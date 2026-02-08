@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Zap, CheckCircle2, Search, Clock, Plus } from "lucide-react";
+import { Zap, CheckCircle2, Search, Clock } from "lucide-react";
 
 export function BusinessOverview() {
   const hasActiveWork = false; // Mock state

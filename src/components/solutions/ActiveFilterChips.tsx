@@ -5,7 +5,7 @@ import { SolutionFilters } from "@/lib/solutions/filters";
 
 interface ActiveFilterChipsProps {
   filters: SolutionFilters;
-  onRemove: (key: keyof SolutionFilters, value?: any) => void;
+  onRemove: (key: keyof SolutionFilters, value?: string | number | null) => void;
   onClear: () => void;
 }
 

@@ -1,4 +1,3 @@
-import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { User, Shield, Bell, CreditCard } from "lucide-react";
 

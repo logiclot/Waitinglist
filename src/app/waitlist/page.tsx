@@ -41,8 +41,8 @@ export default function WaitlistPage() {
         setSuccessMessage("We'll email you when early access opens.");
       }
       setStatus("success");
-    } catch (error: any) {
-      setErrorMessage(error.message);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred");
       setStatus("error");
     }
   };

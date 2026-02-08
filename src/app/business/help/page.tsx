@@ -1,5 +1,3 @@
-import { EmptyState } from "@/components/EmptyState";
-
 export default function BusinessHelpPage() {
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8">

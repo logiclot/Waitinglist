@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle, Clock, Zap, DollarSign, HelpCircle, ShieldCheck, Lock, MessageSquare, Award, Info, List, FileText, Calendar, PlayCircle, Star, ChevronDown } from "lucide-react";
+import { CheckCircle, Zap, DollarSign, HelpCircle, ShieldCheck, Lock, Award, Info, List, PlayCircle, Star, ChevronDown } from "lucide-react";
 import { DemoVideoSection } from "@/components/DemoVideoSection";
 import { SimilarSolutions } from "@/components/SimilarSolutions";
 import { BRAND_NAME } from "@/lib/branding";

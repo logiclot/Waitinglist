@@ -9,7 +9,6 @@ import {
   ChevronLeft, 
   Save, 
   Upload, 
-  CheckCircle, 
   AlertCircle,
   Plus,
   Trash2,
@@ -112,7 +111,10 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
     ? parseInt(searchParams.get("step")!) 
     : (initialData?.lastStep || 1);
 
-  const [step, setStep] = useState(startStep);
+  useEffect(() => {
+    window.scrollTo(0,0);
+  }, [step]);
+  
   const [formData, setFormData] = useState<WizardState>({ 
     ...INITIAL_STATE, 
     ...initialData,

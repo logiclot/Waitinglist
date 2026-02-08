@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getSolutionLockState } from "@/lib/solutions/lock";
-import { Solution, SolutionStatus } from "@/types";
+import { SolutionStatus } from "@/types";
 
 export default async function ExpertMySolutionsPage({
   searchParams,

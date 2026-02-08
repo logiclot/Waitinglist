@@ -4,13 +4,10 @@ import Link from "next/link";
 import { 
   Zap, 
   Search, 
-  ArrowRight, 
   TrendingUp, 
   Clock, 
-  CheckCircle, 
   AlertCircle,
-  Briefcase,
-  DollarSign
+  Briefcase
 } from "lucide-react";
 
 export function ExpertOverview() {
@@ -79,7 +76,7 @@ export function ExpertOverview() {
             <div className="flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-yellow-500" />
               <div>
-                <p className="font-bold text-sm">New request matches "Make.com"</p>
+                <p className="font-bold text-sm">New request matches &quot;Make.com&quot;</p>
                 <p className="text-xs text-muted-foreground">Posted 2 hours ago • High Budget</p>
               </div>
             </div>
@@ -89,7 +86,7 @@ export function ExpertOverview() {
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="font-bold text-sm">Submit Milestone for "CRM Sync"</p>
+                <p className="font-bold text-sm">Submit Milestone for &quot;CRM Sync&quot;</p>
                 <p className="text-xs text-muted-foreground">Due Today</p>
               </div>
             </div>

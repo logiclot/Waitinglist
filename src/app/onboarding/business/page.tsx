@@ -3,12 +3,10 @@
 import { useFormState } from "react-dom";
 import { createBusinessProfile } from "@/actions/onboarding";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { 
   ChevronRight, 
-  ChevronLeft,
-  Check,
-  Search
+  Check
 } from "lucide-react";
 
 const initialState = {
@@ -113,7 +111,7 @@ export default function BusinessOnboardingPage() {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       setTimezone(tz);
       // Rough country guess from timezone could be added here, but leaving blank for accuracy
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, []);

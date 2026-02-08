@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, PlayCircle, ShieldCheck, Award, TrendingUp, Users, Wrench, Lock } from "lucide-react";
+import { Clock, TrendingUp, Users, Wrench, Lock } from "lucide-react";
 
 // Types for the form data (subset of Solution)
 export interface SolutionFormData {

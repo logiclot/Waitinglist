@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Compass, Briefcase, ArrowRight, Lock } from "lucide-react";
+import { Compass, Briefcase, ArrowRight, Lock } from "lucide-react";
 
 export default function FindWorkPage() {
   return (

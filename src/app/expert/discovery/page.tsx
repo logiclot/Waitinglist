@@ -32,7 +32,7 @@ export default function ExpertDiscoveryPage() {
               <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
                 <li>Must reference specific tools/processes</li>
                 <li>No generic or copy-pasted advice</li>
-                <li>Buyer votes "Helpful" or "Not Relevant"</li>
+                <li>Buyer votes &quot;Helpful&quot; or &quot;Not Relevant&quot;</li>
               </ul>
             </div>
           </div>

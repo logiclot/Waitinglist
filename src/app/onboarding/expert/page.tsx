@@ -6,15 +6,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { 
   ChevronRight, 
-  ChevronLeft,
   User,
-  Users,
   Check,
   Building2,
-  Briefcase,
-  Wrench,
-  Clock,
-  ShieldCheck,
   Globe
 } from "lucide-react";
 
@@ -103,7 +97,7 @@ export default function ExpertOnboardingPage() {
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       setTimezone(tz);
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, []);

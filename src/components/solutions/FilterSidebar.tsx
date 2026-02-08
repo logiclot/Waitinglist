@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Filter, X, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { SolutionFilters } from "@/lib/solutions/filters";
 import { Category } from "@/types";
@@ -24,7 +24,7 @@ export function FilterSidebar({
 }: FilterSidebarProps) {
   
   // Handlers for specific filter types
-  const update = (key: keyof SolutionFilters, val: any) => {
+  const update = (key: keyof SolutionFilters, val: string | number | null) => {
     onChange({ ...filters, [key]: val });
   };
 

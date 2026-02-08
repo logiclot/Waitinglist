@@ -47,7 +47,7 @@ export function SolutionsPageClient({ initialSolutions, categories }: SolutionsP
     updateFilters(INITIAL_FILTERS);
   };
 
-  const removeFilter = (key: keyof SolutionFilters, value?: any) => {
+  const removeFilter = (key: keyof SolutionFilters, value?: string | number | null) => {
     const newFilters = { ...filters };
     
     if (Array.isArray(newFilters[key])) {

@@ -144,9 +144,9 @@ export async function publishSolution(solutionId: string) {
       }
     });
     return { success: true };
-  } catch (e: any) {
+  } catch (e) {
     console.error(e);
-    return { error: e.message || "Failed to publish" };
+    return { error: e instanceof Error ? e.message : "Failed to publish" };
   }
 }
 

@@ -1,4 +1,3 @@
-import { EmptyState } from "@/components/EmptyState";
 import { User, Shield, Bell } from "lucide-react";
 
 export default function ExpertSettingsPage() {
