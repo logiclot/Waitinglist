@@ -127,7 +127,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
   const [error, setError] = useState<string | null>(null);
   
   // Helpers
-  const handleChange = (field: keyof WizardState, value: any) => {
+  const handleChange = <K extends keyof WizardState>(field: K, value: WizardState[K]) => {
     if (isLocked) return; // Prevent edits if locked
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -186,6 +186,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
       if (currentId) {
         // Update with full data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updateData: any = {
           title: formData.title,
           category: formData.category,
@@ -223,8 +224,9 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         if (res.error) throw new Error(res.error);
       }
       return true;
-    } catch (err: any) {
-      setError(err.message || "Failed to save draft");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save draft";
+      setError(message);
       return false;
     } finally {
       setLoading(false);
