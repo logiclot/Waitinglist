@@ -1,0 +1,430 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  USER        // Default, pre-onboarding
+  BUSINESS
+  SPECIALIST
+  ADMIN
+}
+
+enum SpecialistStatus {
+  PENDING_REVIEW
+  APPROVED
+  SUSPENDED
+}
+
+enum OrderStatus {
+  draft
+  paid_pending_implementation
+  in_progress
+  delivered
+  approved
+  refunded
+  disputed
+}
+
+enum MessageType {
+  user
+  system
+}
+
+enum DemoVideoStatus {
+  none
+  pending
+  approved
+  rejected
+}
+
+enum JobStatus {
+  draft
+  pending_payment
+  open
+  closed
+  awarded
+  cancelled
+}
+
+enum BidStatus {
+  submitted
+  shortlisted
+  rejected
+  accepted
+  withdrawn
+}
+
+enum SpecialistTier {
+  STANDARD
+  PROVEN
+  ELITE
+}
+
+// User & Auth
+model User {
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  passwordHash          String
+  emailVerifiedAt       DateTime?
+  role                  Role      @default(USER)
+  onboardingCompletedAt DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  businessProfile       BusinessProfile?
+  specialistProfile     SpecialistProfile?
+  emailVerificationTokens EmailVerificationToken[]
+  
+  // Messaging & Orders
+  buyerOrders           Order[]   @relation("BuyerOrders")
+  
+  // Jobs
+  postedJobs            JobPost[] @relation("BuyerJobs")
+
+  // Sent messages
+  sentMessages          Message[]
+
+  // Saved Solutions
+  savedSolutions        SavedSolution[]
+}
+
+model BusinessProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  firstName      String
+  lastName       String
+  companyName    String
+  jobRole        String
+  howHeard       String
+  interests      String[]
+  tools          String[] // New field for "Tools you use"
+  industry       String?
+  companySize    String?
+  whatToAutomate String?
+  timezone       String?
+  billingEmail   String?  // New field for billing contact
+  website        String?  // New field
+  country        String?
+  
+  // Onboarding Refinement fields
+  businessPrimaryProblems String[]
+  successDefinition       String[]
+  decisionContext         String?
+  upgradeInterests        String[]
+  timingPreference        String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SpecialistProfile {
+  id                        String    @id @default(uuid())
+  userId                    String    @unique
+  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Public URL slug
+  slug                      String    @unique
+  
+  // Profile Fields
+  legalFullName             String
+  displayName               String
+  country                   String
+  timezone                  String?
+  isAgency                  Boolean   @default(false)
+  agencyName                String?
+  agencyTeamSize            String?   // New
+  businessIdentificationNumber String? // New
+  
+  phoneNumber               String?
+  
+  primaryTool               String?   // New
+  tools                     String[]  // Secondary tools
+  specialties               String[]  // Kept for backward compat or extra metadata
+  availability              String?   // Weekly capacity
+  
+  yearsExperience           String
+  
+  portfolioLinks            Json      // Stored as JSON array of objects or strings
+  portfolioUrl              String?   // New: Primary portfolio URL
+  
+  pastImplementations       String    // "Approx number of implementations"
+  typicalProjectSize        String?   // New
+  clientAcquisitionSource   String[]  // New
+  
+  bio                       String?   // Short bio for public profile
+  responseTime              String?   // e.g. "Within 2 hours"
+  
+  // Status & Badges
+  status                    SpecialistStatus @default(PENDING_REVIEW)
+  tier                      SpecialistTier   @default(STANDARD)
+  verified                  Boolean   @default(false)
+  businessVerified          Boolean   @default(false)
+  founding                  Boolean   @default(false)
+  foundingRank              Int?      @unique
+  completedSalesCount       Int       @default(0)
+  commissionOverridePercent Decimal?  @db.Decimal(5, 2)
+  
+  // Legal & Compliance
+  legalStatus               String    @default("pending_acceptance") // pending_acceptance, accepted
+  termsAcceptedAt           DateTime?
+  authorityConsent          Boolean   @default(false) // New
+  marketingConsent          Boolean   @default(false)
+  
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  // Relations
+  solutions                 Solution[]
+  sellerOrders              Order[]   @relation("SellerOrders")
+  conversations             Conversation[] @relation("SellerConversations")
+  bids                      Bid[]     @relation("SpecialistBids")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// Marketplace Core
+model Solution {
+  id                            String    @id @default(uuid())
+  expertId                      String
+  expert                        SpecialistProfile @relation(fields: [expertId], references: [id])
+  
+  slug                          String    @unique
+  title                         String
+  shortSummary                  String?
+  outcome                       String?   // "Outcome Line" e.g. "Reduces manual lead handling for sales teams."
+  description                   String
+  longDescription               String?   // Detailed SEO description
+  complexity                    String?   // Simple, Standard, Advanced
+  
+  category                      String
+  integrations                  String[]
+  
+  // Requirements & Access
+  accessRequired                String?   // Admin, User, None
+  requiredInputs                String[]  // sample data, accounts, etc.
+  questions                     Json?     // Array of strings (questions for business)
+  
+  // Pricing (Cents)
+  implementationPriceCents      Int
+  monthlyCostMinCents           Int?
+  monthlyCostMaxCents           Int?
+  maintenancePriceCents         Int?
+  maintenanceDescription        String?
+  
+  // New Pricing Fields
+  toolCostMonthlyMinCents       Int?
+  toolCostMonthlyMaxCents       Int?
+  couponNextPurchase            Json?     // { percent: number, validDays: number }
+  
+  // Discounts & Commission
+  discounts                     Json?     // { type: 'fixed'|'percent', value: number, ... }
+  commissionRate                Decimal?  @db.Decimal(5, 2) // e.g. 15.00
+  
+  deliveryDays                  Int
+  supportDays                   Int       @default(30) // Mandatory support duration (15, 30, 60)
+  revisionsIncluded             Int?
+  estimatedImplementationTime   String?
+  implementationType            String?
+  
+  included                      String[]
+  excluded                      String[]
+  prerequisites                 String[]
+  faq                           Json?     // Array of {question, answer}
+  status                        String    @default("draft") // draft, published, paused, archived
+  publishedAt                   DateTime?
+  
+  // Moderation
+  moderationStatus              String    @default("pending") // auto_approved, pending, approved, rejected
+  approvedAt                    DateTime?
+
+  whatItDoes                    String?
+  
+  // New Content Fields
+  outline                       String[] // Up to 3 highlight lines
+  lastStep                      Int      @default(1) // Wizard progress tracking
+
+  // Proof & Trust
+  proofType                     String?   // screenshot, case_study, diagram, metric
+  proofContent                  String?   // URL or text
+  proof                         Json?     // { type: string, value: any }
+  
+  // Filters & Search Facets
+  businessGoals                 String[]  // Lead gen, Sales auto, etc.
+  industries                    String[]  // eCommerce, SaaS, etc.
+  paybackPeriod                 String?   // lt_1m, 1_3m, long_term
+  trustSignals                  String[]  // NDA included, Zero-data, etc.
+  expertTier                    String?   // vetted, founding, agency (snapshot)
+
+  // Demo Video
+  demoVideoUrl                  String?
+  demoVideoStatus               DemoVideoStatus @default(none)
+  demoVideoReviewedAt           DateTime?
+  demoVideoReviewNotes          String?
+  demoVideoStartSeconds         Int?
+  demoVideoId                   String?
+  
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  
+  orders                        Order[]
+  conversations                 Conversation[]
+  bids                          Bid[]
+  savedByUsers                  SavedSolution[]
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  buyerId         String      // Link to User (Business)
+  buyer           User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  
+  sellerId        String      // Link to SpecialistProfile
+  seller          SpecialistProfile @relation("SellerOrders", fields: [sellerId], references: [id])
+  
+  solutionId      String
+  solution        Solution    @relation(fields: [solutionId], references: [id])
+  
+  priceCents      Int
+  status          OrderStatus @default(draft)
+  
+  deliveryNote    String?
+  
+  approvedAt      DateTime?
+  refundedAt      DateTime?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  conversations   Conversation[]
+}
+
+model Conversation {
+  id              String      @id @default(uuid())
+  buyerId         String      // Usually User ID
+  
+  sellerId        String
+  seller          SpecialistProfile @relation("SellerConversations", fields: [sellerId], references: [id])
+  
+  solutionId      String?
+  solution        Solution?   @relation(fields: [solutionId], references: [id])
+  
+  orderId         String?
+  order           Order?      @relation(fields: [orderId], references: [id])
+
+  jobPostId       String?
+  jobPost         JobPost?    @relation(fields: [jobPostId], references: [id])
+  
+  status          String      @default("active") // active, pending, closed
+  
+  messages        Message[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Message {
+  id              String        @id @default(uuid())
+  conversationId  String
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId        String        // User ID or Specialist ID (User ID of specialist)
+  user            User          @relation(fields: [senderId], references: [id])
+  
+  body            String
+  type            MessageType   @default(user)
+  
+  createdAt       DateTime      @default(now())
+}
+
+// Jobs Feature
+model JobPost {
+  id              String      @id @default(cuid())
+  buyerId         String
+  buyer           User        @relation("BuyerJobs", fields: [buyerId], references: [id])
+  
+  title           String
+  goal            String      @db.Text
+  category        String
+  tools           String[]
+  budgetRange     String      // "Under $500", "$500–$1,500", etc.
+  timeline        String      // "ASAP", "1–2 weeks", etc.
+  
+  status          JobStatus   @default(draft)
+  
+  viewCount       Int         @default(0)
+  
+  // Payment
+  paidAt          DateTime?
+  paymentProvider String?
+  paymentIntentId String?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  bids            Bid[]
+  conversations   Conversation[]
+}
+
+model Bid {
+  id              String      @id @default(cuid())
+  jobPostId       String
+  jobPost         JobPost     @relation(fields: [jobPostId], references: [id], onDelete: Cascade)
+  
+  specialistId    String
+  specialist      SpecialistProfile @relation("SpecialistBids", fields: [specialistId], references: [id])
+  
+  solutionId      String?
+  solution        Solution?   @relation(fields: [solutionId], references: [id])
+  
+  message         String      @db.Text
+  proposedApproach String?    @db.Text
+  estimatedTime   String
+  priceEstimate   String?
+  
+  status          BidStatus   @default(submitted)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@unique([jobPostId, specialistId])
+}
+
+model SavedSolution {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  solutionId String
+  solution   Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, solutionId])
+}
+
+// Waitlist
+model WaitlistSignup {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  fullName  String
+  email     String   @unique
+  role      String   // 'business' | 'expert'
+  source    String?  // 'landing_waitlist'
+  consent   Boolean  @default(true)
+}

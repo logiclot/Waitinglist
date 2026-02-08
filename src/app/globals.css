@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Force CSS Rebuild */
+
+:root {
+  /* Background: Warm Off-White / Cream */
+  --background: 40 14% 98%;   /* #FBFAF8 */
+  --foreground: 220 13% 18%;  /* #111827 (Gray 900) */
+
+  /* Surface: Pure White */
+  --card: 0 0% 100%;          /* #FFFFFF */
+  --card-foreground: 220 13% 18%;
+
+  /* Popovers */
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 13% 18%;
+
+  /* Primary Action: Near-Black (#111827) */
+  --primary: 220 13% 18%;     /* #111827 */
+  --primary-foreground: 0 0% 100%; /* White */
+
+  /* Secondary: Subtle Surface (#F3F4F6 equivalent) */
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 220 13% 18%;
+
+  /* Muted: De-emphasized text */
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 14% 46%; /* #6B7280 (Gray 500) */
+
+  /* Accent: Used for links/highlights only, kept as Calm Blue (#2563EB) */
+  --accent: 221 83% 53%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Destructive */
+  --destructive: 0 72% 51%;   /* #DC2626 */
+  --destructive-foreground: 0 0% 98%;
+
+  /* Borders: Subtle Gray */
+  --border: 220 13% 91%;      /* #E5E7EB (Gray 200) */
+  --input: 220 13% 91%;
+  --ring: 220 13% 18%;        /* Matches primary color for focus rings */
+
+  /* Constants */
+  --radius: 0.5rem; /* 8px for cleaner enterprise feel */
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  
+  /* Subtle texture or plain background */
+  background-color: hsl(var(--background));
+}
+
+/* Remove noise texture for cleaner look */
+body::before {
+  display: none;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Hero Animations */
+@keyframes word-appear {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); }
+}
+
+/* Scoped styles for the new Hero component */
+.hero-light .grid-line {
+  stroke: rgba(17, 24, 39, 0.06);
+  stroke-width: 1px;
+  stroke-dasharray: 4 4;
+  animation: grid-appear 1.5s ease-out forwards;
+  opacity: 0;
+}
+
+.hero-light .detail-dot {
+  fill: rgba(17, 24, 39, 0.15);
+  opacity: 0;
+  animation: dot-appear 0.6s ease-out forwards;
+}
+
+/* NEW: Background floating dots */
+.hero-light .bg-floating-dot {
+  position: absolute;
+  /* width and height set inline for randomness */
+  border-radius: 50%;
+  background-color: #111827;
+  pointer-events: none;
+  z-index: 1; /* Behind content */
+  opacity: 0;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@keyframes float-drift-1 {
+  0% { transform: translate(0, 0); opacity: 0.8; }
+  50% { transform: translate(25px, -30px); opacity: 0.5; }
+  100% { transform: translate(-15px, -50px); opacity: 0.3; }
+}
+
+@keyframes float-drift-2 {
+  0% { transform: translate(0, 0); opacity: 0.7; }
+  50% { transform: translate(-30px, 25px); opacity: 0.4; }
+  100% { transform: translate(20px, 40px); opacity: 0.3; }
+}
+
+@keyframes float-drift-3 {
+  0% { transform: translate(0, 0); opacity: 0.8; }
+  50% { transform: translate(30px, 15px); opacity: 0.5; }
+  100% { transform: translate(50px, -20px); opacity: 0.3; }
+}
+
+@keyframes float-drift-4 {
+  0% { transform: translate(0, 0); opacity: 0.7; }
+  50% { transform: translate(-25px, -30px); opacity: 0.4; }
+  100% { transform: translate(-40px, 20px); opacity: 0.3; }
+}
+
+@keyframes grid-appear {
+  to { opacity: 1; }
+}
+
+@keyframes dot-appear {
+  to { opacity: 1; }
+}
