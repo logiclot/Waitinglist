@@ -15,6 +15,7 @@ function makeExpert(overrides: Partial<Expert> = {}): Expert {
     id: "test-id",
     name: "Test Expert",
     verified: true,
+    founding: false,
     isFoundingExpert: false,
     completed_sales_count: 0,
     tools: [],

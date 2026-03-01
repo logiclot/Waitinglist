@@ -3,12 +3,31 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
+import { log } from "@/lib/logger";
+import * as Sentry from "@sentry/nextjs";
 
-export async function createThread(sellerId: string, solutionId?: string) {
+export async function createThread(sellerId: string, solutionId?: string, orderId?: string) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.id) {
     return { error: "Not authenticated", status: 401 };
+  }
+
+  if (orderId) {
+    const existing = await prisma.conversation.findFirst({
+      where: { orderId },
+    });
+    if (existing) {
+      const isParticipant = existing.buyerId === session.user.id;
+      const seller = await prisma.specialistProfile.findUnique({
+        where: { id: existing.sellerId },
+        select: { userId: true },
+      });
+      if (isParticipant || seller?.userId === session.user.id) {
+        return { success: true, threadId: existing.id };
+      }
+    }
   }
 
   // Prevent self-messaging
@@ -51,9 +70,22 @@ export async function createThread(sellerId: string, solutionId?: string) {
         solutionId: solutionId,
       },
     });
+
+    // Notify Seller
+    if (seller.userId) {
+      await createNotification(
+        seller.userId,
+        "New Conversation",
+        "A potential client has started a conversation with you.",
+        "info",
+        "/inbox"
+      );
+    }
+
     return { success: true, threadId: thread.id };
   } catch (e) {
-    console.error(e);
+    log.error("messaging.create_thread_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
     return { error: "Failed to create thread", status: 500 };
   }
 }
@@ -91,102 +123,48 @@ export async function sendMessage(threadId: string, body: string) {
       },
     });
 
+    // Notification Logic
+    const recipientId = isBuyer ? thread.seller.userId : thread.buyerId;
+    const senderName = session.user.name || "User";
+
+    // Check for existing unread notification for this thread
+    const existingNotification = await prisma.notification.findFirst({
+      where: {
+        userId: recipientId,
+        type: "info",
+        isRead: false,
+        actionUrl: "/inbox",
+        createdAt: {
+          gt: new Date(Date.now() - 60 * 60 * 1000) // Last hour
+        }
+      }
+    });
+
+    if (existingNotification) {
+      await prisma.notification.update({
+        where: { id: existingNotification.id },
+        data: {
+          title: "New Messages",
+          message: `You have new messages from ${senderName}`,
+          createdAt: new Date() // Bump timestamp
+        }
+      });
+    } else {
+      await createNotification(
+        recipientId,
+        "New Message",
+        `You have a new message from ${senderName}`,
+        "info",
+        "/inbox"
+      );
+    }
+
     return { success: true };
   } catch (e) {
-    console.error(e);
+    log.error("messaging.send_message_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
     return { error: "Failed to send" };
   }
-}
-
-export async function getConversations() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return { error: "Not authenticated" };
-
-  const specialist = await prisma.specialistProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { id: true },
-  });
-
-  const conversations = await prisma.conversation.findMany({
-    where: {
-      OR: [
-        { buyerId: session.user.id },
-        ...(specialist ? [{ sellerId: specialist.id }] : []),
-      ],
-    },
-    include: {
-      messages: { orderBy: { createdAt: "desc" }, take: 1 },
-      solution: { select: { title: true } },
-      order: { select: { id: true, status: true } },
-      seller: { select: { id: true, displayName: true, userId: true } },
-      buyer: { select: { id: true, email: true } },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
-
-  return {
-    success: true as const,
-    userId: session.user.id,
-    conversations: conversations.map((c) => ({
-      id: c.id,
-      buyerId: c.buyerId,
-      sellerId: c.sellerId,
-      otherPartyName:
-        c.buyerId === session.user!.id
-          ? c.seller.displayName || "Expert"
-          : c.buyer.email?.split("@")[0] || "Client",
-      solutionTitle: c.solution?.title || null,
-      orderId: c.order?.id || null,
-      orderStatus: c.order?.status || null,
-      lastMessage: c.messages[0]?.body || null,
-      lastMessageAt: c.messages[0]?.createdAt?.toISOString() || c.createdAt.toISOString(),
-      createdAt: c.createdAt.toISOString(),
-    })),
-  };
-}
-
-export async function getConversationMessages(conversationId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return { error: "Not authenticated" };
-
-  const specialist = await prisma.specialistProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { id: true },
-  });
-
-  const conversation = await prisma.conversation.findUnique({
-    where: { id: conversationId },
-    include: {
-      messages: { orderBy: { createdAt: "asc" } },
-      solution: { select: { title: true } },
-      order: { select: { id: true, status: true } },
-      seller: { select: { displayName: true, userId: true } },
-      buyer: { select: { email: true } },
-    },
-  });
-
-  if (!conversation) return { error: "Conversation not found" };
-
-  const isBuyer = conversation.buyerId === session.user.id;
-  const isSeller = specialist && conversation.sellerId === specialist.id;
-  if (!isBuyer && !isSeller) return { error: "Unauthorized" };
-
-  return {
-    success: true as const,
-    userId: session.user.id,
-    otherPartyName: isBuyer
-      ? conversation.seller.displayName || "Expert"
-      : conversation.buyer.email?.split("@")[0] || "Client",
-    solutionTitle: conversation.solution?.title || null,
-    orderId: conversation.order?.id || null,
-    messages: conversation.messages.map((m) => ({
-      id: m.id,
-      senderId: m.senderId,
-      body: m.body,
-      type: m.type,
-      createdAt: m.createdAt.toISOString(),
-    })),
-  };
 }
 
 export async function scheduleMeeting(threadId: string, date: string) {
@@ -225,7 +203,8 @@ export async function scheduleMeeting(threadId: string, date: string) {
 
     return { success: true, meetingLink, messageBody };
   } catch (e) {
-    console.error(e);
+    log.error("messaging.schedule_meeting_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
     return { error: "Failed to schedule" };
   }
 }

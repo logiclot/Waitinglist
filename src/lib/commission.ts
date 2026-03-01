@@ -2,7 +2,8 @@ export interface Expert {
   id: string;
   name: string;
   verified: boolean;
-  isFoundingExpert: boolean;
+  founding: boolean;          // legacy DB field — prefer isFoundingExpert
+  isFoundingExpert?: boolean; // canonical founding status field
   founding_rank?: number | null;
   completed_sales_count: number;
   commission_override_percent?: number | null;
@@ -11,22 +12,22 @@ export interface Expert {
 }
 
 export const TIER_THRESHOLDS = {
-  STANDARD: 15, // 15%
-  PROVEN: 13,   // 13% after 10 sales
-  ELITE: 12,    // 12% after 50 sales
-  FOUNDING: 11, // 11% lifetime
+  STANDARD: 15,  // 15% — new experts
+  PROVEN: 13,    // 13% — after 5 completed sales
+  ELITE: 12,     // 12% — after 10 completed sales
+  FOUNDING: 11,  // 11% — lifetime rate for Founding Experts
 };
 
 export const SALES_THRESHOLDS = {
-  PROVEN: 10,
-  ELITE: 50,
+  PROVEN: 5,
+  ELITE: 10,
 };
 
 export type ExpertTier = 'standard' | 'proven' | 'elite' | 'founding';
 
 export function getExpertTierLabel(expert: Expert): ExpertTier {
-  if (expert.isFoundingExpert) return 'founding';
-  
+  if (expert.isFoundingExpert || expert.founding) return 'founding';
+
   if (expert.completed_sales_count >= SALES_THRESHOLDS.ELITE) return 'elite';
   if (expert.completed_sales_count >= SALES_THRESHOLDS.PROVEN) return 'proven';
   return 'standard';
@@ -38,8 +39,8 @@ export function getCommissionPercent(expert: Expert): number {
     return Number(expert.commission_override_percent);
   }
 
-  // 2. Founding expert
-  if (expert.isFoundingExpert) {
+  // 2. Founding expert (check both fields for backward compat)
+  if (expert.isFoundingExpert || expert.founding) {
     return TIER_THRESHOLDS.FOUNDING;
   }
 
@@ -69,8 +70,8 @@ export function computeExpertPayoutCents(implementationPriceCents: number, commi
 }
 
 export function formatCentsToCurrency(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IE', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'EUR',
   }).format(cents / 100);
 }

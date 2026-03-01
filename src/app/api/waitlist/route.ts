@@ -1,99 +1,62 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
-
-// Simple in-memory rate limit
-const rateLimit = new Map<string, { count: number; lastReset: number }>();
-const LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes
-const MAX_REQUESTS = 5;
+import { log } from "@/lib/logger";
+import { publicFormLimiter } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
-    // 1. Rate Limit
-    const ip = request.headers.get("x-forwarded-for") || "unknown";
-    const now = Date.now();
-    const record = rateLimit.get(ip) || { count: 0, lastReset: now };
-
-    if (now - record.lastReset > LIMIT_WINDOW) {
-      record.count = 0;
-      record.lastReset = now;
+    // Rate limit: 5 submissions per IP per 10 minutes
+    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const rl = publicFormLimiter.check(ip);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
-    if (record.count >= MAX_REQUESTS) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      );
-    }
-
-    record.count += 1;
-    rateLimit.set(ip, record);
-
-    // 2. Parse Body
     const body = await request.json();
     const { fullName, email, role, honeypot } = body;
 
-    // 3. Honeypot check
-    if (honeypot) {
-      // Silently return success
-      return NextResponse.json({ ok: true, status: "created" });
-    }
+    // Honeypot — bots fill this, real users don't see it
+    if (honeypot) return NextResponse.json({ ok: true, status: "created" });
 
-    // 4. Validation
     if (!fullName || !email || !role) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // 5. DB Insert/Upsert
-    const existing = await prisma.waitlistSignup.findUnique({
-      where: { email },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (prisma as any).waitlistSignup.findUnique({ where: { email } });
+    if (existing) return NextResponse.json({ ok: true, status: "existing" });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (prisma as any).waitlistSignup.create({
+      data: { fullName, email, role, source: "landing_waitlist" },
     });
 
-    if (existing) {
-      return NextResponse.json({ ok: true, status: "existing" });
-    }
-
-    await prisma.waitlistSignup.create({
-      data: {
-        fullName,
-        email,
-        role,
-        source: "landing_waitlist",
-      },
-    });
-
-    // 6. Send Email
-    try {
-      // Use configured sender or fallback to testing domain
-      const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-      
-      await resend.emails.send({
-        from: fromEmail, 
-        to: email,
-        subject: "You’re on the LogicLot waitlist",
-        html: `
-          <p>Hi ${fullName},</p>
-          <p>Thanks for joining the LogicLot waitlist as a <strong>${role}</strong>.</p>
-          <p>We’ll email you as soon as early access opens.</p>
-          <br/>
-          <p style="font-size: 12px; color: #666;">If you didn’t request this, ignore this email.</p>
-        `,
-      });
-    } catch (emailError) {
-      console.error("Failed to send email:", emailError);
-      // Don't fail the request if email fails, but log it
+    // Send confirmation email (only if sender is configured)
+    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    if (fromEmail) {
+      try {
+        await resend.emails.send({
+          from: fromEmail,
+          to: email,
+          subject: "You're on the LogicLot waitlist",
+          html: `
+            <p>Hi ${fullName},</p>
+            <p>Thanks for joining the LogicLot waitlist as a <strong>${role}</strong>.</p>
+            <p>We'll be in touch as soon as early access opens.</p>
+            <br/>
+            <p style="font-size:12px;color:#666;">If you didn't request this, you can safely ignore this email.</p>
+          `,
+        });
+      } catch (emailError) {
+        log.error("waitlist.email_send_failed", { email, error: String(emailError) });
+      }
     }
 
     return NextResponse.json({ ok: true, status: "created" });
 
   } catch (error) {
-    console.error("Waitlist API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    log.error("waitlist.api_error", { error: String(error) });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

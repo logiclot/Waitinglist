@@ -1,117 +1,128 @@
 import Link from "next/link";
-import { Compass, Briefcase, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Crown, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 
 export default function AddRequestPage() {
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-12">
-      <div className="max-w-3xl">
-        <h1 className="text-3xl font-bold mb-4">Add Request</h1>
-        <p className="text-xl text-muted-foreground">
-          Choose how you want to engage with experts.
+    <div className="p-8 max-w-5xl mx-auto">
+
+      {/* Header */}
+      <div className="mb-10">
+        <h1 className="text-2xl font-bold mb-2">Post a Request</h1>
+        <p className="text-muted-foreground text-sm">
+          Not sure which to choose?{" "}
+          <Link href="/how-it-works" className="underline hover:text-foreground transition-colors">
+            See how each option works.
+          </Link>
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        {/* Discovery Scan Card */}
-        <div className="group flex flex-col h-full bg-card border border-border rounded-2xl p-8 hover:border-primary/50 transition-all shadow-sm hover:shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600" />
-          
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+        {/* Discovery Scan */}
+        <div className="relative p-8 rounded-2xl bg-[#1E293B] border border-white/10 shadow-xl flex flex-col ring-1 ring-white/5">
           <div className="mb-6">
-            <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
-              <Compass className="h-7 w-7 text-blue-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold mb-4 border border-blue-500/30">
+              Most Popular
             </div>
-            <h2 className="text-2xl font-bold mb-2">Discovery Scan</h2>
-            <p className="text-lg font-medium text-foreground/80 mb-4">Get expert thinking before you spend on building</p>
-            <div className="text-3xl font-bold text-foreground mb-4">€50 <span className="text-sm font-normal text-muted-foreground">one-time</span></div>
-            <p className="text-sm font-medium text-blue-600 bg-blue-50 inline-block px-3 py-1 rounded-full mb-4">
-              Best for: Early-stage clarity
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl border border-blue-500/30">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-white">&euro;50</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">one-time posting fee</div>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-1">Stop guessing.<br />Start automating.</h2>
+            <p className="text-xs text-blue-300/70 uppercase tracking-wide font-medium mt-2">Discovery Scan &middot; Up to 5 expert proposals</p>
+          </div>
+
+          <div className="flex-grow mb-8">
+            <p className="text-slate-300 leading-relaxed text-sm mb-6">
+              Describe how your business runs. Automation experts identify your biggest wins and send you concrete proposals — no access required, no commitment.
             </p>
-          </div>
-
-          <div className="bg-secondary/30 rounded-xl p-6 mb-8 flex-1">
-            <h3 className="font-bold text-sm uppercase tracking-wide text-muted-foreground mb-4">What you get</h3>
             <ul className="space-y-3">
-              <li className="flex gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0" />
-                <span className="text-foreground/90">Experts propose a clear automation approach</span>
-              </li>
-              <li className="flex gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0" />
-                <span className="text-foreground/90">You compare ideas and pick the best</span>
-              </li>
-              <li className="flex gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0" />
-                <span className="text-foreground/90">Perfect when you’re unsure what the right solution is</span>
-              </li>
-              <li className="flex gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0" />
-                <span className="text-foreground/90">Live demo available on request — included at no extra cost</span>
-              </li>
+              {[
+                "Find your 3 biggest time or cost leaks — identified by real experts",
+                "Get 2–5 proposals with full scope, timeline, and ROI estimate",
+                "Live demo before any commitment or access is granted",
+                "Walk away with clarity — even if you don\u2019t proceed",
+              ].map((item) => (
+                <li key={item} className="text-sm text-slate-200 flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" /> {item}
+                </li>
+              ))}
             </ul>
-            <div className="mt-4 pt-4 border-t border-border/50 text-xs text-muted-foreground">
-              Includes max 5 expert submissions. Qualified submissions rewarded.
-            </div>
           </div>
 
-          <Link 
-            href="/jobs/discovery"
-            className="w-full py-4 bg-background border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors"
-          >
-            Post Discovery Scan <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="mt-auto pt-6 border-t border-white/10">
+            <Link
+              href="/jobs/discovery"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-colors shadow-lg shadow-blue-500/10"
+            >
+              Get My Automation Roadmap <ArrowRight className="h-4 w-4" />
+            </Link>
+            <p className="text-xs text-slate-500 text-center mt-3">First proposals arrive within 24 hours</p>
+          </div>
         </div>
 
-        {/* Custom Project Card */}
-        <div className="group flex flex-col h-full bg-card border border-border rounded-2xl p-8 hover:border-primary/50 transition-all shadow-sm hover:shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600" />
-          
+        {/* Custom Project */}
+        <div className="relative p-8 rounded-2xl bg-[#0F172A] border border-purple-500/20 shadow-2xl flex flex-col ring-1 ring-purple-500/10">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500/50 to-blue-500/50 rounded-t-2xl opacity-50" />
           <div className="mb-6">
-            <div className="w-14 h-14 rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
-              <Briefcase className="h-7 w-7 text-amber-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold mb-4 border border-purple-500/30">
+              For Complex Workflows
             </div>
-            <h2 className="text-2xl font-bold mb-2">Custom Project</h2>
-            <p className="text-lg font-medium text-foreground/80 mb-4">High-intent projects with fewer competing bids</p>
-            <div className="text-3xl font-bold text-foreground mb-4">€100 <span className="text-sm font-normal text-muted-foreground">one-time</span></div>
-            <p className="text-sm font-medium text-amber-700 bg-amber-50 inline-block px-3 py-1 rounded-full mb-4">
-              Best for: Bigger outcomes, higher confidence
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-3 bg-purple-500/20 text-purple-400 rounded-xl border border-purple-500/30">
+                <Crown className="h-6 w-6" />
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-white">&euro;100</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">one-time posting fee</div>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-1">Describe it once.<br />Get it built right.</h2>
+            <p className="text-xs text-purple-300/70 uppercase tracking-wide font-medium mt-2">Custom Project &middot; Max 3 tailored proposals</p>
+          </div>
+
+          <div className="flex-grow mb-8">
+            <p className="text-slate-300 leading-relaxed text-sm mb-6">
+              You know what needs to change. Post your requirement — Elite experts compete for the job with tailored proposals, not generic advice.
             </p>
-          </div>
-
-          <div className="bg-secondary/30 rounded-xl p-6 mb-8 flex-1">
-            <h3 className="font-bold text-sm uppercase tracking-wide text-muted-foreground mb-4">What you get</h3>
             <ul className="space-y-3">
-              <li className="flex gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />
-                <span className="text-foreground/90">Stronger proposals, faster decision-making</span>
-              </li>
-              <li className="flex gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />
-                <span className="text-foreground/90">Better fit for larger or more complex workflows</span>
-              </li>
-              <li className="flex gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />
-                <span className="text-foreground/90">Ideal when you already know the goal</span>
-              </li>
-              <li className="flex gap-3 text-sm">
-                <CheckCircle2 className="w-5 h-5 text-amber-600 shrink-0" />
-                <span className="text-foreground/90">Live demo available on request — included at no extra cost</span>
-              </li>
+              {[
+                "Your team stops doing manually what should have been automated a long time ago.",
+                "The problem you describe is the exact problem that gets solved",
+                "You leave with a live, working automation \u2014 not a plan or a prototype",
+                "Know your total cost upfront \u2014 implementation and monthly running costs, itemised",
+                "Nothing ships without your sign-off \u2014 you stay in control at every step",
+                "Every proposal you receive is built for your tools and process.",
+              ].map((item) => (
+                <li key={item} className="text-sm text-slate-200 flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" /> {item}
+                </li>
+              ))}
             </ul>
-            <div className="mt-4 pt-4 border-t border-border/50 text-xs text-muted-foreground">
-              Max 3 expert bids. <span className="font-medium text-foreground">75% refund</span> if no solution selected.
-            </div>
           </div>
 
-          <Link 
-            href="/jobs/new"
-            className="w-full py-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary/20"
-          >
-            Post Custom Project <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="mt-auto pt-6 border-t border-white/10">
+            <Link
+              href="/jobs/new"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-colors shadow-lg shadow-purple-500/10"
+            >
+              Post My Custom Project <ArrowRight className="h-4 w-4" />
+            </Link>
+            <p className="text-xs text-slate-500 text-center mt-3">75% refund if no proposal meets your criteria</p>
+          </div>
         </div>
 
       </div>
+
+      {/* Decision helper */}
+      <p className="text-center text-xs text-muted-foreground mt-8">
+        Not sure yet? Start with a Discovery Scan &mdash; lower commitment, higher clarity.
+      </p>
     </div>
   );
 }

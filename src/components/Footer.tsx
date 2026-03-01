@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
 import { CookieConsent, CookieSettingsLink } from "@/components/privacy/CookieConsent";
 import { BRAND_NAME } from "@/lib/branding";
+import { LogoBrand } from "@/components/LogoBrand";
 import { usePathname } from "next/navigation";
 
 export function Footer() {
   const pathname = usePathname();
 
-  if (pathname === "/waitlist") return null;
+  if (process.env.NODE_ENV !== "development" && (pathname === "/waitlist" || pathname === "/")) return null;
 
   return (
     <footer className="border-t border-border bg-background py-12">
@@ -17,10 +17,7 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 font-semibold text-lg text-foreground">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <span>{BRAND_NAME}</span>
-            </Link>
+            <LogoBrand href="/" size="md" />
             <p className="text-sm text-muted-foreground leading-relaxed">
               Ready-to-use AI automations, implemented by verified experts.
             </p>
@@ -42,11 +39,6 @@ export function Footer() {
               <li>
                 <Link href="/how-it-works" className="hover:text-primary transition-colors">
                   How It Works
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="hover:text-primary transition-colors text-amber-600">
-                  Admin (Internal)
                 </Link>
               </li>
             </ul>
@@ -75,6 +67,11 @@ export function Footer() {
                   Pricing / Fees
                 </Link>
               </li>
+              <li>
+                <Link href="/docs" className="hover:text-primary transition-colors">
+                  Documentation
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -89,6 +86,11 @@ export function Footer() {
               <li>
                 <Link href="/privacy" className="hover:text-primary transition-colors">
                   Privacy
+                </Link>
+              </li>
+              <li>
+                <Link href="/tax" className="hover:text-primary transition-colors">
+                  Tax & Legal
                 </Link>
               </li>
               <li>

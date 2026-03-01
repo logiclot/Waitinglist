@@ -63,6 +63,20 @@ body::before {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Modern button hover — smooth, accessible, no layout shift */
+  .btn-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+  .btn-hover:hover {
+    @apply brightness-95;
+  }
+  .btn-hover:active {
+    @apply scale-[0.98];
+  }
+  .btn-hover-primary:hover {
+    box-shadow: 0 4px 14px 0 rgb(var(--primary) / 0.25);
+  }
 }
 
 /* Hero Animations */
@@ -131,6 +145,12 @@ body::before {
 
 @keyframes grid-appear {
   to { opacity: 1; }
+}
+
+/* Invoice print styles */
+@media print {
+  nav, footer, .print\\:hidden { display: none !important; }
+  main { padding: 0 !important; }
 }
 
 @keyframes dot-appear {

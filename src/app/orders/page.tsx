@@ -4,7 +4,7 @@ import { Clock, CheckCircle, Package, AlertCircle, LucideIcon } from "lucide-rea
 import { OrderStatus } from "@/types";
 
 export const metadata = {
-  title: "My Orders | AI Marketplace",
+  title: "My Orders | LogicLot",
   description: "View and manage your AI automation orders.",
 };
 

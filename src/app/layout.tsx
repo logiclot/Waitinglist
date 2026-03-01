@@ -63,7 +63,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getServerSession(authOptions);
-
+  
   let isFoundingExpert = false;
   if (session?.user?.id) {
     // Track login activity

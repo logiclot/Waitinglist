@@ -48,7 +48,7 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
 
     setMessages((prev) => [...prev, msg]);
     setNewMessage("");
-
+    
     // Call Server Action
     const res = await sendMessage(conversation.id, msg.body);
     if (!res.success) {
@@ -62,11 +62,11 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
     setScheduling(true);
     const res = await scheduleMeeting(conversation.id, meetingDate);
     setScheduling(false);
-
+    
     if (res?.success) {
       setShowScheduler(false);
       setMeetingDate("");
-
+      
       const msg: Message = {
         id: Date.now().toString(),
         conversation_id: conversation.id,
@@ -106,8 +106,8 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
       {/* Header */}
       <div className="p-4 border-b border-border bg-secondary/10 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <Link
-            href={conversation.solution ? `/solutions/${conversation.solution.slug}` : "/dashboard/messages"}
+          <Link 
+            href={conversation.solution ? `/solutions/${conversation.solution.slug}` : "/dashboard/messages"} 
             className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-secondary/50 transition-colors"
             title={conversation.solution ? "Back to Solution" : "Back to Inbox"}
           >
@@ -151,7 +151,7 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
                 <Calendar className="w-3.5 h-3.5" /> Schedule Session
             </button>
             {conversation.solution && (
-            <Link
+            <Link 
                 href={`/solutions/${conversation.solution.slug}`}
                 className="hidden md:block text-xs bg-secondary hover:bg-secondary/80 border border-border px-3 py-1.5 rounded-md transition-colors"
             >
@@ -169,7 +169,7 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
              <p>No messages yet</p>
            </div>
         )}
-
+        
         {messages.map((msg) => (
            msg.type === 'system' ? (
              <div key={msg.id} className="flex justify-center my-4">
@@ -178,8 +178,8 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
                </span>
              </div>
            ) : (
-            <div
-              key={msg.id}
+            <div 
+              key={msg.id} 
               className={`flex gap-3 ${msg.sender_id === currentUser.id ? 'justify-end flex-row-reverse' : 'justify-start'}`}
             >
               <Avatar
@@ -189,8 +189,8 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
                 className="shrink-0"
               />
               <div className={`max-w-[80%] md:max-w-[70%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
-                msg.sender_id === currentUser.id
-                  ? 'bg-primary text-primary-foreground'
+                msg.sender_id === currentUser.id 
+                  ? 'bg-primary text-primary-foreground' 
                   : 'bg-secondary text-secondary-foreground border border-border'
               }`}>
                 {msg.body}
@@ -215,8 +215,8 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
           </div>
         )}
         <div className="flex gap-2 mb-2">
-          <input
-            type="text"
+          <input 
+            type="text" 
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -224,7 +224,7 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
             className="flex-1 bg-secondary/20 border border-border rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             autoFocus
           />
-          <button
+          <button 
             onClick={handleSend}
             disabled={!newMessage.trim()}
             className="bg-primary text-primary-foreground px-4 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium"
@@ -277,7 +277,7 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
         <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
            <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm shadow-2xl relative">
               <button onClick={() => setShowScheduler(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
-
+              
               <div className="text-center mb-6">
                  <div className="bg-[#FF8C00]/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 border border-[#FF8C00]/20">
                     <Calendar className="w-6 h-6 text-[#FF8C00]" />
@@ -294,8 +294,8 @@ export function ThreadView({ conversation, currentUser, otherParty, expertCalend
 
                  <div>
                     <label className="text-xs font-medium mb-1.5 block">Select Date & Time</label>
-                    <input
-                      type="datetime-local"
+                    <input 
+                      type="datetime-local" 
                       value={meetingDate}
                       onChange={(e) => setMeetingDate(e.target.value)}
                       className="w-full bg-background border border-white/10 rounded-md px-3 py-2 text-sm focus:border-[#FF8C00] transition-colors [color-scheme:dark]"

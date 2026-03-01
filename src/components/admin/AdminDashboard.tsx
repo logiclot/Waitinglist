@@ -1,153 +1,215 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { getCommissionPercent, getExpertTierLabel } from "@/lib/commission";
-import { getYouTubeEmbedUrl } from "@/lib/video";
-import { ShieldCheck, Award, Check, ExternalLink, Plus, Pencil, UserX, AlertTriangle, ChevronDown, ChevronUp, MapPin, Briefcase, Search } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Check, Trash2, Users, Briefcase, ShoppingBag, TrendingUp, LayoutGrid } from "lucide-react";
 import { Solution } from "@/types";
 import { ListingEditor } from "@/components/admin/ListingEditor";
-import { approveSpecialist, suspendSpecialist, verifySpecialist, makeFoundingSpecialist, updateSolutionVideoStatus } from "@/actions/admin";
+import { ExpertManagementTab } from "@/components/admin/ExpertManagementTab";
+import { SolutionManagementTab } from "@/components/admin/SolutionManagementTab";
+import {
+  approveSpecialist, suspendSpecialist, verifySpecialist,
+  makeFoundingSpecialist, removeFoundingExpert,
+  setExpertFee, setExpertTier,
+  adminDeleteUser, adminDeleteOrder, adminDeleteSolution,
+  updateSolutionVideoStatus, liftBidBan,
+} from "@/actions/admin";
+import { DisputeManagementTab, type AdminDispute } from "@/components/admin/DisputeManagementTab";
 import { BRAND_NAME } from "@/lib/branding";
-import { usePagination } from "@/hooks/usePagination";
-import { PaginationControls } from "@/components/ui/PaginationControls";
 
-interface AdminDashboardProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialExperts: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialSolutions: any[];
+// ── Admin-specific types (shaped by getAdminData in actions/admin.ts) ─────────
+
+export interface AdminExpert {
+  id: string;
+  status: "PENDING" | "APPROVED" | "SUSPENDED" | string;
+  verified: boolean;
+  isFoundingExpert: boolean;
+  foundingRank: number | null;
+  platformFeePercentage: number | null;
+  tier: "STANDARD" | "PROVEN" | "ELITE" | string;
+  completedSalesCount: number;
+  displayName: string | null;
+  bidBannedUntil?: Date | string | null;
+  bidQuality?: { up: number; down: number };
+  // Extended fields from SpecialistProfile
+  legalFullName?: string;
+  country?: string | null;
+  yearsExperience?: string;
+  tools?: string[];
+  stripeAccountId?: string | null;
+  calendarUrl?: string | null;
+  bio?: string | null;
+  portfolioLinks?: unknown;
+  user: {
+    id: string;
+    email: string;
+    createdAt: Date | string;
+  };
+  solutions?: { id: string }[];
 }
 
-export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'experts' | 'solutions'>('experts');
-  
-  // Expert State
-  const [expertList, setExpertList] = useState(initialExperts);
+export interface AdminOrder {
+  id: string;
+  status: string;
+  priceCents: number | null;
+  solution?: { title: string } | null;
+  buyer?: {
+    email?: string | null;
+    businessProfile?: { companyName?: string | null; firstName?: string | null } | null;
+  } | null;
+  seller?: { displayName?: string | null } | null;
+}
+
+export interface AdminBusiness {
+  id: string;
+  user: {
+    id: string;
+    email: string;
+    createdAt: Date | string;
+  };
+  companyName: string | null;
+  firstName: string | null;
+  country: string | null;
+}
+
+interface AdminDashboardProps {
+  initialExperts: AdminExpert[];
+  initialSolutions: Solution[];
+  initialOrders: AdminOrder[];
+  initialBusinesses: AdminBusiness[];
+  initialDisputes: AdminDispute[];
+  stats: {
+    totalUsers: number;
+    totalExperts: number;
+    totalBusinesses: number;
+    totalSolutions: number;
+    totalOrders: number;
+    totalRevenueCents: number;
+    openDisputeCount: number;
+  };
+}
+
+export function AdminDashboard({ initialExperts, initialSolutions, initialOrders, initialBusinesses, initialDisputes, stats }: AdminDashboardProps) {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"experts" | "solutions" | "orders" | "businesses" | "disputes">("experts");
+  const [expertList, setExpertList] = useState<AdminExpert[]>(initialExperts);
   const [expandedExpertId, setExpandedExpertId] = useState<string | null>(null);
-  
-  // Solution State
   const [solutionList, setSolutionList] = useState<Solution[]>(initialSolutions);
+  const [orderList, setOrderList] = useState<AdminOrder[]>(initialOrders);
   const [fullEditingSolution, setFullEditingSolution] = useState<Solution | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
 
-  const showMessage = (msg: string) => {
+  const showMessage = (msg: string, error = false) => {
     setMessage(msg);
-    setTimeout(() => setMessage(null), 3000);
+    setIsError(error);
+    setTimeout(() => setMessage(null), 4000);
   };
 
-  // --- Actions ---
+  // ── Expert actions ──────────────────────────────────────────────────────────
   const handleApprove = async (id: string) => {
     await approveSpecialist(id);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setExpertList(expertList.map((e: any) => e.id === id ? { ...e, status: "APPROVED" } : e));
-    showMessage("Specialist approved.");
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, status: "APPROVED" } : e));
+    showMessage("Expert approved.");
   };
 
   const handleSuspend = async (id: string) => {
     await suspendSpecialist(id);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setExpertList(expertList.map((e: any) => e.id === id ? { ...e, status: "SUSPENDED" } : e));
-    showMessage("Specialist suspended.");
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, status: "SUSPENDED" } : e));
+    showMessage("Expert suspended.");
   };
 
-  const toggleVerified = async (id: string, current: boolean) => {
+  const handleToggleVerified = async (id: string, current: boolean) => {
     await verifySpecialist(id, !current);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setExpertList(expertList.map((e: any) => e.id === id ? { ...e, verified: !current } : e));
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, verified: !current } : e));
     showMessage("Verification updated.");
   };
 
-  const makeFounding = async (id: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const currentFounders = expertList.filter((e: any) => e.isFoundingExpert).length;
-    if (currentFounders >= 20) {
-      alert("Maximum of 20 Founding Experts reached.");
-      return;
-    }
+  const handleMakeFounding = async (id: string) => {
+    const currentFounders = expertList.filter((e) => e.isFoundingExpert).length;
+    if (currentFounders >= 20) { showMessage("Maximum of 20 Founding Experts reached.", true); return; }
     await makeFoundingSpecialist(id, currentFounders + 1);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setExpertList(expertList.map((e: any) => e.id === id ? { ...e, isFoundingExpert: true, foundingRank: currentFounders + 1 } : e));
-    showMessage("Expert marked as Founding Expert.");
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, isFoundingExpert: true, foundingRank: currentFounders + 1, platformFeePercentage: 11 } : e));
+    showMessage("Expert granted Founding status (fee locked at 11%).");
   };
 
-  const handleVideoStatus = async (id: string, status: "approved" | "rejected") => {
-    await updateSolutionVideoStatus(id, status);
-    setSolutionList(solutionList.map(s => 
-      s.id === id ? { 
-        ...s, 
-        demo_video_status: status,
-        demo_video_reviewed_at: status === 'approved' ? new Date().toISOString() : undefined
-      } : s
+  const handleRemoveFounding = async (id: string) => {
+    if (!confirm("Remove Founding Expert status? Their fee lock will be removed.")) return;
+    await removeFoundingExpert(id);
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, isFoundingExpert: false, foundingRank: null } : e));
+    showMessage("Founding Expert status removed.");
+  };
+
+  const handleSetFee = async (id: string, fee: number) => {
+    await setExpertFee(id, fee);
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, platformFeePercentage: fee } : e));
+    showMessage(`Fee updated to ${fee}%.`);
+  };
+
+  const handleSetTier = async (id: string, tier: "STANDARD" | "PROVEN" | "ELITE") => {
+    await setExpertTier(id, tier);
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, tier } : e));
+    showMessage(`Tier set to ${tier}.`);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("Permanently delete this user and all their data? This cannot be undone.")) return;
+    const result = await adminDeleteUser(userId);
+    if (result.error) { showMessage(`Error: ${result.error}`, true); return; }
+    setExpertList(expertList.filter((e) => e.user?.id !== userId));
+    showMessage("User deleted.");
+  };
+
+  // ── Solution actions ────────────────────────────────────────────────────────
+  const handleVideoStatus = async (id: string, status: "approved" | "rejected", reason?: string) => {
+    await updateSolutionVideoStatus(id, status, reason);
+    setSolutionList(solutionList.map((s) =>
+      s.id === id ? { ...s, demoVideoStatus: status } : s
     ));
-    showMessage(`Video status updated to ${status}.`);
+    showMessage(`Video ${status}.`);
+  };
+
+  const handleDeleteSolution = async (id: string) => {
+    if (!confirm("Permanently delete this solution?")) return;
+    const result = await adminDeleteSolution(id);
+    if (result.error) { showMessage(`Error: ${result.error}`, true); return; }
+    setSolutionList(solutionList.filter((s) => s.id !== id));
+    showMessage("Solution deleted.");
   };
 
   const handleSaveListing = (data: Partial<Solution>) => {
     if (fullEditingSolution) {
-      setSolutionList(solutionList.map(s => s.id === fullEditingSolution.id ? { ...s, ...data } as Solution : s));
+      setSolutionList(solutionList.map((s) => s.id === fullEditingSolution.id ? { ...s, ...data } as Solution : s));
       setFullEditingSolution(null);
-      showMessage("Solution updated successfully.");
+      showMessage("Solution updated.");
     } else {
       setIsCreating(false);
-      showMessage("New solution created.");
+      showMessage("Solution created.");
     }
   };
 
-  // --- Categorization ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pendingExperts = expertList.filter((e: any) => e.status === 'PENDING_REVIEW');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const activeExperts = expertList.filter((e: any) => e.status !== 'PENDING_REVIEW');
+  // ── Order actions ───────────────────────────────────────────────────────────
+  const handleDeleteOrder = async (id: string) => {
+    if (!confirm("Permanently delete this order?")) return;
+    const result = await adminDeleteOrder(id);
+    if (result.error) { showMessage(`Error: ${result.error}`, true); return; }
+    setOrderList(orderList.filter((o) => o.id !== id));
+    showMessage("Order deleted.");
+  };
 
-  const pendingSolutions = solutionList.filter(s => s.demo_video_status === 'pending');
-  const activeSolutions = solutionList.filter(s => s.demo_video_status !== 'pending');
-
-  // --- Expert search + pagination ---
-  const [expertSearch, setExpertSearch] = useState("");
-  const filteredActiveExperts = useMemo(() => {
-    if (!expertSearch.trim()) return activeExperts;
-    const q = expertSearch.toLowerCase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return activeExperts.filter((e: any) =>
-      (e.displayName?.toLowerCase().includes(q)) ||
-      (e.legalFullName?.toLowerCase().includes(q)) ||
-      (e.tools?.some((t: string) => t.toLowerCase().includes(q)))
-    );
-  }, [activeExperts, expertSearch]);
-  const expertPag = usePagination(filteredActiveExperts, 20);
-
-  useEffect(() => { expertPag.setPage(1); }, [expertSearch]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // --- Solution search + pagination ---
-  const [solutionSearch, setSolutionSearch] = useState("");
-  const filteredActiveSolutions = useMemo(() => {
-    if (!solutionSearch.trim()) return activeSolutions;
-    const q = solutionSearch.toLowerCase();
-    return activeSolutions.filter((s) =>
-      s.title?.toLowerCase().includes(q) ||
-      s.category?.toLowerCase().includes(q) ||
-      s.short_summary?.toLowerCase().includes(q)
-    );
-  }, [activeSolutions, solutionSearch]);
-  const solutionPag = usePagination(filteredActiveSolutions, 20);
-
-  useEffect(() => { solutionPag.setPage(1); }, [solutionSearch]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // ── Edit mode ───────────────────────────────────────────────────────────────
   if (fullEditingSolution || isCreating) {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">{isCreating ? "Create New Listing" : `Edit: ${fullEditingSolution?.title}`}</h1>
-          <button 
-             onClick={() => { setFullEditingSolution(null); setIsCreating(false); }}
-             className="text-muted-foreground hover:text-foreground"
-          >
-            Back to Dashboard
+          <button onClick={() => { setFullEditingSolution(null); setIsCreating(false); }} className="text-muted-foreground hover:text-foreground">
+            ← Back
           </button>
         </div>
-        <ListingEditor 
-          initialData={fullEditingSolution || {}} 
+        <ListingEditor
+          initialData={fullEditingSolution || {}}
           onSave={handleSaveListing}
           onCancel={() => { setFullEditingSolution(null); setIsCreating(false); }}
         />
@@ -155,373 +217,178 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
     );
   }
 
-  // RE-WRITE renderExpertTable to avoid hydration error properly
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderExpertList = (experts: any[], isPending: boolean) => (
-    <div className={`overflow-hidden rounded-xl border ${isPending ? "border-yellow-500/20 bg-yellow-500/5" : "border-border bg-card"}`}>
-       {isPending && (
-         <div className="px-6 py-3 border-b border-yellow-500/20 bg-yellow-500/10 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-yellow-500" />
-            <h3 className="font-bold text-yellow-500">Pending Approvals ({experts.length})</h3>
-         </div>
-       )}
-       <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-             <thead className={`font-medium text-muted-foreground border-b ${isPending ? "border-yellow-500/20" : "border-border bg-secondary/50"}`}>
-                <tr>
-                   <th className="px-6 py-4 w-[30%]">Candidate</th>
-                   <th className="px-6 py-4 w-[25%]">Expertise</th>
-                   <th className="px-6 py-4 w-[15%]">Status</th>
-                   {!isPending && <th className="px-6 py-4 w-[10%]">Stats</th>}
-                   <th className="px-6 py-4 text-right w-[20%]">Actions</th>
-                </tr>
-             </thead>
-             <tbody className={`divide-y ${isPending ? "divide-yellow-500/20" : "divide-border"}`}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {experts.map((expert: any) => {
-                  const expertForHelper = {
-                    ...expert,
-                    completed_sales_count: expert.completedSalesCount,
-                    commission_override_percent: expert.commissionOverridePercent
-                  };
-                  const commission = getCommissionPercent(expertForHelper);
-                  const tier = getExpertTierLabel(expertForHelper);
-                  const isOverridden = expert.commissionOverridePercent !== null;
-                  const isExpanded = expandedExpertId === expert.id;
-                  
-                  const isAgency = expert.bio?.includes("Agency Website");
-
-                  return (
-                    // We render content as children array to avoid invalid nesting
-                    // Note: returning an array of TRs requires keys on each TR.
-                    [
-                      <tr key={`${expert.id}-main`} className="group border-b border-border/50 last:border-0 hover:bg-white/5 transition-colors cursor-pointer" onClick={() => setExpandedExpertId(isExpanded ? null : expert.id)}>
-                        <td className="px-6 py-4 align-top">
-                          <div className="flex flex-col gap-1">
-                            <div className="font-bold text-base flex items-center gap-2">
-                               {expert.displayName}
-                               {isAgency && <span className="text-[10px] uppercase bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20 font-bold tracking-wider">Agency</span>}
-                            </div>
-                            <div className="text-xs text-muted-foreground">{expert.legalFullName}</div>
-                            {expert.country && (
-                               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                  <MapPin className="w-3 h-3" /> {expert.country}
-                               </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 align-top">
-                           <div className="space-y-2">
-                              <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
-                                 <Briefcase className="w-3.5 h-3.5 text-muted-foreground" />
-                                 {expert.yearsExperience} Years Exp.
-                              </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                 {expert.tools?.slice(0, 3).map((tool: string) => (
-                                    <span key={tool} className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded border border-white/5">
-                                       {tool}
-                                    </span>
-                                 ))}
-                                 {expert.tools?.length > 3 && (
-                                    <span className="text-[10px] px-1.5 py-0.5 text-muted-foreground">+{expert.tools.length - 3}</span>
-                                 )}
-                              </div>
-                           </div>
-                        </td>
-                        <td className="px-6 py-4 align-top">
-                          <div className="flex flex-col gap-1.5">
-                            {expert.status === 'PENDING_REVIEW' && (
-                               <span className="inline-flex items-center w-fit px-2 py-1 rounded-md bg-yellow-500/10 text-yellow-500 text-xs font-medium border border-yellow-500/20">
-                                 Pending Review
-                               </span>
-                            )}
-                            {expert.status === 'APPROVED' && (
-                               <span className="inline-flex items-center w-fit px-2 py-1 rounded-md bg-green-500/10 text-green-500 text-xs font-medium border border-green-500/20">
-                                 Approved
-                               </span>
-                            )}
-                            {expert.status === 'SUSPENDED' && (
-                               <span className="inline-flex items-center w-fit px-2 py-1 rounded-md bg-red-500/10 text-red-500 text-xs font-medium border border-red-500/20">
-                                 Suspended
-                               </span>
-                            )}
-                            
-                            {expert.verified && (
-                              <span className="inline-flex items-center gap-1 text-xs text-blue-400 font-medium">
-                                <ShieldCheck className="h-3 w-3" /> Verified
-                              </span>
-                            )}
-                            {expert.isFoundingExpert && (
-                              <span className="inline-flex items-center gap-1 text-xs text-yellow-500 font-medium">
-                                <Award className="h-3 w-3" /> Founding #{expert.isFoundingExpertRank}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        {!isPending && (
-                           <td className="px-6 py-4 align-top">
-                              <div className="space-y-1">
-                                 <div className="text-xs font-medium">{tier}</div>
-                                 <div className="text-xs text-muted-foreground">{expert.completedSalesCount} sales</div>
-                                 <div className="flex items-center gap-1.5 mt-1">
-                                    <span className={`text-sm font-bold ${isOverridden ? "text-purple-400" : ""}`}>
-                                       {commission}%
-                                    </span>
-                                    {isOverridden && (
-                                       <span className="w-1.5 h-1.5 rounded-full bg-purple-500" title="Override Active" />
-                                    )}
-                                 </div>
-                              </div>
-                           </td>
-                        )}
-                        <td className="px-6 py-4 text-right align-top" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex flex-col items-end gap-2">
-                             <button 
-                              onClick={() => setExpandedExpertId(isExpanded ? null : expert.id)} 
-                              className="text-xs text-primary hover:underline font-medium flex items-center gap-1 mb-1"
-                            >
-                               {isExpanded ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>}
-                               {isExpanded ? "Hide Details" : "View Application"}
-                            </button>
-
-                            {expert.status === 'PENDING_REVIEW' && (
-                              <div className="flex gap-2">
-                                <button onClick={() => handleApprove(expert.id)} className="px-4 py-1.5 bg-green-500 text-black font-bold rounded hover:bg-green-400 transition-colors text-xs">Approve</button>
-                                <button onClick={() => handleSuspend(expert.id)} className="px-4 py-1.5 bg-card border border-border hover:bg-secondary transition-colors text-xs font-medium">Reject</button>
-                              </div>
-                            )}
-                            
-                            {expert.status === 'APPROVED' && (
-                               <div className="flex flex-col gap-2 items-end">
-                                  <button 
-                                    onClick={() => toggleVerified(expert.id, expert.verified)}
-                                    className={`text-xs px-3 py-1.5 rounded-md border transition-colors w-24 text-center ${
-                                       expert.verified 
-                                       ? "border-muted text-muted-foreground" 
-                                       : "border-blue-500/30 hover:bg-blue-500/10 text-blue-400"
-                                    }`}
-                                 >
-                                    {expert.verified ? "Unverify" : "Verify"}
-                                 </button>
-                                 <button onClick={() => handleSuspend(expert.id)} className="text-xs text-red-500 hover:underline flex items-center gap-1">
-                                    <UserX className="h-3 w-3" /> Suspend
-                                 </button>
-                               </div>
-                            )}
-                            
-                            {!expert.isFoundingExpert && expert.status === 'APPROVED' && (
-                              <button 
-                                onClick={() => makeFounding(expert.id)}
-                                className="text-xs px-3 py-1.5 rounded-md border border-yellow-500/30 hover:bg-yellow-500/10 text-yellow-500 transition-colors w-24"
-                              >
-                                Make Founding
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>,
-                      isExpanded && (
-                         <tr key={`${expert.id}-details`} className="bg-white/5 border-t border-border/50 cursor-default" onClick={(e) => e.stopPropagation()}>
-                            <td colSpan={isPending ? 4 : 5} className="px-6 py-6">
-                               <div className="space-y-6 animate-in slide-in-from-top-2 duration-200">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                     <div className="space-y-3">
-                                        <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider border-b border-white/10 pb-1">Professional Details</h4>
-                                        <div className="space-y-2 text-sm">
-                                           <div className="flex justify-between"><span className="text-muted-foreground">Legal Name:</span> <span>{expert.legalFullName}</span></div>
-                                           <div className="flex justify-between"><span className="text-muted-foreground">Location:</span> <span>{expert.country}</span></div>
-                                           <div className="flex justify-between"><span className="text-muted-foreground">Experience:</span> <span>{expert.yearsExperience}</span></div>
-                                           <div className="flex justify-between"><span className="text-muted-foreground">Tools:</span> <span>{expert.tools?.join(", ") || "None"}</span></div>
-                                        </div>
-                                     </div>
-                                     <div className="space-y-3">
-                                        <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider border-b border-white/10 pb-1">Agency & Contact (Private)</h4>
-                                        <div className="text-xs bg-black/40 p-3 rounded text-muted-foreground whitespace-pre-wrap font-mono border border-white/5">
-                                           {expert.bio || "No private bio/contact data."}
-                                        </div>
-                                     </div>
-                                  </div>
-                                  <div className="space-y-3">
-                                     <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider border-b border-white/10 pb-1">Value Card / Case Studies</h4>
-                                     <div className="text-sm bg-black/40 p-4 rounded text-foreground whitespace-pre-wrap font-mono border border-white/5 leading-relaxed">
-                                        {expert.pastImplementations}
-                                     </div>
-                                  </div>
-                                  <div className="space-y-3">
-                                     <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-wider border-b border-white/10 pb-1">Portfolio Links</h4>
-                                     <div className="flex flex-col gap-2">
-                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                        {(Array.isArray(expert.portfolioLinks) ? expert.portfolioLinks : []).map((link: string, i: number) => (
-                                           <a key={i} href={link} target="_blank" rel="noreferrer" className="text-sm text-blue-400 hover:underline flex items-center gap-1">
-                                              <ExternalLink className="w-3 h-3" /> {link}
-                                           </a>
-                                        ))}
-                                     </div>
-                                  </div>
-                               </div>
-                            </td>
-                         </tr>
-                      )
-                    ]
-                  );
-                })}
-             </tbody>
-          </table>
-       </div>
-    </div>
-  );
+  const foundingCount = expertList.filter((e) => e.isFoundingExpert).length;
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-10">
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">{BRAND_NAME} Admin</h1>
         <div className="text-sm text-muted-foreground">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          Founding Experts: <span className="font-bold text-foreground">{expertList.filter((e: any) => e.isFoundingExpert).length}</span> / 20
+          Founding Experts: <span className="font-bold text-foreground">{foundingCount}</span> / 20
         </div>
       </div>
 
-      <div className="flex gap-4 mb-6 border-b border-border">
-        <button
-          onClick={() => setActiveTab('experts')}
-          className={`px-4 py-2 border-b-2 transition-colors font-medium ${
-            activeTab === 'experts' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Experts ({expertList.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('solutions')}
-          className={`px-4 py-2 border-b-2 transition-colors font-medium ${
-            activeTab === 'solutions' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Solutions ({solutionList.length})
-        </button>
+      {/* Stats overview */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+        {[
+          { label: "Total Users", value: stats.totalUsers, icon: Users },
+          { label: "Experts", value: stats.totalExperts, icon: Briefcase },
+          { label: "Businesses", value: stats.totalBusinesses, icon: LayoutGrid },
+          { label: "Solutions", value: stats.totalSolutions, icon: ShoppingBag },
+          { label: "GMV", value: `€${(stats.totalRevenueCents / 100).toLocaleString()}`, icon: TrendingUp },
+        ].map(({ label, value, icon: Icon }) => (
+          <div key={label} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+              <Icon className="w-3.5 h-3.5" /> {label}
+            </div>
+            <p className="text-2xl font-bold">{value}</p>
+          </div>
+        ))}
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-4 mb-6 border-b border-border overflow-x-auto">
+        {(["experts", "solutions", "orders", "businesses", "disputes"] as const).map((tab) => {
+          const counts: Record<string, number> = {
+            experts: expertList.length,
+            solutions: solutionList.length,
+            orders: orderList.length,
+            businesses: initialBusinesses.length,
+            disputes: initialDisputes.length,
+          };
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 border-b-2 transition-colors font-medium capitalize ${
+                activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)} ({counts[tab]})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Toast */}
       {message && (
-        <div className="bg-green-500/10 border border-green-500/20 text-green-500 px-4 py-2 rounded-md mb-6 flex items-center gap-2 animate-in fade-in">
-          <Check className="h-4 w-4" /> {message}
+        <div className={`px-4 py-2 rounded-md mb-6 flex items-center gap-2 animate-in fade-in text-sm ${
+          isError ? "bg-red-500/10 border border-red-500/20 text-red-500" : "bg-green-500/10 border border-green-500/20 text-green-500"
+        }`}>
+          <Check className="h-4 w-4 shrink-0" /> {message}
         </div>
       )}
 
-      {activeTab === 'experts' ? (
-        <div className="space-y-8">
-           {pendingExperts.length > 0 && renderExpertList(pendingExperts, true)}
-           <div className="relative">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-             <input
-               type="text"
-               placeholder="Search experts by name or tools..."
-               value={expertSearch}
-               onChange={(e) => setExpertSearch(e.target.value)}
-               className="w-full pl-9 pr-4 py-2 border border-border rounded-md bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-             />
-           </div>
-           {renderExpertList(expertPag.items, false)}
-           <PaginationControls
-             page={expertPag.page}
-             totalPages={expertPag.totalPages}
-             totalItems={expertPag.totalItems}
-             onPrev={expertPag.prevPage}
-             onNext={expertPag.nextPage}
-           />
+      {/* Tab content */}
+      {activeTab === "experts" && (
+        <ExpertManagementTab
+          expertList={expertList}
+          expandedExpertId={expandedExpertId}
+          setExpandedExpertId={setExpandedExpertId}
+          onApprove={handleApprove}
+          onSuspend={handleSuspend}
+          onToggleVerified={handleToggleVerified}
+          onMakeFounding={handleMakeFounding}
+          onRemoveFounding={handleRemoveFounding}
+          onSetFee={handleSetFee}
+          onSetTier={handleSetTier}
+          onDeleteUser={handleDeleteUser}
+          onLiftBidBan={async (id) => { await liftBidBan(id); router.refresh(); }}
+        />
+      )}
+
+      {activeTab === "solutions" && (
+        <SolutionManagementTab
+          solutionList={solutionList}
+          onVideoStatus={handleVideoStatus}
+          onEditSolution={setFullEditingSolution}
+          onCreateNew={() => setIsCreating(true)}
+          onDeleteSolution={handleDeleteSolution}
+        />
+      )}
+
+      {activeTab === "orders" && (
+        <div className="space-y-2">
+          {orderList.length === 0 && <p className="text-muted-foreground text-sm">No orders found.</p>}
+          {orderList.map((order) => (
+            <div key={order.id} className="border border-border rounded-lg p-4 flex items-center justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{order.solution?.title ?? "Unknown solution"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Buyer: {order.buyer?.businessProfile?.companyName || order.buyer?.businessProfile?.firstName || order.buyer?.email || "—"}
+                  {" · "}Expert: {order.seller?.displayName || "—"}
+                  {" · "}€{((order.priceCents ?? 0) / 100).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide ${
+                  order.status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                  order.status === "draft" ? "bg-muted text-muted-foreground" :
+                  order.status === "disputed" ? "bg-red-100 text-red-700" :
+                  order.status === "delivered" ? "bg-green-100 text-green-700" :
+                  "bg-muted text-muted-foreground"
+                }`}>
+                  {order.status.replace(/_/g, " ")}
+                </span>
+                <button onClick={() => handleDeleteOrder(order.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded" title="Force delete">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      ) : (
-        <div className="space-y-8">
-          <div className="flex justify-end">
-             <button 
-               onClick={() => setIsCreating(true)}
-               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium"
-             >
-               <Plus className="h-4 w-4" /> Create New Solution
-             </button>
-          </div>
+      )}
 
-          {/* Pending Video Reviews */}
-          {pendingSolutions.length > 0 && (
-             <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-4 text-yellow-500 font-bold">
-                   <AlertTriangle className="w-5 h-5" />
-                   <h2>Pending Video Reviews ({pendingSolutions.length})</h2>
-                </div>
-                <div className="space-y-4">
-                   {pendingSolutions.map(solution => (
-                      <div key={solution.id} className="bg-background border border-border rounded-lg p-4">
-                         <div className="flex justify-between items-start gap-4">
-                            <div>
-                               <h3 className="font-bold">{solution.title}</h3>
-                               {/* @ts-expect-error: expert relation */}
-                               <p className="text-xs text-muted-foreground">Expert: {solution.expert?.displayName}</p>
-                               {solution.demo_video_url && (
-                                  <a href={solution.demo_video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline flex items-center gap-1 mt-1">
-                                     <ExternalLink className="w-3 h-3" /> {solution.demo_video_url}
-                                  </a>
-                               )}
-                            </div>
-                            <div className="w-64 bg-black rounded aspect-video overflow-hidden">
-                               {solution.demo_video_id ? (
-                                  <iframe 
-                                    src={getYouTubeEmbedUrl(solution.demo_video_id, solution.demo_video_start_seconds)}
-                                    className="w-full h-full"
-                                    title="Preview"
-                                  />
-                               ) : (
-                                  <div className="flex items-center justify-center h-full text-xs text-muted-foreground">No Preview</div>
-                               )}
-                            </div>
-                         </div>
-                         <div className="flex justify-end gap-2 mt-4">
-                            <button onClick={() => handleVideoStatus(solution.id, 'approved')} className="px-3 py-1 bg-green-500/10 text-green-500 border border-green-500/20 rounded text-xs font-bold">Approve Video</button>
-                            <button onClick={() => handleVideoStatus(solution.id, 'rejected')} className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded text-xs font-bold">Reject Video</button>
-                         </div>
-                      </div>
-                   ))}
-                </div>
-             </div>
-          )}
+      {activeTab === "disputes" && (
+        <DisputeManagementTab disputes={initialDisputes} showMessage={showMessage} />
+      )}
 
-          {/* Active Solutions List */}
-          <div className="space-y-4">
-             <div className="flex items-center justify-between gap-4">
-               <h2 className="font-bold text-lg">All Solutions</h2>
-               <div className="relative flex-1 max-w-sm">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                 <input
-                   type="text"
-                   placeholder="Search by title or category..."
-                   value={solutionSearch}
-                   onChange={(e) => setSolutionSearch(e.target.value)}
-                   className="w-full pl-9 pr-4 py-2 border border-border rounded-md bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                 />
-               </div>
-             </div>
-             {solutionPag.items.map((solution) => (
-                <div key={solution.id} className="bg-card border border-border rounded-xl p-6 flex flex-col md:flex-row gap-6">
-                   <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                         <h3 className="font-bold text-lg">{solution.title}</h3>
-                         <span className="text-xs bg-secondary px-2 py-1 rounded-full text-muted-foreground">{solution.category}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-1">{solution.short_summary}</p>
-                      <button onClick={() => setFullEditingSolution(solution)} className="text-xs text-primary hover:underline font-medium flex items-center gap-1"><Pencil className="w-3 h-3"/> Edit</button>
-                   </div>
-                   <div className="text-right">
-                      {solution.demo_video_status === 'approved' && <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full border border-green-500/20">Video Approved</span>}
-                      {solution.demo_video_status === 'rejected' && <span className="text-xs text-red-500 bg-red-500/10 px-2 py-1 rounded-full border border-red-500/20">Video Rejected</span>}
-                      {!solution.demo_video_url && <span className="text-xs text-muted-foreground">No Video</span>}
-                   </div>
-                </div>
-             ))}
-             <PaginationControls
-               page={solutionPag.page}
-               totalPages={solutionPag.totalPages}
-               totalItems={solutionPag.totalItems}
-               onPrev={solutionPag.prevPage}
-               onNext={solutionPag.nextPage}
-             />
-          </div>
+      {activeTab === "businesses" && (
+        <div className="border border-border rounded-xl overflow-hidden">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-secondary/50 border-b border-border">
+              <tr>
+                <th className="px-6 py-3 font-medium text-muted-foreground">Business</th>
+                <th className="px-6 py-3 font-medium text-muted-foreground">Email</th>
+                <th className="px-6 py-3 font-medium text-muted-foreground">Company</th>
+                <th className="px-6 py-3 font-medium text-muted-foreground">Country</th>
+                <th className="px-6 py-3 font-medium text-muted-foreground">Joined</th>
+                <th className="px-6 py-3 text-right font-medium text-muted-foreground">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {initialBusinesses.map((b) => (
+                <tr key={b.id} className="hover:bg-secondary/20 transition-colors">
+                  <td className="px-6 py-4 font-medium">{b.firstName}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{b.user?.email || "—"}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{b.companyName || "—"}</td>
+                  <td className="px-6 py-4 text-muted-foreground">{b.country || "—"}</td>
+                  <td className="px-6 py-4 text-muted-foreground text-xs">
+                    {b.user?.createdAt ? new Date(b.user.createdAt).toLocaleDateString() : "—"}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => {
+                        if (!confirm(`Delete user ${b.user?.email}? This removes all their data permanently.`)) return;
+                        adminDeleteUser(b.user.id).then((r) => {
+                          if (r.error) showMessage(`Error: ${r.error}`, true);
+                          else { showMessage("User deleted."); router.refresh(); }
+                        });
+                      }}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded"
+                      title="Delete user"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {initialBusinesses.length === 0 && (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-muted-foreground text-sm">No businesses yet.</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

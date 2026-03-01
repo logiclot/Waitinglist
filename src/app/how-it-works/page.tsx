@@ -3,7 +3,7 @@ import { BRAND_NAME } from "@/lib/branding";
 
 export const metadata = {
   title: `How It Works | ${BRAND_NAME}`,
-  description: "Learn how to buy and sell AI automations.",
+  description: "See how to buy ready-made automations or post a request on LogicLot — step by step.",
 };
 
 export default function HowItWorksPage() {

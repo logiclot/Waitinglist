@@ -13,8 +13,7 @@ export default async function BusinessLayout({
   if (!session?.user) {
     redirect("/auth/sign-in?callbackUrl=/business");
   }
-
-  const role = (session.user as { role?: string }).role || "BUSINESS";
+  const role = session.user.role || "BUSINESS"; 
 
   // Basic Gating
   if (role !== "BUSINESS" && role !== "ADMIN") {

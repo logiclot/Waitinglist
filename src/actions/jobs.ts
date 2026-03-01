@@ -212,11 +212,9 @@ export async function updateBid(bidId: string, updates: {
 }
 
 // ── Bid quality moderation constants ─────────────────────────────────────────
-// TODO: These will be used when Bid.feedback/feedbackAt fields are added to schema
-const _THUMBS_DOWN_BAN_THRESHOLD = 5;   // ban after this many thumbs-down
-const _THUMBS_DOWN_WINDOW_DAYS   = 30;  // sliding window to count thumbs-down in
-const _BAN_DURATION_DAYS         = 30;  // how long the ban lasts
-void _THUMBS_DOWN_BAN_THRESHOLD; void _THUMBS_DOWN_WINDOW_DAYS; void _BAN_DURATION_DAYS;
+const THUMBS_DOWN_BAN_THRESHOLD = 5;   // ban after this many thumbs-down
+const THUMBS_DOWN_WINDOW_DAYS   = 30;  // sliding window to count thumbs-down in
+const BAN_DURATION_DAYS         = 30;  // how long the ban lasts
 
 
 export async function submitBid(prevState: unknown, formData: FormData) {
@@ -363,7 +361,7 @@ export async function awardBid(jobId: string, bidId: string) {
   if (!session?.user?.id) return { error: "Unauthorized" };
 
   try {
-    const job = await prisma.jobPost.findUnique({
+    const job = await prisma.jobPost.findUnique({ 
         where: { id: jobId },
         include: { buyer: true }
     });
@@ -448,12 +446,11 @@ export async function awardBid(jobId: string, bidId: string) {
       });
 
       // Create the order linked to this bid, with milestones from proposal phases
-      if (!bid.solutionId) throw new Error("BID_MISSING_SOLUTION");
       const order = await tx.order.create({
         data: {
           buyerId: session.user.id!,
           sellerId: bid.specialistId,
-          solutionId: bid.solutionId,
+          bidId: bid.id,
           priceCents: totalCents || 0,
           status: "in_progress",
           milestones: milestonesJson ?? undefined,
@@ -546,7 +543,6 @@ export async function rateProposal(
   bidId: string,
   feedback: "up" | "down"
 ): Promise<{ success: boolean; error?: string; banned?: boolean }> {
-  void feedback; // TODO: will be used when Bid.feedback field is added to schema
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "BUSINESS") {
     return { success: false, error: "Only business accounts can rate proposals." };
@@ -567,9 +563,70 @@ export async function rateProposal(
       return { success: false, error: "You can only rate proposals on your own projects." };
     }
 
-    // TODO: Bid.feedback and Bid.feedbackAt fields need to be added to the schema
-    // For now, only handle the ban logic based on bidBannedUntil
-    const banned = false;
+    const previousFeedback = bid.feedback;
+
+    // ── 2. Record the feedback ────────────────────────────────────────────────
+    await prisma.bid.update({
+      where: { id: bidId },
+      data: { feedback, feedbackAt: new Date() },
+    });
+
+    // ── 3. Check if this thumbs-down triggers a ban ───────────────────────────
+    let banned = false;
+    if (feedback === "down") {
+      const windowStart = new Date();
+      windowStart.setDate(windowStart.getDate() - THUMBS_DOWN_WINDOW_DAYS);
+
+      // Count distinct thumbs-down bids by this specialist in the window
+      // (exclude the current bid if it was already counted as a previous up vote)
+      const recentDownCount = await prisma.bid.count({
+        where: {
+          specialistId: bid.specialist.id,
+          feedback: "down",
+          feedbackAt: { gte: windowStart },
+        },
+      });
+
+      if (recentDownCount >= THUMBS_DOWN_BAN_THRESHOLD) {
+        const banUntil = new Date();
+        banUntil.setDate(banUntil.getDate() + BAN_DURATION_DAYS);
+
+        await prisma.specialistProfile.update({
+          where: { id: bid.specialist.id },
+          data: { bidBannedUntil: banUntil },
+        });
+        banned = true;
+
+        // Notify the expert
+        await createNotification(
+          bid.specialist.userId,
+          "Proposal submissions temporarily paused",
+          `You've received ${THUMBS_DOWN_BAN_THRESHOLD} low-quality flags from clients in the past ${THUMBS_DOWN_WINDOW_DAYS} days. Proposal submissions are paused for ${BAN_DURATION_DAYS} days while you review your approach. Focus on quality over quantity.`,
+          "alert",
+          "/expert/performance"
+        );
+      }
+    } else if (feedback === "up" && previousFeedback === "down") {
+      // If they're changing a thumbs-down to thumbs-up, re-evaluate the ban
+      // (if the count now drops below threshold, lift the ban)
+      const windowStart = new Date();
+      windowStart.setDate(windowStart.getDate() - THUMBS_DOWN_WINDOW_DAYS);
+
+      const recentDownCount = await prisma.bid.count({
+        where: {
+          specialistId: bid.specialist.id,
+          feedback: "down",
+          feedbackAt: { gte: windowStart },
+        },
+      });
+
+      if (recentDownCount < THUMBS_DOWN_BAN_THRESHOLD && bid.specialist.bidBannedUntil) {
+        await prisma.specialistProfile.update({
+          where: { id: bid.specialist.id },
+          data: { bidBannedUntil: null },
+        });
+      }
+    }
 
     revalidatePath(`/business/proposals/${bid.jobPost.id}`);
     return { success: true, banned };

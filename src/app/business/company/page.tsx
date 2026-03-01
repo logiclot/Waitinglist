@@ -2,7 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { Building2, Save } from "lucide-react";
+import { Save } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { ProfilePicUpload } from "@/components/ProfilePicUpload";
 
 export default async function CompanyProfilePage() {
   const session = await getServerSession(authOptions);
@@ -12,7 +14,8 @@ export default async function CompanyProfilePage() {
   }
 
   const profile = await prisma.businessProfile.findUnique({
-    where: { userId: session.user.id }
+    where: { userId: session.user.id },
+    include: { user: { select: { profileImageUrl: true } } }
   });
 
   if (!profile) {
@@ -59,13 +62,25 @@ export default async function CompanyProfilePage() {
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8">
       <div className="flex items-center gap-3 mb-8">
-        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-          <Building2 className="h-6 w-6" />
-        </div>
+        <Avatar
+          src={profile.user?.profileImageUrl}
+          name={`${profile.firstName} ${profile.lastName}`}
+          size="lg"
+        />
         <div>
           <h1 className="text-3xl font-bold">Company Profile</h1>
           <p className="text-muted-foreground">Manage your company details and operating context.</p>
         </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-6 mb-8">
+        <h2 className="text-lg font-bold mb-4">Profile Photo</h2>
+        <ProfilePicUpload
+          value={profile.user?.profileImageUrl ?? null}
+          onChange={() => {}}
+          name={`${profile.firstName} ${profile.lastName}`}
+          persistOnChange
+        />
       </div>
 
       <form action={updateProfile} className="space-y-8">

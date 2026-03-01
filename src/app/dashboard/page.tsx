@@ -3,8 +3,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { BusinessOverview } from "@/components/dashboard/BusinessOverview";
 import { ExpertOverview } from "@/components/dashboard/ExpertOverview";
-import { getExpertOverviewData } from "@/actions/expert";
-import { getPersonalizedRecommendations } from "@/lib/recommendation-engine";
+import { getReferralStats } from "@/actions/referral";
+import { getActiveCoupons } from "@/actions/notifications";
+import { prisma } from "@/lib/prisma";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -12,13 +13,104 @@ export default async function DashboardPage() {
   if (!session?.user) {
     redirect("/auth/sign-in");
   }
+  const role = session.user.role;
 
-  const role = (session.user as { role?: string }).role;
+  const [referralStats, activeCoupons] = await Promise.all([
+    getReferralStats(session.user.id),
+    getActiveCoupons(),
+  ]);
 
   if (role === "EXPERT") {
-    const data = await getExpertOverviewData();
-    if ("error" in data) redirect("/auth/sign-in");
-    return <ExpertOverview data={data} />;
+    const expert = await prisma.specialistProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true, calendarUrl: true, isFoundingExpert: true, completedSalesCount: true },
+    });
+
+    if (!expert) redirect("/onboarding");
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [earningsOrders, activeOrdersRaw, topSolution, recentJobs] = await Promise.all([
+      // Delivered/approved orders this month — approximate earnings (before fees)
+      prisma.order.findMany({
+        where: {
+          sellerId: expert.id,
+          status: { in: ["delivered", "approved"] },
+          updatedAt: { gte: startOfMonth },
+        },
+        select: { priceCents: true },
+      }),
+      // In-progress orders (active work)
+      prisma.order.findMany({
+        where: { sellerId: expert.id, status: "in_progress" },
+        select: {
+          id: true,
+          priceCents: true,
+          solution: { select: { title: true } },
+          buyer: {
+            select: {
+              businessProfile: { select: { firstName: true, companyName: true } },
+            },
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 5,
+      }),
+      // Best-performing published solution (ranked by completed order count)
+      prisma.solution.findMany({
+        where: { expertId: expert.id, status: "published" },
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          _count: {
+            select: {
+              orders: { where: { status: { in: ["delivered", "approved"] } } },
+            },
+          },
+        },
+        take: 20,
+      }).then((solutions) => {
+        if (!solutions.length) return null;
+        const best = solutions.sort((a, b) => b._count.orders - a._count.orders)[0];
+        return { id: best.id, title: best.title, category: best.category, completedSalesCount: best._count.orders };
+      }),
+      // Latest open job posts from any business
+      prisma.jobPost.findMany({
+        where: { status: "open" },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { id: true, title: true, category: true, budgetRange: true },
+      }),
+    ]);
+
+    const earningsThisMonthCents = earningsOrders.reduce((sum, o) => sum + o.priceCents, 0);
+    const inEscrowCents = activeOrdersRaw.reduce((sum, o) => sum + o.priceCents, 0);
+
+    const activeOrders = activeOrdersRaw.map((o) => ({
+      id: o.id,
+      solutionTitle: o.solution?.title ?? "Unknown",
+      buyerName:
+        o.buyer?.businessProfile?.companyName ||
+        o.buyer?.businessProfile?.firstName ||
+        "Client",
+    }));
+
+    return (
+      <ExpertOverview
+        referralStats={referralStats}
+        activeCoupons={activeCoupons}
+        hasCalendarUrl={!!expert.calendarUrl}
+        isFoundingExpert={expert.isFoundingExpert ?? false}
+        earningsThisMonthCents={earningsThisMonthCents}
+        inEscrowCents={inEscrowCents}
+        activeOrders={activeOrders}
+        topSolution={topSolution}
+        recentJobs={recentJobs}
+        totalCompletedSales={expert.completedSalesCount}
+      />
+    );
   }
 
   if (role === "BUSINESS") {
@@ -30,12 +122,6 @@ export default async function DashboardPage() {
   }
 
   // Fallback (e.g. USER role before onboarding)
-  let recommendations: Awaited<ReturnType<typeof getPersonalizedRecommendations>> = [];
-  try {
-    recommendations = await getPersonalizedRecommendations(session.user.id);
-  } catch {
-    recommendations = [];
-  }
-
-  return <BusinessOverview recommendations={recommendations} />;
+  const coupons = await getActiveCoupons();
+  return <BusinessOverview referralStats={referralStats} activeCoupons={coupons} />;
 }

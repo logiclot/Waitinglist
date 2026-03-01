@@ -60,7 +60,7 @@ export default async function EditEcosystemPage({ params }: PageProps) {
           <ChevronLeft className="w-4 h-4" /> Back to Bundles
         </Link>
         <div className="flex gap-3">
-          {ecosystem.published && (
+          {ecosystem.isPublished && (
             <Link
               href={`/stacks/${ecosystem.slug}`}
               target="_blank"

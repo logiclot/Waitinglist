@@ -1,20 +1,25 @@
-import { DefaultSession } from "next-auth";
+import "next-auth";
+import "next-auth/jwt";
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
+      email: string;
+      name?: string | null;
+      image?: string | null;
       role: string;
       emailVerifiedAt: string | null;
       onboardingCompletedAt: string | null;
-    } & DefaultSession["user"];
+    };
   }
 
   interface User {
     id: string;
+    email: string;
     role: string;
-    emailVerifiedAt: Date | null;
-    onboardingCompletedAt: Date | null;
+    emailVerifiedAt?: Date | null;
+    onboardingCompletedAt?: Date | null;
   }
 }
 
@@ -22,8 +27,9 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: string;
-    emailVerifiedAt: string | null;
-    onboardingCompletedAt: string | null;
+    emailVerifiedAt?: string | null;
+    onboardingCompletedAt?: string | null;
+    image?: string | null;
     refreshedAt?: number;
   }
 }

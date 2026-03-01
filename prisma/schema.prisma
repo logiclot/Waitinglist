@@ -12,7 +12,7 @@ datasource db {
 
 // Enums
 enum Role {
-  USER // Default, pre-onboarding
+  USER        // Default, pre-onboarding
   BUSINESS
   EXPERT
   ADMIN
@@ -50,10 +50,10 @@ enum JobStatus {
   draft
   pending_payment
   open
-  full
   closed
   awarded
   cancelled
+  full
 }
 
 enum BidStatus {
@@ -75,56 +75,69 @@ model User {
   id                    String    @id @default(uuid())
   email                 String    @unique
   passwordHash          String
+  profileImageUrl       String?   // Avatar URL (Supabase storage or similar)
   emailVerifiedAt       DateTime?
   role                  Role      @default(USER)
   onboardingCompletedAt DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-  lastLoginAt           DateTime?
-  loginDaysCount        Int       @default(0)
-
-  // Referral
-  referralCode        String?   @unique
-  referralRewards     Json?
-  referredBy          String?
-  referralCompletedAt DateTime?
-  profileImageUrl     String?
 
   // Relations
-  businessProfile         BusinessProfile?
-  specialistProfile       SpecialistProfile?
+  businessProfile       BusinessProfile?
+  specialistProfile     SpecialistProfile?
   emailVerificationTokens EmailVerificationToken[]
-
+  passwordResetTokens     PasswordResetToken[]
+  
   // Messaging & Orders
-  buyerOrders Order[] @relation("BuyerOrders")
-
+  buyerOrders           Order[]   @relation("BuyerOrders")
+  buyerConversations    Conversation[] @relation("BuyerConversations")
+  
   // Jobs
-  postedJobs JobPost[] @relation("BuyerJobs")
+  postedJobs            JobPost[] @relation("BuyerJobs")
 
   // Sent messages
-  sentMessages Message[]
+  sentMessages          Message[]
 
   // Saved Solutions
-  savedSolutions SavedSolution[]
-
-  // Conversations (buyer side)
-  conversations Conversation[]
+  savedSolutions        SavedSolution[]
 
   // Notifications
-  notifications Notification[]
+  notifications         Notification[]
 
   // Feedback
-  feedback Feedback[]
+  feedbackSubmissions   Feedback[]
+  surveyCompletions     SurveyCompletion[]
 
-  // Survey
-  surveyCompletion SurveyCompletion?
+  // Referral System
+  referralCode          String?   @unique @default(uuid())
+  referredBy            String?   // The referral code of the user who referred this user
+  referralRewards       Json?     // { expertDiscountCount: Int, businessDiscountCount: Int }
+  
+  // Tracking for referral conditions
+  lastLoginAt           DateTime?
+  loginDaysCount        Int       @default(0)
+  referralCompletedAt   DateTime? // When the referral reward was granted to the referrer
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String
+  type      String   // info, success, alert
+  isRead    Boolean  @default(false)
+  actionUrl String?
+  
+  createdAt DateTime @default(now())
 }
 
 model BusinessProfile {
-  id     String @id @default(uuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   firstName      String
   lastName       String
   companyName    String
@@ -136,10 +149,10 @@ model BusinessProfile {
   companySize    String?
   whatToAutomate String?
   timezone       String?
-  billingEmail   String? // New field for billing contact
-  website        String? // New field
+  billingEmail   String?  // New field for billing contact
+  website        String?  // New field
   country        String?
-
+  
   // Onboarding Refinement fields
   businessPrimaryProblems String[]
   successDefinition       String[]
@@ -147,91 +160,93 @@ model BusinessProfile {
   upgradeInterests        String[]
   timingPreference        String?
 
-  // Stripe
-  stripeCustomerId String?
+  // Stripe Customer
+  stripeCustomerId        String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model SpecialistProfile {
-  id     String @id @default(uuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id                        String    @id @default(uuid())
+  userId                    String    @unique
+  user                      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   // Public URL slug
-  slug String @unique
-
+  slug                      String    @unique
+  
   // Profile Fields
-  legalFullName                String
-  displayName                  String
-  country                      String
-  timezone                     String?
-  isAgency                     Boolean @default(false)
-  agencyName                   String?
-  agencyTeamSize               String? // New
+  legalFullName             String
+  displayName               String
+  country                   String
+  timezone                  String?
+  isAgency                  Boolean   @default(false)
+  agencyName                String?
+  agencyTeamSize            String?   // New
   businessIdentificationNumber String? // New
-
-  phoneNumber String?
-
-  primaryTool  String? // New
-  tools        String[] // Secondary tools
-  specialties  String[] // Kept for backward compat or extra metadata
-  availability String? // Weekly capacity
-
-  yearsExperience String
-
-  portfolioLinks Json // Stored as JSON array of objects or strings
-  portfolioUrl   String? // New: Primary portfolio URL
-
-  pastImplementations     String // "Approx number of implementations"
-  typicalProjectSize      String? // New
-  clientAcquisitionSource String[] // New
-
-  bio          String? // Short bio for public profile
-  responseTime String? // e.g. "Within 2 hours"
-
+  
+  phoneNumber               String?
+  
+  primaryTool               String?   // New
+  tools                     String[]  // Secondary tools
+  specialties               String[]  // Kept for backward compat or extra metadata
+  availability              String?   // Weekly capacity
+  
+  yearsExperience           String
+  
+  portfolioLinks            Json      // Stored as JSON array of objects or strings
+  portfolioUrl              String?   // New: Primary portfolio URL
+  
+  pastImplementations       String    // "Approx number of implementations"
+  typicalProjectSize        String?   // New
+  clientAcquisitionSource   String[]  // New
+  
+  bio                       String?   // Short bio for public profile
+  responseTime              String?   // e.g. "Within 2 hours"
+  
   // Status & Badges
   status                    SpecialistStatus @default(PENDING_REVIEW)
   tier                      SpecialistTier   @default(STANDARD)
-  verified                  Boolean          @default(false)
-  businessVerified          Boolean          @default(false)
-  isFoundingExpert          Boolean          @default(false)
-  foundingRank              Int?             @unique
-  completedSalesCount       Int              @default(0)
-  commissionOverridePercent Decimal?         @db.Decimal(5, 2)
-
+  verified                  Boolean   @default(false)
+  businessVerified          Boolean   @default(false)
+  foundingRank              Int?      @unique
+  completedSalesCount       Int       @default(0)
+  commissionOverridePercent Decimal?  @db.Decimal(5, 2)
+  
   // Legal & Compliance
-  legalStatus      String    @default("pending_acceptance") // pending_acceptance, accepted
-  termsAcceptedAt  DateTime?
-  authorityConsent Boolean   @default(false) // New
-  marketingConsent Boolean   @default(false)
+  legalStatus               String    @default("pending_acceptance") // pending_acceptance, accepted
+  termsAcceptedAt           DateTime?
+  authorityConsent          Boolean   @default(false) // New
+  marketingConsent          Boolean   @default(false)
 
-  // Stripe / Payouts
-  stripeAccountId        String?
-  stripeDetailsSubmitted Boolean @default(false)
-  platformFeePercentage  Int     @default(20)
+  // Stripe Connect
+  stripeAccountId           String?
+  stripeDetailsSubmitted    Boolean   @default(false)
+  
+  // Founding Expert Campaign
+  isFoundingExpert          Boolean   @default(false)
+  platformFeePercentage     Int       @default(20)
 
-  // Calendar & Booking
-  calendarUrl String?
+  // Calendar
+  calendarUrl               String?   // e.g. Calendly link
 
-  // Moderation
-  bidBannedUntil DateTime?
+  // Invoice template (for sellers to issue invoices to buyers)
+  invoiceCompanyName        String?   // Legal/trading name for invoices
+  invoiceAddress            String?   // Full address for invoices
+  invoiceVatNumber          String?   // VAT/Tax ID if applicable
 
-  // Invoice
-  invoiceAddress     String?
-  invoiceCompanyName String?
-  invoiceVatNumber   String?
+  // Bid quality moderation
+  bidBannedUntil            DateTime? // Set when expert accumulates too many thumbs-down
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
   // Relations
-  solutions     Solution[]
-  sellerOrders  Order[]        @relation("SellerOrders")
-  conversations Conversation[] @relation("SellerConversations")
-  bids          Bid[]          @relation("SpecialistBids")
-  ecosystems    Ecosystem[]
+  solutions                 Solution[]
+  sellerOrders              Order[]   @relation("SellerOrders")
+  conversations             Conversation[] @relation("SellerConversations")
+  bids                      Bid[]     @relation("SpecialistBids")
+  ecosystems                Ecosystem[]
 }
 
 model EmailVerificationToken {
@@ -243,242 +258,281 @@ model EmailVerificationToken {
   createdAt DateTime @default(now())
 }
 
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 // Marketplace Core
 model Solution {
-  id       String            @id @default(uuid())
-  expertId String
-  expert   SpecialistProfile @relation(fields: [expertId], references: [id])
-
-  slug            String  @unique
-  title           String
-  shortSummary    String?
-  outcome         String? // "Outcome Line" e.g. "Reduces manual lead handling for sales teams."
-  description     String
-  longDescription String? // Detailed SEO description
-  complexity      String? // Simple, Standard, Advanced
-
-  category     String
-  integrations String[]
-
+  id                            String    @id @default(uuid())
+  expertId                      String
+  expert                        SpecialistProfile @relation(fields: [expertId], references: [id])
+  
+  slug                          String    @unique
+  title                         String
+  shortSummary                  String?
+  outcome                       String?   // "Outcome Line" e.g. "Reduces manual lead handling for sales teams."
+  description                   String
+  longDescription               String?   // Detailed SEO description
+  complexity                    String?   // Simple, Standard, Advanced
+  
+  category                      String
+  integrations                  String[]
+  
   // Requirements & Access
-  accessRequired String? // Admin, User, None
-  requiredInputs String[] // sample data, accounts, etc.
-  questions      Json? // Array of strings (questions for business)
-
+  requiredInputs                String[]  // sample data, accounts, etc.
+  
   // Pricing (Cents)
-  implementationPriceCents Int
-  monthlyCostMinCents      Int?
-  monthlyCostMaxCents      Int?
-  maintenancePriceCents    Int?
-  maintenanceDescription   String?
+  implementationPriceCents      Int
+  monthlyCostMinCents           Int?
+  monthlyCostMaxCents           Int?
+  
+  deliveryDays                  Int
+  supportDays                   Int       @default(30) // Mandatory support duration (15, 30, 60)
 
-  // New Pricing Fields
-  toolCostMonthlyMinCents Int?
-  toolCostMonthlyMaxCents Int?
-  couponNextPurchase      Json? // { percent: number, validDays: number }
-
-  // Discounts & Commission
-  discounts      Json? // { type: 'fixed'|'percent', value: number, ... }
-  commissionRate Decimal? @db.Decimal(5, 2) // e.g. 15.00
-
-  deliveryDays                Int
-  supportDays                 Int     @default(30) // Mandatory support duration (15, 30, 60)
-  revisionsIncluded           Int?
-  estimatedImplementationTime String?
-  implementationType          String?
-
-  included      String[]
-  excluded      String[]
-  prerequisites String[]
-  faq           Json? // Array of {question, answer}
-  status        String    @default("draft") // draft, published, paused, archived
-  publishedAt   DateTime?
-
+  included                      String[]
+  excluded                      String[]
+  faq                           Json?     // Array of {question, answer}
+  status                        String    @default("draft") // draft, published, paused, archived
+  publishedAt                   DateTime?
+  
   // Moderation
-  moderationStatus String    @default("pending") // auto_approved, pending, approved, rejected
-  approvedAt       DateTime?
+  moderationStatus              String    @default("pending") // auto_approved, pending, approved, rejected
+  approvedAt                    DateTime?
 
-  whatItDoes String?
-
-  // New Content Fields
-  outline  String[] // Up to 3 highlight lines
-  lastStep Int      @default(1) // Wizard progress tracking
+  // Content Fields
+  outline                       String[] // Up to 3 highlight lines
+  lastStep                      Int      @default(1) // Wizard progress tracking
 
   // Proof & Trust
-  proofType    String? // screenshot, case_study, diagram, metric
-  proofContent String? // URL or text
-  proof        Json? // { type: string, value: any }
+  proofType                     String?   // screenshot, case_study, both
+  proofContent                  String?   // URL, text, or JSON (for "both")
 
   // Filters & Search Facets
-  businessGoals String[] // Lead gen, Sales auto, etc.
-  industries    String[] // eCommerce, SaaS, etc.
-  paybackPeriod String? // lt_1m, 1_3m, long_term
-  trustSignals  String[] // NDA included, Zero-data, etc.
-  expertTier    String? // vetted, founding, agency (snapshot)
+  businessGoals                 String[]  // Lead gen, Sales auto, etc.
+  industries                    String[]  // eCommerce, SaaS, etc.
+  paybackPeriod                 String?   // lt_1m, 1_3m, long_term
+  trustSignals                  String[]  // NDA included, Zero-data, etc.
+
+  // Solution structure
+  structureConsistent           String[]  // "What stays the same"
+  structureCustom               String[]  // "What requires customization"
+  measurableOutcome             String?   // Numeric/Specific impact
+  
+  // Milestones (V3)
+  milestones                    Json?     // Array of { title, description, priceCents, deliveryTime }
+
+  // Versioning & Maintenance
+  version                       Int       @default(1)
+  changelog                     String?
+  upgradePriceCents             Int?
+  
+  parentId                      String?
+  parent                        Solution? @relation("SolutionVersions", fields: [parentId], references: [id])
+  children                      Solution[] @relation("SolutionVersions")
 
   // Demo Video
-  demoVideoUrl          String?
-  demoVideoStatus       DemoVideoStatus @default(none)
-  demoVideoReviewedAt   DateTime?
-  demoVideoReviewNotes  String?
-  demoVideoStartSeconds Int?
-  demoVideoId           String?
+  demoVideoUrl                  String?
+  demoVideoStatus               DemoVideoStatus @default(none)
+  demoVideoReviewedAt           DateTime?
+  
+  // Demo Booking
+  demoPriceCents                Int       @default(200) // Default 2 EUR
 
-  // Versioning
-  version           Int      @default(1)
-  parentId          String?
-  changelog         String?
-  upgradePriceCents Int?
-
-  // Milestones
-  milestones Json? // Array of milestone objects
-
-  // Structure
-  structureConsistent String?
-  structureCustom     String?
-  measurableOutcome   String?
-
-  // Demo pricing
-  demoPriceCents Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  orders         Order[]
-  conversations  Conversation[]
-  bids           Bid[]
-  savedByUsers   SavedSolution[]
-  ecosystemItems EcosystemItem[]
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  
+  orders                        Order[]
+  conversations                 Conversation[]
+  bids                          Bid[]
+  savedByUsers                  SavedSolution[]
+  ecosystemItems                EcosystemItem[]
 }
 
 model Order {
-  id      String @id @default(uuid())
-  buyerId String // Link to User (Business)
-  buyer   User   @relation("BuyerOrders", fields: [buyerId], references: [id])
+  id              String      @id @default(uuid())
+  buyerId         String      // Link to User (Business)
+  buyer           User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  
+  sellerId        String      // Link to SpecialistProfile
+  seller          SpecialistProfile @relation("SellerOrders", fields: [sellerId], references: [id])
+  
+  solutionId      String?
+  solution        Solution?   @relation(fields: [solutionId], references: [id])
 
-  sellerId String // Link to SpecialistProfile
-  seller   SpecialistProfile @relation("SellerOrders", fields: [sellerId], references: [id])
+  // For job-based orders (from accepted bid proposals)
+  bidId           String?     @unique
+  bid             Bid?        @relation(fields: [bidId], references: [id])
+  
+  priceCents      Int
+  status          OrderStatus @default(draft)
+  
+  deliveryNote    String?
+  
+  // Milestones — Array of { title, description, priceCents, status, fundedAt, releasedAt }
+  milestones      Json?
 
-  solutionId String
-  solution   Solution @relation(fields: [solutionId], references: [id])
+  approvedAt      DateTime?
+  refundedAt      DateTime?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  conversations   Conversation[]
+  review          Review?
+  dispute         Dispute?
+}
 
-  priceCents Int
-  status     OrderStatus @default(draft)
+// Double-blind review system
+model Review {
+  id                String    @id @default(uuid())
+  orderId           String    @unique
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  // Milestones (JSON array of milestone objects)
-  milestones Json?
+  // Seller (expert) reviews the buyer
+  sellerRating      Int?      // 1-5
+  sellerComment     String?   @db.Text
+  sellerSubmittedAt DateTime?
 
-  // Payment
-  paymentProvider    String?
-  paymentIntentId    String?
-  stripeCustomerId   String?
+  // Buyer reviews the seller (expert)
+  buyerRating       Int?      // 1-5
+  buyerComment      String?   @db.Text
+  buyerSubmittedAt  DateTime?
 
-  deliveryNote String?
-  disputeReason String?
+  // Unblinding — both parties can see each other's review
+  isUnblinded       Boolean   @default(false)
+  unblindedAt       DateTime?
 
-  approvedAt DateTime?
-  refundedAt DateTime?
+  // Admin moderation
+  isHidden          Boolean   @default(false)
+  hiddenReason      String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
 
-  conversations Conversation[]
-  review        Review?
-  dispute       Dispute?
+// Dispute resolution
+model Dispute {
+  id              String    @id @default(uuid())
+  orderId         String    @unique
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  reason          String    @db.Text
+  status          String    @default("open") // open, investigating, resolved
+
+  adminNotes      String?   @db.Text
+  resolution      String?   // full_refund, release_to_seller, partial_refund, dismissed
+  resolutionNote  String?   @db.Text
+  resolvedBy      String?   // Admin user ID
+  resolvedAt      DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Conversation {
-  id      String @id @default(uuid())
-  buyerId String // Usually User ID
-  buyer   User   @relation(fields: [buyerId], references: [id])
+  id              String      @id @default(uuid())
+  buyerId         String      // Usually User ID
+  buyer           User        @relation("BuyerConversations", fields: [buyerId], references: [id])
+  
+  sellerId        String
+  seller          SpecialistProfile @relation("SellerConversations", fields: [sellerId], references: [id])
+  
+  solutionId      String?
+  solution        Solution?   @relation(fields: [solutionId], references: [id])
+  
+  orderId         String?
+  order           Order?      @relation(fields: [orderId], references: [id])
 
-  sellerId String
-  seller   SpecialistProfile @relation("SellerConversations", fields: [sellerId], references: [id])
-
-  solutionId String?
-  solution   Solution? @relation(fields: [solutionId], references: [id])
-
-  orderId String?
-  order   Order?  @relation(fields: [orderId], references: [id])
-
-  jobPostId String?
-  jobPost   JobPost? @relation(fields: [jobPostId], references: [id])
-
-  status String @default("active") // active, pending, closed
-
-  messages Message[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  jobPostId       String?
+  jobPost         JobPost?    @relation(fields: [jobPostId], references: [id])
+  
+  status          String      @default("active") // active, pending, closed
+  
+  messages        Message[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model Message {
-  id             String       @id @default(uuid())
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  senderId String // User ID or Specialist ID (User ID of specialist)
-  user     User   @relation(fields: [senderId], references: [id])
-
-  body String
-  type MessageType @default(user)
-
-  createdAt DateTime @default(now())
+  id              String        @id @default(uuid())
+  conversationId  String
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId        String        // User ID or Specialist ID (User ID of specialist)
+  user            User          @relation(fields: [senderId], references: [id])
+  
+  body            String
+  type            MessageType   @default(user)
+  
+  createdAt       DateTime      @default(now())
 }
 
 // Jobs Feature
 model JobPost {
-  id      String @id @default(cuid())
-  buyerId String
-  buyer   User   @relation("BuyerJobs", fields: [buyerId], references: [id])
-
-  title       String
-  goal        String   @db.Text
-  category    String
-  tools       String[]
-  budgetRange String // "Under $500", "$500–$1,500", etc.
-  timeline    String // "ASAP", "1–2 weeks", etc.
-
-  status JobStatus @default(draft)
-
-  viewCount Int @default(0)
-
-  // Rejection
-  rejectionFeedback String?
-  rejectedAt        DateTime?
-
+  id              String      @id @default(cuid())
+  buyerId         String
+  buyer           User        @relation("BuyerJobs", fields: [buyerId], references: [id])
+  
+  title           String
+  goal            String      @db.Text
+  category        String
+  tools           String[]
+  budgetRange     String      // "Under $500", "$500–$1,500", etc.
+  timeline        String      // "ASAP", "1–2 weeks", etc.
+  
+  status          JobStatus   @default(draft)
+  
+  viewCount       Int         @default(0)
+  
   // Payment
   paidAt          DateTime?
   paymentProvider String?
   paymentIntentId String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Rejection (business chose none of the proposals)
+  rejectionFeedback String?   @db.Text
+  rejectedAt        DateTime?
 
-  bids          Bid[]
-  conversations Conversation[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  bids            Bid[]
+  conversations   Conversation[]
 }
 
 model Bid {
-  id        String  @id @default(cuid())
-  jobPostId String
-  jobPost   JobPost @relation(fields: [jobPostId], references: [id], onDelete: Cascade)
+  id              String      @id @default(cuid())
+  jobPostId       String
+  jobPost         JobPost     @relation(fields: [jobPostId], references: [id], onDelete: Cascade)
+  
+  specialistId    String
+  specialist      SpecialistProfile @relation("SpecialistBids", fields: [specialistId], references: [id])
+  
+  solutionId      String?
+  solution        Solution?   @relation(fields: [solutionId], references: [id])
+  
+  message         String      @db.Text
+  proposedApproach String?    @db.Text
+  estimatedTime   String
+  priceEstimate   String?
+  
+  status          BidStatus   @default(submitted)
 
-  specialistId String
-  specialist   SpecialistProfile @relation("SpecialistBids", fields: [specialistId], references: [id])
+  // Business owner feedback on this proposal
+  feedback        String?     // "up" | "down"
+  feedbackAt      DateTime?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  solutionId String?
-  solution   Solution? @relation(fields: [solutionId], references: [id])
-
-  message          String  @db.Text
-  proposedApproach String? @db.Text
-  estimatedTime    String
-  priceEstimate    String?
-
-  status BidStatus @default(submitted)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  order           Order?
 
   @@unique([jobPostId, specialistId])
 }
@@ -494,108 +548,68 @@ model SavedSolution {
   @@unique([userId, solutionId])
 }
 
-// Notifications
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String
-  message   String
-  type      String   @default("info") // info, success, alert
-  actionUrl String?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-// Double-blind Reviews
-model Review {
-  id      String @id @default(uuid())
-  orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  sellerRating      Int?
-  sellerComment     String?
-  sellerSubmittedAt DateTime?
-
-  buyerRating      Int?
-  buyerComment     String?
-  buyerSubmittedAt DateTime?
-
-  blindedUntil DateTime? // Both must submit, or timeout
-  unblinedAt   DateTime? // When both reviews became visible
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// Dispute Resolution
-model Dispute {
-  id      String @id @default(uuid())
-  orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  submittedBy    String // userId of person who filed
-  reason         String
-  adminNotes     String?
-  resolution     String? // full_refund, release_to_seller, partial_refund, dismissed
-  resolvedAt     DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// Ecosystems (curated solution bundles)
-model Ecosystem {
-  id          String            @id @default(uuid())
-  expertId    String
-  expert      SpecialistProfile @relation(fields: [expertId], references: [id])
-  title       String
-  slug        String            @unique
-  description String?
-  published   Boolean           @default(false)
-  items       EcosystemItem[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-}
-
-model EcosystemItem {
-  id          String    @id @default(uuid())
-  ecosystemId String
-  ecosystem   Ecosystem @relation(fields: [ecosystemId], references: [id], onDelete: Cascade)
-  solutionId  String
-  solution    Solution  @relation(fields: [solutionId], references: [id])
-  position    Int       @default(0)
-  createdAt   DateTime  @default(now())
-}
-
-// Feedback
-model Feedback {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rating    Int
-  message   String?
-  page      String?
-  role      String?
-  createdAt DateTime @default(now())
-}
-
-model SurveyCompletion {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  answers   Json
-  role      String?
-  createdAt DateTime @default(now())
-}
-
 // Waitlist
 model WaitlistSignup {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   fullName  String
   email     String   @unique
-  role      String // 'business' | 'expert'
-  source    String? // 'landing_waitlist'
+  role      String   // 'business' | 'expert'
+  source    String?  // 'landing_waitlist'
   consent   Boolean  @default(true)
+}
+
+// Ecosystems (Bundles)
+model Ecosystem {
+  id            String   @id @default(cuid())
+  expertId      String
+  expert        SpecialistProfile @relation(fields: [expertId], references: [id])
+  
+  title         String
+  slug          String   @unique
+  shortPitch    String   // 1-2 lines (max 140)
+  businessGoal  String   // e.g. "Lead generation"
+  outcomes      String?  // small bullet list, store as newline-separated or JSON
+  isPublished   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items         EcosystemItem[]
+}
+
+// Feedback (free text, 3 per day per user)
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String   @db.Text
+  role      String   // "EXPERT" | "BUSINESS" - snapshot at submission
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// Survey completion (first time = 5% coupon)
+model SurveyCompletion {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers   Json     // { q1: number|string, q2: ..., ... }
+  role      String   // "EXPERT" | "BUSINESS" at completion
+  createdAt DateTime @default(now())
+}
+
+model EcosystemItem {
+  id          String   @id @default(cuid())
+  ecosystemId String
+  solutionId  String
+  position    Int      @default(0)
+  note        String?  // optional “Why this is included”
+  createdAt   DateTime @default(now())
+
+  ecosystem   Ecosystem @relation(fields: [ecosystemId], references: [id], onDelete: Cascade)
+  solution    Solution  @relation(fields: [solutionId], references: [id])
+
+  @@unique([ecosystemId, solutionId])
+  @@index([solutionId])
 }

@@ -3,9 +3,25 @@
 import { awardBid } from "@/actions/jobs";
 import { useState } from "react";
 import { Loader2, CheckCircle } from "lucide-react";
+import { TierBadge } from "@/components/ui/TierBadge";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function BidList({ bids, jobId, isOwner }: { bids: any[], jobId: string, isOwner: boolean }) {
+interface BidSpecialist {
+  displayName?: string | null;
+  tier?: "STANDARD" | "PROVEN" | "ELITE" | null;
+  isFoundingExpert?: boolean | null;
+  completedSalesCount?: number | null;
+}
+
+interface BidItem {
+  id: string;
+  message: string;
+  estimatedTime: string;
+  priceEstimate?: string | null;
+  status: string;
+  specialist?: BidSpecialist | null;
+}
+
+export function BidList({ bids, jobId, isOwner }: { bids: BidItem[], jobId: string, isOwner: boolean }) {
   const [awardingId, setAwardingId] = useState<string | null>(null);
 
   const handleAward = async (bidId: string) => {
@@ -33,15 +49,17 @@ export function BidList({ bids, jobId, isOwner }: { bids: any[], jobId: string, 
   return (
     <div className="space-y-4">
       <h3 className="font-bold text-lg">Proposals ({bids.length})</h3>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {bids.map((bid: any) => (
+      {bids.map((bid: BidItem) => (
         <div key={bid.id} className="bg-card border border-border rounded-xl p-6">
           <div className="flex justify-between items-start gap-4 mb-4">
             <div>
-              <div className="font-bold text-lg">{bid.specialist.displayName}</div>
-              <div className="text-sm text-muted-foreground flex items-center gap-2">
-                <span className="bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded text-xs font-bold border border-yellow-500/20">ELITE</span>
-                <span>• {bid.specialist.completedSalesCount} completed implementations</span>
+              <div className="font-bold text-lg">{bid.specialist?.displayName ?? "Specialist"}</div>
+              <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                <TierBadge
+                  tier={bid.specialist?.tier ?? "STANDARD"}
+                  isFoundingExpert={bid.specialist?.isFoundingExpert ?? false}
+                />
+                <span>{bid.specialist?.completedSalesCount ?? 0} completed implementations</span>
               </div>
             </div>
             {bid.status === 'accepted' ? (

@@ -15,14 +15,14 @@ export async function generateMetadata({ params }: PageProps) {
   if (!ecosystem) return { title: "Stack Not Found" };
   return {
     title: `${ecosystem.title} | LogicLot Suites`,
-    description: ecosystem.description,
+    description: ecosystem.shortPitch,
   };
 }
 
 export default async function StackDetailPage({ params }: PageProps) {
   const ecosystem = await getEcosystemBySlug(params.slug);
 
-  if (!ecosystem || !ecosystem.published) {
+  if (!ecosystem || !ecosystem.isPublished) {
     notFound();
   }
 
@@ -41,7 +41,7 @@ export default async function StackDetailPage({ params }: PageProps) {
             </div>
             <h1 className="text-3xl md:text-5xl font-bold mb-4">{ecosystem.title}</h1>
             <p className="text-xl text-muted-foreground max-w-2xl">
-              {ecosystem.description}
+              {ecosystem.shortPitch}
             </p>
           </div>
         </div>

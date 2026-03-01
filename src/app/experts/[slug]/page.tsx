@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { SolutionCard } from "@/components/SolutionCard";
-import { ShieldCheck, Award, MessageSquare, ArrowLeft, Clock, CheckCircle } from "lucide-react";
+import { ShieldCheck, MessageSquare, ArrowLeft, Clock, CheckCircle } from "lucide-react";
 import { Solution } from "@/types";
+import { TierBadge } from "@/components/ui/TierBadge";
 
 interface PageProps {
   params: {
@@ -16,7 +18,7 @@ export async function generateMetadata({ params }: PageProps) {
   });
   if (!expert) return { title: "Expert Not Found" };
   return {
-    title: `${expert.displayName} | AI Marketplace`,
+    title: `${expert.displayName} | LogicLot`,
     description: expert.bio || `Hire ${expert.displayName} for AI automations.`,
   };
 }
@@ -25,6 +27,7 @@ export default async function ExpertProfilePage({ params }: PageProps) {
   const expert = await prisma.specialistProfile.findUnique({
     where: { slug: params.slug },
     include: {
+      user: { select: { profileImageUrl: true } },
       solutions: {
         where: { status: "published" }
       }
@@ -62,8 +65,17 @@ export default async function ExpertProfilePage({ params }: PageProps) {
           
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Avatar / Initials */}
-            <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-secondary border border-border flex items-center justify-center text-3xl md:text-4xl font-bold relative shrink-0">
-              {expert.displayName.substring(0, 2).toUpperCase()}
+            <div className="h-24 w-24 md:h-32 md:w-32 rounded-full bg-secondary border border-border flex items-center justify-center text-3xl md:text-4xl font-bold relative shrink-0 overflow-hidden">
+              {expert.user?.profileImageUrl ? (
+                <Image
+                  src={expert.user.profileImageUrl}
+                  alt={expert.displayName}
+                  fill
+                  className="object-cover object-center"
+                />
+              ) : (
+                expert.displayName.substring(0, 2).toUpperCase()
+              )}
               {expert.verified && (
                 <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-1 border border-border">
                   <ShieldCheck className="h-6 w-6 text-blue-400 fill-blue-400/10" />
@@ -79,11 +91,11 @@ export default async function ExpertProfilePage({ params }: PageProps) {
                     <ShieldCheck className="h-3 w-3" /> Verified Business
                   </span>
                 )}
-                {expert.isFoundingExpert && (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 flex items-center gap-1">
-                    <Award className="h-3 w-3" /> Founding Expert
-                  </span>
-                )}
+                <TierBadge
+                  tier={(expert.tier as "STANDARD" | "PROVEN" | "ELITE") ?? "STANDARD"}
+                  isFoundingExpert={expert.isFoundingExpert || false}
+                  size="md"
+                />
               </div>
               
               <p className="text-xl text-muted-foreground mb-6 max-w-2xl leading-relaxed">

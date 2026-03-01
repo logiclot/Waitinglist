@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { BRAND_NAME } from "@/lib/branding";
+import { LogoBrand } from "@/components/LogoBrand";
+import { LogoMark } from "@/components/LogoMark";
 
 export default function WaitlistPage() {
   const [fullName, setFullName] = useState("");
@@ -52,7 +54,7 @@ export default function WaitlistPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 animate-in fade-in duration-500">
         <div className="text-center max-w-md">
           <div className="mx-auto h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-            <Sparkles className="h-8 w-8 text-primary" />
+            <LogoMark size={40} />
           </div>
           <h1 className="text-3xl font-bold mb-4">You&apos;re in.</h1>
           <p className="text-xl text-muted-foreground mb-8">
@@ -74,9 +76,8 @@ export default function WaitlistPage() {
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">{BRAND_NAME}</span>
+          <div className="flex items-center justify-center mb-6">
+            <LogoBrand size="lg" />
           </div>
           <h1 className="text-4xl font-bold mb-4 tracking-tight">Join the {BRAND_NAME} waitlist</h1>
           <p className="text-lg text-muted-foreground mb-6">

@@ -13,15 +13,11 @@ export function ActiveFilterChips({ filters, onRemove, onClear }: ActiveFilterCh
   const activeCount = 
     (filters.category ? 1 : 0) +
     (filters.minPrice || filters.maxPrice ? 1 : 0) +
-    (filters.maintenance !== "any" ? 1 : 0) +
     (filters.deliveryMaxDays ? 1 : 0) +
     filters.businessGoals.length +
     filters.tools.length +
-    (filters.complexity ? 1 : 0) +
     (filters.expertTier ? 1 : 0) +
-    (filters.paybackPeriod ? 1 : 0) +
-    filters.industries.length +
-    filters.trustSignals.length;
+    (filters.paybackPeriod ? 1 : 0);
 
   if (activeCount === 0) return null;
 
@@ -35,23 +31,8 @@ export function ActiveFilterChips({ filters, onRemove, onClear }: ActiveFilterCh
       
       {(filters.minPrice || filters.maxPrice) && (
         <Chip 
-          label={`Price: ${filters.minPrice ? `$${filters.minPrice}` : '0'} - ${filters.maxPrice ? `$${filters.maxPrice}` : 'Any'}`} 
+          label={`Price: ${filters.minPrice ? `€${filters.minPrice}` : '0'} - ${filters.maxPrice ? `€${filters.maxPrice}` : 'Any'}`} 
           onRemove={() => { onRemove("minPrice", null); onRemove("maxPrice", null); }} 
-        />
-      )}
-
-      {filters.maintenance !== "any" && (
-        <Chip 
-          label={
-            filters.maintenance === "available" && (filters.minMaintenancePrice || filters.maxMaintenancePrice)
-              ? `Maint: $${filters.minMaintenancePrice || 0} - ${filters.maxMaintenancePrice || 'Any'}/mo`
-              : `Maintenance: ${filters.maintenance}`
-          } 
-          onRemove={() => {
-            onRemove("maintenance", "any");
-            onRemove("minMaintenancePrice", null);
-            onRemove("maxMaintenancePrice", null);
-          }} 
         />
       )}
 
@@ -67,10 +48,6 @@ export function ActiveFilterChips({ filters, onRemove, onClear }: ActiveFilterCh
         <Chip key={t} label={t} onRemove={() => onRemove("tools", t)} />
       ))}
 
-      {filters.complexity && (
-        <Chip label={`Complexity: ${filters.complexity}`} onRemove={() => onRemove("complexity", null)} />
-      )}
-
       {filters.expertTier && (
         <Chip label={`Tier: ${filters.expertTier}`} onRemove={() => onRemove("expertTier", null)} />
       )}
@@ -78,14 +55,6 @@ export function ActiveFilterChips({ filters, onRemove, onClear }: ActiveFilterCh
       {filters.paybackPeriod && (
         <Chip label={`ROI: ${filters.paybackPeriod}`} onRemove={() => onRemove("paybackPeriod", null)} />
       )}
-
-      {filters.industries.map(i => (
-        <Chip key={i} label={i} onRemove={() => onRemove("industries", i)} />
-      ))}
-
-      {filters.trustSignals.map(t => (
-        <Chip key={t} label={t} onRemove={() => onRemove("trustSignals", t)} />
-      ))}
 
       <button 
         onClick={onClear}

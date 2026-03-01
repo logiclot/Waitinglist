@@ -1,5 +1,5 @@
 import { PlayCircle, CheckCircle2 } from "lucide-react";
-import { getYouTubeEmbedUrl } from "@/lib/video";
+import { getYouTubeEmbedUrl, normalizeYouTubeUrl } from "@/lib/video";
 import { Solution } from "@/types";
 
 interface DemoVideoSectionProps {
@@ -7,7 +7,12 @@ interface DemoVideoSectionProps {
 }
 
 export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
-  if (solution.demo_video_status !== 'approved' || !solution.demo_video_id) {
+  const videoStatus = solution.demoVideoStatus ?? solution.demo_video_status;
+  const videoUrl = solution.demoVideoUrl ?? solution.demo_video_url;
+  const videoResult = videoUrl ? normalizeYouTubeUrl(videoUrl) : null;
+  const videoId = videoResult?.ok ? videoResult.videoId : null;
+
+  if (videoStatus !== 'approved' || !videoId) {
     return null;
   }
 
@@ -30,8 +35,8 @@ export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
         {/* Left Column: Video Player (3/5 width on large screens) */}
         <div className="lg:col-span-3">
           <div className="relative w-full pb-[56.25%] bg-black rounded-lg overflow-hidden shadow-sm border border-border/50">
-            <iframe 
-              src={getYouTubeEmbedUrl(solution.demo_video_id, solution.demo_video_start_seconds)}
+            <iframe
+              src={getYouTubeEmbedUrl(videoId)}
               title={`${solution.title} Demo Video`}
               className="absolute top-0 left-0 w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

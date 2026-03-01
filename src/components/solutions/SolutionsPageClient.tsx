@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   SolutionFilters, 
   INITIAL_FILTERS, 
@@ -19,11 +19,12 @@ import { ArrowUpDown, Search, SlidersHorizontal, PlusCircle } from "lucide-react
 interface SolutionsPageClientProps {
   initialSolutions: Solution[];
   categories: Category[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ecosystems?: any[]; // Optional ecosystems for suite filtering
 }
 
-export function SolutionsPageClient({ initialSolutions, categories }: SolutionsPageClientProps) {
+export function SolutionsPageClient({ initialSolutions, categories, ecosystems }: SolutionsPageClientProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // Initialize state from URL on mount (and update when URL changes)
@@ -40,7 +41,8 @@ export function SolutionsPageClient({ initialSolutions, categories }: SolutionsP
     setFilters(newFilters);
     const params = serializeFiltersToSearchParams(newFilters);
     // Use replace to avoid cluttering history stack too much, or push for navigation feel
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const currentPath = window.location.pathname;
+    router.replace(`${currentPath}?${params.toString()}`, { scroll: false });
   };
 
   const clearFilters = () => {
@@ -95,6 +97,8 @@ export function SolutionsPageClient({ initialSolutions, categories }: SolutionsP
         filters={filters} 
         onChange={updateFilters} 
         categories={categories} 
+        ecosystems={ecosystems} // Pass ecosystems
+        solutions={initialSolutions} // Pass ALL solutions for counters
         isMobileOpen={isMobileFiltersOpen}
         onMobileClose={() => setIsMobileFiltersOpen(false)}
       />

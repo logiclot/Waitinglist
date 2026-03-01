@@ -42,7 +42,6 @@ export async function cancelOrder(orderId: string): Promise<{ success: true } | 
       prisma.dispute.create({
         data: {
           orderId,
-          submittedBy: session.user.id,
           reason: "Buyer cancelled project with funded milestones.",
         },
       }),
@@ -110,7 +109,6 @@ export async function submitDispute(
       prisma.dispute.create({
         data: {
           orderId,
-          submittedBy: session.user.id,
           reason: reason.trim(),
         },
       }),

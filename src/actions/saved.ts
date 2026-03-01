@@ -3,6 +3,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { log } from "@/lib/logger";
+import * as Sentry from "@sentry/nextjs";
 
 export async function toggleSavedSolution(solutionId: string) {
   const session = await getServerSession(authOptions);
@@ -37,7 +39,8 @@ export async function toggleSavedSolution(solutionId: string) {
       return { saved: true };
     }
   } catch (error) {
-    console.error("Error toggling saved solution:", error);
+    log.error("saved.toggle_failed", { error: error instanceof Error ? error.message : String(error) });
+    Sentry.captureException(error);
     return { error: "Failed to update" };
   }
 }
@@ -55,7 +58,8 @@ export async function getSavedSolutions() {
     });
     return saved.map((s) => s.solutionId);
   } catch (error) {
-    console.error("Error fetching saved solutions:", error);
+    log.error("saved.fetch_failed", { error: error instanceof Error ? error.message : String(error) });
+    Sentry.captureException(error);
     return [];
   }
 }

@@ -5,9 +5,6 @@ export interface SolutionFilters {
   category: string | null;
   minPrice: number | null;
   maxPrice: number | null;
-  maintenance: "any" | "none" | "available"; // none = 0/null, available = >0
-  minMaintenancePrice: number | null;
-  maxMaintenancePrice: number | null;
   deliveryMaxDays: number | null;
   businessGoals: string[];
   tools: string[];
@@ -17,6 +14,7 @@ export interface SolutionFilters {
   industries: string[];
   trustSignals: string[];
   sort: string;
+  stackId: string | null;
 }
 
 export const INITIAL_FILTERS: SolutionFilters = {
@@ -24,9 +22,6 @@ export const INITIAL_FILTERS: SolutionFilters = {
   category: null,
   minPrice: null,
   maxPrice: null,
-  maintenance: "any",
-  minMaintenancePrice: null,
-  maxMaintenancePrice: null,
   deliveryMaxDays: null,
   businessGoals: [],
   tools: [],
@@ -35,7 +30,8 @@ export const INITIAL_FILTERS: SolutionFilters = {
   paybackPeriod: null,
   industries: [],
   trustSignals: [],
-  sort: "recommended"
+  sort: "recommended",
+  stackId: null
 };
 
 export function parseFiltersFromSearchParams(searchParams: URLSearchParams): SolutionFilters {
@@ -49,9 +45,6 @@ export function parseFiltersFromSearchParams(searchParams: URLSearchParams): Sol
     category: searchParams.get("category"),
     minPrice: searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : null,
     maxPrice: searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : null,
-    maintenance: (searchParams.get("maintenance") as "any" | "none" | "available") || "any",
-    minMaintenancePrice: searchParams.get("minMaintenancePrice") ? Number(searchParams.get("minMaintenancePrice")) : null,
-    maxMaintenancePrice: searchParams.get("maxMaintenancePrice") ? Number(searchParams.get("maxMaintenancePrice")) : null,
     deliveryMaxDays: searchParams.get("deliveryMaxDays") ? Number(searchParams.get("deliveryMaxDays")) : null,
     businessGoals: getAll("goals"),
     tools: getAll("tools"),
@@ -60,7 +53,8 @@ export function parseFiltersFromSearchParams(searchParams: URLSearchParams): Sol
     paybackPeriod: searchParams.get("payback"),
     industries: getAll("industries"),
     trustSignals: getAll("trust"),
-    sort: searchParams.get("sort") || "recommended"
+    sort: searchParams.get("sort") || "recommended",
+    stackId: searchParams.get("stack"),
   };
 }
 
@@ -71,9 +65,6 @@ export function serializeFiltersToSearchParams(filters: SolutionFilters): URLSea
   if (filters.category) params.set("category", filters.category);
   if (filters.minPrice) params.set("minPrice", filters.minPrice.toString());
   if (filters.maxPrice) params.set("maxPrice", filters.maxPrice.toString());
-  if (filters.maintenance !== "any") params.set("maintenance", filters.maintenance);
-  if (filters.minMaintenancePrice) params.set("minMaintenancePrice", filters.minMaintenancePrice.toString());
-  if (filters.maxMaintenancePrice) params.set("maxMaintenancePrice", filters.maxMaintenancePrice.toString());
   if (filters.deliveryMaxDays) params.set("deliveryMaxDays", filters.deliveryMaxDays.toString());
   
   if (filters.businessGoals.length > 0) params.set("goals", filters.businessGoals.join(","));
@@ -85,6 +76,7 @@ export function serializeFiltersToSearchParams(filters: SolutionFilters): URLSea
   if (filters.trustSignals.length > 0) params.set("trust", filters.trustSignals.join(","));
   
   if (filters.sort !== "recommended") params.set("sort", filters.sort);
+  if (filters.stackId) params.set("stack", filters.stackId);
 
   return params;
 }
@@ -103,46 +95,28 @@ export function applySolutionFilters(solutions: Solution[], filters: SolutionFil
 
     // 2. Category
     if (filters.category && s.category.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-").replace(/[^\w-]+/g, "") !== filters.category) {
-      // Note: Comparing slug to name is tricky if we don't have the map. 
-      // Ideally we filter by slug if s.category is a slug, but mock data has "Sales Automations" (Name).
-      // We'll try loose matching or rely on the category slug being passed correctly.
-      // Let's assume s.category is the Display Name.
-      // We should probably normalize s.category to slug for comparison.
       const sSlug = s.category.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-").replace(/[^\w-]+/g, "");
       if (sSlug !== filters.category) return false;
     }
 
     // 3. Price (One-time)
-    // s.implementation_price is usually in dollars (mock) or derived from cents.
-    // Let's use implementation_price (number).
     if (filters.minPrice !== null && s.implementation_price < filters.minPrice) return false;
     if (filters.maxPrice !== null && s.implementation_price > filters.maxPrice) return false;
 
-    // 4. Maintenance
-    // s.maintenancePriceCents
-    const maintPrice = (s.maintenancePriceCents || 0) / 100;
-    if (filters.maintenance === "none" && maintPrice > 0) return false;
-    if (filters.maintenance === "available" && maintPrice === 0) return false;
-    
-    if (filters.minMaintenancePrice !== null && maintPrice < filters.minMaintenancePrice) return false;
-    if (filters.maxMaintenancePrice !== null && maintPrice > filters.maxMaintenancePrice) return false;
-
-    // 5. Delivery Time
-    // s.delivery_days
+    // 4. Delivery Time
     if (filters.deliveryMaxDays !== null && s.delivery_days > filters.deliveryMaxDays) return false;
 
-    // 6. Business Goals (Multi-select OR logic usually, or AND? Let's do OR for coverage)
+    // 5. Business Goals
     if (filters.businessGoals.length > 0) {
       if (!s.businessGoals || !s.businessGoals.some(g => filters.businessGoals.includes(g))) return false;
     }
 
-    // 7. Tools (Multi-select OR logic)
+    // 7. Tools
     if (filters.tools.length > 0) {
-      // s.integrations
       if (!s.integrations.some(t => filters.tools.includes(t))) return false;
     }
 
-    // 8. Complexity (Single select)
+    // 8. Complexity
     if (filters.complexity && s.complexity !== filters.complexity) return false;
 
     // 9. Expert Tier
@@ -151,24 +125,24 @@ export function applySolutionFilters(solutions: Solution[], filters: SolutionFil
     // 10. Payback
     if (filters.paybackPeriod && s.paybackPeriod !== filters.paybackPeriod) return false;
 
-    // 11. Industries (Multi-select OR)
+    // 11. Industries
     if (filters.industries.length > 0) {
       if (!s.industries || !s.industries.some(i => filters.industries.includes(i))) return false;
     }
 
-    // 12. Trust Signals (Checkboxes usually AND logic for constraints)
-    // "NDA included" means the solution MUST have it.
+    // 12. Trust Signals
     if (filters.trustSignals.length > 0) {
-       // Check explicit trustSignals list AND boolean flags
        const hasSignal = (sig: string) => {
          if (s.trustSignals?.includes(sig)) return true;
          if (sig === "NDA included" && s.requires_nda) return true;
-         // Add other mappings if needed
          return false;
        };
-       
-       // If ANY filter selected isn't present, return false (AND logic)
        if (!filters.trustSignals.every(hasSignal)) return false;
+    }
+
+    // 13. Stack Filter
+    if (filters.stackId) {
+      if (!s.ecosystemIds || !s.ecosystemIds.includes(filters.stackId)) return false;
     }
 
     return true;
@@ -188,7 +162,6 @@ export function sortSolutions(solutions: Solution[], sortOption: string): Soluti
       return sorted.sort((a, b) => (b.avg_roi || 0) - (a.avg_roi || 0));
     case "recommended":
     default:
-      // Assuming default order is "recommended"
       return sorted;
   }
 }

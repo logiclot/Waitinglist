@@ -3,25 +3,47 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { Role } from "@prisma/client";
-import { fireExpertOnboardingNotifications, fireBusinessOnboardingNotifications } from "@/lib/onboarding-notifications";
+import type { Role } from "@prisma/client";
+import { resend } from "@/lib/resend";
+import { welcomeEmail } from "@/lib/email-templates";
+import { log } from "@/lib/logger";
+import * as Sentry from "@sentry/nextjs";
+import { Analytics } from "@/lib/analytics";
+import {
+  fireBusinessOnboardingNotifications,
+  fireExpertOnboardingNotifications,
+} from "@/lib/onboarding-notifications";
 
-async function sendWelcomeEmail(email: string, firstName: string, role: "business" | "expert") {
-  const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
-  if (!FROM_EMAIL || !email) return;
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+
+async function sendWelcomeEmail(userId: string, role: "business" | "expert") {
+  if (!FROM_EMAIL) return;
   try {
-    const { resend } = await import("@/lib/resend");
-    const { welcomeEmail } = await import("@/lib/email-templates");
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        businessProfile: { select: { firstName: true } },
+        specialistProfile: { select: { displayName: true, legalFullName: true } },
+      },
+    });
+    if (!user?.email) return;
+
+    const firstName =
+      role === "business"
+        ? (user.businessProfile?.firstName ?? "there")
+        : (user.specialistProfile?.displayName ?? user.specialistProfile?.legalFullName ?? "there");
+
     await resend.emails.send({
       from: FROM_EMAIL,
-      to: email,
+      to: user.email,
       subject: role === "business"
-        ? "Welcome to LogicLot — let's automate"
-        : "Welcome to LogicLot — your first clients are waiting",
+        ? "You're all set on LogicLot — here's what to do next"
+        : "Welcome to LogicLot — your profile is live",
       html: welcomeEmail({ firstName, role }),
     });
   } catch (e) {
-    console.error("Failed to send welcome email:", e);
+    log.error("onboarding.welcome_email_failed", { userId, error: String(e) });
   }
 }
 
@@ -39,7 +61,8 @@ export async function selectRole(role: Role) {
     });
     return { success: true };
   } catch (e) {
-    console.error(e);
+    log.error("onboarding.select_role_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
     return { error: "Failed to update role" };
   }
 }
@@ -49,11 +72,11 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
   if (!session?.user?.id) return { error: "Not authenticated" };
 
   // Phase 1 Fields (Updated)
-  const companyName = formData.get("companyName") as string;
+  const companyName = (formData.get("companyName") as string) || "";
   const fullName = formData.get("fullName") as string;
+  const jobTitle = (formData.get("jobTitle") as string) || "";
   const website = formData.get("website") as string;
   const country = formData.get("country") as string;
-  const timezone = formData.get("timezone") as string;
   
   const industry = formData.get("industry") as string;
   const companySize = formData.get("companySize") as string; // teamSize
@@ -62,18 +85,15 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
   const businessPrimaryProblems = formData.getAll("businessPrimaryProblems") as string[]; // painPoints
   
   const intent = formData.get("intent") as string; // decisionContext
+  const profileImageUrl = (formData.get("profileImageUrl") as string) || null;
 
   // Derived fields
   const nameParts = fullName ? fullName.trim().split(" ") : ["Business", "User"];
   const firstName = nameParts[0];
   const lastName = nameParts.slice(1).join(" ") || "";
   
-  const jobRole = "Admin"; // Placeholder
+  const jobRole = jobTitle || "Admin";
   const howHeard = "Direct"; // Placeholder
-
-  if (!companyName) {
-    return { error: "Company Name is required" };
-  }
 
   try {
     await prisma.businessProfile.upsert({
@@ -82,13 +102,11 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
         companyName,
         website,
         country,
-        timezone,
         industry,
         companySize,
         tools,
         businessPrimaryProblems,
         decisionContext: intent,
-        // Legacy/Placeholders
         firstName,
         lastName,
         jobRole,
@@ -100,13 +118,11 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
         companyName,
         website,
         country,
-        timezone,
         industry,
         companySize,
         tools,
         businessPrimaryProblems,
         decisionContext: intent,
-        // Legacy/Placeholders
         firstName,
         lastName,
         jobRole,
@@ -117,16 +133,19 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
 
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { onboardingCompletedAt: new Date() },
+      data: {
+        onboardingCompletedAt: new Date(),
+        ...(profileImageUrl && { profileImageUrl }),
+      },
     });
 
-    // Fire welcome email + onboarding notifications (non-blocking)
-    sendWelcomeEmail(session.user.email || "", firstName, "business").catch(() => {});
+    sendWelcomeEmail(session.user.id, "business").catch(() => {});
+    Analytics.onboardingCompleted(session.user.id, { role: "BUSINESS" });
     fireBusinessOnboardingNotifications(session.user.id).catch(() => {});
 
     return { success: true };
   } catch (e) {
-    console.error(e);
+    log.error("onboarding.create_business_profile_failed", { error: String(e) });
     return { error: "Failed to create profile" };
   }
 }
@@ -137,8 +156,8 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
 
   // --- Step 1: Identity ---
   const legalFullName = formData.get("legalFullName") as string;
+  const displayNameInput = (formData.get("displayName") as string) || legalFullName;
   const country = formData.get("country") as string;
-  const timezone = formData.get("timezone") as string;
   const isAgency = formData.get("roleType") === "Agency";
   
   const agencyName = formData.get("agencyName") as string;
@@ -157,6 +176,8 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
   const tools = formData.getAll("secondaryTools") as string[]; // Secondary tools
   const availability = formData.get("availability") as string; // Weekly capacity
 
+  const profileImageUrl = (formData.get("profileImageUrl") as string) || null;
+
   // --- Step 4: Legal ---
   // Checkboxes are usually "on" if checked, null if not.
   const legalAgreed = formData.get("legalAgreed") === "on";
@@ -164,7 +185,7 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
   const marketingConsent = formData.get("marketingConsent") === "on";
 
   // Required Fields Validation
-  if (!legalFullName || !country || !timezone || !yearsExperience || !pastImplementations || !typicalProjectSize || !primaryTool || !availability) {
+  if (!legalFullName || !country || !yearsExperience || !pastImplementations || !typicalProjectSize || !primaryTool || !availability) {
     return { error: "Required fields missing" };
   }
 
@@ -180,8 +201,8 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
   const baseName = isAgency && agencyName ? agencyName : legalFullName;
   const slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") + "-" + Math.random().toString(36).substr(2, 4);
 
-  // Display Name logic (use Agency Name if Agency, else Legal Name)
-  const displayName = isAgency && agencyName ? agencyName : legalFullName;
+  // Display Name: user input → agency name fallback → legal name
+  const displayName = isAgency && agencyName ? agencyName : (displayNameInput || legalFullName);
 
   try {
     await prisma.specialistProfile.upsert({
@@ -190,7 +211,6 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         legalFullName,
         displayName,
         country,
-        timezone,
         isAgency,
         agencyName: isAgency ? agencyName : null,
         businessIdentificationNumber: isAgency ? businessIdentificationNumber : null,
@@ -223,7 +243,6 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         legalFullName,
         displayName,
         country,
-        timezone,
         isAgency,
         agencyName: isAgency ? agencyName : null,
         businessIdentificationNumber: isAgency ? businessIdentificationNumber : null,
@@ -253,17 +272,20 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
 
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { onboardingCompletedAt: new Date() },
+      data: {
+        onboardingCompletedAt: new Date(),
+        ...(profileImageUrl && { profileImageUrl }),
+      },
     });
 
-    // Fire welcome email + onboarding notifications (non-blocking)
-    const expertFirstName = legalFullName.split(" ")[0];
-    sendWelcomeEmail(session.user.email || "", expertFirstName, "expert").catch(() => {});
+    // Fire-and-forget welcome email
+    sendWelcomeEmail(session.user.id, "expert").catch(() => {});
+    Analytics.onboardingCompleted(session.user.id, { role: "EXPERT" });
     fireExpertOnboardingNotifications(session.user.id).catch(() => {});
 
     return { success: true };
   } catch (e) {
-    console.error(e);
+    log.error("onboarding.create_specialist_profile_failed", { error: String(e) });
     return { error: "Failed to create profile" };
   }
 }

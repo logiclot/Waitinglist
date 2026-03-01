@@ -36,7 +36,9 @@ export default async function EditSolutionPage({ params }: { params: { id: strin
   // Check Lock State
   const lockState = await getSolutionLockState(solution.id);
 
-  // Map Solution to WizardState
+  const milestones = (solution.milestones as import("@/types").Milestone[]) || [];
+
+  // Map Solution to WizardState — all fields must be populated to avoid wizard reverting saved data
   const initialData: Partial<WizardState> = {
     id: solution.id,
     title: solution.title,
@@ -45,28 +47,45 @@ export default async function EditSolutionPage({ params }: { params: { id: strin
     short_summary: solution.shortSummary || "",
     longDescription: solution.longDescription || "",
     complexity: solution.complexity || "Standard",
-    
-    included: solution.included,
+
+    included: solution.included.length > 0 ? solution.included : ["Fully configured automation workflow", "Video walkthrough & documentation"],
     excluded: solution.excluded.join("\n"),
 
     requiredInputs: solution.requiredInputs,
     requiredInputsText: solution.requiredInputs.join("\n"),
 
-    structureConsistent: (solution as Record<string, unknown>).structureConsistent as string[] || [],
-    structureCustom: (solution as Record<string, unknown>).structureCustom as string[] || [],
-
     delivery_days: solution.deliveryDays,
     support_days: solution.supportDays,
+    paybackPeriod: solution.paybackPeriod || "",
 
     implementation_price: solution.implementationPriceCents / 100,
     monthly_cost_min: solution.monthlyCostMinCents ? solution.monthlyCostMinCents / 100 : 0,
     monthly_cost_max: solution.monthlyCostMaxCents ? solution.monthlyCostMaxCents / 100 : 0,
     outcome: solution.outcome || "",
+    demoPrice: solution.demoPriceCents ? solution.demoPriceCents / 100 : 2,
+
+    milestones: milestones.length > 0 ? milestones : [
+      { title: "Core Logic Engine", description: "Setup and configuration of the main automation workflow.", price: 0 },
+      { title: "Environment Mapping", description: "Customizing fields and triggers to match your specific tools.", price: 0 },
+      { title: "QA & Handover", description: "Testing and final walkthrough session.", price: 0 },
+    ],
+
+    outline: solution.outline && solution.outline.length > 0
+      ? [...solution.outline, "", "", ""].slice(0, 3)
+      : ["", "", ""],
+
+    structureConsistent: solution.structureConsistent || [],
+    structureCustom: solution.structureCustom || [],
+    businessGoals: solution.businessGoals || [],
+    industries: solution.industries || [],
+
+    demoVideoUrl: solution.demoVideoUrl || "",
 
     proofEnabled: !!solution.proofType,
     proofType: solution.proofType || undefined,
     proofContent: solution.proofContent || undefined,
-    demoVideoUrl: (solution as Record<string, unknown>).demoVideoUrl as string || undefined,
+
+    lastStep: solution.lastStep || 1,
   };
 
   return (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Crown, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Crown } from "lucide-react";
 import { SolutionCard } from "@/components/SolutionCard";
 import { solutions } from "@/data/mock";
 
@@ -26,27 +26,49 @@ export function FeaturedSolutions() {
           ))}
         </div>
 
-        {/* Custom / Discovery Catch-all */}
-        <div className="w-full p-8 md:p-10 rounded-xl border border-border bg-card/50 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left relative overflow-hidden group hover:border-primary/30 transition-all">
-           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-           
-           <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
-              <div className="h-14 w-14 rounded-full bg-secondary flex items-center justify-center text-primary shrink-0 border border-border">
-                 <Crown className="h-7 w-7" />
+        {/* Two-path CTA for visitors who didn't find a match */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-7 rounded-2xl bg-[#111827] flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center text-white/70 shrink-0">
+                <Sparkles className="h-4 w-4" />
               </div>
               <div>
-                 <h3 className="text-xl font-bold mb-2 text-foreground tracking-tight">Custom / Discovery Required?</h3>
-                 <p className="text-muted-foreground max-w-xl">
-                    Didn&apos;t find a match? Describe your business needs. Our Elite-tier experts will provide custom architectural bids.
-                 </p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold">Not sure where to start?</p>
+                <h3 className="text-base font-bold text-white">Post a Discovery Scan</h3>
               </div>
-           </div>
-           <Link 
+            </div>
+            <p className="text-sm text-white/50 leading-relaxed">
+              Describe how your business runs. Experts identify your biggest automation wins and send you concrete proposals within 24 hours.
+            </p>
+            <Link
               href="/jobs/discovery"
-              className="relative z-10 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap text-sm"
+              className="mt-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-colors"
             >
-              <Sparkles className="h-4 w-4" /> Launch Discovery Scan
+              Get Started <ArrowRight className="h-4 w-4" />
             </Link>
+          </div>
+
+          <div className="p-7 rounded-2xl bg-[#111827] flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center text-white/70 shrink-0">
+                <Crown className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider font-bold">Know exactly what you need?</p>
+                <h3 className="text-base font-bold text-white">Post a Custom Project</h3>
+              </div>
+            </div>
+            <p className="text-sm text-white/50 leading-relaxed">
+              Write your requirement once. Elite experts compete for the job with scoped proposals, a fixed price, and a clear timeline.
+            </p>
+            <Link
+              href="/jobs/new"
+              className="mt-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white text-sm font-bold hover:bg-white/8 transition-colors"
+            >
+              Post a Project <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </div>
     </section>

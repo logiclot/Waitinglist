@@ -1,4 +1,4 @@
-import { ShieldCheck, RefreshCw, MessageSquare, DollarSign, HelpCircle, Award, TrendingUp, Star } from "lucide-react";
+import { ShieldCheck, RefreshCw, MessageSquare, Euro, HelpCircle, Award, TrendingUp, Star } from "lucide-react";
 import { TIER_THRESHOLDS, SALES_THRESHOLDS } from "@/lib/commission";
 import { BRAND_NAME } from "@/lib/branding";
 
@@ -8,154 +8,160 @@ export const metadata = {
 };
 
 export default function PricingPage() {
-  const exampleImplementationPrice = 250000; // $2,500
-  const standardCommission = TIER_THRESHOLDS.STANDARD;
-  const platformFeeCents = Math.round(exampleImplementationPrice * (standardCommission / 100));
-  const expertPayoutCents = exampleImplementationPrice - platformFeeCents;
-
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(cents / 100);
-  };
-
   return (
-    <div className="container mx-auto px-4 py-20">
-      <div className="max-w-3xl mx-auto text-center mb-16">
-        <h1 className="text-4xl font-bold mb-6">Transparent Pricing</h1>
-        <p className="text-xl text-muted-foreground">
-          We believe in clear, upfront costs. No hidden fees or surprise subscriptions.
+    <div className="container mx-auto px-4 py-20 bg-[#FBFAF8]">
+      <div className="max-w-3xl mx-auto text-center mb-14">
+        <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-3">Fees &amp; Commissions</p>
+        <h1 className="text-4xl font-bold mb-4 tracking-tight">Transparent Pricing</h1>
+        <p className="text-base text-muted-foreground leading-relaxed">
+          No hidden fees, no subscriptions. Businesses pay nothing extra. Experts keep more as they grow.
         </p>
       </div>
 
       {/* Fees Explained Table */}
-      <div className="max-w-4xl mx-auto mb-20">
-        <h2 className="text-2xl font-bold mb-8 text-center">Fee Structure Explained</h2>
-        <div className="border border-border rounded-xl overflow-hidden bg-card">
+      <div className="max-w-5xl mx-auto mb-20">
+        <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
-            <div className="p-8">
-              <h3 className="font-bold text-lg mb-2">Implementation Fee</h3>
-              <p className="text-3xl font-bold mb-4">Fixed Price</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Paid once to the expert for setting up the automation.
-              </p>
-              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                Paid by Buyer
-              </span>
+            
+            {/* Column 1: Implementation */}
+            <div className="p-8 md:p-10 flex flex-col h-full">
+              <div className="mb-auto">
+                <h3 className="font-bold text-lg mb-2 text-foreground">Implementation Fee</h3>
+                <div className="text-3xl font-bold mb-4 text-foreground">Milestone Based</div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Paid in stages defined by the expert. Funds are held in secure escrow until you approve the work.
+                </p>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border/50">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-bold border border-border">
+                  Paid by Buyer
+                </span>
+              </div>
             </div>
-            <div className="p-8 bg-secondary/5">
-              <h3 className="font-bold text-lg mb-2">Platform Fee</h3>
-              <p className="text-3xl font-bold mb-4">0%</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                We charge the expert a commission. You pay exactly the listed price.
-              </p>
-              <span className="inline-block px-3 py-1 rounded-full bg-green-500/10 text-green-500 text-xs font-medium">
-                Free for Buyers
-              </span>
+
+            {/* Column 2: Platform Fee (Highlighted) */}
+            <div className="p-8 md:p-10 bg-primary/5 flex flex-col h-full relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+              <div className="mb-auto">
+                <h3 className="font-bold text-lg mb-2 text-primary">Platform Fee</h3>
+                <div className="text-4xl font-bold mb-4 text-foreground">0%</div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  We charge the expert a commission. You pay exactly the listed price.
+                </p>
+              </div>
+              <div className="mt-6 pt-6 border-t border-primary/10">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-foreground text-background text-xs font-bold">
+                  Free for Buyers
+                </span>
+              </div>
             </div>
-            <div className="p-8">
-              <h3 className="font-bold text-lg mb-2">AI/Cloud Usage</h3>
-              <p className="text-3xl font-bold mb-4">At Cost</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Paid directly to providers (OpenAI, Make, etc.). No markup.
-              </p>
-              <span className="inline-block px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
-                Paid to 3rd Parties
-              </span>
+
+            {/* Column 3: AI Costs */}
+            <div className="p-8 md:p-10 flex flex-col h-full">
+              <div className="mb-auto">
+                <h3 className="font-bold text-lg mb-2 text-foreground">AI/Cloud Usage</h3>
+                <div className="text-3xl font-bold mb-4 text-foreground">At Cost</div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Paid directly to providers (OpenAI, Make, etc.). No markup. Every solution lists estimated monthly costs upfront.
+                </p>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border/50">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-bold border border-border">
+                  Paid to 3rd Parties
+                </span>
+              </div>
             </div>
+
           </div>
         </div>
       </div>
 
-      {/* Expert Commission Tiers */}
-      <div className="max-w-4xl mx-auto mb-20">
-        <h2 className="text-2xl font-bold mb-4 text-center">Expert Commission Tiers</h2>
-        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-          We reward top-performing experts with lower platform fees. The more you sell, the more you keep.
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Standard Tier */}
-          <div className="border border-border rounded-xl p-6 bg-card relative overflow-hidden">
-            <div className="mb-4 flex items-center gap-2">
-               <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
-                 <TrendingUp className="h-4 w-4" />
-               </div>
-               <h3 className="font-bold">Standard</h3>
+      {/* Visual Break / Illustration Placeholder */}
+      <div className="max-w-4xl mx-auto mb-24 relative">
+        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+          <div className="w-full border-t border-border"></div>
+        </div>
+        <div className="relative flex justify-center">
+          <div className="bg-[#FBFAF8] px-4">
+            <div className="h-16 w-16 rounded-full bg-white border border-border flex items-center justify-center shadow-sm">
+              <ShieldCheck className="h-8 w-8 text-primary/80" />
             </div>
-            <div className="text-3xl font-bold mb-2">{TIER_THRESHOLDS.STANDARD}%</div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Commission</p>
-            <div className="mt-4 pt-4 border-t border-border text-sm text-muted-foreground">
-              Starting rate for all verified experts.
+          </div>
+        </div>
+        <p className="text-center text-sm text-muted-foreground mt-4 font-medium uppercase tracking-widest">
+          Secure · Transparent · Escrow Protected
+        </p>
+      </div>
+
+      {/* Expert Commission Tiers */}
+      <div className="max-w-5xl mx-auto mb-24">
+        <div className="text-center mb-10">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">For Experts</p>
+          <h2 className="text-2xl font-bold text-foreground">Expert Commission Tiers</h2>
+          <p className="text-muted-foreground mt-2 max-w-xl mx-auto text-sm">
+            The more you deliver, the less you pay. Commission drops automatically as your sales grow.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Standard Tier */}
+          <div className="bg-white border border-border rounded-2xl p-6 shadow-sm flex flex-col">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-secondary flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-foreground" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Standard</h3>
+            </div>
+            <div className="text-5xl font-bold mb-1 text-foreground">{TIER_THRESHOLDS.STANDARD}%</div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-auto">Commission</p>
+            <div className="mt-6 pt-5 border-t border-border text-sm text-muted-foreground">
+              Starting rate for all experts.
             </div>
           </div>
 
           {/* Proven Tier */}
-          <div className="border border-border rounded-xl p-6 bg-card relative overflow-hidden">
-            <div className="mb-4 flex items-center gap-2">
-               <div className="h-8 w-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                 <Award className="h-4 w-4" />
-               </div>
-               <h3 className="font-bold text-blue-500">Proven</h3>
+          <div className="bg-white border border-border rounded-2xl p-6 shadow-sm flex flex-col">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center">
+                <Award className="h-4 w-4 text-primary" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Proven</h3>
             </div>
-            <div className="text-3xl font-bold mb-2">{TIER_THRESHOLDS.PROVEN}%</div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Commission</p>
-            <div className="mt-4 pt-4 border-t border-border text-sm text-muted-foreground">
-              Unlocked after <strong>{SALES_THRESHOLDS.PROVEN} sales</strong>.
+            <div className="text-5xl font-bold mb-1 text-foreground">{TIER_THRESHOLDS.PROVEN}%</div>
+            <p className="text-[10px] text-primary uppercase tracking-wider font-bold mb-auto">Commission</p>
+            <div className="mt-6 pt-5 border-t border-border text-sm text-muted-foreground">
+              Unlocked after <strong className="text-foreground">{SALES_THRESHOLDS.PROVEN} sales</strong>.
             </div>
           </div>
 
           {/* Elite Tier */}
-          <div className="border border-border rounded-xl p-6 bg-card relative overflow-hidden ring-1 ring-purple-500/20">
-            <div className="mb-4 flex items-center gap-2">
-               <div className="h-8 w-8 rounded-full bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                 <Star className="h-4 w-4" />
-               </div>
-               <h3 className="font-bold text-purple-500">Elite</h3>
+          <div className="bg-white border border-border rounded-2xl p-6 shadow-sm flex flex-col">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center">
+                <Star className="h-4 w-4 text-primary" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Elite</h3>
             </div>
-            <div className="text-3xl font-bold mb-2">{TIER_THRESHOLDS.ELITE}%</div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Commission</p>
-            <div className="mt-4 pt-4 border-t border-border text-sm text-muted-foreground">
-              Unlocked after <strong>{SALES_THRESHOLDS.ELITE} sales</strong>.
+            <div className="text-5xl font-bold mb-1 text-foreground">{TIER_THRESHOLDS.ELITE}%</div>
+            <p className="text-[10px] text-primary uppercase tracking-wider font-bold mb-auto">Commission</p>
+            <div className="mt-6 pt-5 border-t border-border text-sm text-muted-foreground">
+              Unlocked after <strong className="text-foreground">{SALES_THRESHOLDS.ELITE} sales</strong>.
             </div>
           </div>
 
           {/* Founding Expert Tier */}
-          <div className="border border-yellow-500/30 rounded-xl p-6 bg-yellow-500/5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded-bl">LIMITED</div>
-            <div className="mb-4 flex items-center gap-2">
-               <div className="h-8 w-8 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center">
-                 <Award className="h-4 w-4" />
-               </div>
-               <h3 className="font-bold text-yellow-500">Founding</h3>
+          <div className="bg-[#111827] rounded-2xl p-6 shadow-xl flex flex-col relative overflow-hidden">
+            <span className="absolute top-0 right-0 bg-white text-[#111827] text-[10px] font-bold px-3 py-1 rounded-bl-xl">LIMITED</span>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center">
+                <Award className="h-4 w-4 text-white" />
+              </div>
+              <h3 className="font-bold text-base text-white">Founder</h3>
             </div>
-            <div className="text-3xl font-bold mb-2">{TIER_THRESHOLDS.FOUNDING}%</div>
-            <p className="text-xs text-yellow-500/70 uppercase tracking-wider font-semibold">Lifetime Commission</p>
-            <div className="mt-4 pt-4 border-t border-yellow-500/20 text-sm text-muted-foreground">
-              First 20 experts only. Permanent status.
-            </div>
-          </div>
-        </div>
-
-        {/* Payout Example */}
-        <div className="mt-12 bg-secondary/10 rounded-xl p-8 border border-border">
-          <h3 className="font-bold text-lg mb-6">Payout Example (Standard Tier)</h3>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-            <div className="bg-card p-4 rounded-lg border border-border flex-1 w-full text-center">
-              <div className="text-muted-foreground mb-1">Project Price</div>
-              <div className="font-bold text-xl">{formatCurrency(exampleImplementationPrice)}</div>
-            </div>
-            <div className="text-muted-foreground font-bold">-</div>
-            <div className="bg-card p-4 rounded-lg border border-border flex-1 w-full text-center">
-              <div className="text-muted-foreground mb-1">Platform Fee ({standardCommission}%)</div>
-              <div className="font-bold text-xl text-red-500">-{formatCurrency(platformFeeCents)}</div>
-            </div>
-            <div className="text-muted-foreground font-bold">=</div>
-            <div className="bg-green-500/10 p-4 rounded-lg border border-green-500/20 flex-1 w-full text-center">
-              <div className="text-green-600 mb-1 font-medium">Expert Payout</div>
-              <div className="font-bold text-xl text-green-500">{formatCurrency(expertPayoutCents)}</div>
+            <div className="text-5xl font-bold mb-1 text-white">{TIER_THRESHOLDS.FOUNDING}%</div>
+            <p className="text-[10px] text-white/50 uppercase tracking-wider font-bold mb-auto">Lifetime Commission</p>
+            <div className="mt-6 pt-5 border-t border-white/10 text-sm text-white/50">
+              First 20 experts only. <span className="text-white font-semibold">Permanent status.</span>
             </div>
           </div>
         </div>
@@ -163,11 +169,14 @@ export default function PricingPage() {
 
       {/* How Payments Work */}
       <div className="max-w-5xl mx-auto mb-20">
-        <h2 className="text-2xl font-bold mb-12 text-center">How Payments Work</h2>
+        <div className="text-center mb-10">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">Payment Flow</p>
+          <h2 className="text-2xl font-bold text-foreground">How Payments Work</h2>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="flex flex-col items-center text-center">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
-              <DollarSign className="h-6 w-6" />
+              <Euro className="h-6 w-6" />
             </div>
             <h3 className="font-bold mb-2">Secure Deposit</h3>
             <p className="text-sm text-muted-foreground">
@@ -196,9 +205,9 @@ export default function PricingPage() {
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
               <RefreshCw className="h-6 w-6" />
             </div>
-            <h3 className="font-bold mb-2">100% Refund</h3>
+            <h3 className="font-bold mb-2">Refund Protection</h3>
             <p className="text-sm text-muted-foreground">
-              If the expert fails to deliver or doesn&apos;t meet requirements, you get a full refund.
+              Posting fees: 75% refund if no proposal meets your criteria. For funded projects, disputes are mediated and may include full or partial refunds.
             </p>
           </div>
         </div>
@@ -206,7 +215,10 @@ export default function PricingPage() {
 
       {/* FAQ Section */}
       <div className="max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
+        <div className="text-center mb-8">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">Support</p>
+          <h2 className="text-2xl font-bold text-foreground">Frequently Asked Questions</h2>
+        </div>
         <div className="space-y-6">
           <div className="border border-border rounded-lg p-6 bg-card">
             <h3 className="font-bold flex items-start gap-3 mb-2">
@@ -214,7 +226,7 @@ export default function PricingPage() {
               What is the refund policy?
             </h3>
             <p className="text-muted-foreground pl-8">
-              We offer a 100% money-back guarantee if the expert fails to deliver the solution as described or misses the agreed-upon deadline. You can request a refund directly from your dashboard before the project is marked as complete.
+              Posting fees (€50 for Discovery Scans, €100 for Custom Projects): 75% refund if no expert proposal meets your criteria. For funded projects, you can raise a dispute; our team will mediate and may award full or partial refunds based on deliverables.
             </p>
           </div>
           <div className="border border-border rounded-lg p-6 bg-card">

@@ -123,6 +123,14 @@ export const AUTOMATION_STATUS = [
   "Not sure"
 ];
 
+// SECTION D: Process Pain Signals — Human judgment (max 2)
+export const HUMAN_JUDGMENT_LEVEL = [
+  "Fully rule-based — Every step follows clear, predictable rules",
+  "Mostly automated — Some edge cases need occasional review",
+  "Hybrid process — One critical decision point requires human input",
+  "Highly complex — Most steps require human judgment",
+];
+
 // SECTION D: Process Pain Signals
 export const MANUAL_TIME_DRAINS = [
   "Lead qualification",
@@ -141,7 +149,7 @@ export const ERROR_PRONE_TASKS = [
   "Billing / invoicing",
   "Reporting",
   "Status tracking",
-  "None stand out",
+  "None of these stand out",
   "Other"
 ];
 
@@ -233,19 +241,12 @@ export const PROPOSAL_CRITERIA = [
   "Other"
 ];
 
-export const HUMAN_JUDGMENT_LEVEL = [
-  "Fully rule-based — no judgment needed",
-  "Mostly rule-based, occasional exceptions",
-  "Significant judgment required",
-  "Highly variable — judgment-heavy",
-  "Not sure"
-];
-
+// Outcome Orientation — implementation timeline
 export const IMPLEMENTATION_TIMELINE = [
-  "ASAP (within 2 weeks)",
-  "Within 1 month",
-  "1–3 months",
-  "3–6 months",
-  "No fixed timeline",
+  "ASAP — Within 1–2 weeks",
+  "Within a month",
+  "Within 2–3 months",
+  "No rush — whenever it fits",
+  "Flexible — depends on scope",
   "Other"
 ];

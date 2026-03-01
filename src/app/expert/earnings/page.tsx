@@ -1,15 +1,19 @@
+import { EmptyState } from "@/components/EmptyState";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { getExpertEarnings } from "@/actions/expert";
-import { EarningsClient } from "./EarningsClient";
 
 export default async function EarningsPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/auth/sign-in");
+  await getServerSession(authOptions);
 
-  const data = await getExpertEarnings();
-  if ("error" in data) redirect("/dashboard");
-
-  return <EarningsClient data={data} />;
+  return (
+    <div className="p-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-8">Earnings</h1>
+      <EmptyState
+        title="No earnings yet"
+        description="Track your revenue and payouts here once you start completing projects."
+        primaryCtaLabel="Find Work"
+        primaryCtaHref="/expert/find-work"
+      />
+    </div>
+  );
 }

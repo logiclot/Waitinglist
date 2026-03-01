@@ -19,18 +19,6 @@ export async function getSolutionLockState(solutionId: string): Promise<LockStat
     return { locked: true, reason: "This solution is currently used in an active bid." };
   }
 
-  // Check active conversations
-  const activeConversation = await prisma.conversation.findFirst({
-    where: {
-      solutionId,
-      status: { in: ["active", "pending"] }
-    }
-  });
-
-  if (activeConversation) {
-    return { locked: true, reason: "This solution is currently part of an active buyer discussion." };
-  }
-
   // Check active orders (projects)
   const activeOrder = await prisma.order.findFirst({
     where: {

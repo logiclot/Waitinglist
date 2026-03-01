@@ -1,125 +1,206 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Zap,
   Search,
   TrendingUp,
-  Clock,
-  AlertCircle,
   Briefcase,
-  Info
+  Crown,
+  Users,
+  Copy,
+  Calendar,
+  Gift,
+  CheckCircle,
+  ArrowRight,
 } from "lucide-react";
+import { toast } from "sonner";
+import { formatCentsToCurrency } from "@/lib/commission";
+import { ActiveCoupons } from "./ActiveCoupons";
 
-interface ExpertOverviewData {
-  isFirstTime: boolean;
-  displayName: string | null;
-  thisMonthEarnedCents: number;
-  pendingCents: number;
-  actions: Array<{ type: "warning" | "info" | "action"; title: string; description: string; href: string }>;
-  activeOrders: Array<{ id: string; title: string; buyerEmail: string; status: string }>;
-  jobPosts: Array<{ id: string; title: string; budgetRange: string; createdAt: string }>;
-  topSolution: { id: string; title: string; category: string; orderCount: number } | null;
-  solutionCount: number;
+interface ActiveOrder {
+  id: string;
+  solutionTitle: string;
+  buyerName: string;
 }
 
-function formatEur(cents: number): string {
-  return `€${(cents / 100).toLocaleString("en-IE", { maximumFractionDigits: 0 })}`;
+interface TopSolution {
+  id: string;
+  title: string;
+  category: string;
+  completedSalesCount: number;
 }
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  paid_pending_implementation: { label: "Pending Start", className: "bg-yellow-500/10 text-yellow-600" },
-  in_progress: { label: "In Progress", className: "bg-blue-500/10 text-blue-500" },
-  delivered: { label: "Delivered", className: "bg-green-500/10 text-green-600" },
-  disputed: { label: "Disputed", className: "bg-red-500/10 text-red-600" },
-};
+interface RecentJob {
+  id: string;
+  title: string;
+  category: string;
+  budgetRange: string;
+}
 
-export function ExpertOverview({ data }: { data: ExpertOverviewData }) {
-  if (data.isFirstTime) {
-    return (
-      <div className="p-8 max-w-4xl mx-auto text-center space-y-8">
-        <h1 className="text-4xl font-bold">Welcome to the Expert Network</h1>
-        <p className="text-xl text-muted-foreground">Get started in 3 steps to unlock your first earnings.</p>
+interface ReferralRewards {
+  expertDiscountCount: number;
+  businessDiscountCount: number;
+}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          <div className="p-6 bg-card border border-border rounded-xl">
-            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4 font-bold">1</div>
-            <h3 className="font-bold mb-2">Complete Profile</h3>
-            <p className="text-sm text-muted-foreground mb-4">Add your skills and portfolio.</p>
-            <Link href="/expert/settings" className="text-sm font-bold text-primary hover:underline">Start now &rarr;</Link>
-          </div>
-          <div className="p-6 bg-card border border-border rounded-xl">
-            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4 font-bold">2</div>
-            <h3 className="font-bold mb-2">Add Solution or Bid</h3>
-            <p className="text-sm text-muted-foreground mb-4">Productize your service or find a request.</p>
-            <Link href="/expert/add-solution" className="text-sm font-bold text-primary hover:underline">Create Listing &rarr;</Link>
-          </div>
-          <div className="p-6 bg-card border border-border rounded-xl">
-            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4 font-bold">3</div>
-            <h3 className="font-bold mb-2">Win & Deliver</h3>
-            <p className="text-sm text-muted-foreground mb-4">Get paid securely via escrow.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+interface ReferralStats {
+  referralCode?: string | null;
+  referralRewards?: ReferralRewards | null;
+  referralCount?: number;
+  pendingCount?: number;
+  error?: string;
+}
+
+interface ExpertOverviewProps {
+  referralStats?: ReferralStats;
+  activeCoupons?: { code: string; title: string }[];
+  hasCalendarUrl?: boolean;
+  isFoundingExpert?: boolean;
+  earningsThisMonthCents?: number;
+  inEscrowCents?: number;
+  activeOrders?: ActiveOrder[];
+  topSolution?: TopSolution | null;
+  recentJobs?: RecentJob[];
+  totalCompletedSales?: number;
+}
+
+export function ExpertOverview({
+  referralStats,
+  activeCoupons = [],
+  hasCalendarUrl,
+  isFoundingExpert,
+  earningsThisMonthCents = 0,
+  inEscrowCents = 0,
+  activeOrders = [],
+  topSolution,
+  recentJobs = [],
+  totalCompletedSales = 0,
+}: ExpertOverviewProps) {
+  const [referralLink, setReferralLink] = useState("");
+  useEffect(() => {
+    setReferralLink(`${window.location.origin}/auth/signup?ref=${referralStats?.referralCode || ""}`);
+  }, [referralStats?.referralCode]);
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(referralLink);
+    toast.success("Referral link copied!");
+  };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-12">
+    <div className="p-8 max-w-6xl mx-auto space-y-8">
 
-      {/* Top section: Welcome + Earnings */}
-      <section className="flex flex-col md:flex-row justify-between gap-8">
+      {/* Active Coupons */}
+      {activeCoupons.length > 0 && (
+        <section className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground font-medium">Your coupons:</span>
+          <ActiveCoupons coupons={activeCoupons} />
+        </section>
+      )}
+
+      {/* Header + Earnings */}
+      <section className="flex flex-col md:flex-row justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Let&apos;s get you paid.</h1>
-          <p className="text-muted-foreground">High-intent businesses are looking for experts like you.</p>
+          <h1 className="text-2xl font-bold mb-1.5">Build once. Earn on every delivery.</h1>
+          <p className="text-muted-foreground text-sm">Qualified requests arrive daily. You focus on delivery.</p>
         </div>
 
-        <div className="flex gap-4">
-          <div className="bg-card border border-border rounded-xl p-4 min-w-[140px]">
+        <div className="flex gap-3">
+          {isFoundingExpert && (
+            <div className="bg-amber-100 border border-amber-200 rounded-xl p-4 min-w-[130px] flex flex-col justify-center">
+              <p className="text-xs text-amber-800 uppercase tracking-wider font-bold mb-1 flex items-center gap-1">
+                <Crown className="w-3 h-3" /> Founder
+              </p>
+              <p className="text-sm font-medium text-amber-900">11% Fee Locked</p>
+            </div>
+          )}
+          <div className="bg-card border border-border rounded-xl p-4 min-w-[130px]">
             <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">This Month</p>
-            <p className="text-2xl font-bold">{formatEur(data.thisMonthEarnedCents)}</p>
+            <p className="text-2xl font-bold">
+              {earningsThisMonthCents > 0 ? formatCentsToCurrency(earningsThisMonthCents) : "—"}
+            </p>
           </div>
-          <div className="bg-card border border-border rounded-xl p-4 min-w-[140px]">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Pending</p>
-            <p className="text-2xl font-bold text-muted-foreground">{formatEur(data.pendingCents)}</p>
+          <div className="bg-card border border-border rounded-xl p-4 min-w-[130px]">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">In Escrow</p>
+            <p className="text-2xl font-bold text-muted-foreground">
+              {inEscrowCents > 0 ? formatCentsToCurrency(inEscrowCents) : "—"}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Referral Section */}
+      <section className="bg-card border border-border rounded-xl p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="font-bold text-base mb-1.5 flex items-center gap-2">
+              <Users className="w-5 h-5 text-foreground" /> Referral Program
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+              Share your link. When a referred expert stays active for 3 days and publishes a solution, you receive{" "}
+              <span className="font-bold text-foreground">5% off our platform fee</span> for your next 2 sales.
+            </p>
+            <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
+              <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
+                {referralLink}
+              </code>
+              <button onClick={copyToClipboard} className="p-1 hover:bg-secondary rounded-md transition-colors" title="Copy link">
+                <Copy className="w-4 h-4 text-foreground" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-8 text-right">
+            {(referralStats?.referralRewards?.expertDiscountCount || 0) > 0 && (
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                  <Gift className="w-4 h-4 text-green-500 shrink-0" />
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                      {referralStats?.referralRewards?.expertDiscountCount} discount credit
+                      {referralStats?.referralRewards?.expertDiscountCount !== 1 ? "s" : ""} available
+                    </p>
+                    <p className="text-xs text-green-600/70 dark:text-green-400/70">
+                      5% off platform fee · auto-applied on next sale
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col items-end">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Referrals</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold text-foreground">{referralStats?.referralCount || 0}</span>
+                <span className="text-sm font-medium text-muted-foreground">joined</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Experts</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Priority Actions */}
-      {data.actions.length > 0 && (
+      {(!hasCalendarUrl) && (
         <section>
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-5 h-5 text-yellow-500" />
-            <h2 className="text-xl font-bold">Priority Actions</h2>
+            <h2 className="text-lg font-bold">Priority Actions</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.actions.slice(0, 4).map((action, i) => {
-              const colorMap = {
-                warning: "bg-yellow-500/10 border-yellow-500/20",
-                info: "bg-blue-500/10 border-blue-500/20",
-                action: "bg-green-500/10 border-green-500/20",
-              };
-              const iconMap = {
-                warning: <AlertCircle className="w-5 h-5 text-yellow-500" />,
-                info: <Info className="w-5 h-5 text-blue-500" />,
-                action: <Clock className="w-5 h-5 text-green-500" />,
-              };
-              return (
-                <div key={i} className={`${colorMap[action.type]} border p-4 rounded-xl flex items-center justify-between`}>
-                  <div className="flex items-center gap-3">
-                    {iconMap[action.type]}
-                    <div>
-                      <p className="font-bold text-sm">{action.title}</p>
-                      <p className="text-xs text-muted-foreground">{action.description}</p>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {!hasCalendarUrl && (
+              <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-purple-500" />
+                  <div>
+                    <p className="font-bold text-sm">Link Work Calendar</p>
+                    <p className="text-xs text-muted-foreground">Let clients book demos and calls</p>
                   </div>
-                  <Link href={action.href} className="px-3 py-1.5 bg-background border border-border rounded-md text-xs font-bold hover:bg-secondary transition-colors shrink-0">
-                    View
-                  </Link>
                 </div>
-              );
-            })}
+                <Link href="/expert/settings" className="px-3 py-1.5 bg-background border border-border rounded-md text-xs font-bold hover:bg-secondary transition-colors">
+                  Link
+                </Link>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -127,51 +208,60 @@ export function ExpertOverview({ data }: { data: ExpertOverviewData }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {/* Left Col (2/3) */}
-        <div className="lg:col-span-2 space-y-12">
+        <div className="lg:col-span-2 space-y-8">
 
           {/* New Opportunities */}
           <section>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Search className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-bold">New Opportunities</h2>
+                <h2 className="text-lg font-bold">New Opportunities</h2>
               </div>
-              <Link href="/expert/find-work" className="text-sm text-primary hover:underline">View Feed &rarr;</Link>
+              <Link href="/jobs/discovery" className="text-sm text-primary hover:underline flex items-center gap-1">
+                View all <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
 
-            {data.jobPosts.length > 0 ? (
+            {recentJobs.length === 0 ? (
+              <div className="bg-card border border-border rounded-xl p-6 text-center text-muted-foreground text-sm">
+                No open requests right now.{" "}
+                <Link href="/jobs/discovery" className="text-primary hover:underline">Check the full feed.</Link>
+              </div>
+            ) : (
               <div className="space-y-3">
-                {data.jobPosts.map((job) => (
-                  <Link key={job.id} href={`/jobs/${job.id}`} className="group bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors cursor-pointer flex justify-between items-center block">
+                {recentJobs.map((job) => (
+                  <Link
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    className="group bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors cursor-pointer flex justify-between items-center"
+                  >
                     <div>
                       <h3 className="font-bold text-sm mb-1 group-hover:text-primary transition-colors">{job.title}</h3>
                       <div className="flex gap-2 text-xs text-muted-foreground">
-                        {job.budgetRange && (
-                          <span className="text-green-500 font-medium">
-                            {job.budgetRange}
-                          </span>
-                        )}
-                        <span>{new Date(job.createdAt).toLocaleDateString()}</span>
+                        <span className="bg-secondary px-1.5 py-0.5 rounded">{job.category}</span>
+                        <span className="text-green-500 font-medium">{job.budgetRange}</span>
                       </div>
                     </div>
                     <span className="text-[10px] uppercase font-bold text-muted-foreground bg-secondary px-2 py-1 rounded">New</span>
                   </Link>
                 ))}
               </div>
-            ) : (
-              <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground">
-                <p className="text-sm">No open job posts right now. Check back soon!</p>
-              </div>
             )}
           </section>
 
-          {/* Active Work */}
+          {/* Active Projects */}
           <section>
             <div className="flex items-center gap-2 mb-4">
               <Briefcase className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold">Active Projects</h2>
+              <h2 className="text-lg font-bold">Active Projects</h2>
             </div>
-            {data.activeOrders.length > 0 ? (
+
+            {activeOrders.length === 0 ? (
+              <div className="bg-card border border-border rounded-xl p-6 text-center text-muted-foreground text-sm">
+                No active projects yet.{" "}
+                <Link href="/solutions" className="text-primary hover:underline">Publish a solution</Link> to start getting orders.
+              </div>
+            ) : (
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
@@ -183,27 +273,22 @@ export function ExpertOverview({ data }: { data: ExpertOverviewData }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {data.activeOrders.map((order) => {
-                      const statusInfo = STATUS_LABELS[order.status] || { label: order.status, className: "bg-secondary text-muted-foreground" };
-                      return (
-                        <tr key={order.id}>
-                          <td className="px-4 py-3 font-medium">{order.title}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{order.buyerEmail.split("@")[0]}</td>
-                          <td className="px-4 py-3">
-                            <span className={`text-xs px-2 py-1 rounded-full font-bold ${statusInfo.className}`}>{statusInfo.label}</span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <Link href="/expert/projects" className="text-xs font-bold hover:underline text-primary">Manage</Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {activeOrders.map((order) => (
+                      <tr key={order.id}>
+                        <td className="px-4 py-3 font-medium truncate max-w-[180px]">{order.solutionTitle}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{order.buyerName}</td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs bg-blue-500/10 text-blue-500 px-2 py-1 rounded-full font-bold">In Progress</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Link href={`/expert/projects/${order.id}`} className="text-xs font-bold text-primary hover:underline">
+                            Manage
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
-              </div>
-            ) : (
-              <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground">
-                <p className="text-sm">No active projects yet. Browse opportunities to find work.</p>
               </div>
             )}
           </section>
@@ -211,62 +296,65 @@ export function ExpertOverview({ data }: { data: ExpertOverviewData }) {
         </div>
 
         {/* Right Col (1/3) */}
-        <div className="space-y-8">
+        <div className="space-y-6">
 
           {/* Top Solution */}
-          {data.topSolution ? (
-            <section className="bg-card border border-border rounded-xl p-6">
-              <h3 className="font-bold mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-green-500" /> Top Solution
-              </h3>
-              <div className="mb-4">
-                <p className="font-medium text-sm">{data.topSolution.title}</p>
-                <p className="text-xs text-muted-foreground">{data.topSolution.category}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mb-6">
-                <div className="text-center p-2 bg-secondary/30 rounded">
-                  <p className="text-xs text-muted-foreground">Sales</p>
-                  <p className="font-bold">{data.topSolution.orderCount}</p>
+          <section className="bg-card border border-border rounded-xl p-5">
+            <h3 className="font-bold mb-3 flex items-center gap-2 text-sm">
+              <TrendingUp className="w-4 h-4 text-green-500" /> Top Solution
+            </h3>
+            {topSolution ? (
+              <>
+                <div className="mb-3">
+                  <p className="font-medium text-sm">{topSolution.title}</p>
+                  <p className="text-xs text-muted-foreground">{topSolution.category}</p>
                 </div>
-                <div className="text-center p-2 bg-secondary/30 rounded">
-                  <p className="text-xs text-muted-foreground">Listed</p>
-                  <p className="font-bold">{data.solutionCount}</p>
+                <div className="grid grid-cols-2 gap-2 mb-5">
+                  <div className="text-center p-2 bg-secondary/30 rounded">
+                    <p className="text-xs text-muted-foreground">Sales</p>
+                    <p className="font-bold text-sm">{topSolution.completedSalesCount}</p>
+                  </div>
+                  <div className="text-center p-2 bg-secondary/30 rounded">
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="font-bold text-sm">{totalCompletedSales}</p>
+                  </div>
                 </div>
+                <Link
+                  href={`/expert/solutions/${topSolution.id}/edit`}
+                  className="block w-full py-2 text-center bg-secondary hover:bg-secondary/80 rounded-lg text-xs font-bold transition-colors"
+                >
+                  Improve Listing
+                </Link>
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground mb-3">No published solutions yet.</p>
+                <Link href="/expert/my-solutions/new" className="text-xs text-primary hover:underline font-medium">
+                  Create your first solution →
+                </Link>
               </div>
-              <Link href={`/solutions/${data.topSolution.id}/edit`} className="block w-full py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-xs font-bold transition-colors text-center">
-                Optimize Listing
-              </Link>
-            </section>
-          ) : (
-            <section className="bg-card border border-border rounded-xl p-6">
-              <h3 className="font-bold mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-green-500" /> Your Solutions
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                You have {data.solutionCount} solution{data.solutionCount !== 1 ? "s" : ""} listed.
-              </p>
-              <Link href="/expert/add-solution" className="block w-full py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg text-xs font-bold transition-colors text-center">
-                Add Solution
-              </Link>
-            </section>
-          )}
+            )}
+          </section>
 
-          {/* Quick Stats */}
-          <section className="bg-card border border-border rounded-xl p-6">
-            <h3 className="font-bold mb-4">Quick Links</h3>
+          {/* Stats */}
+          <section className="bg-card border border-border rounded-xl p-5">
+            <h3 className="font-bold mb-3 text-sm">Your Stats</h3>
             <div className="space-y-3">
-              <Link href="/expert/earnings" className="flex justify-between items-center text-sm hover:text-primary transition-colors">
-                <span className="text-muted-foreground">Earnings</span>
-                <span className="font-bold">{formatEur(data.thisMonthEarnedCents)}</span>
-              </Link>
-              <Link href="/expert/my-solutions" className="flex justify-between items-center text-sm hover:text-primary transition-colors">
-                <span className="text-muted-foreground">My Solutions</span>
-                <span className="font-bold">{data.solutionCount}</span>
-              </Link>
-              <Link href="/expert/projects" className="flex justify-between items-center text-sm hover:text-primary transition-colors">
-                <span className="text-muted-foreground">Active Projects</span>
-                <span className="font-bold">{data.activeOrders.length}</span>
-              </Link>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Completed Sales</span>
+                <span className="font-bold text-sm flex items-center gap-1">
+                  {totalCompletedSales}
+                  {totalCompletedSales > 0 && <CheckCircle className="w-3.5 h-3.5 text-green-500" />}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Active Orders</span>
+                <span className="font-bold text-sm">{activeOrders.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Rating</span>
+                <span className="text-sm text-muted-foreground italic">No reviews yet</span>
+              </div>
             </div>
           </section>
 

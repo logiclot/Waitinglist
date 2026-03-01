@@ -5,12 +5,21 @@ import { useEffect, useState } from "react";
 import { Zap, CheckCircle2, Clock, Users, Copy, Gift, ArrowRight } from "lucide-react";
 import { ActiveCoupons } from "./ActiveCoupons";
 import { toast } from "sonner";
-import type { RecommendedSolution } from "@/lib/recommendation-engine";
 
 interface ActiveOrder {
   id: string;
   solutionTitle: string;
   status: string;
+}
+
+interface RecommendedSolution {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  implementationPrice: number;
+  deliveryDays: number;
 }
 
 interface ReferralRewards {
@@ -31,69 +40,14 @@ interface BusinessOverviewProps {
   activeCoupons?: { code: string; title: string }[];
   activeOrders?: ActiveOrder[];
   recommendedSolutions?: RecommendedSolution[];
-  /** Alias kept for backward compatibility with existing page code */
-  recommendations?: RecommendedSolution[];
-}
-
-function formatPrice(cents: number): string {
-  return `\u20AC${(cents / 100).toLocaleString("en-IE", { maximumFractionDigits: 0 })}`;
-}
-
-function RecommendationCard({ solution }: { solution: RecommendedSolution }) {
-  return (
-    <Link
-      href={`/solutions/${solution.slug}`}
-      className="block bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-colors group cursor-pointer"
-    >
-      <div className="flex justify-between items-start mb-3">
-        <span className="text-[10px] uppercase font-bold bg-primary/10 text-primary px-2 py-1 rounded">
-          {solution.category}
-        </span>
-        {solution.expertVerified && (
-          <span className="text-[10px] uppercase font-bold bg-green-500/10 text-green-500 px-2 py-1 rounded">
-            Verified
-          </span>
-        )}
-      </div>
-      <h3 className="font-bold text-base mb-1.5 group-hover:text-primary transition-colors line-clamp-2">
-        {solution.title}
-      </h3>
-      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-        {solution.shortSummary || solution.outcome || "Ready-to-deploy automation solution."}
-      </p>
-      {solution.integrations.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-4">
-          {solution.integrations.slice(0, 3).map((t) => (
-            <span key={t} className="text-[10px] bg-secondary px-2 py-0.5 rounded text-muted-foreground">
-              {t}
-            </span>
-          ))}
-          {solution.integrations.length > 3 && (
-            <span className="text-[10px] bg-secondary px-2 py-0.5 rounded text-muted-foreground">
-              +{solution.integrations.length - 3}
-            </span>
-          )}
-        </div>
-      )}
-      <div className="pt-3 border-t border-border flex items-center justify-between text-sm">
-        <span className="font-bold">{formatPrice(solution.implementationPriceCents)}</span>
-        <span className="text-muted-foreground flex items-center gap-1">
-          <Clock className="w-3 h-3" /> {solution.deliveryDays} days
-        </span>
-      </div>
-    </Link>
-  );
 }
 
 export function BusinessOverview({
   referralStats,
   activeCoupons = [],
   activeOrders = [],
-  recommendedSolutions,
-  recommendations,
+  recommendedSolutions = [],
 }: BusinessOverviewProps) {
-  // Accept either prop name for backward compatibility
-  const solutions = recommendedSolutions ?? recommendations ?? [];
   const hasActiveWork = activeOrders.length > 0;
 
   const [referralLink, setReferralLink] = useState("");
@@ -132,7 +86,7 @@ export function BusinessOverview({
             Automate your operations, without the complexity.
           </h1>
           <p className="text-base text-muted-foreground mb-5">
-            Work with vetted experts to automate your exact workflow &mdash; or explore the solution library.
+            Work with vetted experts to automate your exact workflow — or explore the solution library.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
             <Link
@@ -151,7 +105,7 @@ export function BusinessOverview({
               href="/solutions"
               className="inline-flex items-center gap-1.5 justify-center px-5 py-3 rounded-xl text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
             >
-              Browse Solutions &rarr;
+              Browse Solutions →
             </Link>
           </div>
           <p className="text-xs text-muted-foreground mt-3">
@@ -169,56 +123,54 @@ export function BusinessOverview({
       </section>
 
       {/* Referral Section */}
-      {referralStats && (
-        <section className="bg-card border border-border rounded-xl p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h3 className="font-bold text-lg mb-1.5 flex items-center gap-2">
-                <Users className="w-5 h-5 text-foreground" /> Referral Program
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
-                Share your link. When a referred business buys a solution, you receive{" "}
-                <span className="font-bold text-foreground">5% off your next purchase</span> &mdash; automatically applied at checkout.
-              </p>
-              <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
-                <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
-                  {referralLink}
-                </code>
-                <button onClick={copyToClipboard} className="p-1 hover:bg-secondary rounded-md transition-colors" title="Copy link">
-                  <Copy className="w-4 h-4 text-foreground" />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-8 text-right">
-              {(referralStats?.referralRewards?.businessDiscountCount || 0) > 0 && (
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
-                    <Gift className="w-4 h-4 text-green-500 shrink-0" />
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                        {referralStats?.referralRewards?.businessDiscountCount} discount credit
-                        {referralStats?.referralRewards?.businessDiscountCount !== 1 ? "s" : ""} available
-                      </p>
-                      <p className="text-xs text-green-600/70 dark:text-green-400/70">
-                        5% off next purchase &middot; auto-applied at checkout
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="flex flex-col items-end">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Referrals</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-foreground">{referralStats?.referralCount || 0}</span>
-                  <span className="text-sm font-medium text-muted-foreground">joined</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Businesses</p>
-              </div>
+      <section className="bg-card border border-border rounded-xl p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="font-bold text-lg mb-1.5 flex items-center gap-2">
+              <Users className="w-5 h-5 text-foreground" /> Referral Program
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+              Share your link. When a referred business buys a solution, you receive{" "}
+              <span className="font-bold text-foreground">5% off your next purchase</span> — automatically applied at checkout.
+            </p>
+            <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
+              <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
+                {referralLink}
+              </code>
+              <button onClick={copyToClipboard} className="p-1 hover:bg-secondary rounded-md transition-colors" title="Copy link">
+                <Copy className="w-4 h-4 text-foreground" />
+              </button>
             </div>
           </div>
-        </section>
-      )}
+
+          <div className="flex gap-8 text-right">
+            {(referralStats?.referralRewards?.businessDiscountCount || 0) > 0 && (
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                  <Gift className="w-4 h-4 text-green-500 shrink-0" />
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                      {referralStats?.referralRewards?.businessDiscountCount} discount credit
+                      {referralStats?.referralRewards?.businessDiscountCount !== 1 ? "s" : ""} available
+                    </p>
+                    <p className="text-xs text-green-600/70 dark:text-green-400/70">
+                      5% off next purchase · auto-applied at checkout
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col items-end">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Referrals</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold text-foreground">{referralStats?.referralCount || 0}</span>
+                <span className="text-sm font-medium text-muted-foreground">joined</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Businesses</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Active Projects or How It Works */}
       {hasActiveWork ? (
@@ -306,15 +258,34 @@ export function BusinessOverview({
           </Link>
         </div>
 
-        {solutions.length === 0 ? (
+        {recommendedSolutions.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-6 text-center text-muted-foreground text-sm">
-            <p className="mb-2">No personalised recommendations yet.</p>
-            <Link href="/solutions" className="text-primary hover:underline font-medium">Browse all solutions</Link>
+            <Link href="/solutions" className="text-primary hover:underline font-medium">Browse the solution library →</Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {solutions.map((solution) => (
-              <RecommendationCard key={solution.id} solution={solution} />
+            {recommendedSolutions.map((solution) => (
+              <Link
+                key={solution.id}
+                href={`/solutions/${solution.id}`}
+                className="block bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-colors group cursor-pointer"
+              >
+                <div className="mb-3">
+                  <span className="text-[10px] uppercase font-bold bg-primary/10 text-primary px-2 py-1 rounded">
+                    {solution.category}
+                  </span>
+                </div>
+                <h3 className="font-bold text-base mb-1.5 group-hover:text-primary transition-colors line-clamp-2">
+                  {solution.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{solution.description}</p>
+                <div className="pt-3 border-t border-border flex items-center justify-between text-sm">
+                  <span className="font-bold">€{solution.implementationPrice.toLocaleString()}</span>
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> {solution.deliveryDays} days
+                  </span>
+                </div>
+              </Link>
             ))}
           </div>
         )}

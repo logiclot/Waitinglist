@@ -51,13 +51,13 @@ async function getSolution(idOrSlug: string) {
   try {
     let s = await prisma.solution.findUnique({
       where: { id: idOrSlug },
-      include: { expert: true, _count: { select: { orders: true } } }
+      include: { expert: true }
     });
 
     if (!s) {
       s = await prisma.solution.findUnique({
         where: { slug: idOrSlug },
-        include: { expert: true, _count: { select: { orders: true } } }
+        include: { expert: true }
       });
     }
 
@@ -73,7 +73,6 @@ async function getSolution(idOrSlug: string) {
       delivery_days: s.deliveryDays,
       support_days: s.supportDays,
       short_summary: s.shortSummary,
-      adoption_count: s._count.orders > 0 ? s._count.orders : undefined,
       milestones: (s.milestones as unknown as Milestone[]) || [],
       demoPrice: s.demoPriceCents ? s.demoPriceCents / 100 : 2,
       expert: {
@@ -128,6 +127,40 @@ export default async function SolutionPage({ params }: PageProps) {
 
   const ecosystems = await getEcosystemsForSolution(solution.id);
   const isPartOfStack = ecosystems.length > 0;
+
+  // Fetch real similar solutions from DB (same category, exclude current, published only)
+  const similarRaw = await prisma.solution.findMany({
+    where: {
+      status: "published",
+      category: solution.category,
+      id: { not: solution.id },
+    },
+    orderBy: { publishedAt: "desc" },
+    take: 3,
+    include: { expert: true },
+  });
+  // If not enough in same category, fill up with any other published solutions
+  const similarFromOther = similarRaw.length < 3
+    ? await prisma.solution.findMany({
+        where: {
+          status: "published",
+          id: { notIn: [solution.id, ...similarRaw.map(s => s.id)] },
+        },
+        orderBy: { publishedAt: "desc" },
+        take: 3 - similarRaw.length,
+        include: { expert: true },
+      })
+    : [];
+  const similarSolutions = [...similarRaw, ...similarFromOther].map(s => ({
+    id: s.id,
+    slug: s.slug,
+    title: s.title,
+    category: s.category,
+    implementation_price: s.implementationPriceCents / 100,
+    short_summary: s.shortSummary || "",
+    outcome: s.outcome || "",
+    expertName: s.expert?.displayName || s.expert?.legalFullName || "Expert",
+  }));
 
   return (
     <div className="min-h-screen pb-20">
@@ -487,7 +520,7 @@ export default async function SolutionPage({ params }: PageProps) {
       </div>
 
       {/* Similar Solutions */}
-      <SimilarSolutions currentSlug={solution.slug} category={solution.category} />
+      <SimilarSolutions solutions={similarSolutions} />
     </div>
   );
 }

@@ -1,100 +1,150 @@
 import Link from "next/link";
-import { Search, Crown, Lightbulb, ShieldCheck, Zap, CheckCircle2 } from "lucide-react";
+import { Search, Crown, Sparkles, ShieldCheck, CheckCircle2, ArrowRight } from "lucide-react";
 import { BRAND_NAME } from "@/lib/branding";
 
 export const metadata = {
   title: `For Businesses | ${BRAND_NAME}`,
-  description: "Three ways to automate your business: Browse the gallery, get ideas with a Discovery Scan, or build custom.",
+  description: "Three ways to automate your business: explore solutions, get an expert roadmap, or have something built exactly for you.",
 };
 
 export default function ForBusinessesPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+
       {/* Hero */}
-      <section className="py-20 text-center px-4 border-b border-white/10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent -z-10" />
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+      <section className="py-20 text-center px-4 border-b border-border relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent -z-10" />
+        <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
           Three ways to automate your business.
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Whether you know exactly what you need or just know something is broken, we have a path for you.
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Whether you know exactly what you need or just know something is broken, there&apos;s a path for you.
         </p>
       </section>
 
       {/* The 3 Paths */}
       <section className="py-16 container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Path 1: The Gallery */}
-          <div className="group rounded-2xl border border-white/10 bg-card p-8 hover:border-primary/50 transition-all flex flex-col relative overflow-hidden">
-            <div className="mb-6 h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+          {/* Path 1: Browse Solutions */}
+          <div className="relative p-8 rounded-2xl bg-white border border-gray-200 shadow-md hover:shadow-lg transition-all flex flex-col">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gray-100 to-gray-200 rounded-t-2xl" />
+            <div className="mb-6 h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
               <Search className="h-6 w-6" />
             </div>
-            <h3 className="text-2xl font-bold mb-2">The Gallery</h3>
-            <div className="text-xs font-bold uppercase tracking-wider text-green-400 mb-4">Instant Access</div>
-            <p className="text-muted-foreground mb-8 flex-grow">
-              Explore ready-made automations with fixed pricing and clear deliverables. No guessing games. Best for standard workflows.
+            <h3 className="text-2xl font-bold mb-1">Browse Solutions</h3>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-5">Ready to deploy</p>
+            <p className="text-muted-foreground text-sm mb-6 flex-grow">
+              Pick a proven automation, see it working live, and have it running in your tools within days.
             </p>
+            <ul className="text-sm space-y-3 mb-8">
+              {[
+                "Watch a live demo before you commit",
+                "Deployed inside your existing tools",
+                "You approve the result before funds release",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-foreground">
+                  <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" /> {item}
+                </li>
+              ))}
+            </ul>
             <div className="mt-auto">
-              <Link 
-                href="/solutions" 
-                className="w-full py-3 rounded-lg border border-white/10 bg-secondary/50 hover:bg-secondary text-center block font-medium transition-colors"
+              <Link
+                href="/solutions"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold transition-colors"
               >
-                Browse Solutions
+                Browse Solutions <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
 
           {/* Path 2: Discovery Scan */}
-          <div className="group rounded-2xl border border-[#FF8C00]/30 bg-card p-8 hover:border-[#FF8C00] transition-all flex flex-col relative shadow-lg shadow-orange-500/5">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#FF8C00] to-yellow-500" />
-            <div className="mb-6 h-12 w-12 rounded-full bg-[#FF8C00]/10 flex items-center justify-center text-[#FF8C00]">
-              <Lightbulb className="h-6 w-6" />
+          <div className="relative p-8 rounded-2xl bg-[#1E293B] border border-white/10 shadow-xl flex flex-col ring-1 ring-white/5">
+            <div className="mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold mb-4 border border-blue-500/30">
+                Most Popular
+              </div>
+              <div className="flex items-start justify-between mb-3">
+                <div className="h-12 w-12 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <Sparkles className="h-6 w-6" />
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-white">&euro;50</div>
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">one-time posting fee</div>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-1">Stop guessing.<br />Start automating.</h3>
+              <p className="text-xs text-blue-300/70 uppercase tracking-wide font-medium mt-2">Discovery Scan &middot; Up to 5 expert proposals</p>
             </div>
-            <h3 className="text-2xl font-bold mb-2">Discovery Scan</h3>
-            <div className="text-xs font-bold uppercase tracking-wider text-[#FF8C00] mb-4">Most Popular • €50 one-time</div>
-            <p className="text-muted-foreground mb-6 flex-grow">
-              Not sure what to automate? Describe your business in our guided scan — specialists identify opportunities and send bids.
+            <p className="text-slate-300 text-sm mb-6 flex-grow">
+              Describe how your business runs. Automation experts identify your biggest wins and send you concrete proposals — no access required, no commitment.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-3 mb-8">
-              <li className="flex items-start gap-2"><Zap className="w-4 h-4 text-[#FF8C00] shrink-0 mt-0.5" /> Guided business + stack intake (wizard)</li>
-              <li className="flex items-start gap-2"><Zap className="w-4 h-4 text-[#FF8C00] shrink-0 mt-0.5" /> Multiple bids with clear recommendations</li>
-              <li className="flex items-start gap-2"><Zap className="w-4 h-4 text-[#FF8C00] shrink-0 mt-0.5" /> Compare options and pick what fits</li>
+            <ul className="text-sm space-y-3 mb-8">
+              {[
+                "Find your 3 biggest time or cost leaks — identified by real experts",
+                "Get 2–5 proposals with full scope, timeline, and ROI estimate",
+                "Live demo before any commitment or access is granted",
+                "Walk away with clarity — even if you don\u2019t proceed",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-slate-200">
+                  <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" /> {item}
+                </li>
+              ))}
             </ul>
-            <div className="mt-auto">
-              <Link 
-                href="/jobs/discovery" 
-                className="w-full py-3 rounded-lg bg-[#FF8C00] hover:bg-[#E67E00] text-white text-center block font-bold transition-colors shadow-md shadow-orange-500/20"
+            <div className="mt-auto pt-6 border-t border-white/10">
+              <Link
+                href="/jobs/discovery"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg bg-primary hover:bg-primary/90 text-white font-bold transition-colors shadow-lg shadow-blue-500/10"
               >
-                Start Discovery Wizard
+                Get My Automation Roadmap <ArrowRight className="h-4 w-4" />
               </Link>
-              <p className="text-xs text-muted-foreground text-center mt-3">Receive bids in 24–72h</p>
+              <p className="text-xs text-slate-500 text-center mt-3">First proposals arrive within 24 hours</p>
             </div>
           </div>
 
           {/* Path 3: Custom Project */}
-          <div className="group rounded-2xl border border-white/10 bg-card p-8 hover:border-purple-500/50 transition-all flex flex-col relative">
-            <div className="mb-6 h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400">
-              <Crown className="h-6 w-6" />
+          <div className="relative p-8 rounded-2xl bg-[#0F172A] border border-purple-500/20 shadow-2xl flex flex-col ring-1 ring-purple-500/10">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500/50 to-blue-500/50 rounded-t-2xl opacity-50" />
+            <div className="mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold mb-4 border border-purple-500/30">
+                For Complex Workflows
+              </div>
+              <div className="flex items-start justify-between mb-3">
+                <div className="h-12 w-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <Crown className="h-6 w-6" />
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-white">&euro;100</div>
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">one-time posting fee</div>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-1">Describe it once.<br />Get it built right.</h3>
+              <p className="text-xs text-purple-300/70 uppercase tracking-wide font-medium mt-2">Custom Project &middot; Max 3 tailored proposals</p>
             </div>
-            <h3 className="text-2xl font-bold mb-2">Custom Project</h3>
-            <div className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-4">Most Efficient • €100 one-time</div>
-            <p className="text-muted-foreground mb-6 flex-grow">
-              Know the bottleneck? Submit one specific problem — Elite experts respond with tailored bids and a clear plan.
+            <p className="text-slate-300 text-sm mb-6 flex-grow">
+              You know what needs to change. Post your requirement — Elite experts compete for the job with tailored proposals, not generic advice.
             </p>
-            <ul className="text-sm text-muted-foreground space-y-3 mb-8">
-              <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" /> Elite / Founding experts only</li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" /> Multiple bids with scope + outcome</li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" /> Includes AI/API cost estimate</li>
+            <ul className="text-sm space-y-3 mb-8">
+              {[
+                "Your team stops doing manually what should have been automated a long time ago.",
+                "The problem you describe is the exact problem that gets solved",
+                "You leave with a live, working automation \u2014 not a plan or a prototype",
+                "Nothing ships without your sign-off \u2014 you stay in control at every step",
+                "Every proposal you receive is built for your tools and process.",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-slate-200">
+                  <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" /> {item}
+                </li>
+              ))}
             </ul>
-            <div className="mt-auto">
-              <Link 
-                href="/jobs/new" 
-                className="w-full py-3 rounded-lg border border-white/10 bg-secondary/50 hover:bg-secondary text-center block font-medium transition-colors"
+            <div className="mt-auto pt-6 border-t border-white/10">
+              <Link
+                href="/jobs/new"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg bg-primary hover:bg-primary/90 text-white font-bold transition-colors shadow-lg shadow-purple-500/10"
               >
-                Post Custom Project
+                Post My Custom Project <ArrowRight className="h-4 w-4" />
               </Link>
-              <p className="text-xs text-muted-foreground text-center mt-3">75% refund if unresolved</p>
+              <p className="text-xs text-slate-500 text-center mt-3">75% refund if no proposal meets your criteria</p>
             </div>
           </div>
 
@@ -103,31 +153,19 @@ export default function ForBusinessesPage() {
 
       {/* Security Section */}
       <section className="py-16 container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center gap-8 bg-card border border-white/10 rounded-2xl p-8 md:p-12 shadow-2xl shadow-blue-900/10">
-           <div className="bg-blue-500/10 p-6 rounded-full shrink-0 border border-blue-500/20">
-              <ShieldCheck className="w-12 h-12 text-blue-400" />
-           </div>
-           <div className="space-y-2 text-center md:text-left">
-              <h2 className="text-2xl font-bold text-foreground">Built-In Protection</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl">
-                 Every Expert is vetted and bound by a Mutual NDA. We enforce strict professional standards for implementation quality and punctuality, so your projects stay on track.
-              </p>
-           </div>
-        </div>
-      </section>
-
-      {/* Trust Strip */}
-      <section className="py-12 border-t border-white/10 bg-white/5">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground mb-6 uppercase tracking-widest font-semibold">Trusted by businesses for</p>
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 text-lg font-medium text-muted-foreground">
-             <span>Lead Automation</span>
-             <span>Financial Reporting</span>
-             <span>Customer Support</span>
-             <span>Inventory Ops</span>
+        <div className="flex flex-col md:flex-row items-center gap-8 bg-card border border-border rounded-2xl p-8 md:p-12 shadow-sm">
+          <div className="bg-emerald-500/10 p-6 rounded-full shrink-0 border border-emerald-500/20">
+            <ShieldCheck className="w-12 h-12 text-emerald-500" />
+          </div>
+          <div className="space-y-2 text-center md:text-left">
+            <h2 className="text-2xl font-bold text-foreground">Your money is protected at every step</h2>
+            <p className="text-base text-muted-foreground max-w-2xl">
+              Every expert is vetted and bound by a Mutual NDA. Funds are held in escrow and released only after you approve. If no proposal fits, 75% of your posting fee comes back.
+            </p>
           </div>
         </div>
       </section>
+
     </div>
   );
 }

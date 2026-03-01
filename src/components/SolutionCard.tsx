@@ -69,7 +69,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
 
   // Badge Logic (Max 3, Priority Order)
   const badges = [];
-
+  
   // Version Badge
   badges.push({ label: `v${solution.version || 1}.0`, icon: Clock, tooltip: "Current Version", className: "text-slate-700 bg-slate-100 border-slate-200" });
 
@@ -78,23 +78,28 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
     badges.push({ label: "Draft", icon: Edit, tooltip: "Not visible to public", className: "text-slate-600 bg-slate-100 border-slate-300" });
   }
 
-  if (solution.is_vetted) badges.push({ label: "Vetted", icon: ShieldCheck, tooltip: "Verified portfolio and identity; performance tracked on\u2011platform.", className: "text-blue-700 bg-blue-50 border-blue-200" });
+  if (solution.is_vetted) badges.push({ label: "Vetted", icon: ShieldCheck, tooltip: "Verified portfolio and identity; performance tracked on‑platform.", className: "text-blue-700 bg-blue-50 border-blue-200" });
   if (solution.requires_nda) badges.push({ label: "NDA", icon: LockIcon, tooltip: "Covered by platform NDA; files and chat protected.", className: "text-purple-700 bg-purple-50 border-purple-200" });
-  if (solution.support_days) badges.push({ label: `Support: ${solution.support_days}d`, icon: Wrench, tooltip: "Includes post\u2011delivery support (bug\u2011fix scope).", className: "text-emerald-700 bg-emerald-50 border-emerald-200" });
-  badges.push({ label: "Escrow", icon: Lock, tooltip: "Milestone escrow \u2014 funds release only after buyer approval.", className: "text-slate-700 bg-slate-50 border-slate-200" });
+  if (solution.support_days) badges.push({ label: `Support: ${solution.support_days}d`, icon: Wrench, tooltip: "Includes post‑delivery support (bug‑fix scope).", className: "text-emerald-700 bg-emerald-50 border-emerald-200" });
+  badges.push({ label: "Escrow", icon: Lock, tooltip: "Milestone escrow — funds release only after buyer approval.", className: "text-slate-700 bg-slate-50 border-slate-200" });
 
   const displayBadges = badges.slice(0, 3);
 
   // Proof Strip Logic
   const buildProofStrip = () => {
+    const parts = [];
+    if (solution.adoption_count) parts.push(`Trusted by ${solution.adoption_count}+ teams`);
+    if (solution.avg_roi) parts.push(`Avg ROI ${solution.avg_roi}x`);
+    if (solution.delivery_days) parts.push(`Live in ${solution.delivery_days} days`);
+    
     if (solution.adoption_count && solution.avg_roi && solution.delivery_days) {
-      return `Trusted by ${solution.adoption_count}+ teams \u00b7 Avg ROI ${solution.avg_roi}x \u00b7 Live in ${solution.delivery_days} days`;
+      return `Trusted by ${solution.adoption_count}+ teams · Avg ROI ${solution.avg_roi}x · Live in ${solution.delivery_days} days`;
     }
     if (solution.adoption_count && solution.delivery_days) {
-      return `Trusted by ${solution.adoption_count}+ teams \u00b7 Live in ${solution.delivery_days} days`;
+      return `Trusted by ${solution.adoption_count}+ teams · Live in ${solution.delivery_days} days`;
     }
     if (solution.adoption_count && solution.avg_roi) {
-      return `Trusted by ${solution.adoption_count}+ teams \u00b7 Avg ROI ${solution.avg_roi}x`;
+      return `Trusted by ${solution.adoption_count}+ teams · Avg ROI ${solution.avg_roi}x`;
     }
     if (solution.adoption_count) {
       return `Trusted by ${solution.adoption_count}+ teams`;
@@ -106,20 +111,20 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
 
   return (
     <div className="group relative rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 flex flex-col h-full overflow-hidden">
-
+      
       {/* Top Section */}
       <div className="p-6 flex-1 flex flex-col">
-
+        
         {/* Header Row: Category & Badges */}
         <div className="flex items-start justify-between mb-4 gap-2">
           <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md bg-primary/10 text-primary truncate max-w-[140px]">
             {solution.category}
           </span>
-
+          
           <div className="flex items-center gap-1.5 shrink-0">
             {displayBadges.map((badge, idx) => (
-              <div
-                key={idx}
+              <div 
+                key={idx} 
                 className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${badge.className} cursor-help`}
                 title={badge.tooltip}
               >
@@ -143,7 +148,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
           {solution.short_summary || solution.description}
         </p>
 
-        {/* Outline / Highlights */}
+        {/* Outline / Highlights (New) */}
         {solution.outline && solution.outline.length > 0 && (
           <div className="mb-4 space-y-1">
             {solution.outline.slice(0, 3).map((line, i) => (
@@ -209,13 +214,13 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
         <div className="flex items-end justify-between py-4 border-t border-border">
           <div>
             <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Implementation</p>
-            <p className="font-bold text-xl text-foreground tracking-tight">&euro;{(solution.implementation_price || (solution.implementation_price_cents ?? 0) / 100).toLocaleString("de-DE")}</p>
-
+            <p className="font-bold text-xl text-foreground tracking-tight">€{(solution.implementation_price || (solution.implementation_price_cents ?? 0) / 100).toLocaleString("de-DE")}</p>
+            
             {/* Delivery & ROI Lines & Support */}
             <div className="flex flex-col gap-0.5 mt-1.5">
               {(solution.delivery_days_range || solution.delivery_days) && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
+                  <Clock className="h-3 w-3" /> 
                   Delivery: {solution.delivery_days_range ? `${solution.delivery_days_range} days` : `~${solution.delivery_days} days`}
                 </p>
               )}
@@ -233,11 +238,11 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               )}
             </div>
           </div>
-
+          
           <div className="text-right pl-4">
             <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Est. Monthly AI</p>
             <p className="font-medium text-sm text-foreground">
-              &euro;{solution.monthly_cost_min || 0}&ndash;&euro;{solution.monthly_cost_max || 0}
+              €{solution.monthly_cost_min || 0}–€{solution.monthly_cost_max || 0}
             </p>
           </div>
         </div>
@@ -258,7 +263,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               View Solution
             </Link>
           )}
-
+          
           {/* Owner Actions (Moved to Footer) */}
           {editHref && (
             <>
@@ -321,8 +326,8 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               onClick={handleSave}
               disabled={isSaving}
               className={`p-2.5 rounded-lg border transition-all ${
-                isSaved
-                  ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                isSaved 
+                  ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100" 
                   : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
               }`}
               title={isSaved ? "Saved" : "Save Solution"}
@@ -342,13 +347,13 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               This will hide the solution from Browse Solutions. You can re-publish later.
             </p>
             <div className="flex gap-2 justify-center">
-              <button
+              <button 
                 onClick={() => setShowRemoveConfirm(false)}
                 className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-lg"
               >
                 Cancel
               </button>
-              <button
+              <button 
                 onClick={handleRemove}
                 className="px-4 py-2 text-sm font-bold bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
@@ -392,7 +397,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
 
               <div>
                 <label className="block text-sm font-bold text-foreground mb-2">
-                  Upgrade Fee (&euro;) <span className="text-destructive">*</span>
+                  Upgrade Fee (€) <span className="text-destructive">*</span>
                 </label>
                 <input
                   type="number"
@@ -420,7 +425,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
                   disabled={isCreatingVersion}
                   className="flex-1 px-4 py-2.5 text-sm font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
-                  {isCreatingVersion ? "Creating\u2026" : "Create Draft"}
+                  {isCreatingVersion ? "Creating…" : "Create Draft"}
                 </button>
               </div>
             </div>

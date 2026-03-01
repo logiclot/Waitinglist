@@ -1,84 +1,88 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
+import { LogoBrand } from "@/components/LogoBrand";
+import { ExpertBadge } from "@/components/ui/ExpertBadge";
+import { Avatar } from "@/components/ui/Avatar";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { LogoBrand } from "@/components/LogoBrand";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
 
 import { Session } from "next-auth";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function Navbar({ user, isFoundingExpert = false }: { user?: Session["user"] & { role?: string }; isFoundingExpert?: boolean }) {
+export function Navbar({ user, isFoundingExpert }: { user?: Session["user"] & { role?: string }, isFoundingExpert?: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const pathname = usePathname();
 
-  if (pathname === "/waitlist") return null;
+  if (process.env.NODE_ENV !== "development" && (pathname === "/waitlist" || pathname === "/")) return null;
 
   const getLinkClass = (href: string) => {
     const isActive = pathname.startsWith(href);
     return `text-sm font-medium transition-all duration-200 ${
-      isActive
-        ? "text-primary"
-        : "text-muted-foreground hover:text-foreground"
+      isActive 
+        ? "text-primary" 
+        : "text-muted-foreground hover:text-foreground hover:underline underline-offset-4"
     }`;
   };
-
-  const dashboardHref =
-    user?.role === "ADMIN" || user?.email === "logiclot.helpdesk@gmail.com"
-      ? "/admin"
-      : user?.role === "EXPERT"
-        ? "/dashboard"
-        : user?.role === "BUSINESS"
-          ? "/business"
-          : "/dashboard";
 
   return (
     <nav className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <LogoBrand href={user ? dashboardHref : "/"} size="md" />
+        <LogoBrand href={user ? (user.role === "ADMIN" ? "/admin" : "/dashboard") : "/"} size="md" />
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-6">
+          <Link href="/solutions" className={getLinkClass("/solutions")}>
+            Browse Solutions
+          </Link>
           <Link href="/how-it-works" className={getLinkClass("/how-it-works")}>
             How It Works
           </Link>
-          <Link href="/solutions" className={getLinkClass("/solutions")}>
-            Browse Solutions
+          <Link href="/docs" className={getLinkClass("/docs")}>
+            Documentation
           </Link>
           <Link href="/pricing" className={getLinkClass("/pricing")}>
             Pricing
           </Link>
           <Link
             href="/audit"
-            className={`text-sm font-medium px-3 py-1 rounded-full border transition-all duration-200 ${
+            className={`text-sm font-semibold transition-all duration-200 px-3 py-1.5 rounded-full border ${
               pathname.startsWith("/audit")
-                ? "border-primary text-primary bg-primary/5"
-                : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-primary/30 text-primary hover:bg-primary/10"
             }`}
           >
             Free Audit
           </Link>
-          <Link href="/docs" className={getLinkClass("/docs")}>
-            Docs
-          </Link>
 
           {/* Auth / Join */}
           {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors text-foreground"
-              >
-                <div className="h-8 w-8 bg-secondary rounded-full flex items-center justify-center text-muted-foreground">
-                  <User className="h-4 w-4" />
-                </div>
-                <span>{user.email}</span>
-              </button>
+            <div className="flex items-center gap-3 pl-2 border-l border-border">
+              <NotificationDropdown />
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-background hover:bg-secondary transition-colors text-sm font-medium text-foreground"
+                >
+                  <Avatar
+                    src={user.image}
+                    name={user.name || user.email?.split("@")[0] || "User"}
+                    size="xs"
+                  />
+                  <span className="max-w-[120px] truncate text-foreground/80">
+                    {user.name || user.email?.split("@")[0]}
+                  </span>
+                  {isFoundingExpert && (
+                    <span className="hidden md:inline-flex">
+                      <ExpertBadge isFoundingExpert />
+                    </span>
+                  )}
+                </button>
 
-              {isProfileOpen && (
+                {isProfileOpen && (
                 <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-lg shadow-lg py-2 animate-in fade-in zoom-in-95 z-50 text-foreground">
                   <div className="px-4 py-2 border-b border-border">
                     <p className="text-xs text-muted-foreground">Signed in as</p>
@@ -86,15 +90,23 @@ export function Navbar({ user, isFoundingExpert = false }: { user?: Session["use
                     <p className="text-xs text-primary mt-1 capitalize">{user.role?.toLowerCase() || 'User'}</p>
                   </div>
 
-                  <Link
-                    href={dashboardHref}
-                    className="block px-4 py-2 text-sm hover:bg-secondary transition-colors font-medium text-primary"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    {user.role === "ADMIN" || user.email === "logiclot.helpdesk@gmail.com"
-                      ? "Admin Dashboard"
-                      : "Dashboard"}
-                  </Link>
+                  {user.role === 'ADMIN' ? (
+                    <Link
+                      href="/admin"
+                      className="block px-4 py-2 text-sm hover:bg-secondary transition-colors font-medium text-primary"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-2 text-sm hover:bg-secondary transition-colors font-medium text-primary"
+                      onClick={() => setIsProfileOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
 
                   {user.role === 'EXPERT' && (
                     <Link
@@ -106,33 +118,6 @@ export function Navbar({ user, isFoundingExpert = false }: { user?: Session["use
                     </Link>
                   )}
 
-                  {user.role === 'BUSINESS' && (
-                    <Link
-                      href="/jobs/new"
-                      className="block px-4 py-2 text-sm hover:bg-secondary transition-colors"
-                      onClick={() => setIsProfileOpen(false)}
-                    >
-                      Custom Project
-                    </Link>
-                  )}
-
-                  {/* Admin Link (separate from dashboard for non-admin roles that have admin email) */}
-                  {user.role !== "ADMIN" &&
-                    (user.email === "logiclot.helpdesk@gmail.com" ||
-                      user.email === process.env.ADMIN_EMAIL) && (
-                      <Link
-                        href="/admin"
-                        className={`block px-4 py-2 text-sm transition-colors ${
-                          pathname === "/admin"
-                            ? "text-primary bg-primary/5 font-medium"
-                            : "hover:bg-secondary text-warning-500"
-                        }`}
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        Admin Dashboard
-                      </Link>
-                    )}
-
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
                     className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors flex items-center gap-2"
@@ -142,10 +127,11 @@ export function Navbar({ user, isFoundingExpert = false }: { user?: Session["use
                 </div>
               )}
             </div>
+            </div>
           ) : (
             <Link
               href="/auth/sign-in"
-              className="text-sm font-medium bg-primary text-primary-foreground px-5 py-2.5 rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+              className="text-sm font-medium bg-primary text-primary-foreground px-5 py-2.5 rounded-full hover:bg-primary/90 transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
             >
               Log In / Join
             </Link>
@@ -166,6 +152,13 @@ export function Navbar({ user, isFoundingExpert = false }: { user?: Session["use
         <div className="md:hidden border-t border-border bg-background">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
             <Link
+              href="/solutions"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Browse Solutions
+            </Link>
+            <Link
               href="/how-it-works"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsMenuOpen(false)}
@@ -173,11 +166,11 @@ export function Navbar({ user, isFoundingExpert = false }: { user?: Session["use
               How It Works
             </Link>
             <Link
-              href="/solutions"
+              href="/docs"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Browse Solutions
+              Documentation
             </Link>
             <Link
               href="/pricing"
@@ -188,17 +181,10 @@ export function Navbar({ user, isFoundingExpert = false }: { user?: Session["use
             </Link>
             <Link
               href="/audit"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-semibold text-primary"
               onClick={() => setIsMenuOpen(false)}
             >
-              Free Audit
-            </Link>
-            <Link
-              href="/docs"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Docs
+              Free Audit →
             </Link>
 
             <div className="border-t border-border pt-4 flex flex-col gap-3">
@@ -209,11 +195,11 @@ export function Navbar({ user, isFoundingExpert = false }: { user?: Session["use
                     <p className="text-xs text-muted-foreground capitalize">{user.role?.toLowerCase()}</p>
                   </div>
                   <Link
-                    href={dashboardHref}
-                    className="text-sm font-medium text-center py-2 rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
+                    href={user.role === "ADMIN" ? "/admin" : "/dashboard"}
+                    className="text-sm font-medium text-center py-2 rounded-md border border-primary/20 text-primary hover:bg-primary/10 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Dashboard
+                    {user.role === "ADMIN" ? "Admin Dashboard" : "Dashboard"}
                   </Link>
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}

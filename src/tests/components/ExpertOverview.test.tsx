@@ -20,74 +20,66 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-const mockData = {
-  isFirstTime: false,
-  displayName: "Jane Expert",
-  thisMonthEarnedCents: 245000,
-  pendingCents: 80000,
-  actions: [
-    { type: "warning" as const, title: "Connect Stripe to get paid", description: "You need a Stripe account.", href: "/expert/settings" },
-    { type: "info" as const, title: "Add your scheduling link", description: "Let clients book demos.", href: "/expert/settings" },
-  ],
-  activeOrders: [
-    { id: "o1", title: "HubSpot Data Clean", buyerEmail: "acme@corp.com", status: "in_progress" },
-  ],
-  jobPosts: [
-    { id: "j1", title: "CRM Integration Needed", budgetRange: "$500–$1,500", createdAt: "2026-01-15T00:00:00Z" },
-  ],
-  topSolution: { id: "s1", title: "Lead Scoring System", category: "Sales Automation", orderCount: 12 },
-  solutionCount: 3,
-};
-
 describe("ExpertOverview", () => {
   it("renders earnings summary cards", () => {
-    render(<ExpertOverview data={mockData} />);
+    render(<ExpertOverview earningsThisMonthCents={245000} inEscrowCents={80000} />);
     expect(screen.getByText("This Month")).toBeInTheDocument();
-    expect(screen.getByText("Pending")).toBeInTheDocument();
+    expect(screen.getByText("In Escrow")).toBeInTheDocument();
   });
 
-  it("shows 'Priority Actions' heading", () => {
-    render(<ExpertOverview data={mockData} />);
+  it("shows 'Priority Actions' heading when no calendar URL", () => {
+    render(<ExpertOverview hasCalendarUrl={false} />);
     expect(screen.getByText("Priority Actions")).toBeInTheDocument();
   });
 
-  it("shows priority action items", () => {
-    render(<ExpertOverview data={mockData} />);
-    expect(screen.getByText("Connect Stripe to get paid")).toBeInTheDocument();
-    expect(screen.getByText("Add your scheduling link")).toBeInTheDocument();
+  it("shows calendar link action when hasCalendarUrl is false", () => {
+    render(<ExpertOverview hasCalendarUrl={false} />);
+    expect(screen.getByText("Link Work Calendar")).toBeInTheDocument();
   });
 
   it("shows New Opportunities section", () => {
-    render(<ExpertOverview data={mockData} />);
+    render(<ExpertOverview />);
     expect(screen.getByText("New Opportunities")).toBeInTheDocument();
-    expect(screen.getByText("View Feed \u2192")).toBeInTheDocument();
   });
 
   it("shows Active Projects section", () => {
-    render(<ExpertOverview data={mockData} />);
+    render(
+      <ExpertOverview
+        activeOrders={[
+          { id: "o1", solutionTitle: "HubSpot Data Clean", buyerName: "Acme Corp" },
+        ]}
+      />
+    );
     expect(screen.getByText("Active Projects")).toBeInTheDocument();
     expect(screen.getByText("HubSpot Data Clean")).toBeInTheDocument();
   });
 
   it("shows Top Solution section", () => {
-    render(<ExpertOverview data={mockData} />);
+    render(
+      <ExpertOverview
+        topSolution={{ id: "s1", title: "Lead Scoring System", category: "Sales Automation", completedSalesCount: 12 }}
+      />
+    );
     expect(screen.getByText("Lead Scoring System")).toBeInTheDocument();
     expect(screen.getByText("Sales Automation")).toBeInTheDocument();
   });
 
   it("renders the main heading", () => {
-    render(<ExpertOverview data={mockData} />);
-    expect(screen.getByText(/get you paid/i)).toBeInTheDocument();
+    render(<ExpertOverview />);
+    expect(screen.getByText(/Build once\. Earn on every delivery\./)).toBeInTheDocument();
   });
 
-  it("shows first-time onboarding when isFirstTime is true", () => {
-    render(<ExpertOverview data={{ ...mockData, isFirstTime: true }} />);
-    expect(screen.getByText("Welcome to the Expert Network")).toBeInTheDocument();
-    expect(screen.getByText("Complete Profile")).toBeInTheDocument();
+  it("shows founding expert badge when isFoundingExpert is true", () => {
+    render(<ExpertOverview isFoundingExpert={true} />);
+    expect(screen.getByText("11% Fee Locked")).toBeInTheDocument();
   });
 
-  it("shows Optimize Listing button in Top Solution section", () => {
-    render(<ExpertOverview data={mockData} />);
-    expect(screen.getByText("Optimize Listing")).toBeInTheDocument();
+  it("shows Improve Listing button in Top Solution section", () => {
+    render(
+      <ExpertOverview
+        topSolution={{ id: "s1", title: "Lead Scoring System", category: "Sales Automation", completedSalesCount: 12 }}
+      />
+    );
+    expect(screen.getByText("Improve Listing")).toBeInTheDocument();
   });
 });

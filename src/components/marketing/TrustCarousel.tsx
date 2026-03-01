@@ -10,8 +10,8 @@ const trustItems = [
   },
   {
     icon: Lightbulb,
-    text: "Stop guessing. Let our Elite Experts propose the ideas to you for $50.",
-    highlight: ["$50"]
+    text: "Stop guessing. Let our Elite Experts propose the ideas to you for €50.",
+    highlight: ["€50"]
   },
   {
     icon: CheckCircle2,
@@ -25,7 +25,7 @@ const trustItems = [
   },
   {
     icon: Award,
-    text: "Only the top 5% of automation architects earn the Founding Expert badge.",
+    text: "Only the top 5% of automation architects earn the Founder badge.",
     highlight: ["top 5%"]
   },
   {

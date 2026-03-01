@@ -26,7 +26,7 @@ async function getExpertId(userId: string) {
   return expert?.id;
 }
 
-export async function createEcosystem(data: { title: string; description?: string }) {
+export async function createEcosystem(data: { title: string; description?: string; shortPitch?: string }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Not authenticated" };
 
@@ -47,8 +47,9 @@ export async function createEcosystem(data: { title: string; description?: strin
         expertId,
         title: data.title,
         slug,
-        description: data.description ?? null,
-        published: false,
+        shortPitch: data.shortPitch ?? data.description ?? "",
+        businessGoal: "",
+        isPublished: false,
       },
     });
     revalidatePath("/expert/ecosystems");
@@ -60,7 +61,7 @@ export async function createEcosystem(data: { title: string; description?: strin
   }
 }
 
-export async function updateEcosystem(id: string, data: { title?: string; description?: string }) {
+export async function updateEcosystem(id: string, data: { title?: string; shortPitch?: string }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Not authenticated" };
 
@@ -106,7 +107,7 @@ export async function publishEcosystem(id: string, publish: boolean) {
 
     await prisma.ecosystem.update({
       where: { id },
-      data: { published: publish },
+      data: { isPublished: publish },
     });
 
     revalidatePath(`/expert/ecosystems`);
@@ -239,7 +240,7 @@ export async function deleteEcosystem(id: string) {
   await prisma.ecosystem.delete({ where: { id } });
 
   revalidatePath("/expert/ecosystems");
-  if (existing.published) revalidatePath(`/stacks/${existing.slug}`);
+  if (existing.isPublished) revalidatePath(`/stacks/${existing.slug}`);
   return { success: true };
 }
 
@@ -274,7 +275,7 @@ export async function getEcosystemBySlug(slug: string) {
 
 export async function getEcosystemsForSolution(solutionId: string) {
   const items = await prisma.ecosystemItem.findMany({
-    where: { solutionId, ecosystem: { published: true } },
+    where: { solutionId, ecosystem: { isPublished: true } },
     include: {
       ecosystem: {
         include: {
@@ -293,7 +294,7 @@ export async function getEcosystemsForSolution(solutionId: string) {
 
 export async function getPublishedEcosystems() {
   return await prisma.ecosystem.findMany({
-    where: { published: true },
+    where: { isPublished: true },
     include: {
       items: {
         include: { solution: true },

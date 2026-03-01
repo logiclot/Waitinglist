@@ -49,8 +49,7 @@ export async function POST(req: Request) {
     await prisma.feedback.create({
       data: {
         userId: session.user.id,
-        rating: 0,
-        message: text.trim(),
+        text: text.trim(),
         role: validRole,
       },
     });

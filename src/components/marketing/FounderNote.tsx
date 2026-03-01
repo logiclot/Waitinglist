@@ -1,31 +1,30 @@
 import Image from "next/image";
-import { BRAND_NAME } from "@/lib/branding";
+import { Quote } from "lucide-react";
 
 export function FounderNote() {
   return (
-    <section className="py-24 border-t border-border bg-secondary/30">
+    <section className="py-16 border-t border-border bg-[#FBFAF8]">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-8 max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto p-8 md:p-10 bg-white border border-border rounded-2xl flex flex-col md:flex-row items-center gap-8 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-foreground rounded-l-2xl" />
           <div className="shrink-0">
-            <div className="relative w-32 h-32 rounded-full border border-border overflow-hidden shadow-sm shrink-0">
-              <Image 
-                src="/founder.png" 
-                alt="Claudiu - Founder" 
-                width={128}
-                height={128}
-                className="object-cover hover:scale-105 transition-transform duration-500"
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border shadow-sm">
+              <Image
+                src="/founder.png"
+                alt="Claudiu — Founder"
+                width={96}
+                height={96}
+                className="object-cover"
               />
             </div>
           </div>
           <div className="text-center md:text-left">
-            <h2 className="text-2xl font-bold mb-4 text-foreground">Built to run in real businesses</h2>
-            <p className="text-muted-foreground mb-4 leading-relaxed max-w-2xl text-lg">
-              A lot of modern technology never makes it past the idea stage.
-              I built {BRAND_NAME} to help businesses work with specialists who deliver real implementations of workflow automations, AI solutions, and automated services, with clear scope and real accountability.
+            <Quote className="h-6 w-6 text-foreground/20 mb-3 mx-auto md:mx-0" />
+            <h4 className="font-bold text-xl mb-3 text-foreground">Where this all started</h4>
+            <p className="text-muted-foreground text-base leading-relaxed mb-4 max-w-2xl">
+              &ldquo;I built LogicLot after spending years watching good businesses stay stuck on work that should have been automated long ago. The talent to fix it was always out there. Getting the two in the same room, reliably, was the hard part. Thank you for being here.&rdquo;
             </p>
-            <p className="text-sm text-muted-foreground">
-              Built by Claudiu — founder of {BRAND_NAME}.
-            </p>
+            <p className="text-sm font-bold text-foreground">&mdash; Claudiu, Founder</p>
           </div>
         </div>
       </div>

@@ -1,17 +1,16 @@
-import { SolutionWizard } from "@/components/solutions/SolutionWizard";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { AddSolutionClient } from "./AddSolutionClient";
 
 export default async function NewSolutionPage() {
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user) {
     redirect("/auth/sign-in");
   }
-
-  if ((session.user as { role?: string }).role !== "EXPERT" && (session.user as { role?: string }).role !== "ADMIN") {
-    redirect("/dashboard"); // Redirect non-experts
+  if (session.user.role !== "EXPERT" && session.user.role !== "ADMIN") {
+    redirect("/dashboard");
   }
 
   return (
@@ -22,8 +21,8 @@ export default async function NewSolutionPage() {
           Create a productized automation solution. Follow the steps to ensure a high-quality listing.
         </p>
       </div>
-      
-      <SolutionWizard />
+
+      <AddSolutionClient />
     </div>
   );
 }

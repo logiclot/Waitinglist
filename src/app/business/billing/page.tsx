@@ -14,10 +14,10 @@ export default function BusinessBillingPage() {
         </h1>
         
         <EmptyState
-          title="No payment method"
-          description="Add a payment method to purchase solutions and post requests."
-          primaryCtaLabel="Add Payment Method"
-          primaryCtaHref="/business/settings" // Redirects to settings where presumably they can add one
+          title="No saved payment method"
+          description="You'll add a payment method when you check out — whether posting a request or purchasing a solution. No need to add one in advance."
+          primaryCtaLabel="Browse Solutions"
+          primaryCtaHref="/solutions"
         />
       </div>
     );

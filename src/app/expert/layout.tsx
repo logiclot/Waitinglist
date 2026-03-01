@@ -13,8 +13,7 @@ export default async function ExpertLayout({
   if (!session?.user) {
     redirect("/auth/sign-in?callbackUrl=/dashboard");
   }
-
-  const role = (session.user as { role?: string }).role || "EXPERT";
+  const role = session.user.role || "EXPERT"; 
 
   // Basic Gating (Middleware handles most, but double check)
   if (role !== "EXPERT" && role !== "ADMIN") {

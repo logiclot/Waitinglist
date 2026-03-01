@@ -4,8 +4,8 @@ import { useFormState } from "react-dom";
 import { createSpecialistProfile } from "@/actions/onboarding";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  ChevronRight,
+import { 
+  ChevronRight, 
   User,
   Check,
   Building2,
@@ -64,7 +64,7 @@ const ACQUISITION_SOURCES = [
 const PRIMARY_TOOLS = ["n8n", "Make", "Zapier", "Custom code", "Other"];
 
 const SECONDARY_TOOLS = [
-  "HubSpot", "Salesforce", "Shopify", "Stripe", "Google Sheets",
+  "HubSpot", "Salesforce", "Shopify", "Stripe", "Google Sheets", 
   "Notion", "Slack", "AWS", "Azure", "Other"
 ];
 
@@ -86,7 +86,7 @@ export default function ExpertOnboardingPage() {
   const [displayName, setDisplayName] = useState("");
   const [country, setCountry] = useState("");
   const [roleType, setRoleType] = useState("Individual");
-
+  
   const [agencyName, setAgencyName] = useState("");
   const [businessId, setBusinessId] = useState("");
   const [agencyTeamSize, setAgencyTeamSize] = useState("");
@@ -174,7 +174,7 @@ export default function ExpertOnboardingPage() {
   return (
     <div className="min-h-screen py-12 px-4 bg-background flex flex-col items-center font-sans">
       <div className="max-w-2xl w-full space-y-8">
-
+        
         {/* Progress Bubbles */}
         <div className="flex flex-col items-center space-y-2 mb-8">
           <div className="flex items-center gap-3">
@@ -183,9 +183,9 @@ export default function ExpertOnboardingPage() {
               const isCompleted = s < step;
               return (
                 <div key={s} className="flex items-center">
-                  <div
+                  <div 
                     className={`
-                      w-3 h-3 rounded-full transition-all duration-300
+                      w-3 h-3 rounded-full transition-all duration-300 
                       ${isActive ? 'bg-primary scale-125 ring-2 ring-primary/30' : ''}
                       ${isCompleted ? 'bg-primary' : ''}
                       ${!isActive && !isCompleted ? 'bg-secondary' : ''}
@@ -216,7 +216,7 @@ export default function ExpertOnboardingPage() {
           formData.append("displayName", displayName || legalFullName);
           formData.append("country", country);
           formData.append("roleType", roleType);
-
+          
           if (roleType === "Agency") {
             formData.append("agencyName", agencyName);
             formData.append("businessIdentificationNumber", businessId);
@@ -310,7 +310,7 @@ export default function ExpertOnboardingPage() {
                   <label className="block text-sm font-medium mb-3">Role Type <span className="text-primary">*</span></label>
                   <div className="grid grid-cols-2 gap-4">
                     {["Individual", "Agency"].map(type => (
-                      <div
+                      <div 
                         key={type}
                         onClick={() => setRoleType(type)}
                         className={`cursor-pointer border rounded-lg p-4 flex flex-col items-center gap-2 transition-all ${roleType === type ? "bg-primary/5 border-primary text-primary ring-1 ring-primary/20" : "hover:bg-secondary"}`}
@@ -346,9 +346,9 @@ export default function ExpertOnboardingPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Team Size</label>
-                      <select
-                        value={agencyTeamSize}
-                        onChange={e => setAgencyTeamSize(e.target.value)}
+                      <select 
+                        value={agencyTeamSize} 
+                        onChange={e => setAgencyTeamSize(e.target.value)} 
                         className="w-full bg-background border border-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                       >
                         <option value="">Select...</option>
@@ -370,7 +370,7 @@ export default function ExpertOnboardingPage() {
               </div>
 
               <div className="bg-card border border-border rounded-xl p-8 space-y-8 shadow-sm">
-
+                
                 {/* Years Experience */}
                 <div>
                   <label className="block text-sm font-medium mb-3">Years of hands-on automation experience <span className="text-primary">*</span></label>
@@ -401,10 +401,10 @@ export default function ExpertOnboardingPage() {
 
                 {/* Project Size */}
                 <div>
-                  <label className="block text-sm font-medium mb-3">Typical project size you&apos;ve handled <span className="text-primary">*</span></label>
+                  <label className="block text-sm font-medium mb-3">Typical project size you’ve handled <span className="text-primary">*</span></label>
                   <div className="flex flex-wrap gap-3">
                     {PROJECT_SIZES.map(s => (
-                      <label
+                      <label 
                         key={s}
                         className={`
                           flex items-center justify-center px-4 py-2 rounded-full border cursor-pointer transition-all min-w-[80px]
@@ -438,7 +438,7 @@ export default function ExpertOnboardingPage() {
                   </div>
                   {acquisitionSources.includes("Other") && (
                     <div className="mt-3">
-                      <input
+                      <input 
                         value={customSource}
                         onChange={e => setCustomSource(e.target.value)}
                         placeholder="Tell us more..."
@@ -453,9 +453,9 @@ export default function ExpertOnboardingPage() {
                   <label className="block text-sm font-medium mb-2">Portfolio / LinkedIn / GitHub URL <span className="text-muted-foreground font-normal">(Optional)</span></label>
                   <div className="relative">
                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      value={portfolioUrl}
-                      onChange={e => setPortfolioUrl(e.target.value)}
+                    <input 
+                      value={portfolioUrl} 
+                      onChange={e => setPortfolioUrl(e.target.value)} 
                       className="w-full bg-background border border-border rounded-lg pl-10 pr-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                       placeholder="https://..."
                     />
@@ -475,7 +475,7 @@ export default function ExpertOnboardingPage() {
               </div>
 
               <div className="bg-card border border-border rounded-xl p-8 space-y-8 shadow-sm">
-
+                
                 {/* Primary Tool */}
                 <div>
                   <label className="block text-sm font-medium mb-3">Primary Automation Tool <span className="text-primary">*</span></label>
@@ -521,7 +521,7 @@ export default function ExpertOnboardingPage() {
                   </div>
                    {secondaryTools.includes("Other") && (
                     <div className="mt-3">
-                      <input
+                      <input 
                         value={customSecondaryTool}
                         onChange={e => setCustomSecondaryTool(e.target.value)}
                         placeholder="Other tools..."
@@ -654,18 +654,18 @@ export default function ExpertOnboardingPage() {
             </p>
           )}
           <div className="flex justify-between pt-8 max-w-2xl mx-auto w-full">
-            <button
-              type="button"
-              onClick={handleBack}
+            <button 
+              type="button" 
+              onClick={handleBack} 
               className={`px-6 py-3 text-muted-foreground hover:text-foreground font-medium transition-colors ${step === 1 ? 'invisible' : ''}`}
             >
               Back
             </button>
-
+            
             {step < 4 ? (
-              <button
-                type="button"
-                onClick={handleNext}
+              <button 
+                type="button" 
+                onClick={handleNext} 
                 className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
               >
                 Continue <ChevronRight className="w-4 h-4" />

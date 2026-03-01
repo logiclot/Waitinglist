@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createThread } from "@/actions/messaging";
 import { useSession } from "next-auth/react";
+import * as Sentry from "@sentry/nextjs";
 
 export default function NewMessagePage() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function NewMessagePage() {
   
   const expertId = searchParams.get("expert");
   const solutionId = searchParams.get("solution");
+  const orderId = searchParams.get("order");
+  const userId = searchParams.get("user"); // If messaging a user (buyer)
 
   useEffect(() => {
     if (status === "loading") return;
@@ -21,21 +24,34 @@ export default function NewMessagePage() {
       return;
     }
 
-    if (!expertId) {
+    // Determine target ID (Expert or User)
+    const targetId = expertId || userId;
+
+    if (!targetId) {
+      Sentry.captureMessage("Missing target ID on new message page", "warning");
       router.push("/solutions");
       return;
     }
 
     async function initThread() {
-      const result = await createThread(expertId!, solutionId || undefined);
+      // Create thread with either expertId (seller) or direct userId if needed
+      // Our action currently expects 'sellerId'. 
+      // If we are messaging a buyer, we might need a different action or logic.
+      // But usually 'createThread' implies Buyer -> Seller.
+      // If Seller -> Buyer, we need to find existing thread or create one where they are buyer.
+      
+      // For now, let's assume standard flow: Buyer -> Expert
+      // If expertId is present, we use it.
+      
+      const result = await createThread(targetId!, solutionId || undefined, orderId || undefined);
       
       if (result.success && result.threadId) {
         router.push(`/messages/${result.threadId}`);
       } else {
         // Handle error (e.g. self-messaging or not found)
-        console.error(result.error);
+        Sentry.captureMessage(result.error ?? "Unknown messaging error", "error");
         if (result.status === 404) {
-            alert("Specialist not found");
+            alert("User not found");
             router.push("/solutions");
         } else if (result.status === 400) {
             alert("You cannot message yourself");
@@ -48,7 +64,7 @@ export default function NewMessagePage() {
     }
 
     initThread();
-  }, [expertId, solutionId, router, session, status]);
+  }, [expertId, userId, solutionId, orderId, router, session, status]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

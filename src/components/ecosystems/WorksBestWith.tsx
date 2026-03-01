@@ -10,7 +10,7 @@ interface WorksBestEcosystem {
   id: string;
   title: string;
   slug: string;
-  description: string | null;
+  shortPitch: string;
   items: EcosystemItem[];
 }
 
@@ -41,7 +41,7 @@ export function WorksBestWith({ ecosystems }: { ecosystems: WorksBestEcosystem[]
             </Link>
           </div>
           
-          <p className="text-sm text-muted-foreground mb-4">{eco.description}</p>
+          <p className="text-sm text-muted-foreground mb-4">{eco.shortPitch}</p>
           
           <div className="space-y-3">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Also in this suite:</p>

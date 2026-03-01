@@ -1,11 +1,12 @@
 import { EmptyState } from "@/components/EmptyState";
 import { SolutionCard } from "@/components/SolutionCard";
+import { SharePortfolioButton } from "@/components/dashboard/SharePortfolioButton";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getSolutionLockState } from "@/lib/solutions/lock";
-import { SolutionStatus } from "@/types";
+import { SolutionStatus, ModerationStatus } from "@/types";
 
 export default async function ExpertMySolutionsPage({
   searchParams,
@@ -31,8 +32,7 @@ export default async function ExpertMySolutionsPage({
     where: { expertId: expert.id, status: { not: "archived" } }, // Exclude archived
     orderBy: { updatedAt: "desc" },
     include: {
-      expert: true,
-      _count: { select: { orders: true } }
+      expert: true
     }
   });
 
@@ -40,28 +40,27 @@ export default async function ExpertMySolutionsPage({
   const solutionsWithLock = await Promise.all(
     rawSolutions.map(async (sol) => {
       const lockState = await getSolutionLockState(sol.id);
-      return { 
-        ...sol, 
-        locked: lockState.locked, 
+      return {
+        ...sol,
+        locked: lockState.locked,
         lockedReason: lockState.reason,
-        // Map Prisma fields to Solution type compatibility
+        // Map Prisma camelCase fields to Solution type
+        implementation_price_cents: sol.implementationPriceCents,
         implementation_price: sol.implementationPriceCents / 100,
         monthly_cost_min: sol.monthlyCostMinCents ? sol.monthlyCostMinCents / 100 : 0,
         monthly_cost_max: sol.monthlyCostMaxCents ? sol.monthlyCostMaxCents / 100 : 0,
         delivery_days: sol.deliveryDays,
-        support_days: sol.supportDays,
-        short_summary: sol.shortSummary,
-        adoption_count: sol._count.orders > 0 ? sol._count.orders : undefined,
-        is_vetted: sol.expert?.verified ?? false,
-        is_founding_expert: sol.expert?.isFoundingExpert ?? false,
-        status: sol.status as SolutionStatus
-      };
+        status: sol.status as SolutionStatus,
+        outcome: sol.outcome ?? undefined,
+        longDescription: sol.longDescription ?? undefined,
+        moderationStatus: sol.moderationStatus as ModerationStatus | undefined
+      } as unknown as import("@/types").Solution & { locked: boolean; lockedReason: string | undefined };
     })
   );
 
   const activeTab = searchParams.tab || "published";
   
-  const filteredSolutions = solutionsWithLock.filter(s =>
+  const filteredSolutions = solutionsWithLock.filter(s => 
     activeTab === "draft" ? s.status === "draft" : s.status === "published"
   );
 
@@ -71,9 +70,14 @@ export default async function ExpertMySolutionsPage({
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">My Solutions</h1>
           <p className="text-muted-foreground">Manage your productized services, pricing, and visibility.</p>
+          {expert.slug && (
+            <div className="pt-1">
+              <SharePortfolioButton slug={expert.slug} />
+            </div>
+          )}
         </div>
-        <a 
-          href="/expert/add-solution" 
+        <a
+          href="/expert/add-solution"
           className="bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
         >
           + Add Solution
@@ -117,10 +121,9 @@ export default async function ExpertMySolutionsPage({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSolutions.map((solution) => (
-            <SolutionCard
-              key={solution.id}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              solution={solution as any}
+            <SolutionCard 
+              key={solution.id} 
+              solution={solution}
               editHref={`/expert/solutions/${solution.id}/edit`}
               isLocked={solution.locked}
               lockReason={solution.lockedReason}

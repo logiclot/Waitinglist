@@ -57,11 +57,23 @@ export async function getAdminData() {
     prisma.user.count(),
   ]);
 
-  // Bid quality stats per expert
-  // NOTE: feedback field not yet in schema — using bid counts only for now
+  // Bid quality stats per expert (thumbs up / down counts)
+  const bidFeedbackRaw = await prisma.bid.groupBy({
+    by: ["specialistId", "feedback"],
+    where: { feedback: { not: null } },
+    _count: { feedback: true },
+  });
+  const bidQualityMap: Record<string, { up: number; down: number }> = {};
+  for (const row of bidFeedbackRaw) {
+    if (!bidQualityMap[row.specialistId]) bidQualityMap[row.specialistId] = { up: 0, down: 0 };
+    if (row.feedback === "up")   bidQualityMap[row.specialistId].up   += row._count.feedback;
+    if (row.feedback === "down") bidQualityMap[row.specialistId].down += row._count.feedback;
+  }
+
+  // Attach quality stats to each expert object
   const expertsWithStats = experts.map(e => ({
     ...e,
-    bidQuality: { up: 0, down: 0 },
+    bidQuality: bidQualityMap[e.id] ?? { up: 0, down: 0 },
   }));
 
   const totalRevenueCents = orders
@@ -69,7 +81,7 @@ export async function getAdminData() {
     .reduce((sum, o) => sum + o.priceCents, 0);
 
   const openDisputeCount = await prisma.dispute.count({
-    where: { resolvedAt: null },
+    where: { status: { not: "resolved" } },
   });
 
   return {
@@ -109,6 +121,7 @@ export async function approveSpecialist(id: string, grantProven = true) {
     include: { user: { select: { id: true } } },
   });
 
+  const { createNotification } = await import("@/lib/notifications");
   const message = grantProven
     ? "Your expert profile has been approved. You now have Proven tier — access Discovery Scans and bid on opportunities. Complete 10 projects to unlock Custom Projects."
     : "Your expert profile has been approved. You can now access Discovery Scans (Proven tier) and bid on opportunities — or level up to Elite to unlock Custom Projects.";
@@ -412,6 +425,7 @@ export async function getDisputedOrders() {
             },
           },
           solution: { select: { title: true } },
+          bid: { select: { jobPost: { select: { title: true } } } },
           review: true,
           conversations: { select: { id: true, _count: { select: { messages: true } } } },
         },
@@ -455,9 +469,9 @@ export async function resolveDispute(
 
     if (!order) return { error: "Order not found" };
     if (!order.dispute) return { error: "No dispute found for this order" };
-    if (order.dispute.resolvedAt) return { error: "Dispute already resolved" };
+    if (order.dispute.status === "resolved") return { error: "Dispute already resolved" };
 
-    const milestones = (order.milestones as unknown as import("@/types").Milestone[]) || [];
+    const milestones = (order.milestones as import("@/types").Milestone[]) || [];
     const escrowedCents = milestones
       .filter((m: { status?: string }) => m.status === "in_escrow")
       .reduce((sum: number, m: { priceCents?: number; price?: number }) => {
@@ -521,8 +535,10 @@ export async function resolveDispute(
       prisma.dispute.update({
         where: { orderId },
         data: {
+          status: "resolved",
           resolution,
-          adminNotes: `[${adminUserId}] ${resolutionNote}`,
+          resolutionNote,
+          resolvedBy: adminUserId,
           resolvedAt: new Date(),
         },
       }),

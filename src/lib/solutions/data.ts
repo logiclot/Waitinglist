@@ -1,5 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { Solution } from "@/types";
+import { log } from "@/lib/logger";
+import * as Sentry from "@sentry/nextjs";
+
+type SolutionWithExpertAndEcosystems = Prisma.SolutionGetPayload<{
+  include: { expert: true; ecosystemItems: { select: { ecosystemId: true } } };
+}>;
 
 export async function getPublishedSolutions() {
   try {
@@ -13,7 +20,7 @@ export async function getPublishedSolutions() {
       },
       include: {
         expert: true,
-        _count: { select: { orders: true } }
+        ecosystemItems: { select: { ecosystemId: true } }
       },
       orderBy: {
         publishedAt: 'desc'
@@ -21,8 +28,7 @@ export async function getPublishedSolutions() {
     });
 
     // Map Prisma solution to Client Solution type
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return dbSolutions.map((s: any) => ({
+    return dbSolutions.map((s: SolutionWithExpertAndEcosystems) => ({
       ...s,
       // Map fields that might differ
       implementation_price: s.implementationPriceCents / 100,
@@ -31,9 +37,7 @@ export async function getPublishedSolutions() {
       delivery_days: s.deliveryDays,
       support_days: s.supportDays,
       short_summary: s.shortSummary,
-      adoption_count: s._count.orders > 0 ? s._count.orders : undefined,
-      is_vetted: s.expert?.verified ?? false,
-      is_founding_expert: s.expert?.isFoundingExpert ?? false,
+      // expert relationship is included, but we might need to map fields if expert type differs
       expert: {
         ...s.expert,
         id: s.expert.id,
@@ -43,12 +47,14 @@ export async function getPublishedSolutions() {
         business_verified: s.expert.businessVerified,
         founding: s.expert.isFoundingExpert,
         completed_sales_count: s.expert.completedSalesCount,
-        // Ensure other required expert fields exist
-      }
-    })) as Solution[];
+        tier: s.expert.tier || "STANDARD",
+      },
+      ecosystemIds: s.ecosystemItems.map((i: { ecosystemId: string }) => i.ecosystemId),
+    })) as unknown as Solution[];
 
   } catch (e) {
-    console.error("Failed to fetch solutions from DB", e);
+    log.error("solutions.fetch_published_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
     // Return empty array instead of mock data on error
     return [];
   }

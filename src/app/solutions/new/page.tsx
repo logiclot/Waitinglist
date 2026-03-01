@@ -9,7 +9,6 @@ export default async function NewSolutionPage() {
   if (!session?.user) {
     redirect("/auth/sign-in");
   }
-
   if (session.user.role !== "EXPERT" && session.user.role !== "ADMIN") {
     redirect("/dashboard"); // Redirect non-experts
   }

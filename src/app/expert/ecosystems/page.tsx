@@ -52,11 +52,11 @@ export default async function ExpertEcosystemsPage() {
                   <h3 className="font-bold text-lg line-clamp-1">{eco.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                      eco.published
+                      eco.isPublished
                         ? "bg-green-100 text-green-700"
                         : "bg-slate-100 text-slate-600"
                     }`}>
-                      {eco.published ? "Published" : "Draft"}
+                      {eco.isPublished ? "Published" : "Draft"}
                     </span>
                     <span className="text-xs text-muted-foreground">{eco.items.length} Solutions</span>
                   </div>
@@ -64,7 +64,7 @@ export default async function ExpertEcosystemsPage() {
               </div>
               
               <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">
-                {eco.description}
+                {eco.shortPitch}
               </p>
 
               <div className="flex items-center gap-2 pt-4 border-t border-border">
@@ -74,7 +74,7 @@ export default async function ExpertEcosystemsPage() {
                 >
                   <Edit className="w-3.5 h-3.5" /> Edit
                 </Link>
-                {eco.published && (
+                {eco.isPublished && (
                   <Link
                     href={`/stacks/${eco.slug}`}
                     target="_blank"

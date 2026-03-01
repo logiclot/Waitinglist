@@ -1,108 +1,105 @@
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { InboxClient } from "@/components/inbox/InboxClient";
-import type { Conversation, Message } from "@/types";
+import { Conversation, Expert, Solution } from "@/types";
+
+export const metadata = {
+  title: "Inbox | LogicLot",
+};
 
 export default async function InboxPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/auth/sign-in");
 
-  const userId = session.user.id;
+  if (!session?.user?.id) {
+    redirect("/auth/sign-in");
+  }
 
-  // Check if user is an expert
-  const specialist = await prisma.specialistProfile.findUnique({
-    where: { userId },
+  const expertProfile = await prisma.specialistProfile.findUnique({
+    where: { userId: session.user.id },
     select: { id: true },
   });
 
-  // Fetch all conversations where user is buyer or seller
-  const rawConversations = await prisma.conversation.findMany({
+  const conversations = await prisma.conversation.findMany({
     where: {
       OR: [
-        { buyerId: userId },
-        ...(specialist ? [{ sellerId: specialist.id }] : []),
+        { buyerId: session.user.id },
+        ...(expertProfile ? [{ sellerId: expertProfile.id }] : []),
       ],
     },
     include: {
       messages: { orderBy: { createdAt: "asc" } },
-      solution: { select: { id: true, slug: true, title: true, demoPriceCents: true } },
-      order: { select: { id: true, status: true } },
-      seller: {
-        select: {
-          id: true,
-          displayName: true,
-          userId: true,
-          slug: true,
-          calendarUrl: true,
-          isFoundingExpert: true,
-          completedSalesCount: true,
-          tools: true,
-        },
-      },
-      buyer: { select: { id: true, email: true } },
+      solution: { include: { expert: true } },
+      seller: true,
+      order: true,
     },
     orderBy: { updatedAt: "desc" },
   });
 
-  // Map to the Conversation type that InboxClient expects
-  const conversations: Conversation[] = rawConversations.map((c) => ({
-    id: c.id,
-    buyer_id: c.buyerId,
-    seller_id: c.sellerId,
-    solution_id: c.solutionId ?? undefined,
-    order_id: c.orderId ?? undefined,
-    created_at: c.createdAt.toISOString(),
-    updated_at: c.updatedAt.toISOString(),
-    buyer_name: c.buyer.email?.split("@")[0] || "Client",
-    messages: c.messages.map((m): Message => ({
-      id: m.id,
-      conversation_id: c.id,
-      sender_id: m.senderId,
-      body: m.body,
-      type: m.type as "user" | "system",
-      created_at: m.createdAt.toISOString(),
-    })),
-    solution: c.solution
-      ? {
-          id: c.solution.id,
-          slug: c.solution.slug,
-          title: c.solution.title,
-          description: "",
-          category: "",
-          implementation_price_cents: 0,
-          implementation_price: 0,
-          monthly_cost_min: 0,
-          monthly_cost_max: 0,
-          delivery_days: 0,
-          integrations: [],
-          status: "published" as const,
-        }
-      : undefined,
-    order: c.order
-      ? {
-          id: c.order.id,
-          buyer_id: c.buyerId,
-          seller_id: c.sellerId,
-          solution_id: c.solutionId || "",
-          price_cents: 0,
-          status: c.order.status as "draft" | "paid_pending_implementation" | "in_progress" | "delivered" | "approved" | "refunded" | "disputed",
-          created_at: c.createdAt.toISOString(),
-          updated_at: c.updatedAt.toISOString(),
-        }
-      : undefined,
-    seller: {
-      id: c.seller.id,
-      user_id: c.seller.userId,
-      slug: c.seller.slug ?? undefined,
-      name: c.seller.displayName || "Expert",
-      verified: true,
-      founding: c.seller.isFoundingExpert ?? false,
-      completed_sales_count: c.seller.completedSalesCount,
-      tools: c.seller.tools,
-    },
-  }));
+  // Fetch buyer business profiles separately to resolve buyer display names
+  const buyerIds = [...new Set(conversations.map((c) => c.buyerId))];
+  const buyerProfiles = await prisma.businessProfile.findMany({
+    where: { userId: { in: buyerIds } },
+    select: { userId: true, firstName: true, lastName: true, companyName: true },
+  });
+  const buyerProfileMap = Object.fromEntries(buyerProfiles.map((bp) => [bp.userId, bp]));
 
-  return <InboxClient initialConversations={conversations} currentUserId={userId} />;
+  const mappedConversations: Conversation[] = conversations.map((c) => {
+    const bp = buyerProfileMap[c.buyerId];
+    const buyerName = bp?.companyName || (bp?.firstName ? `${bp.firstName}${bp.lastName ? ` ${bp.lastName}` : ""}` : null) || "Client";
+
+    return {
+      id: c.id,
+      buyer_id: c.buyerId,
+      seller_id: c.sellerId,
+      solution_id: c.solutionId || undefined,
+      order_id: c.orderId || undefined,
+      created_at: c.createdAt.toISOString(),
+      updated_at: c.updatedAt.toISOString(),
+      buyer_name: buyerName,
+
+      messages: c.messages.map((m) => ({
+        id: m.id,
+        conversation_id: m.conversationId,
+        sender_id: m.senderId,
+        body: m.body,
+        type: m.type as "user" | "system",
+        created_at: m.createdAt.toISOString(),
+      })),
+
+      solution: c.solution
+        ? ({
+            ...c.solution,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            implementation_price: c.solution.implementationPriceCents / 100,
+            monthly_cost_min: c.solution.monthlyCostMinCents ? c.solution.monthlyCostMinCents / 100 : 0,
+            monthly_cost_max: c.solution.monthlyCostMaxCents ? c.solution.monthlyCostMaxCents / 100 : 0,
+            delivery_days: c.solution.deliveryDays,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            status: c.solution.status as any,
+            integrations: c.solution.integrations,
+            implementation_price_cents: c.solution.implementationPriceCents,
+          } as unknown as Solution)
+        : undefined,
+
+      seller: {
+        id: c.seller.id,
+        user_id: c.seller.userId,
+        name: c.seller.displayName || c.seller.legalFullName,
+        verified: c.seller.verified,
+        founding: c.seller.isFoundingExpert,
+        completed_sales_count: c.seller.completedSalesCount,
+        tools: c.seller.tools,
+        calendarUrl: c.seller.calendarUrl,
+      } as Expert,
+    };
+  });
+
+  return (
+    <InboxClient
+      initialConversations={mappedConversations}
+      currentUserId={session.user.id}
+    />
+  );
 }

@@ -129,11 +129,11 @@ describe("updateEcosystem", () => {
     prismaMock.ecosystem.findUnique.mockResolvedValue({ id: "eco-1", expertId: "expert-1" });
     prismaMock.ecosystem.update.mockResolvedValue({});
 
-    const result = await updateEcosystem("eco-1", { title: "Updated Title", description: "New pitch" });
+    const result = await updateEcosystem("eco-1", { title: "Updated Title", shortPitch: "New pitch" });
     expect(result).toEqual({ success: true });
     expect(prismaMock.ecosystem.update).toHaveBeenCalledWith({
       where: { id: "eco-1" },
-      data: { title: "Updated Title", description: "New pitch" },
+      data: { title: "Updated Title", shortPitch: "New pitch" },
     });
   });
 });

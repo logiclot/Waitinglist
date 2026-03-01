@@ -10,25 +10,25 @@ import { PaginationControls } from "@/components/ui/PaginationControls";
 
 export interface AdminExpert {
   id: string;
-  displayName: string;
-  legalFullName: string;
-  country?: string;
-  yearsExperience?: number;
+  displayName: string | null;
+  legalFullName?: string;
+  country?: string | null;
+  yearsExperience?: string | number;
   tools?: string[];
-  bio?: string;
+  bio?: string | null;
   status: string;
   verified: boolean;
   isFoundingExpert?: boolean;
-  foundingRank?: number;
+  foundingRank?: number | null;
   completedSalesCount?: number;
-  platformFeePercentage?: number;
+  platformFeePercentage?: number | null;
   tier?: string;
-  stripeAccountId?: string;
-  calendarUrl?: string;
-  portfolioLinks?: string[];
+  stripeAccountId?: string | null;
+  calendarUrl?: string | null;
+  portfolioLinks?: string[] | unknown;
   pastImplementations?: string;
   bidQuality?: { up: number; down: number };
-  bidBannedUntil?: string;
+  bidBannedUntil?: Date | string | null;
   user: { id: string; email?: string };
 }
 

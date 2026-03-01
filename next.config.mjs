@@ -1,20 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    // Warning: This allows production builds to successfully complete
-    // even if your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    // Also ignore type errors for a fast emergency launch
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
+      { protocol: "https", hostname: "**.supabase.co" },
+      { protocol: "https", hostname: "**.googleusercontent.com" },
+      { protocol: "https", hostname: "**.licdn.com" },
+      { protocol: "https", hostname: "**.linkedin.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
-      { protocol: "https", hostname: "media.licdn.com" },
-      { protocol: "https", hostname: "*.supabase.co" },
     ],
+  },
+  async redirects() {
+    // In development, we skip the waitlist redirect so we can work on the site
+    if (process.env.NODE_ENV === 'development') {
+      return [];
+    }
+
+    return [
+      {
+        source: '/',
+        destination: '/waitlist',
+        permanent: false, // Temporary redirect
+      },
+    ];
   },
 };
 

@@ -40,7 +40,6 @@ export async function createSolutionDraft(formData: FormData) {
 
   try {
     const solution = await prisma.solution.create({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
         expertId: expert.id,
         title,
@@ -60,8 +59,7 @@ export async function createSolutionDraft(formData: FormData) {
         outline: [],
         structureConsistent: [],
         structureCustom: []
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any
+      } as Record<string, unknown>
     });
 
     return { success: true, solutionId: solution.id };
@@ -174,7 +172,7 @@ export async function publishSolution(solutionId: string) {
       });
 
       // Notify them
-      await Promise.all(previousOrders.map(order =>
+      await Promise.all(previousOrders.map(order => 
         createNotification(
           order.buyerId,
           "New Version Available",
@@ -303,8 +301,7 @@ export async function createSolutionVersion(solutionId: string, changelog: strin
         status: "draft",
         moderationStatus: "pending",
         lastStep: 1 // Start wizard at step 1 for review
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any
+      } as Record<string, unknown>
     });
 
     return { success: true, solutionId: newSolution.id };

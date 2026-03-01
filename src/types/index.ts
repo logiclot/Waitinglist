@@ -1,3 +1,21 @@
+// ── Milestone (JSON stored in Order.milestones) ──────────────────────────────
+export interface Milestone {
+  title: string;
+  description?: string;
+  priceCents?: number;
+  price?: number;
+  status: 'pending_payment' | 'waiting_for_funds' | 'in_escrow' | 'releasing' | 'released';
+  fundedAt?: string | null;
+  releasedAt?: string | null;
+}
+
+// ── Referral rewards (JSON stored in BusinessProfile.referralRewards) ─────────
+export interface ReferralRewards {
+  businessDiscountCount?: number;
+  expertDiscountCount?: number;
+  [key: string]: unknown;
+}
+
 export interface Expert {
   id: string;
   user_id?: string;
@@ -9,11 +27,11 @@ export interface Expert {
   business_verified?: boolean;
   founding: boolean;
   founding_rank?: number | null;
-  tier?: "STANDARD" | "PROVEN" | "ELITE";
   completed_sales_count: number;
   commission_override_percent?: number | null;
   tools: string[];
-  calendarUrl?: string | null;
+  calendarUrl?: string;
+  tier?: string; // STANDARD | PROVEN | ELITE
 }
 
 export type DemoVideoStatus = 'none' | 'pending' | 'approved' | 'rejected';
@@ -32,49 +50,43 @@ export interface Solution {
   description: string;
   longDescription?: string; // Add this mapping explicitly
   category: string;
-  
+
   // New pricing fields (source of truth)
   implementation_price_cents: number;
   monthly_cost_min_cents?: number;
   monthly_cost_max_cents?: number;
-  maintenancePriceCents?: number;
-  maintenanceDescription?: string;
-  
+
   // Legacy fields (kept for compatibility with existing components for now)
-  implementation_price: number; 
+  implementation_price: number;
   monthly_cost_min: number;
   monthly_cost_max: number;
-  
+
   delivery_days: number;
   support_days?: number;
   estimated_implementation_time?: ImplementationTime;
   implementation_type?: ImplementationType;
-  
+
   integrations: string[]; // "Tools used"
   status: SolutionStatus;
   moderationStatus?: ModerationStatus; // New field
-  
+
   // Detailed fields
-  what_it_does?: string;
   included?: string[];
   excluded?: string[];
   prerequisites?: string[];
   faq?: { question: string; answer: string }[];
 
   // Requirements & Access
-  accessRequired?: string;
   requiredInputs?: string[];
-  questions?: string[];
 
   // Content Fields
   outline?: string[];
   lastStep?: number;
-  version?: number;
 
   // Proof & Trust
   proofType?: string;
   proofContent?: string;
-  
+
   // Trust & Stats
   adoption_count?: number;
   avg_roi?: number;
@@ -83,33 +95,45 @@ export interface Solution {
   is_vetted?: boolean;
   requires_nda?: boolean;
   is_founding_expert?: boolean;
-  
+
   // Filter Fields
   businessGoals?: string[];
   industries?: string[];
   paybackPeriod?: string;
   trustSignals?: string[];
-  expertTier?: string;
   complexity?: string;
 
-  // Pricing alias (camelCase)
-  implementationPriceCents?: number;
+  // Solution structure
+  structureConsistent?: string[];
+  structureCustom?: string[];
+  measurableOutcome?: string;
+
+  // Versioning & Maintenance
+  version?: number;
+  changelog?: string;
+  upgradePriceCents?: number;
+
+  // Filter Fields (expert-derived)
+  expertTier?: string;
 
   // Demo Video
-  demo_video_url?: string;
-  demo_video_status?: DemoVideoStatus;
-  demo_video_reviewed_at?: string;
-  demo_video_review_notes?: string;
-  demo_video_start_seconds?: number;
-  demo_video_id?: string;
-
-  // Demo video aliases (camelCase)
   demoVideoUrl?: string;
+  demo_video_url?: string; // legacy alias used by admin ListingEditor
   demoVideoStatus?: DemoVideoStatus;
-  
+  demo_video_status?: DemoVideoStatus; // legacy alias used by older components
+  demoVideoId?: string;
+  demoVideoStartSeconds?: number;
+  demoVideoReviewedAt?: string;
+
+  // Demo Booking
+  demoPriceCents?: number;
+
   // Relationship
   expert?: Expert;
   expert_id?: string;
+  
+  // Ecosystems
+  ecosystemIds?: string[];
 }
 
 export interface Category {
@@ -133,7 +157,7 @@ export interface Order {
   refunded_at?: string;
   created_at: string;
   updated_at: string;
-  
+
   // Relationships (optional/hydrated)
   solution?: Solution;
   seller?: Expert;
@@ -147,13 +171,13 @@ export interface Conversation {
   order_id?: string;
   created_at: string;
   updated_at?: string;
-  buyer_name?: string;
-  
+
   // Hydrated
   messages?: Message[];
   solution?: Solution;
   order?: Order;
   seller?: Expert;
+  buyer_name?: string; // resolved name of the buyer for seller-side display
 }
 
 export interface Message {
@@ -163,20 +187,4 @@ export interface Message {
   body: string;
   type: 'user' | 'system';
   created_at: string;
-}
-
-export interface Milestone {
-  title: string;
-  description: string;
-  price: number;
-  priceCents?: number;
-  status: "pending_payment" | "waiting_for_funds" | "in_escrow" | "releasing" | "released";
-  fundedAt?: string;
-  releasedAt?: string;
-}
-
-export interface ReferralRewards {
-  expertDiscountCount?: number;
-  businessDiscountCount?: number;
-  [key: string]: number | undefined;
 }

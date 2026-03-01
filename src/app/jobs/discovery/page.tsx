@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -16,13 +16,17 @@ import {
 } from "lucide-react";
 import { createDiscoveryJobPost } from "@/actions/jobs";
 import { CheckoutModal } from "@/components/jobs/discovery/CheckoutModal";
+import {
+  SingleSelect,
+  MultiSelect,
+  MultiSelectMax2,
+  MultiSelectWithToolNames,
+} from "@/components/jobs/questionnaire/QuestionnaireFields";
+import { buildBriefData } from "@/components/jobs/questionnaire/buildBriefData";
 import * as C from "./constants";
 
 export default function DiscoveryWizardPage() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const router = useRouter();
   const [step, setStep] = useState(0); // 0 = Intro
-  const [, setPending] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingJobId, setPendingJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,12 +59,15 @@ export default function DiscoveryWizardPage() {
 
     // Section C
     coreTools: [] as string[],
+    coreToolNames: {} as Record<string, string>,
     otherCoreTool: "",
     sourceOfTruth: "",
     otherSourceOfTruth: "",
     automationStatus: "",
 
     // Section D
+    humanJudgmentLevel: [] as string[],
+    otherHumanJudgmentLevel: "",
     manualTimeDrains: [] as string[],
     otherManualTimeDrain: "",
     errorProneTasks: [] as string[],
@@ -70,8 +77,7 @@ export default function DiscoveryWizardPage() {
     operationsVisibility: "",
     otherOperationsVisibility: "",
 
-    // Section E
-    systemAccess: "",
+    // Section E (systemAccess removed - was Q18)
     complianceConstraints: [] as string[],
     otherComplianceConstraint: "",
     environments: [] as string[],
@@ -80,6 +86,8 @@ export default function DiscoveryWizardPage() {
     vendorConstraintDetails: "", // If "Yes"
 
     // Section F
+    implementationTimeline: "",
+    otherImplementationTimeline: "",
     successMetrics: [] as string[],
     otherSuccessMetric: "",
     primaryOutcome: "",
@@ -146,13 +154,16 @@ export default function DiscoveryWizardPage() {
                formData.handoffPoints.length > 0 &&
                (!formData.handoffPoints.includes("Other") || !!formData.otherHandoffPoint);
       case 3: // Section C
-        return formData.coreTools.length > 0 &&
-               (!formData.coreTools.includes("Other") || !!formData.otherCoreTool) &&
+        const coreToolsValid = formData.coreTools.length > 0 &&
+          (!formData.coreTools.includes("Other") || !!formData.otherCoreTool) &&
+          formData.coreTools.every(t => t === "Other" || !!(formData.coreToolNames[t] || "").trim());
+        return coreToolsValid &&
                !!formData.sourceOfTruth &&
                (formData.sourceOfTruth !== "Other" || !!formData.otherSourceOfTruth) &&
                !!formData.automationStatus;
       case 4: // Section D
-        return formData.manualTimeDrains.length > 0 &&
+        return formData.humanJudgmentLevel.length > 0 &&
+               formData.manualTimeDrains.length > 0 &&
                (!formData.manualTimeDrains.includes("Other") || !!formData.otherManualTimeDrain) &&
                formData.errorProneTasks.length > 0 &&
                (!formData.errorProneTasks.includes("Other") || !!formData.otherErrorProneTask) &&
@@ -160,16 +171,17 @@ export default function DiscoveryWizardPage() {
                (!formData.delayPoints.includes("Other") || !!formData.otherDelayPoint) &&
                !!formData.operationsVisibility &&
                (formData.operationsVisibility !== "Other" || !!formData.otherOperationsVisibility);
-      case 5: // Section E
-        return !!formData.systemAccess &&
-               formData.complianceConstraints.length > 0 &&
+      case 5: // Section E (systemAccess/Q18 removed)
+        return formData.complianceConstraints.length > 0 &&
                (!formData.complianceConstraints.includes("Other") || !!formData.otherComplianceConstraint) &&
                formData.environments.length > 0 &&
                (!formData.environments.includes("Other") || !!formData.otherEnvironment) &&
                !!formData.vendorConstraints &&
                (formData.vendorConstraints !== "Yes" || !!formData.vendorConstraintDetails);
       case 6: // Section F
-        return formData.successMetrics.length > 0 &&
+        return !!formData.implementationTimeline &&
+               (formData.implementationTimeline !== "Other" || !!formData.otherImplementationTimeline) &&
+               formData.successMetrics.length > 0 &&
                (!formData.successMetrics.includes("Other") || !!formData.otherSuccessMetric) &&
                !!formData.primaryOutcome &&
                (formData.primaryOutcome !== "Other" || !!formData.otherPrimaryOutcome) &&
@@ -185,18 +197,37 @@ export default function DiscoveryWizardPage() {
 
   const handleNext = async () => {
     setError(null);
-    if (validateStep(step)) {
-      if (step < totalSteps) {
-        setStep(step + 1);
-        window.scrollTo(0, 0);
-      } else {
-        // Create the job first, then show payment modal
-        await handlePaymentAndSubmit();
-        setShowPaymentModal(true);
-      }
-    } else {
+    if (!validateStep(step)) {
       setError("Please complete all required fields to continue.");
+      return;
     }
+    if (step < totalSteps) {
+      setStep(step + 1);
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    // Last step: create the job (pending_payment) then show payment modal
+    setError(null);
+
+    const v  = (val: string, other: string) => val === "Other" || val === "Yes" ? other : val;
+    const va = (arr: string[], other: string) => arr.map(i => i === "Other" ? other : i).filter(Boolean);
+
+    const briefData = buildBriefData(formData, v, va);
+    const payload = new FormData();
+    payload.append("title", `Discovery Scan: ${formData.businessModel}`);
+    payload.append("goal", JSON.stringify(briefData));
+
+    const result = await createDiscoveryJobPost(payload);
+
+    if (!result.success) {
+      setError(result.error || "Something went wrong.");
+      toast.error(result.error || "Something went wrong.");
+      return;
+    }
+
+    setPendingJobId(result.jobId!);
+    setShowPaymentModal(true);
   };
 
   const handleBack = () => {
@@ -204,227 +235,86 @@ export default function DiscoveryWizardPage() {
     if (step > 0) setStep(step - 1);
   };
 
-  const handlePaymentAndSubmit = async () => {
-    setError(null);
-    setPending(true);
-
-    // Serialize all data into a readable format for the expert
-    const serializedData = `
-# DISCOVERY SCAN REPORT
-
-## SECTION A: Business Context
-- Model: ${formData.businessModel === "Other" ? formData.otherBusinessModel : formData.businessModel}
-- Products: ${formData.primaryProducts.map(p => p === "Other" ? formData.otherPrimaryProduct : p).join(", ")}
-- Size: ${formData.companySize === "Other" ? formData.otherCompanySize : formData.companySize}
-
-## SECTION B: Revenue & Operations
-- Acquisition: ${formData.customerChannels.map(c => c === "Other" ? formData.otherCustomerChannel : c).join(", ")}
-- Conversion: ${formData.conversionMechanism === "Other" ? formData.otherConversionMechanism : formData.conversionMechanism}
-- Triggers: ${formData.workTriggers.map(t => t === "Other" ? formData.otherWorkTrigger : t).join(", ")}
-- Rev Tracking: ${formData.revenueTracking === "Other" ? formData.otherRevenueTracking : formData.revenueTracking}
-- Predictability: ${formData.revenuePredictability}
-- Scaling Impact: ${formData.scalingImpact === "Other" ? formData.otherScalingImpact : formData.scalingImpact}
-- Handoffs: ${formData.handoffPoints.map(h => h === "Other" ? formData.otherHandoffPoint : h).join(", ")}
-
-## SECTION C: Tools & Stack
-- Core Tools: ${formData.coreTools.map(t => t === "Other" ? formData.otherCoreTool : t).join(", ")}
-- Source of Truth: ${formData.sourceOfTruth === "Other" ? formData.otherSourceOfTruth : formData.sourceOfTruth}
-- Automation Status: ${formData.automationStatus}
-
-## SECTION D: Process Pain
-- Time Drains: ${formData.manualTimeDrains.map(t => t === "Other" ? formData.otherManualTimeDrain : t).join(", ")}
-- Error Prone: ${formData.errorProneTasks.map(t => t === "Other" ? formData.otherErrorProneTask : t).join(", ")}
-- Delays: ${formData.delayPoints.map(d => d === "Other" ? formData.otherDelayPoint : d).join(", ")}
-- Visibility: ${formData.operationsVisibility === "Other" ? formData.otherOperationsVisibility : formData.operationsVisibility}
-
-## SECTION E: Risk & Constraints
-- Access: ${formData.systemAccess}
-- Compliance: ${formData.complianceConstraints.map(c => c === "Other" ? formData.otherComplianceConstraint : c).join(", ")}
-- Environments: ${formData.environments.map(e => e === "Other" ? formData.otherEnvironment : e).join(", ")}
-- Vendor Constraints: ${formData.vendorConstraints === "Yes" ? `YES - ${formData.vendorConstraintDetails}` : formData.vendorConstraints}
-
-## SECTION F: Outcome Orientation
-- Success Metrics: ${formData.successMetrics.map(s => s === "Other" ? formData.otherSuccessMetric : s).join(", ")}
-- Top Priority: ${formData.primaryOutcome === "Other" ? formData.otherPrimaryOutcome : formData.primaryOutcome}
-- Inaction Risk: ${formData.inactionConsequence === "Other" ? formData.otherInactionConsequence : formData.inactionConsequence}
-- Proposal Criteria: ${formData.proposalCriteria.map(p => p === "Other" ? formData.otherProposalCriteria : p).join(", ")}
-
-## SECTION G: Final Notes
-${formData.finalClarifier || "None provided."}
-    `;
-
-    const payload = new FormData();
-    payload.append("title", `Discovery Scan: ${formData.businessModel}`);
-    payload.append("goal", serializedData);
-    payload.append("category", "Discovery Scan");
-    payload.append("budgetRange", "Not applicable");
-    payload.append("timeline", "Not applicable");
-
-    const result = await createDiscoveryJobPost(payload);
-
-    if (result.success && result.jobId) {
-      setPendingJobId(result.jobId);
-      setPending(false);
-      // Show checkout modal for payment
-    } else {
-      setPending(false);
-      setShowPaymentModal(false);
-      setError(result.error || "Something went wrong.");
-    }
-  };
-
-  // --- RENDER HELPERS ---
-
-  const SingleSelect = ({ 
-    label, 
-    options, 
-    value, 
-    onChange, 
-    otherValue, 
-    onOtherChange, 
-    helperText 
-  }: { 
-    label: string, 
-    options: string[], 
-    value: string, 
-    onChange: (val: string) => void,
-    otherValue?: string,
-    onOtherChange?: (val: string) => void,
-    helperText?: string
-  }) => (
-    <div className="space-y-3 mb-8">
-      <label className="block text-lg font-bold text-foreground">
-        {label} <span className="text-primary">*</span>
-      </label>
-      {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {options.map(opt => (
-          <button
-            key={opt}
-            onClick={() => onChange(opt)}
-            className={`p-3 rounded-lg border text-left text-sm transition-all ${
-              value === opt 
-                ? "border-primary bg-primary/5 text-primary ring-1 ring-primary" 
-                : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-      {(value === "Other" || value === "Yes") && onOtherChange && (
-        <input 
-          value={otherValue}
-          onChange={(e) => onOtherChange(e.target.value)}
-          className="w-full mt-2 bg-background border border-border rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
-          placeholder="Please specify..."
-          autoFocus
-        />
-      )}
-    </div>
-  );
-
-  const MultiSelect = ({ 
-    label, 
-    options, 
-    selected, 
-    onToggle, 
-    otherValue, 
-    onOtherChange,
-    helperText 
-  }: { 
-    label: string, 
-    options: string[], 
-    selected: string[], 
-    onToggle: (val: string) => void,
-    otherValue?: string,
-    onOtherChange?: (val: string) => void,
-    helperText?: string
-  }) => (
-    <div className="space-y-3 mb-8">
-      <label className="block text-lg font-bold text-foreground">
-        {label} <span className="text-primary">*</span>
-      </label>
-      {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
-      <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">Select all that apply</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {options.map(opt => {
-          const isSelected = selected.includes(opt);
-          return (
-            <button
-              key={opt}
-              onClick={() => onToggle(opt)}
-              className={`p-3 rounded-lg border text-left text-sm transition-all ${
-                isSelected 
-                  ? "border-primary bg-primary/5 text-primary ring-1 ring-primary" 
-                  : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {opt}
-            </button>
-          );
-        })}
-      </div>
-      {selected.includes("Other") && onOtherChange && (
-        <input 
-          value={otherValue}
-          onChange={(e) => onOtherChange(e.target.value)}
-          className="w-full mt-2 bg-background border border-border rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
-          placeholder="Please specify..."
-          autoFocus
-        />
-      )}
-    </div>
-  );
-
   // --- STEPS RENDER ---
 
   const renderIntro = () => (
-    <div className="text-center max-w-2xl mx-auto py-8 animate-in fade-in slide-in-from-bottom-4">
-      <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-        <Sparkles className="h-10 w-10 text-primary" />
-      </div>
-      <h1 className="text-3xl md:text-4xl font-bold mb-4">Discovery Scan</h1>
-      <p className="text-xl text-muted-foreground mb-8">
-        You&apos;ll complete a short diagnostic about how your business operates today. 
-        Experts use this to identify automation opportunities and send you concrete proposals.
-      </p>
-      
-      <div className="bg-secondary/20 border border-border rounded-xl p-6 text-left mb-8">
-        <h3 className="font-bold mb-4 flex items-center gap-2">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500" /> What happens next:
-        </h3>
-        <ul className="space-y-3">
-          <li className="flex gap-3 text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary mt-2 shrink-0" />
-            Scope alignment
-          </li>
-          <li className="flex gap-3 text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary mt-2 shrink-0" />
-            Live demo & walkthrough
-          </li>
-          <li className="flex gap-3 text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary mt-2 shrink-0" />
-            Implementation in your environment
-          </li>
-          <li className="flex gap-3 text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary mt-2 shrink-0" />
-            Review & approve
-          </li>
-        </ul>
-      </div>
+    <div className="w-full max-w-3xl animate-in fade-in slide-in-from-bottom-4 py-8">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 
-      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-8 text-sm text-blue-600 dark:text-blue-400">
-        <strong>Clarifier:</strong> You don&apos;t need to know what to automate. Describe your business accurately and completely — specialists will do the analysis.
-      </div>
+        {/* Header */}
+        <div className="px-8 pt-8 pb-6 border-b border-border">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">Stop guessing. Start automating.</h1>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+                Discovery Scan &middot; &euro;50 one-time &middot; Up to 5 expert proposals
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Describe how your business runs. Automation experts identify your biggest wins and send you concrete proposals — no access required, no commitment.
+          </p>
+        </div>
 
-      <button 
-        onClick={() => setStep(1)}
-        className="w-full sm:w-auto px-10 py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-lg transition-all shadow-lg shadow-primary/20"
-      >
-        Start Discovery Scan
-      </button>
-      <p className="text-xs text-muted-foreground mt-3">Takes ~5 minutes.</p>
+        {/* Body */}
+        <div className="px-8 py-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+
+          {/* Left: What you get */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">What you get</p>
+            <ul className="space-y-2.5">
+              {[
+                "Find your 3 biggest time or cost leaks — identified by real experts",
+                "Get 2\u20135 proposals with full scope, timeline, and ROI estimate",
+                "Live demo before any commitment or access is granted",
+                "Walk away with clarity — even if you don\u2019t proceed",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="text-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Right: Pricing + CTA */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-secondary/40 rounded-xl p-5 border border-border">
+              <div className="text-2xl font-bold text-foreground mb-0.5">&euro;50</div>
+              <div className="text-xs text-muted-foreground mb-3">One-time posting fee</div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                  First proposals within 24 hours
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                  Up to 5 qualified submissions
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                  Mutual NDA before any data is shared
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-600 dark:text-blue-400">
+              You don&apos;t need to know what to automate. Just describe your business — the analysis is on us.
+            </div>
+
+            <button
+              onClick={() => setStep(1)}
+              className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
+            >
+              Get My Automation Roadmap &rarr;
+            </button>
+            <p className="text-xs text-muted-foreground text-center -mt-1">First proposals arrive within 24 hours</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -541,6 +431,7 @@ ${formData.finalClarifier || "None provided."}
         onToggle={(v) => handleMultiSelect("handoffPoints", v)}
         otherValue={formData.otherHandoffPoint}
         onOtherChange={(v) => handleChange("otherHandoffPoint", v)}
+        helperText="Points where work or information passes from one person, team, or system to another."
       />
     </div>
   );
@@ -557,13 +448,16 @@ ${formData.finalClarifier || "None provided."}
         </div>
       </div>
 
-      <MultiSelect 
+      <MultiSelectWithToolNames 
         label="11. Which tools are core to your daily operations?" 
         options={C.CORE_TOOLS} 
         selected={formData.coreTools} 
         onToggle={(v) => handleMultiSelect("coreTools", v)}
+        toolNames={formData.coreToolNames}
+        onToolNameChange={(tool, name) => setFormData(prev => ({ ...prev, coreToolNames: { ...prev.coreToolNames, [tool]: name } }))}
         otherValue={formData.otherCoreTool}
         onOtherChange={(v) => handleChange("otherCoreTool", v)}
+        helperText="Specify the exact tool name (e.g. HubSpot, Salesforce) for each selected option."
       />
 
       <SingleSelect 
@@ -601,8 +495,16 @@ ${formData.finalClarifier || "None provided."}
         You don’t need to identify bottlenecks. Just answer based on your day-to-day reality.
       </div>
 
+      <MultiSelectMax2 
+        label="14. How much human judgment does this process require?" 
+        options={C.HUMAN_JUDGMENT_LEVEL} 
+        selected={formData.humanJudgmentLevel} 
+        onToggle={(v) => handleMultiSelect("humanJudgmentLevel", v)}
+        helperText="Select up to 2 options that best describe how decisions are made in this process."
+      />
+
       <MultiSelect 
-        label="14. Which activities consume the most manual time each week?" 
+        label="15. Which activities consume the most manual time each week?" 
         options={C.MANUAL_TIME_DRAINS} 
         selected={formData.manualTimeDrains} 
         onToggle={(v) => handleMultiSelect("manualTimeDrains", v)}
@@ -611,16 +513,17 @@ ${formData.finalClarifier || "None provided."}
       />
 
       <MultiSelect 
-        label="15. Which tasks are most error-prone today?" 
+        label="16. Which tasks often lead to mistakes or need redoing?" 
         options={C.ERROR_PRONE_TASKS} 
         selected={formData.errorProneTasks} 
         onToggle={(v) => handleMultiSelect("errorProneTasks", v)}
         otherValue={formData.otherErrorProneTask}
         onOtherChange={(v) => handleChange("otherErrorProneTask", v)}
+        helperText="Activities where things go wrong, need correcting, or get done twice."
       />
 
       <MultiSelect 
-        label="16. Where do delays most often occur?" 
+        label="17. Where do delays most often occur?" 
         options={C.DELAY_POINTS} 
         selected={formData.delayPoints} 
         onToggle={(v) => handleMultiSelect("delayPoints", v)}
@@ -629,7 +532,7 @@ ${formData.finalClarifier || "None provided."}
       />
 
       <SingleSelect 
-        label="17. How visible are your operations right now?" 
+        label="18. How visible are your operations right now?" 
         options={C.OPERATIONS_VISIBILITY} 
         value={formData.operationsVisibility} 
         onChange={(v) => handleSingleSelect("operationsVisibility", v, "otherOperationsVisibility")}
@@ -651,14 +554,6 @@ ${formData.finalClarifier || "None provided."}
         </div>
       </div>
 
-      <SingleSelect 
-        label="18. What level of system access are you comfortable with?" 
-        options={C.SYSTEM_ACCESS} 
-        value={formData.systemAccess} 
-        onChange={(v) => handleSingleSelect("systemAccess", v)}
-        helperText="This helps experts propose solutions that respect your boundaries."
-      />
-
       <MultiSelect 
         label="19. Are there compliance or regulatory constraints?" 
         options={C.COMPLIANCE_CONSTRAINTS} 
@@ -669,7 +564,7 @@ ${formData.finalClarifier || "None provided."}
       />
 
       <MultiSelect 
-        label="20. What environments do you operate in?" 
+        label="20. What environments do you operate in?"
         options={C.ENVIRONMENTS} 
         selected={formData.environments} 
         onToggle={(v) => handleMultiSelect("environments", v)}
@@ -700,8 +595,18 @@ ${formData.finalClarifier || "None provided."}
         </div>
       </div>
 
+      <SingleSelect 
+        label="22. When do you need to have a solution implemented?" 
+        options={C.IMPLEMENTATION_TIMELINE} 
+        value={formData.implementationTimeline} 
+        onChange={(v) => handleSingleSelect("implementationTimeline", v, "otherImplementationTimeline")}
+        otherValue={formData.otherImplementationTimeline}
+        onOtherChange={(v) => handleChange("otherImplementationTimeline", v)}
+        helperText="This helps experts align proposals with your timeline."
+      />
+
       <MultiSelect 
-        label="22. What would success look like in 3–6 months?" 
+        label="23. What would success look like in 3–6 months?" 
         options={C.SUCCESS_METRICS} 
         selected={formData.successMetrics} 
         onToggle={(v) => handleMultiSelect("successMetrics", v)}
@@ -710,7 +615,7 @@ ${formData.finalClarifier || "None provided."}
       />
 
       <SingleSelect 
-        label="23. Which outcome matters most right now?" 
+        label="24. Which outcome matters most right now?" 
         options={C.PRIMARY_OUTCOME} 
         value={formData.primaryOutcome} 
         onChange={(v) => handleSingleSelect("primaryOutcome", v, "otherPrimaryOutcome")}
@@ -719,7 +624,7 @@ ${formData.finalClarifier || "None provided."}
       />
 
       <SingleSelect 
-        label="24. If nothing changes, what happens?" 
+        label="25. If nothing changes, what happens?" 
         options={C.INACTION_CONSEQUENCE} 
         value={formData.inactionConsequence} 
         onChange={(v) => handleSingleSelect("inactionConsequence", v, "otherInactionConsequence")}
@@ -728,7 +633,7 @@ ${formData.finalClarifier || "None provided."}
       />
 
       <MultiSelect 
-        label="25. How will you decide if a proposal is “good”?" 
+        label="26. How will you decide if a proposal is “good”?" 
         options={C.PROPOSAL_CRITERIA} 
         selected={formData.proposalCriteria} 
         onToggle={(v) => handleMultiSelect("proposalCriteria", v)}
@@ -752,7 +657,7 @@ ${formData.finalClarifier || "None provided."}
 
       <div className="space-y-3">
         <label className="block text-lg font-bold text-foreground">
-          26. Is there anything about your business that would change how solutions should be designed?
+          27. Is there anything about your business that would change how solutions should be designed?
         </label>
         <p className="text-sm text-muted-foreground -mt-2">
           Only include details that affect daily operations, scale, or risk.
@@ -768,7 +673,7 @@ ${formData.finalClarifier || "None provided."}
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground py-12 px-4 flex flex-col items-center">
+    <div className="container mx-auto px-4 py-10 max-w-3xl flex flex-col items-center">
       
       {/* Progress (Only show if started) */}
       {step > 0 && (
@@ -810,8 +715,15 @@ ${formData.finalClarifier || "None provided."}
             {step === 7 && renderSectionG()}
           </div>
 
+          <div className="bg-secondary/30 p-4 rounded-lg border border-border mt-6">
+            <p className="text-xs text-muted-foreground text-center">
+              By proceeding, you enter a legally binding <strong>Mutual NDA</strong>. 
+              All data and logic shared are protected by LogicLot protocols.
+            </p>
+          </div>
+
           {/* Footer Actions */}
-          <div className="pt-8 mt-4 border-t border-border flex justify-between items-center">
+          <div className="pt-4 mt-4 border-t border-border flex justify-between items-center">
             <button 
               onClick={handleBack}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"

@@ -173,12 +173,12 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
     }
 
     // Invalidate any existing reset token for this user
-    await prisma.emailVerificationToken.deleteMany({ where: { userId: user.id } });
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
 
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    await prisma.emailVerificationToken.create({
+    await prisma.passwordResetToken.create({
       data: { token, userId: user.id, expiresAt },
     });
 
@@ -209,7 +209,7 @@ export async function resetPassword(token: string, newPassword: string) {
   }
 
   try {
-    const resetToken = await prisma.emailVerificationToken.findUnique({
+    const resetToken = await prisma.passwordResetToken.findUnique({
       where: { token },
     });
 
@@ -226,7 +226,7 @@ export async function resetPassword(token: string, newPassword: string) {
     });
 
     // Consume the token
-    await prisma.emailVerificationToken.delete({ where: { id: resetToken.id } });
+    await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
 
     return { success: true };
   } catch (e) {
@@ -299,6 +299,7 @@ export async function deleteMyAccount(password: string) {
     await prisma.$transaction(async (tx) => {
       // Auth tokens
       await tx.emailVerificationToken.deleteMany({ where: { userId } });
+      await tx.passwordResetToken.deleteMany({ where: { userId } });
 
       // Ephemeral user data
       await tx.savedSolution.deleteMany({ where: { userId } });

@@ -23,11 +23,11 @@ export default async function ForExpertsPage() {
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
             Build once. Sell repeatedly.
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            Productize your best AI automations into repeatable implementations.
-            <br />
-            Clear scope, qualified buyers, and protected payouts.
-          </p>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+              Productize your best AI automations into repeatable implementations.
+              <br />
+              Clear scope, qualified buyers, and protected milestone payouts.
+            </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <Link
@@ -94,7 +94,7 @@ export default async function ForExpertsPage() {
 
           <div className="text-center max-w-3xl mx-auto border-t border-border pt-10">
             <p className="text-lg font-medium text-foreground">
-              We turn your best automation into a product: fixed deliverables, clear prerequisites, and a repeatable delivery process that scales.
+              We turn your best automation into a product: clear milestones, defined prerequisites, and a repeatable delivery process that scales.
             </p>
           </div>
         </div>
@@ -271,7 +271,7 @@ export default async function ForExpertsPage() {
               <div className="h-8 w-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 shrink-0">
                 <Award className="h-4 w-4" />
               </div>
-              <span className="font-medium text-sm">Permanent Founding Expert badge</span>
+              <span className="font-medium text-sm">Permanent Founder badge</span>
             </div>
             <div className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border border-yellow-500/10">
               <div className="h-8 w-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 shrink-0">

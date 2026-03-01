@@ -109,7 +109,7 @@ export async function submitBuyerReview(
           buyerComment: comment.trim() || null,
           buyerSubmittedAt: new Date(),
           ...(shouldUnblind
-            ? { unblinedAt: new Date() }
+            ? { unblindedAt: new Date() }
             : {}),
         },
       }),
@@ -161,7 +161,7 @@ export interface ReviewData {
   buyerRating: number | null;
   buyerComment: string | null;
   buyerSubmittedAt: string | null;
-  isUnblinded: boolean; // derived: unblinedAt !== null
+  isUnblinded: boolean; // derived: unblindedAt !== null
   createdAt: string;
 }
 
@@ -194,7 +194,7 @@ export async function getReviewForOrder(
 
     // Check 14-day timeout for auto-unblinding
     const now = new Date();
-    let effectivelyUnblinded = review.unblinedAt !== null;
+    let effectivelyUnblinded = review.unblindedAt !== null;
 
     // If seller reviewed but buyer hasn't after 14 days → auto-unblind seller's review
     if (
@@ -208,7 +208,7 @@ export async function getReviewForOrder(
         // Persist the auto-unblind
         await prisma.review.update({
           where: { id: review.id },
-          data: { unblinedAt: now },
+          data: { unblindedAt: now },
         });
       }
     }
@@ -294,7 +294,7 @@ export async function getExpertPublicReviews(specialistId: string): Promise<{
   try {
     const reviews = await prisma.review.findMany({
       where: {
-        unblinedAt: { not: null },
+        unblindedAt: { not: null },
         buyerRating: { not: null },
         order: {
           sellerId: specialistId,

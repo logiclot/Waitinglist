@@ -2,12 +2,23 @@
 
 import { useFormState } from "react-dom";
 import { submitBid } from "@/actions/jobs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function BidForm({ jobId }: { jobId: string }) {
-  const [state, formAction] = useFormState(submitBid as (prevState: unknown, formData: FormData) => Promise<{ error?: string; success?: boolean }>, null as unknown as { error?: string; success?: boolean });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [state, formAction] = useFormState(submitBid as any, null as any);
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    if (state?.success) {
+      toast.success("Bid Submitted! The business has been notified.");
+    } else if (state?.error) {
+      toast.error(state.error, { duration: 4000 });
+      setPending(false);
+    }
+  }, [state]);
 
   if (state?.success) {
     return (

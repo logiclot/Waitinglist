@@ -1,16 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { User, Shield, Bell, CreditCard, ExternalLink, Loader2, CheckCircle, Calendar, FileText } from "lucide-react";
+import { User, Shield, Bell, CreditCard, ExternalLink, Loader2, CheckCircle, Calendar, Link as LinkIcon, FileText } from "lucide-react";
 import { DeleteAccountButton } from "@/components/settings/DeleteAccountButton";
 import { ProfilePicUpload } from "@/components/ProfilePicUpload";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getExpertSettings, updateExpertInvoice } from "@/actions/expert";
+import { getExpertSettings, updateExpertCalendar, updateExpertInvoice } from "@/actions/expert";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
-import { CalendarSection } from "./CalendarSection";
-import { ProfileSection } from "./ProfileSection";
 
 export default function ExpertSettingsPage() {
   const router = useRouter();
@@ -18,13 +16,15 @@ export default function ExpertSettingsPage() {
   const [loadingStripe, setLoadingStripe] = useState(false);
   const [isStripeConnected, setIsStripeConnected] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
+  
   // Profile State
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [calendarUrl, setCalendarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [title, setTitle] = useState("");
   const [bio, setBio] = useState("");
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [savingCalendar, setSavingCalendar] = useState(false);
   const [invoiceCompanyName, setInvoiceCompanyName] = useState("");
   const [invoiceAddress, setInvoiceAddress] = useState("");
   const [invoiceVatNumber, setInvoiceVatNumber] = useState("");
@@ -43,6 +43,7 @@ export default function ExpertSettingsPage() {
       setProfileImageUrl(res.settings.profileImageUrl || null);
       setCalendarUrl(res.settings.calendarUrl || "");
       setDisplayName(res.settings.displayName || "");
+      setTitle("");
       setBio(res.settings.bio || "");
       setInvoiceCompanyName(res.settings.invoiceCompanyName || "");
       setInvoiceAddress(res.settings.invoiceAddress || "");
@@ -57,7 +58,7 @@ export default function ExpertSettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setIsStripeConnected(data.isConnected);
-
+        
         // If returning from Stripe flow
         if (searchParams.get("stripe") === "return" && data.isConnected) {
           setShowSuccess(true);
@@ -85,6 +86,29 @@ export default function ExpertSettingsPage() {
       alert("Error connecting to Stripe");
     } finally {
       setLoadingStripe(false);
+    }
+  };
+
+  const handleSaveCalendar = async () => {
+    if (!calendarUrl.trim()) {
+      toast.error("Please enter a calendar URL");
+      return;
+    }
+    
+    // Basic validation
+    if (!calendarUrl.startsWith("http")) {
+      toast.error("Please enter a valid URL (starting with http:// or https://)");
+      return;
+    }
+
+    setSavingCalendar(true);
+    const res = await updateExpertCalendar(calendarUrl);
+    setSavingCalendar(false);
+
+    if (res.success) {
+      toast.success("Calendar link updated successfully");
+    } else {
+      toast.error(res.error || "Failed to update calendar link");
     }
   };
 
@@ -134,7 +158,7 @@ export default function ExpertSettingsPage() {
 
         {/* Content Area */}
         <div className="md:col-span-3 space-y-6">
-
+          
           {/* Success Notification */}
           {showSuccess && (
             <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-start gap-3 mb-4 animate-in fade-in slide-in-from-top-2">
@@ -160,12 +184,6 @@ export default function ExpertSettingsPage() {
             />
           </div>
 
-          {/* Public Profile (child component) */}
-          <ProfileSection
-            initialDisplayName={displayName}
-            initialBio={bio}
-          />
-
           {/* Payouts Section */}
           <div id="payouts" className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -173,21 +191,21 @@ export default function ExpertSettingsPage() {
             </h2>
             <div className="bg-secondary/20 p-4 rounded-lg border border-border mb-4">
               <p className="text-sm text-muted-foreground mb-4">
-                {isStripeConnected
+                {isStripeConnected 
                   ? "Your Stripe account is connected. You can now receive automatic payouts to your bank account."
                   : "To receive payments from clients, you must connect a Stripe account. LogicLot uses Stripe Connect to ensure secure, compliant payouts to your bank account."
                 }
               </p>
-
+              
               {isStripeConnected ? (
-                <button
+                <button 
                   disabled
                   className="bg-green-100 text-green-700 border border-green-200 px-4 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 cursor-default"
                 >
                   <CheckCircle className="h-4 w-4" /> Stripe Connected
                 </button>
               ) : (
-                <button
+                <button 
                   onClick={handleConnectStripe}
                   disabled={loadingStripe}
                   className="bg-[#635BFF] hover:bg-[#5851df] text-white px-4 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
@@ -209,9 +227,55 @@ export default function ExpertSettingsPage() {
             </div>
           </div>
 
-          {/* Calendar Section (child component with provider detection) */}
-          <div id="calendar" className="scroll-mt-8">
-            <CalendarSection initialUrl={calendarUrl} />
+          {/* Calendar Section */}
+          <div id="calendar" className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" /> Calendar & Booking
+            </h2>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Link your calendar (Calendly, Cal.com, etc.) so clients can book discovery calls directly from your messages.
+              </p>
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Booking URL</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input 
+                      type="url" 
+                      value={calendarUrl}
+                      onChange={(e) => setCalendarUrl(e.target.value)}
+                      placeholder="https://calendly.com/your-name"
+                      className="w-full bg-background border border-border rounded-md pl-9 pr-3 py-2 text-sm focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <button 
+                    onClick={handleSaveCalendar}
+                    disabled={savingCalendar}
+                    className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold text-sm disabled:opacity-70"
+                  >
+                    {savingCalendar ? "Saving..." : "Save Link"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Security Section */}
+          <div id="security" className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" /> Security
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Change your password or manage account security.
+            </p>
+            <Link
+              href="/auth/forgot-password"
+              className="inline-flex items-center gap-2 text-primary font-medium hover:underline text-sm"
+            >
+              Reset password
+            </Link>
+            <DeleteAccountButton />
           </div>
 
           {/* Invoice Template */}
@@ -238,7 +302,9 @@ export default function ExpertSettingsPage() {
                 <textarea
                   value={invoiceAddress}
                   onChange={(e) => setInvoiceAddress(e.target.value)}
-                  placeholder={"123 Business St\nCity, Postal Code\nCountry"}
+                  placeholder="123 Business St
+City, Postal Code
+Country"
                   rows={3}
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm resize-none"
                 />
@@ -263,21 +329,44 @@ export default function ExpertSettingsPage() {
             </div>
           </div>
 
-          {/* Security Section */}
-          <div id="security" className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" /> Security
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Change your password or manage account security.
-            </p>
-            <Link
-              href="/auth/forgot-password"
-              className="inline-flex items-center gap-2 text-primary font-medium hover:underline text-sm"
-            >
-              Reset password
-            </Link>
-            <DeleteAccountButton />
+          {/* Public Profile */}
+          <div className="scroll-mt-8 bg-card border border-border rounded-xl p-6">
+            <h2 className="text-xl font-bold mb-4">Public Profile</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Display Name</label>
+                  <input 
+                    className="w-full bg-background border border-border rounded-md px-3 py-2" 
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="John Doe" 
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Title</label>
+                  <input 
+                    className="w-full bg-background border border-border rounded-md px-3 py-2" 
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Automation Architect" 
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Bio</label>
+                <textarea 
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 h-24" 
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell businesses about your expertise..." 
+                />
+              </div>
+              
+              <div className="pt-4 border-t border-border">
+                <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold text-sm">Save Changes</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
