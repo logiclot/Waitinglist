@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { 
   ArrowRight, 
   ArrowLeft, 
   Crown, 
   CheckCircle2, 
-  Search, 
   Loader2,
   Briefcase,
   Layers,
@@ -18,14 +17,232 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { createJobPost } from "@/actions/jobs";
+import { CheckoutModal } from "@/components/jobs/discovery/CheckoutModal";
 import * as C from "./constants";
 
+// --- HELPER COMPONENTS (Moved outside to prevent re-mounting on render) ---
+
+const SingleSelect = ({ 
+  label, 
+  options, 
+  value, 
+  onChange, 
+  otherValue, 
+  onOtherChange, 
+  helperText,
+  index
+}: { 
+  label: string, 
+  options: string[], 
+  value: string, 
+  onChange: (val: string) => void,
+  otherValue?: string,
+  onOtherChange?: (val: string) => void,
+  helperText?: string,
+  index?: number
+}) => (
+  <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${(index || 0) * 100}ms` }}>
+    <label className="block text-lg font-bold text-foreground">
+      {label} <span className="text-primary">*</span>
+    </label>
+    {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {options.map(opt => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          type="button"
+          className={`p-3 rounded-lg border text-left text-sm transition-all ${
+            value === opt 
+              ? "border-primary bg-primary/5 text-primary ring-1 ring-primary" 
+              : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+    {(value === "Other" || value === "Yes" || value === "Other (please specify)") && onOtherChange && (
+      <input 
+        value={otherValue}
+        onChange={(e) => onOtherChange(e.target.value)}
+        className="w-full mt-2 bg-background border border-border rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
+        placeholder="Please specify..."
+        autoFocus
+      />
+    )}
+  </div>
+);
+
+const MultiSelectWithToolNames = ({ 
+  label, 
+  options, 
+  selected, 
+  onToggle, 
+  toolNames,
+  onToolNameChange,
+  otherValue, 
+  onOtherChange,
+  helperText,
+  index 
+}: { 
+  label: string, 
+  options: string[], 
+  selected: string[], 
+  onToggle: (val: string) => void,
+  toolNames: Record<string, string>,
+  onToolNameChange: (tool: string, name: string) => void,
+  otherValue?: string,
+  onOtherChange?: (val: string) => void,
+  helperText?: string,
+  index?: number
+}) => (
+  <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${(index || 0) * 100}ms` }}>
+    <label className="block text-lg font-bold text-foreground">
+      {label} <span className="text-primary">*</span>
+    </label>
+    {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
+    <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">Select all that apply</p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {options.map(opt => {
+        const isSelected = selected.includes(opt);
+        return (
+          <div key={opt} className="space-y-1">
+            <button
+              type="button"
+              onClick={() => onToggle(opt)}
+              className={`w-full p-3 rounded-lg border text-left text-sm transition-all ${
+                isSelected 
+                  ? "border-primary bg-primary/5 text-primary ring-1 ring-primary" 
+                  : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {opt}
+            </button>
+            {isSelected && opt !== "Other" && (
+              <input 
+                value={toolNames[opt] || ""}
+                onChange={(e) => onToolNameChange(opt, e.target.value)}
+                placeholder="Name of tool"
+                className="w-full text-sm bg-background border border-border rounded-md px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+    {selected.includes("Other") && onOtherChange && (
+      <div className="space-y-1">
+        <input 
+          value={otherValue}
+          onChange={(e) => onOtherChange(e.target.value)}
+          className="w-full bg-background border border-border rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
+          placeholder="Please specify..."
+        />
+        <input 
+          value={toolNames["Other"] || ""}
+          onChange={(e) => onToolNameChange("Other", e.target.value)}
+          placeholder="Name of tool"
+          className="w-full text-sm bg-background border border-border rounded-md px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
+        />
+      </div>
+    )}
+  </div>
+);
+
+const MultiSelect = ({ 
+  label, 
+  options, 
+  selected, 
+  onToggle, 
+  otherValue, 
+  onOtherChange,
+  helperText,
+  index 
+}: { 
+  label: string, 
+  options: string[], 
+  selected: string[], 
+  onToggle: (val: string) => void,
+  otherValue?: string,
+  onOtherChange?: (val: string) => void,
+  helperText?: string,
+  index?: number
+}) => (
+  <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${(index || 0) * 100}ms` }}>
+    <label className="block text-lg font-bold text-foreground">
+      {label} <span className="text-primary">*</span>
+    </label>
+    {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
+    <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">Select all that apply</p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {options.map(opt => {
+        const isSelected = selected.includes(opt);
+        return (
+          <button
+            key={opt}
+            onClick={() => onToggle(opt)}
+            type="button"
+            className={`p-3 rounded-lg border text-left text-sm transition-all ${
+              isSelected 
+                ? "border-primary bg-primary/5 text-primary ring-1 ring-primary" 
+                : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {opt}
+          </button>
+        );
+      })}
+    </div>
+    {selected.includes("Other") && onOtherChange && (
+      <input 
+        value={otherValue}
+        onChange={(e) => onOtherChange(e.target.value)}
+        className="w-full mt-2 bg-background border border-border rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
+        placeholder="Please specify..."
+        autoFocus
+      />
+    )}
+  </div>
+);
+
+const ShortText = ({
+  label,
+  value,
+  onChange,
+  helperText,
+  placeholder,
+  required = true,
+  index
+}: {
+  label: string,
+  value: string,
+  onChange: (val: string) => void,
+  helperText?: string,
+  placeholder?: string,
+  required?: boolean,
+  index?: number
+}) => (
+  <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${(index || 0) * 100}ms` }}>
+    <label className="block text-lg font-bold text-foreground">
+      {label} {required && <span className="text-primary">*</span>}
+    </label>
+    {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full h-24 bg-background border border-border rounded-xl p-4 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-foreground"
+      placeholder={placeholder}
+    />
+  </div>
+);
+
 export default function NewJobPage() {
-  const router = useRouter();
   const [step, setStep] = useState(0); // 0 = Intro
   const [pending, setPending] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [pendingJobId, setPendingJobId] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -49,6 +266,7 @@ export default function NewJobPage() {
     processHandling: "",
     otherProcessHandling: "",
     involvedTools: [] as string[],
+    involvedToolNames: {} as Record<string, string>,
     otherInvolvedTool: "",
     breakingPoint: "",
     otherBreakingPoint: "",
@@ -69,13 +287,11 @@ export default function NewJobPage() {
     otherUrgencyDriver: "",
     risksConcerns: "", // OPTIONAL
 
-    // Section D
+    // Section D (systemAccess/Q22 removed)
     mandatoryTools: "",
     otherMandatoryTool: "",
     immutableSystems: "",
     otherImmutableSystem: "",
-    systemAccess: "",
-    otherSystemAccess: "",
     implementer: "",
     otherImplementer: "",
     boundariesConstraints: "", // OPTIONAL
@@ -97,7 +313,7 @@ export default function NewJobPage() {
     finalClarifier: "" // OPTIONAL
   });
 
-  const totalSteps = 6; // Intro (0) + 6 Sections (1-6)
+  const totalSteps = 7; // Intro (0) + 6 Sections (1-6) + Review (7)
 
   // Generic Handlers
   const handleSingleSelect = (key: string, value: string, otherKey?: string) => {
@@ -142,10 +358,12 @@ export default function NewJobPage() {
                !!formData.problemTrigger &&
                (formData.problemTrigger !== "Other" || !!formData.otherProblemTrigger);
       case 2: // Section B
+        const involvedToolsValid = formData.involvedTools.length > 0 &&
+          (!formData.involvedTools.includes("Other") || !!formData.otherInvolvedTool) &&
+          formData.involvedTools.every((t: string) => t === "Other" || !!(formData.involvedToolNames[t] || "").trim());
         return !!formData.processHandling &&
                (formData.processHandling !== "Other" || !!formData.otherProcessHandling) &&
-               formData.involvedTools.length > 0 &&
-               (!formData.involvedTools.includes("Other") || !!formData.otherInvolvedTool) &&
+               involvedToolsValid &&
                !!formData.breakingPoint &&
                (formData.breakingPoint !== "Other" || !!formData.otherBreakingPoint) &&
                formData.affectedParties.length > 0 &&
@@ -161,13 +379,11 @@ export default function NewJobPage() {
                (formData.criticality !== "Other" || !!formData.otherCriticality) &&
                !!formData.urgencyDriver &&
                (formData.urgencyDriver !== "Yes" || !!formData.otherUrgencyDriver);
-      case 4: // Section D
+      case 4: // Section D (systemAccess/Q22 removed)
         return !!formData.mandatoryTools &&
                (formData.mandatoryTools !== "Yes" || !!formData.otherMandatoryTool) &&
                !!formData.immutableSystems &&
                (formData.immutableSystems !== "Yes" || !!formData.otherImmutableSystem) &&
-               !!formData.systemAccess &&
-               (formData.systemAccess !== "Other" || !!formData.otherSystemAccess) &&
                !!formData.implementer &&
                (formData.implementer !== "Other" || !!formData.otherImplementer);
       case 5: // Section E
@@ -183,6 +399,8 @@ export default function NewJobPage() {
                (formData.acceptanceProof !== "Other" || !!formData.otherAcceptanceProof);
       case 6: // Section F (Optional)
         return true;
+      case 7: // Review
+        return true;
       default: return false;
     }
   };
@@ -192,7 +410,7 @@ export default function NewJobPage() {
     if (validateStep(step)) {
       if (step < totalSteps) {
         setStep(step + 1);
-        window.scrollTo(0, 0);
+        window.scrollTo(0, 0); // Kept on section change as it's useful
       } else {
         // Ready to submit
         handleSubmit();
@@ -210,306 +428,199 @@ export default function NewJobPage() {
   const handleSubmit = async () => {
     setError(null);
     setPending(true);
-    // Simulate processing
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Serialize data
-    const serializedData = `
-# CUSTOM PROJECT WIZARD REPORT
+    // Helper: resolve "Other" values
+    const v  = (val: string, other: string) => val === "Other" || val === "Yes" ? other : val;
+    const va = (arr: string[], other: string) => arr.map(i => i === "Other" ? other : i).filter(Boolean);
 
-## SECTION A: Business Context & Problem
-- Model: ${formData.businessModel === "Other" ? formData.otherBusinessModel : formData.businessModel}
-- Products: ${formData.primaryProducts.map(p => p === "Other" ? formData.otherPrimaryProduct : p).join(", ")}
-- Customer Journey: ${formData.customerJourney === "Other" ? formData.otherCustomerJourney : formData.customerJourney}
-- PROBLEM STATEMENT: "${formData.problemStatement}"
-- Location: ${formData.problemLocation.map(l => l === "Other" ? formData.otherProblemLocation : l).join(", ")}
-- Duration: ${formData.problemDuration === "Other" ? formData.otherProblemDuration : formData.problemDuration}
-- Trigger: ${formData.problemTrigger === "Other" ? formData.otherProblemTrigger : formData.problemTrigger}
-- Context: ${formData.problemContext || "None provided"}
-
-## SECTION B: Current Process
-- Handling: ${formData.processHandling === "Other" ? formData.otherProcessHandling : formData.processHandling}
-- Tools: ${formData.involvedTools.map(t => t === "Other" ? formData.otherInvolvedTool : t).join(", ")}
-- Breaking Point: ${formData.breakingPoint === "Other" ? formData.otherBreakingPoint : formData.breakingPoint}
-- Affected: ${formData.affectedParties.map(a => a === "Other" ? formData.otherAffectedParty : a).join(", ")}
-- Source of Truth: ${formData.sourceOfTruth === "Other" ? formData.otherSourceOfTruth : formData.sourceOfTruth}
-- Description: ${formData.currentProcessDescription || "None provided"}
-
-## SECTION C: Impact & Risk
-- Main Impact: ${formData.mainImpact === "Other" ? formData.otherMainImpact : formData.mainImpact}
-- Consequence: ${formData.unsolvedConsequence === "Other" ? formData.otherUnsolvedConsequence : formData.unsolvedConsequence}
-- Criticality: ${formData.criticality === "Other" ? formData.otherCriticality : formData.criticality}
-- Urgency: ${formData.urgencyDriver === "Yes" ? `YES - ${formData.otherUrgencyDriver}` : formData.urgencyDriver}
-- Risks: ${formData.risksConcerns || "None provided"}
-
-## SECTION D: Constraints
-- Mandatory Tools: ${formData.mandatoryTools === "Yes" ? `YES - ${formData.otherMandatoryTool}` : formData.mandatoryTools}
-- Immutable Systems: ${formData.immutableSystems === "Yes" ? `YES - ${formData.otherImmutableSystem}` : formData.immutableSystems}
-- Access: ${formData.systemAccess === "Other" ? formData.otherSystemAccess : formData.systemAccess}
-- Implementer: ${formData.implementer === "Other" ? formData.otherImplementer : formData.implementer}
-- Boundaries: ${formData.boundariesConstraints || "None provided"}
-
-## SECTION E: Success Criteria
-- Success Looks Like: ${formData.successLooksLike.map(s => s === "Other" ? formData.otherSuccessLooksLike : s).join(", ")}
-- Top Priority: ${formData.priorityOutcome === "Other" ? formData.otherPriorityOutcome : formData.priorityOutcome}
-- Success Judgment: ${formData.successJudgment === "Other" ? formData.otherSuccessJudgment : formData.successJudgment}
-- "Solved" Definition: ${formData.problemSolvedDefinition === "Other" ? formData.otherProblemSolvedDefinition : formData.problemSolvedDefinition}
-- Proof Required: ${formData.acceptanceProof === "Other" ? formData.otherAcceptanceProof : formData.acceptanceProof}
-- Other Expectations: ${formData.otherExpectations || "None provided"}
-
-## SECTION F: Final Clarifier
-${formData.finalClarifier || "None provided."}
-    `;
+    // Serialize as BriefV2 JSON so the expert brief displays the full structured Q&A
+    const briefData = {
+      version: "2",
+      sections: [
+        {
+          id: "A",
+          title: "Business Context & Problem",
+          subtitle: "What the business does and the core issue to solve",
+          qa: [
+            { q: "What best describes your business?",       a: v(formData.businessModel, formData.otherBusinessModel) },
+            { q: "What do you primarily sell?",              a: va(formData.primaryProducts, formData.otherPrimaryProduct) },
+            { q: "Primary customer journey",                 a: v(formData.customerJourney, formData.otherCustomerJourney) },
+            { q: "Problem to solve",                         a: formData.problemStatement },
+            { q: "Where does this problem show up?",         a: va(formData.problemLocation, formData.otherProblemLocation) },
+            { q: "How long has this problem existed?",       a: v(formData.problemDuration, formData.otherProblemDuration) },
+            { q: "What triggers or exposes this problem?",   a: v(formData.problemTrigger, formData.otherProblemTrigger) },
+            ...(formData.problemContext ? [{ q: "Additional context", a: formData.problemContext }] : []),
+          ],
+        },
+        {
+          id: "B",
+          title: "Current Process",
+          subtitle: "How it works — or breaks — today",
+          qa: [
+            { q: "How is this process handled right now?",   a: v(formData.processHandling, formData.otherProcessHandling) },
+            { q: "Which tools are involved?",                a: formData.involvedTools.map((t: string) => t === "Other" ? formData.otherInvolvedTool : (formData.involvedToolNames[t] ? `${t} (${formData.involvedToolNames[t]})` : t)).filter(Boolean) },
+            { q: "Where does this process slow down?",       a: v(formData.breakingPoint, formData.otherBreakingPoint) },
+            { q: "Who is most affected?",                    a: va(formData.affectedParties, formData.otherAffectedParty) },
+            { q: "Source of truth for this process",         a: v(formData.sourceOfTruth, formData.otherSourceOfTruth) },
+            ...(formData.currentProcessDescription ? [{ q: "Process description", a: formData.currentProcessDescription }] : []),
+          ],
+        },
+        {
+          id: "C",
+          title: "Impact & Risk",
+          subtitle: "Why this matters and what's at stake",
+          qa: [
+            { q: "Main impact of this problem",              a: v(formData.mainImpact, formData.otherMainImpact) },
+            { q: "What happens if not solved?",              a: v(formData.unsolvedConsequence, formData.otherUnsolvedConsequence) },
+            { q: "How critical is this to the business?",    a: v(formData.criticality, formData.otherCriticality) },
+            { q: "Deadline or urgency driver",               a: formData.urgencyDriver === "Yes" ? `Yes — ${formData.otherUrgencyDriver}` : formData.urgencyDriver },
+            ...(formData.risksConcerns ? [{ q: "Risks or concerns", a: formData.risksConcerns }] : []),
+          ],
+        },
+        {
+          id: "D",
+          title: "Constraints & Boundaries",
+          subtitle: "What experts must respect",
+          qa: [
+            { q: "Tools that must be used",                  a: formData.mandatoryTools === "Yes" ? `Yes — ${formData.otherMandatoryTool}` : formData.mandatoryTools },
+            { q: "Systems that must NOT be changed",         a: formData.immutableSystems === "Yes" ? `Yes — ${formData.otherImmutableSystem}` : formData.immutableSystems },
+            { q: "Who will implement the solution?",         a: v(formData.implementer, formData.otherImplementer) },
+            ...(formData.boundariesConstraints ? [{ q: "Additional boundaries", a: formData.boundariesConstraints }] : []),
+          ],
+        },
+        {
+          id: "E",
+          title: "Outcome & Success Criteria",
+          subtitle: "What done looks like",
+          qa: [
+            { q: "What does a successful solution look like?",          a: va(formData.successLooksLike, formData.otherSuccessLooksLike) },
+            { q: "Which outcome matters most?",                         a: v(formData.priorityOutcome, formData.otherPriorityOutcome) },
+            { q: "How will you judge success?",                         a: v(formData.successJudgment, formData.otherSuccessJudgment) },
+            { q: 'What would make you say "this solved my problem"?',   a: v(formData.problemSolvedDefinition, formData.otherProblemSolvedDefinition) },
+            { q: "Required proof of completion",                        a: v(formData.acceptanceProof, formData.otherAcceptanceProof) },
+            ...(formData.otherExpectations ? [{ q: "Additional expectations", a: formData.otherExpectations }] : []),
+          ],
+        },
+        ...(formData.finalClarifier ? [{
+          id: "F",
+          title: "Final Clarifier",
+          subtitle: "Extra context from the business owner",
+          qa: [{ q: "Anything else that would help experts?", a: formData.finalClarifier }],
+        }] : []),
+      ],
+    };
 
     const payload = new FormData();
-    payload.append("title", `Custom Project: ${formData.businessModel}`); // Or maybe prompt for a title? Sticking to generated for consistency/ease
-    payload.append("goal", serializedData);
-    // Since we don't have budget/timeline in the wizard explicitly as drop-downs in the new spec, 
-    // we set defaults or extract if we added them. The spec didn't ask for them explicitly in questions 
-    // but the DB requires them. We can infer or set placeholders.
-    // Actually, "Implementation Budget Range" and "Timeline" were in the OLD form. 
-    // The new wizard asks about constraints/urgency but not a strict budget dropdown.
-    // We will set them to "To be discussed" or similar if the DB allows, or map reasonably.
-    // Checking schema... JobPost requires budgetRange and timeline strings.
+    payload.append("title", `Custom Project: ${formData.problemStatement.slice(0, 60)}${formData.problemStatement.length > 60 ? "…" : ""}`);
+    payload.append("goal", JSON.stringify(briefData));
     payload.append("budgetRange", "Custom Quote Required");
-    payload.append("timeline", "See Urgency Section");
+    payload.append("timeline", formData.urgencyDriver === "Yes" ? formData.otherUrgencyDriver || "Urgent" : formData.urgencyDriver || "To be discussed");
     payload.append("category", "Custom Project");
-    payload.append("tools", formData.involvedTools.join(", "));
+    const toolsWithNames = formData.involvedTools.map((t: string) => t === "Other" ? formData.otherInvolvedTool : (formData.involvedToolNames[t] ? `${t} (${formData.involvedToolNames[t]})` : t)).filter(Boolean);
+    payload.append("tools", toolsWithNames.join(", "));
 
-    const result = await createJobPost(payload);
+    const result = await createJobPost(null, payload);
 
-    if (result.success) {
-      router.push(`/jobs/${result.jobId}`);
+    if (result.success && result.jobId) {
+      setPendingJobId(result.jobId);
+      setPending(false);
+      setShowPaymentModal(true);
     } else {
       setPending(false);
+      toast.error(result.error || "Something went wrong.", { duration: 4000 });
       setError(result.error || "Something went wrong.");
     }
   };
 
-  // --- RENDER HELPERS ---
-
-  const SingleSelect = ({ 
-    label, 
-    options, 
-    value, 
-    onChange, 
-    otherValue, 
-    onOtherChange, 
-    helperText,
-    index
-  }: { 
-    label: string, 
-    options: string[], 
-    value: string, 
-    onChange: (val: string) => void,
-    otherValue?: string,
-    onOtherChange?: (val: string) => void,
-    helperText?: string,
-    index?: number
-  }) => (
-    <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${(index || 0) * 100}ms` }}>
-      <label className="block text-lg font-bold text-foreground">
-        {label} <span className="text-primary">*</span>
-      </label>
-      {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {options.map(opt => (
-          <button
-            key={opt}
-            onClick={() => onChange(opt)}
-            type="button"
-            className={`p-3 rounded-lg border text-left text-sm transition-all ${
-              value === opt 
-                ? "border-primary bg-primary/5 text-primary ring-1 ring-primary" 
-                : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {opt}
-          </button>
-        ))}
-      </div>
-      {(value === "Other" || value === "Yes" || value === "Other (please specify)") && onOtherChange && (
-        <input 
-          value={otherValue}
-          onChange={(e) => onOtherChange(e.target.value)}
-          className="w-full mt-2 bg-background border border-border rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
-          placeholder="Please specify..."
-          autoFocus
-        />
-      )}
-    </div>
-  );
-
-  const MultiSelect = ({ 
-    label, 
-    options, 
-    selected, 
-    onToggle, 
-    otherValue, 
-    onOtherChange,
-    helperText,
-    index 
-  }: { 
-    label: string, 
-    options: string[], 
-    selected: string[], 
-    onToggle: (val: string) => void,
-    otherValue?: string,
-    onOtherChange?: (val: string) => void,
-    helperText?: string,
-    index?: number
-  }) => (
-    <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${(index || 0) * 100}ms` }}>
-      <label className="block text-lg font-bold text-foreground">
-        {label} <span className="text-primary">*</span>
-      </label>
-      {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
-      <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">Select all that apply</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {options.map(opt => {
-          const isSelected = selected.includes(opt);
-          return (
-            <button
-              key={opt}
-              onClick={() => onToggle(opt)}
-              type="button"
-              className={`p-3 rounded-lg border text-left text-sm transition-all ${
-                isSelected 
-                  ? "border-primary bg-primary/5 text-primary ring-1 ring-primary" 
-                  : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {opt}
-            </button>
-          );
-        })}
-      </div>
-      {selected.includes("Other") && onOtherChange && (
-        <input 
-          value={otherValue}
-          onChange={(e) => onOtherChange(e.target.value)}
-          className="w-full mt-2 bg-background border border-border rounded-md px-4 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-colors text-foreground"
-          placeholder="Please specify..."
-          autoFocus
-        />
-      )}
-    </div>
-  );
-
-  const ShortText = ({
-    label,
-    value,
-    onChange,
-    helperText,
-    placeholder,
-    required = true,
-    index
-  }: {
-    label: string,
-    value: string,
-    onChange: (val: string) => void,
-    helperText?: string,
-    placeholder?: string,
-    required?: boolean,
-    index?: number
-  }) => (
-    <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${(index || 0) * 100}ms` }}>
-      <label className="block text-lg font-bold text-foreground">
-        {label} {required && <span className="text-primary">*</span>}
-      </label>
-      {helperText && <p className="text-sm text-muted-foreground -mt-2 mb-2">{helperText}</p>}
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-24 bg-background border border-border rounded-xl p-4 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none text-foreground"
-        placeholder={placeholder}
-      />
-    </div>
-  );
-
   // --- SECTIONS RENDER ---
 
   const renderIntro = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-      <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
-        <div className="max-w-2xl mx-auto mb-8">
-          <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
-             <Crown className="h-8 w-8 text-primary" /> Custom Project Request
-          </h1>
-          <p className="text-muted-foreground text-center text-lg max-w-xl mx-auto mb-8">
-            Describe one specific problem using our guided diagnostic wizard. Elite experts will respond with tailored bids.
-          </p>
+    <div className="w-full animate-in fade-in slide-in-from-bottom-4">
+      <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
 
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-8 text-sm text-blue-700 dark:text-blue-400">
-            <strong>Clarification:</strong> This is for focused problems where you already know what isn’t working. 
-            If you’re unsure what to automate, <Link href="/jobs/discovery" className="underline hover:text-blue-600 font-medium">start with a Discovery Scan instead.</Link>
-          </div>
-
-          <h3 className="font-bold text-lg mb-4">What happens next:</h3>
-          <ul className="space-y-3 mb-8">
-            <li className="flex gap-3 text-muted-foreground">
-              <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-              Scope alignment
-            </li>
-            <li className="flex gap-3 text-muted-foreground">
-              <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-              Live demo & walkthrough
-            </li>
-            <li className="flex gap-3 text-muted-foreground">
-              <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-              Implementation in your environment
-            </li>
-            <li className="flex gap-3 text-muted-foreground">
-              <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-              Review & approve
-            </li>
-          </ul>
-
-          <div className="flex flex-col items-center gap-4 bg-secondary/30 p-6 rounded-xl border border-border mb-8">
-             <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">€100 one-time posting fee</div>
-                <div className="text-sm text-muted-foreground">75% refund if unresolved</div>
-             </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => setStep(1)}
-              className="px-8 py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto"
-            >
-              Start Custom Project Wizard <ArrowRight className="h-5 w-5" />
-            </button>
-          </div>
-          <p className="text-xs text-center text-muted-foreground mt-3 font-medium">
-            Concrete proposals, not generic advice.
-          </p>
-        </div>
-
-        {/* Secondary: Search (moved below) */}
-        <div className="border-t border-border pt-8 mt-8">
-          <div className="text-center mb-6">
-            <p className="text-sm text-muted-foreground mb-4">Or search for something ready-made:</p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
-              <input
-                type="text"
-                placeholder="e.g. HubSpot to Slack sync"
-                className="flex-grow bg-background border border-border rounded-md px-3 py-2 text-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Link
-                href={`/solutions?q=${searchQuery}`}
-                className="px-4 py-2 border border-border bg-secondary/50 hover:bg-secondary text-secondary-foreground rounded-md font-medium transition-colors flex items-center justify-center gap-2 text-sm whitespace-nowrap"
-              >
-                <Search className="h-4 w-4" /> Browse Solutions
-              </Link>
+        {/* Header */}
+        <div className="px-8 pt-8 pb-6 border-b border-border">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Crown className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">Describe it once. Get it built right.</h1>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+                Custom Project &middot; &euro;100 one-time &middot; Max 3 tailored proposals
+              </p>
             </div>
           </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            You know what needs to change. Post your requirement &mdash; Elite experts compete for the job with tailored proposals, not generic advice.
+          </p>
         </div>
+
+        {/* Body */}
+        <div className="px-8 py-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+
+          {/* Left: What you get */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">What you get</p>
+            <ul className="space-y-2.5">
+              {[
+                "Your team stops doing manually what should have been automated a long time ago.",
+                "The problem you describe is the exact problem that gets solved",
+                "You leave with a live, working automation \u2014 not a plan or a prototype",
+                "Know your total cost upfront \u2014 implementation and monthly running costs, itemised",
+                "Nothing ships without your sign-off \u2014 you stay in control at every step",
+                "Every proposal you receive is built for your tools and process.",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="text-foreground">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Right: Pricing + CTA */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-secondary/40 rounded-xl p-5 border border-border">
+              <div className="text-2xl font-bold text-foreground mb-0.5">&euro;100</div>
+              <div className="text-xs text-muted-foreground mb-3">One-time posting fee</div>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                  Max 3 bids &mdash; less noise, higher intent
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                  75% refund if no proposal meets your criteria
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                  Mutual NDA before any data is shared
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-600 dark:text-blue-400">
+              Not sure what to automate yet?{" "}
+              <Link href="/jobs/discovery" className="underline font-medium">
+                Start with a Discovery Scan instead.
+              </Link>
+            </div>
+
+            <button
+              onClick={() => setStep(1)}
+              className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+            >
+              Post My Custom Project <ArrowRight className="h-4 w-4" />
+            </button>
+            <p className="text-xs text-muted-foreground text-center -mt-1">75% refund if no proposal meets your criteria</p>
+          </div>
+        </div>
+
       </div>
     </div>
   );
-
   const renderSectionA = () => (
     <div className="animate-in fade-in slide-in-from-right-8 duration-300">
       <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border">
@@ -546,7 +657,7 @@ ${formData.finalClarifier || "None provided."}
       </div>
 
       <SingleSelect label="9. How is this process handled right now?" options={C.PROCESS_HANDLING} value={formData.processHandling} onChange={(v) => handleSingleSelect("processHandling", v, "otherProcessHandling")} otherValue={formData.otherProcessHandling} onOtherChange={(v) => handleChange("otherProcessHandling", v)} index={0} />
-      <MultiSelect label="10. Which tools are involved in this process?" options={C.INVOLVED_TOOLS} selected={formData.involvedTools} onToggle={(v) => handleMultiSelect("involvedTools", v)} otherValue={formData.otherInvolvedTool} onOtherChange={(v) => handleChange("otherInvolvedTool", v)} index={1} />
+      <MultiSelectWithToolNames label="10. Which tools are involved in this process?" options={C.INVOLVED_TOOLS} selected={formData.involvedTools} onToggle={(v) => handleMultiSelect("involvedTools", v)} toolNames={formData.involvedToolNames} onToolNameChange={(tool, name) => setFormData(prev => ({ ...prev, involvedToolNames: { ...prev.involvedToolNames, [tool]: name } }))} otherValue={formData.otherInvolvedTool} onOtherChange={(v) => handleChange("otherInvolvedTool", v)} helperText="Specify the exact tool name (e.g. HubSpot, Salesforce) for each selected option." index={1} />
       <SingleSelect label="11. Where does this process usually slow down or break?" options={C.BREAKING_POINT} value={formData.breakingPoint} onChange={(v) => handleSingleSelect("breakingPoint", v, "otherBreakingPoint")} otherValue={formData.otherBreakingPoint} onOtherChange={(v) => handleChange("otherBreakingPoint", v)} index={2} />
       <MultiSelect label="12. Who is most affected by this problem?" options={C.AFFECTED_PARTIES} selected={formData.affectedParties} onToggle={(v) => handleMultiSelect("affectedParties", v)} otherValue={formData.otherAffectedParty} onOtherChange={(v) => handleChange("otherAffectedParty", v)} index={3} />
       <SingleSelect label="13. What is the current “source of truth” for this process?" options={C.SOURCE_OF_TRUTH} value={formData.sourceOfTruth} onChange={(v) => handleSingleSelect("sourceOfTruth", v, "otherSourceOfTruth")} otherValue={formData.otherSourceOfTruth} onOtherChange={(v) => handleChange("otherSourceOfTruth", v)} helperText="This is where the most reliable data for this workflow lives today." index={4} />
@@ -588,8 +699,7 @@ ${formData.finalClarifier || "None provided."}
 
       <SingleSelect label="20. Are there tools that must be used?" options={C.MANDATORY_TOOLS} value={formData.mandatoryTools} onChange={(v) => handleSingleSelect("mandatoryTools", v, "otherMandatoryTool")} otherValue={formData.otherMandatoryTool} onOtherChange={(v) => handleChange("otherMandatoryTool", v)} index={0} />
       <SingleSelect label="21. Are there tools or systems that must NOT be changed?" options={C.IMMUTABLE_SYSTEMS} value={formData.immutableSystems} onChange={(v) => handleSingleSelect("immutableSystems", v, "otherImmutableSystem")} otherValue={formData.otherImmutableSystem} onOtherChange={(v) => handleChange("otherImmutableSystem", v)} index={1} />
-      <SingleSelect label="22. What level of system access is acceptable?" options={C.SYSTEM_ACCESS} value={formData.systemAccess} onChange={(v) => handleSingleSelect("systemAccess", v, "otherSystemAccess")} otherValue={formData.otherSystemAccess} onOtherChange={(v) => handleChange("otherSystemAccess", v)} index={2} />
-      <SingleSelect label="23. Who will implement the solution?" options={C.IMPLEMENTER} value={formData.implementer} onChange={(v) => handleSingleSelect("implementer", v, "otherImplementer")} otherValue={formData.otherImplementer} onOtherChange={(v) => handleChange("otherImplementer", v)} helperText="This affects how the solution is documented and delivered." index={3} />
+      <SingleSelect label="22. Who will implement the solution?" options={C.IMPLEMENTER} value={formData.implementer} onChange={(v) => handleSingleSelect("implementer", v, "otherImplementer")} otherValue={formData.otherImplementer} onOtherChange={(v) => handleChange("otherImplementer", v)} helperText="This affects how the solution is documented and delivered." index={2} />
       <ShortText label="24. Optional — Any boundaries or constraints we should respect?" value={formData.boundariesConstraints} onChange={(v) => handleChange("boundariesConstraints", v)} required={false} helperText="For example: security policies, internal rules, or things you don’t want touched." index={4} />
     </div>
   );
@@ -638,7 +748,48 @@ ${formData.finalClarifier || "None provided."}
     </div>
   );
 
+  const renderReview = () => {
+    const v  = (val: string, other: string) => (val === "Other" || val === "Yes") && other ? other : val;
+    const va = (arr: string[], other: string) => arr.map(i => i === "Other" ? other : i).filter(Boolean);
+    const rows: { label: string; value: string | string[] }[] = [
+      { label: "Problem",          value: formData.problemStatement },
+      { label: "Business model",   value: v(formData.businessModel, formData.otherBusinessModel) },
+      { label: "Products / services", value: va(formData.primaryProducts, formData.otherPrimaryProduct) },
+      { label: "Current process",  value: v(formData.processHandling, formData.otherProcessHandling) },
+      { label: "Tools involved",   value: formData.involvedTools.map((t: string) => t === "Other" ? formData.otherInvolvedTool : (formData.involvedToolNames[t] ? `${t} (${formData.involvedToolNames[t]})` : t)).filter(Boolean) },
+      { label: "Main impact",      value: v(formData.mainImpact, formData.otherMainImpact) },
+      { label: "Urgency",          value: formData.urgencyDriver === "Yes" ? `Yes — ${formData.otherUrgencyDriver}` : formData.urgencyDriver },
+      { label: "Success looks like", value: va(formData.successLooksLike, formData.otherSuccessLooksLike) },
+      { label: "Priority outcome", value: v(formData.priorityOutcome, formData.otherPriorityOutcome) },
+      ...(formData.finalClarifier ? [{ label: "Final clarifier", value: formData.finalClarifier }] : []),
+    ];
+    return (
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-bold mb-1">Review your brief</h2>
+          <p className="text-sm text-muted-foreground">This is exactly what experts will see. Confirm everything looks correct before paying.</p>
+        </div>
+        <div className="divide-y divide-border border border-border rounded-xl overflow-hidden">
+          {rows.map((row, i) => (
+            <div key={i} className="flex gap-4 px-4 py-3 text-sm">
+              <span className="text-muted-foreground w-36 shrink-0 font-medium">{row.label}</span>
+              <span className="flex-1 text-foreground">
+                {Array.isArray(row.value)
+                  ? row.value.length > 0 ? row.value.join(", ") : <span className="text-muted-foreground italic">Not provided</span>
+                  : row.value || <span className="text-muted-foreground italic">Not provided</span>}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground text-center pt-2">
+          You can go back and edit any answer before paying.
+        </p>
+      </div>
+    );
+  };
+
   return (
+    <>
     <div className="container mx-auto px-4 py-12 max-w-3xl">
       {step === 0 ? (
         renderIntro()
@@ -672,6 +823,14 @@ ${formData.finalClarifier || "None provided."}
               {step === 4 && renderSectionD()}
               {step === 5 && renderSectionE()}
               {step === 6 && renderSectionF()}
+              {step === 7 && renderReview()}
+            </div>
+
+            <div className="bg-secondary/30 p-4 rounded-lg border border-border mb-6">
+              <p className="text-xs text-muted-foreground text-center">
+                By proceeding, you enter a legally binding <strong>Mutual NDA</strong>. 
+                All data and logic shared are protected by LogicLot protocols.
+              </p>
             </div>
 
             <div className="flex justify-between border-t border-border pt-6">
@@ -690,7 +849,9 @@ ${formData.finalClarifier || "None provided."}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
               >
                 {step === totalSteps ? (
-                  pending ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : "Submit Request"
+                  pending ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : "Confirm & Pay →"
+                ) : step === totalSteps - 1 ? (
+                  <>Review my brief <ArrowRight className="w-4 h-4" /></>
                 ) : (
                   <>Next Step <ArrowRight className="w-4 h-4" /></>
                 )}
@@ -700,5 +861,14 @@ ${formData.finalClarifier || "None provided."}
         </>
       )}
     </div>
+
+      {showPaymentModal && pendingJobId && (
+        <CheckoutModal
+          jobId={pendingJobId}
+          type="custom"
+          onClose={() => setShowPaymentModal(false)}
+        />
+      )}
+    </>
   );
 }

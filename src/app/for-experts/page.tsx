@@ -10,7 +10,7 @@ export const metadata = {
 
 export default async function ForExpertsPage() {
   const foundingCount = await prisma.specialistProfile.count({
-    where: { founding: true }
+    where: { isFoundingExpert: true }
   });
   const remainingSpots = Math.max(0, 20 - foundingCount);
 

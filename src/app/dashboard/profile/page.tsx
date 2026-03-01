@@ -4,9 +4,8 @@ import { authOptions } from "@/lib/auth";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
-  // @ts-expect-error: role is in session
-  const role = session?.user?.role;
-  const isExpert = role === "SPECIALIST";
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const isExpert = role === "EXPERT";
 
   return (
     <div className="p-8 max-w-4xl mx-auto">

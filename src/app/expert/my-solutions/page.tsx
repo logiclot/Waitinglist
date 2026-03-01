@@ -31,7 +31,8 @@ export default async function ExpertMySolutionsPage({
     where: { expertId: expert.id, status: { not: "archived" } }, // Exclude archived
     orderBy: { updatedAt: "desc" },
     include: {
-      expert: true
+      expert: true,
+      _count: { select: { orders: true } }
     }
   });
 
@@ -47,7 +48,12 @@ export default async function ExpertMySolutionsPage({
         implementation_price: sol.implementationPriceCents / 100,
         monthly_cost_min: sol.monthlyCostMinCents ? sol.monthlyCostMinCents / 100 : 0,
         monthly_cost_max: sol.monthlyCostMaxCents ? sol.monthlyCostMaxCents / 100 : 0,
-        // Other mappings if types differ strictly
+        delivery_days: sol.deliveryDays,
+        support_days: sol.supportDays,
+        short_summary: sol.shortSummary,
+        adoption_count: sol._count.orders > 0 ? sol._count.orders : undefined,
+        is_vetted: sol.expert?.verified ?? false,
+        is_founding_expert: sol.expert?.isFoundingExpert ?? false,
         status: sol.status as SolutionStatus
       };
     })
@@ -55,8 +61,7 @@ export default async function ExpertMySolutionsPage({
 
   const activeTab = searchParams.tab || "published";
   
-  // @ts-expect-error: mapping complexity
-  const filteredSolutions = solutionsWithLock.filter(s => 
+  const filteredSolutions = solutionsWithLock.filter(s =>
     activeTab === "draft" ? s.status === "draft" : s.status === "published"
   );
 
@@ -112,10 +117,10 @@ export default async function ExpertMySolutionsPage({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSolutions.map((solution) => (
-            // @ts-expect-error: Type mapping partial match
-            <SolutionCard 
-              key={solution.id} 
-              solution={solution}
+            <SolutionCard
+              key={solution.id}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              solution={solution as any}
               editHref={`/expert/solutions/${solution.id}/edit`}
               isLocked={solution.locked}
               lockReason={solution.lockedReason}

@@ -9,9 +9,11 @@ export interface Expert {
   business_verified?: boolean;
   founding: boolean;
   founding_rank?: number | null;
+  tier?: "STANDARD" | "PROVEN" | "ELITE";
   completed_sales_count: number;
   commission_override_percent?: number | null;
   tools: string[];
+  calendarUrl?: string | null;
 }
 
 export type DemoVideoStatus = 'none' | 'pending' | 'approved' | 'rejected';
@@ -67,6 +69,7 @@ export interface Solution {
   // Content Fields
   outline?: string[];
   lastStep?: number;
+  version?: number;
 
   // Proof & Trust
   proofType?: string;
@@ -89,6 +92,9 @@ export interface Solution {
   expertTier?: string;
   complexity?: string;
 
+  // Pricing alias (camelCase)
+  implementationPriceCents?: number;
+
   // Demo Video
   demo_video_url?: string;
   demo_video_status?: DemoVideoStatus;
@@ -96,6 +102,10 @@ export interface Solution {
   demo_video_review_notes?: string;
   demo_video_start_seconds?: number;
   demo_video_id?: string;
+
+  // Demo video aliases (camelCase)
+  demoVideoUrl?: string;
+  demoVideoStatus?: DemoVideoStatus;
   
   // Relationship
   expert?: Expert;
@@ -137,6 +147,7 @@ export interface Conversation {
   order_id?: string;
   created_at: string;
   updated_at?: string;
+  buyer_name?: string;
   
   // Hydrated
   messages?: Message[];
@@ -152,4 +163,20 @@ export interface Message {
   body: string;
   type: 'user' | 'system';
   created_at: string;
+}
+
+export interface Milestone {
+  title: string;
+  description: string;
+  price: number;
+  priceCents?: number;
+  status: "pending_payment" | "waiting_for_funds" | "in_escrow" | "releasing" | "released";
+  fundedAt?: string;
+  releasedAt?: string;
+}
+
+export interface ReferralRewards {
+  expertDiscountCount?: number;
+  businessDiscountCount?: number;
+  [key: string]: number | undefined;
 }

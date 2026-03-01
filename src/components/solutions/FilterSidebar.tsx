@@ -24,7 +24,7 @@ export function FilterSidebar({
 }: FilterSidebarProps) {
   
   // Handlers for specific filter types
-  const update = (key: keyof SolutionFilters, val: string | number | null) => {
+  const update = (key: keyof SolutionFilters, val: string | number | string[] | null) => {
     onChange({ ...filters, [key]: val });
   };
 
@@ -262,7 +262,7 @@ export function FilterSidebar({
 
       {/* 6. Complexity */}
       <Section id="complexity" title="Complexity">
-        {["Simple", "Medium", "Advanced"].map(c => (
+        {["Standard", "Advanced", "Enterprise"].map(c => (
           <label key={c} className="flex items-center gap-2 text-sm cursor-pointer mb-1">
             <input 
               type="radio" 

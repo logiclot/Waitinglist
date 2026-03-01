@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // Warning: This allows production builds to successfully complete 
+    // Warning: This allows production builds to successfully complete
     // even if your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
@@ -9,14 +9,12 @@ const nextConfig = {
     // Also ignore type errors for a fast emergency launch
     ignoreBuildErrors: true,
   },
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/waitlist',
-        permanent: false, // Temporary redirect
-      },
-    ];
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "media.licdn.com" },
+      { protocol: "https", hostname: "*.supabase.co" },
+    ],
   },
 };
 

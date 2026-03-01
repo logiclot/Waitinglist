@@ -3,8 +3,29 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { Role } from "@prisma/client";
+import { fireExpertOnboardingNotifications, fireBusinessOnboardingNotifications } from "@/lib/onboarding-notifications";
 
-export async function selectRole(role: "BUSINESS" | "SPECIALIST") {
+async function sendWelcomeEmail(email: string, firstName: string, role: "business" | "expert") {
+  const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+  if (!FROM_EMAIL || !email) return;
+  try {
+    const { resend } = await import("@/lib/resend");
+    const { welcomeEmail } = await import("@/lib/email-templates");
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: role === "business"
+        ? "Welcome to LogicLot — let's automate"
+        : "Welcome to LogicLot — your first clients are waiting",
+      html: welcomeEmail({ firstName, role }),
+    });
+  } catch (e) {
+    console.error("Failed to send welcome email:", e);
+  }
+}
+
+export async function selectRole(role: Role) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.id) {
@@ -98,6 +119,10 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
       where: { id: session.user.id },
       data: { onboardingCompletedAt: new Date() },
     });
+
+    // Fire welcome email + onboarding notifications (non-blocking)
+    sendWelcomeEmail(session.user.email || "", firstName, "business").catch(() => {});
+    fireBusinessOnboardingNotifications(session.user.id).catch(() => {});
 
     return { success: true };
   } catch (e) {
@@ -230,6 +255,11 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
       where: { id: session.user.id },
       data: { onboardingCompletedAt: new Date() },
     });
+
+    // Fire welcome email + onboarding notifications (non-blocking)
+    const expertFirstName = legalFullName.split(" ")[0];
+    sendWelcomeEmail(session.user.email || "", expertFirstName, "expert").catch(() => {});
+    fireExpertOnboardingNotifications(session.user.id).catch(() => {});
 
     return { success: true };
   } catch (e) {

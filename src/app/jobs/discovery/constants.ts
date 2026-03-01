@@ -232,3 +232,20 @@ export const PROPOSAL_CRITERIA = [
   "Speed of implementation",
   "Other"
 ];
+
+export const HUMAN_JUDGMENT_LEVEL = [
+  "Fully rule-based — no judgment needed",
+  "Mostly rule-based, occasional exceptions",
+  "Significant judgment required",
+  "Highly variable — judgment-heavy",
+  "Not sure"
+];
+
+export const IMPLEMENTATION_TIMELINE = [
+  "ASAP (within 2 weeks)",
+  "Within 1 month",
+  "1–3 months",
+  "3–6 months",
+  "No fixed timeline",
+  "Other"
+];

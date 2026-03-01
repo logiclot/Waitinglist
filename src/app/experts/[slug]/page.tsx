@@ -79,7 +79,7 @@ export default async function ExpertProfilePage({ params }: PageProps) {
                     <ShieldCheck className="h-3 w-3" /> Verified Business
                   </span>
                 )}
-                {expert.founding && (
+                {expert.isFoundingExpert && (
                   <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 flex items-center gap-1">
                     <Award className="h-3 w-3" /> Founding Expert
                   </span>

@@ -6,6 +6,9 @@ import { Footer } from "@/components/Footer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Providers } from "@/components/providers/SessionProvider";
+import { PostHogProvider } from "@/components/analytics/PostHogProvider";
+import { prisma } from "@/lib/prisma";
+import { Toaster } from "sonner";
 
 
 const geistSans = localFont({
@@ -23,15 +26,36 @@ const geistMono = localFont({
 
 import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
 
+const BASE_URL = `https://${BRAND_DOMAIN}`;
+
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} — Buy ready to implement automations for your day to day business`,
+  title: {
+    default: `${BRAND_NAME} — Buy ready to implement automations for your day to day business`,
+    template: `%s | ${BRAND_NAME}`,
+  },
   description: `${BRAND_NAME} is a marketplace where businesses buy ready to implement automations and work directly with specialists who deliver them.`,
+  metadataBase: new URL(BASE_URL),
   openGraph: {
-    title: BRAND_NAME,
+    title: `${BRAND_NAME} — Automation marketplace`,
     description: `${BRAND_NAME} is a marketplace where businesses buy ready to implement automations and work directly with specialists who deliver them.`,
-    url: `https://${BRAND_DOMAIN}`,
+    url: BASE_URL,
+    siteName: BRAND_NAME,
+    locale: "en_US",
+    type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: `${BRAND_NAME} — Automation marketplace` }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${BRAND_NAME} — Automation marketplace`,
+    description: `${BRAND_NAME} is a marketplace where businesses buy ready to implement automations and work directly with specialists who deliver them.`,
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
+
+import { trackUserLogin } from "@/actions/referral";
 
 export default async function RootLayout({
   children,
@@ -40,15 +64,43 @@ export default async function RootLayout({
 }>) {
   const session = await getServerSession(authOptions);
 
+  let isFoundingExpert = false;
+  if (session?.user?.id) {
+    // Track login activity
+    await trackUserLogin(session.user.id);
+    if (session.user.role === "EXPERT") {
+      const expert = await prisma.specialistProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { isFoundingExpert: true }
+      });
+      isFoundingExpert = expert?.isFoundingExpert || false;
+    }
+  }
+
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}
       >
         <Providers>
-          <Navbar user={session?.user} />
+          <PostHogProvider>
+          <Navbar user={session?.user} isFoundingExpert={isFoundingExpert} />
           <main className="flex-1">{children}</main>
           <Footer />
+          <Toaster
+            position="top-right"
+            theme="light"
+            toastOptions={{
+              duration: 2000,
+              classNames: {
+                toast: 'group toast group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
+                description: 'group-[.toast]:text-muted-foreground',
+                actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
+                cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+              }
+            }}
+          />
+          </PostHogProvider>
         </Providers>
       </body>
     </html>

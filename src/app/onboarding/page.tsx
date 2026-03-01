@@ -12,7 +12,7 @@ export default function OnboardingPage() {
   const [pending, setPending] = useState(false);
   const { data: session } = useSession();
 
-  const handleSelect = async (role: "BUSINESS" | "SPECIALIST") => {
+  const handleSelect = async (role: "BUSINESS" | "EXPERT") => {
     setPending(true);
     const result = await selectRole(role);
     if (result.success) {
@@ -60,7 +60,7 @@ export default function OnboardingPage() {
         </button>
 
         <button
-          onClick={() => handleSelect("SPECIALIST")}
+          onClick={() => handleSelect("EXPERT")}
           disabled={pending}
           className="group relative flex flex-col items-center text-center p-8 rounded-xl border border-border bg-card hover:border-primary/50 transition-all hover:shadow-lg disabled:opacity-50"
         >

@@ -6,8 +6,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
 export function BidForm({ jobId }: { jobId: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state, formAction] = useFormState(submitBid as any, null);
+  const [state, formAction] = useFormState(submitBid as (prevState: unknown, formData: FormData) => Promise<{ error?: string; success?: boolean }>, null as unknown as { error?: string; success?: boolean });
   const [pending, setPending] = useState(false);
 
   if (state?.success) {

@@ -10,8 +10,7 @@ export default async function NewSolutionPage() {
     redirect("/auth/sign-in");
   }
 
-  // @ts-expect-error: role is part of user session
-  if (session.user.role !== "SPECIALIST" && session.user.role !== "ADMIN") {
+  if ((session.user as { role?: string }).role !== "EXPERT" && (session.user as { role?: string }).role !== "ADMIN") {
     redirect("/dashboard"); // Redirect non-experts
   }
 

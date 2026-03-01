@@ -14,17 +14,16 @@ export default async function ExpertLayout({
     redirect("/auth/sign-in?callbackUrl=/dashboard");
   }
 
-  // @ts-expect-error: role is part of user session
-  const role = session.user.role || "SPECIALIST"; 
+  const role = (session.user as { role?: string }).role || "EXPERT";
 
   // Basic Gating (Middleware handles most, but double check)
-  if (role !== "SPECIALIST" && role !== "ADMIN") {
+  if (role !== "EXPERT" && role !== "ADMIN") {
      redirect("/dashboard");
   }
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar role="SPECIALIST" />
+      <Sidebar role="EXPERT" />
       <main className="flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
         {children}
       </main>

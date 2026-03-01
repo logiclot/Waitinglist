@@ -5,44 +5,56 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
-
-    // Check if user has completed onboarding
-    // @ts-expect-error: token type extended
     const isOnboardingComplete = !!token?.onboardingCompletedAt;
-    // @ts-expect-error: token type extended
+    const isEmailVerified = !!token?.emailVerifiedAt;
     const role = token?.role;
 
-    // 1. If trying to access onboarding but already done -> Redirect to Dashboard
+    // 0. Email verification gate — block all protected routes until verified.
+    //    Social-login users are auto-verified in the signIn callback so this
+    //    only affects email/password signups.
+    if (!isEmailVerified) {
+      const dest = new URL("/auth/verify-email-notice", req.url);
+      // Pass email so the page can show the resend button without asking again
+      if (token?.email) dest.searchParams.set("email", token.email);
+      return NextResponse.redirect(dest);
+    }
+
+    // 1. Admins always go straight to /admin — guard everything else from them too
+    if (role === "ADMIN") {
+      if (!path.startsWith("/admin")) {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+      return NextResponse.next();
+    }
+
+    // 2. Non-admins cannot access /admin
+    if (path.startsWith("/admin")) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
+    // 3. If trying to access onboarding but already done → home dashboard
     if (path.startsWith("/onboarding") && isOnboardingComplete) {
-      // Determine where to send based on role
       if (role === "BUSINESS") return NextResponse.redirect(new URL("/business", req.url));
-      // Experts go to /dashboard (which redirects to ExpertOverview) OR we could map to /expert/dashboard if we wanted
-      // Current expert home is /dashboard (ExpertOverview). 
-      // User requested "Business dashboard layout just like expert", and we moved Business to /business.
-      // Experts stay at /dashboard (ExpertOverview)? 
-      // The Sidebar for experts points to /dashboard for Overview.
-      // So /dashboard is fine for experts.
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // 2. If trying to access dashboard but NOT done -> Redirect to Onboarding
-    // Admin bypass: Admins might not need standard onboarding flow
-    if (path.startsWith("/dashboard") && !isOnboardingComplete && role !== "ADMIN") {
+    // 4. If trying to access dashboard but NOT done → onboarding
+    if (path.startsWith("/dashboard") && !isOnboardingComplete) {
       return NextResponse.redirect(new URL("/onboarding", req.url));
     }
 
-    // 3. Redirect Business Users from /dashboard to /business
+    // 5. Redirect Business Users from /dashboard to /business
     if (path === "/dashboard" && role === "BUSINESS") {
       return NextResponse.redirect(new URL("/business", req.url));
     }
-    
-    // 4. Route Guarding for Role Specific paths
-    if (path.startsWith("/business") && role !== "BUSINESS" && role !== "ADMIN") {
-       return NextResponse.redirect(new URL("/dashboard", req.url));
+
+    // 6. Route guarding for role-specific paths
+    if (path.startsWith("/business") && role !== "BUSINESS") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    if (path.startsWith("/expert") && role !== "SPECIALIST" && role !== "ADMIN") {
-       return NextResponse.redirect(new URL("/dashboard", req.url));
+    if (path.startsWith("/expert") && role !== "EXPERT") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
     return NextResponse.next();
@@ -59,9 +71,10 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/dashboard/:path*", 
+    "/dashboard/:path*",
     "/onboarding/:path*",
     "/business/:path*",
-    "/expert/:path*"
+    "/expert/:path*",
+    "/admin/:path*",
   ],
 };

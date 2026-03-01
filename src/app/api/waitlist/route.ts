@@ -48,7 +48,6 @@ export async function POST(request: Request) {
     }
 
     // 5. DB Insert/Upsert
-    // @ts-expect-error: Prisma client might not be regenerated yet
     const existing = await prisma.waitlistSignup.findUnique({
       where: { email },
     });
@@ -57,7 +56,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, status: "existing" });
     }
 
-    // @ts-expect-error: Prisma client might not be regenerated yet
     await prisma.waitlistSignup.create({
       data: {
         fullName,

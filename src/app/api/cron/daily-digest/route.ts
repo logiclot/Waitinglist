@@ -1,0 +1,243 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { createNotification, wasRecentlyNotified } from "@/lib/notifications";
+import { log } from "@/lib/logger";
+import * as Sentry from "@sentry/nextjs";
+
+// Vercel Cron: runs twice daily (9am and 4pm UTC) — see vercel.json
+// Secured via CRON_SECRET env var
+export async function GET(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const results: Record<string, number> = {
+    proposalsWaiting: 0,
+    zeroBidJobs: 0,
+    deliveredOrders: 0,
+    expertBidsPending: 0,
+    expertNewOpportunities: 0,
+    expertProfileNudge: 0,
+  };
+
+  try {
+    const now = new Date();
+    const h24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const h48 = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const h72 = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+    const d5 = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+
+    // ─────────────────────────────────────────────
+    // BUSINESS NOTIFICATIONS
+    // ─────────────────────────────────────────────
+
+    // 1. Jobs with unawarded bids older than 24h — remind buyer to review
+    const jobsWithPendingBids = await prisma.jobPost.findMany({
+      where: {
+        status: "open",
+        bids: {
+          some: {
+            status: "submitted",
+            createdAt: { lte: h24 },
+          },
+        },
+      },
+      include: {
+        bids: {
+          where: { status: "submitted" },
+          select: { id: true },
+        },
+      },
+    });
+
+    for (const job of jobsWithPendingBids) {
+      const bidCount = job.bids.length;
+      const title = "Proposals waiting for your review";
+      const alreadyNotified = await wasRecentlyNotified(job.buyerId, title);
+      if (alreadyNotified) continue;
+
+      await createNotification(
+        job.buyerId,
+        title,
+        `You have ${bidCount} expert proposal${bidCount > 1 ? "s" : ""} on "${job.title}" that need your review. Proposals go stale — take a look before experts move on.`,
+        "alert",
+        `/business/jobs/${job.id}`
+      );
+      results.proposalsWaiting++;
+    }
+
+    // 2. Jobs open for 3+ days with zero bids — reassurance + nudge
+    const zeroBidJobs = await prisma.jobPost.findMany({
+      where: {
+        status: "open",
+        paidAt: { lte: h72 },
+        bids: { none: {} },
+      },
+    });
+
+    for (const job of zeroBidJobs) {
+      const title = "Your project is live — tip to attract more proposals";
+      const alreadyNotified = await wasRecentlyNotified(job.buyerId, title);
+      if (alreadyNotified) continue;
+
+      await createNotification(
+        job.buyerId,
+        title,
+        `"${job.title}" has been live for a few days. Experts are browsing — adding more detail about your current tools or daily volume can double the response rate.`,
+        "info",
+        `/business/jobs/${job.id}`
+      );
+      results.zeroBidJobs++;
+    }
+
+    // 3. Orders marked as "delivered" awaiting buyer approval for 48h+
+    const deliveredOrders = await prisma.order.findMany({
+      where: {
+        status: "delivered",
+        updatedAt: { lte: h48 },
+      },
+      include: {
+        seller: {
+          select: { displayName: true },
+        },
+      },
+    });
+
+    for (const order of deliveredOrders) {
+      const title = "Your project is ready for final sign-off";
+      const alreadyNotified = await wasRecentlyNotified(order.buyerId, title);
+      if (alreadyNotified) continue;
+
+      await createNotification(
+        order.buyerId,
+        title,
+        `${order.seller.displayName} has marked your project as delivered and is waiting for your approval. Review the work and release payment when you're happy.`,
+        "alert",
+        `/business/projects`
+      );
+      results.deliveredOrders++;
+    }
+
+    // ─────────────────────────────────────────────
+    // EXPERT NOTIFICATIONS
+    // ─────────────────────────────────────────────
+
+    // 4. Expert bids pending decision for 3+ days — prompt to follow up
+    const staleBids = await prisma.bid.findMany({
+      where: {
+        status: "submitted",
+        createdAt: { lte: h72 },
+      },
+      include: {
+        specialist: { select: { userId: true, displayName: true } },
+        jobPost: { select: { title: true, id: true } },
+      },
+    });
+
+    for (const bid of staleBids) {
+      const userId = bid.specialist.userId;
+      const title = "Your proposal is still under review";
+      const alreadyNotified = await wasRecentlyNotified(userId, title);
+      if (alreadyNotified) continue;
+
+      await createNotification(
+        userId,
+        title,
+        `Your bid on "${bid.jobPost.title}" has been with the client for over 3 days. A short follow-up message often makes the difference — clients appreciate the initiative.`,
+        "info",
+        `/inbox`
+      );
+      results.expertBidsPending++;
+    }
+
+    // 5. Experts with no profile solutions — nudge to publish
+    const expertsWithNoSolutions = await prisma.specialistProfile.findMany({
+      where: {
+        status: "APPROVED",
+        solutions: { none: {} },
+        // Only nudge once per 5 days
+        user: {
+          notifications: {
+            none: {
+              title: "Add a solution to get discovered",
+              createdAt: { gte: d5 },
+            },
+          },
+        },
+      },
+      select: { userId: true },
+    });
+
+    for (const expert of expertsWithNoSolutions) {
+      await createNotification(
+        expert.userId,
+        "Add a solution to get discovered",
+        "Experts with at least one published solution receive 3x more profile views. It takes less than 10 minutes and puts you in front of buyers browsing the Solution Library right now.",
+        "info",
+        `/expert/solutions/new`
+      );
+      results.expertProfileNudge++;
+    }
+
+    // 6. Experts — new jobs posted in last 24h that they haven't bid on yet
+    const newJobs = await prisma.jobPost.findMany({
+      where: {
+        status: "open",
+        paidAt: { gte: h24 },
+      },
+      select: { id: true, title: true, category: true },
+    });
+
+    if (newJobs.length > 0) {
+      const approvedExperts = await prisma.specialistProfile.findMany({
+        where: {
+          status: "APPROVED",
+          tier: "ELITE",
+        },
+        include: {
+          bids: {
+            where: {
+              jobPostId: { in: newJobs.map((j) => j.id) },
+            },
+            select: { jobPostId: true },
+          },
+        },
+      });
+
+      for (const expert of approvedExperts) {
+        const biddedJobIds = new Set(expert.bids.map((b) => b.jobPostId));
+        const unbidJobs = newJobs.filter((j) => !biddedJobIds.has(j.id));
+
+        if (unbidJobs.length === 0) continue;
+
+        const title = `${unbidJobs.length} new project${unbidJobs.length > 1 ? "s" : ""} in the marketplace`;
+        const alreadyNotified = await wasRecentlyNotified(expert.userId, title);
+        if (alreadyNotified) continue;
+
+        const jobTitles = unbidJobs
+          .slice(0, 2)
+          .map((j) => `"${j.title}"`)
+          .join(" and ");
+        const more = unbidJobs.length > 2 ? ` and ${unbidJobs.length - 2} more` : "";
+
+        await createNotification(
+          expert.userId,
+          title,
+          `New client projects are live: ${jobTitles}${more}. The first expert to submit a strong proposal usually wins the brief.`,
+          "info",
+          `/jobs`
+        );
+        results.expertNewOpportunities++;
+      }
+    }
+
+    return NextResponse.json({ ok: true, results });
+  } catch (error) {
+    log.error("cron.daily_digest_failed", { error: error instanceof Error ? error.message : String(error) });
+    Sentry.captureException(error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}

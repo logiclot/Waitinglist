@@ -48,23 +48,25 @@ export default async function EditSolutionPage({ params }: { params: { id: strin
     
     included: solution.included,
     excluded: solution.excluded.join("\n"),
-    
-    accessRequired: solution.accessRequired || "",
+
     requiredInputs: solution.requiredInputs,
     requiredInputsText: solution.requiredInputs.join("\n"),
-    questions: solution.questions ? (solution.questions as string[]) : [],
-    
+
+    structureConsistent: (solution as Record<string, unknown>).structureConsistent as string[] || [],
+    structureCustom: (solution as Record<string, unknown>).structureCustom as string[] || [],
+
     delivery_days: solution.deliveryDays,
     support_days: solution.supportDays,
-    
+
     implementation_price: solution.implementationPriceCents / 100,
     monthly_cost_min: solution.monthlyCostMinCents ? solution.monthlyCostMinCents / 100 : 0,
     monthly_cost_max: solution.monthlyCostMaxCents ? solution.monthlyCostMaxCents / 100 : 0,
     outcome: solution.outcome || "",
-    
+
     proofEnabled: !!solution.proofType,
     proofType: solution.proofType || undefined,
     proofContent: solution.proofContent || undefined,
+    demoVideoUrl: (solution as Record<string, unknown>).demoVideoUrl as string || undefined,
   };
 
   return (

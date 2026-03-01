@@ -14,8 +14,7 @@ export default async function DashboardLayout({
     redirect("/auth/sign-in?callbackUrl=/dashboard");
   }
 
-  // @ts-expect-error: role is part of user session
-  const role = session.user.role || "BUSINESS"; 
+  const role = ((session.user as { role?: string }).role || "BUSINESS") as "BUSINESS" | "EXPERT" | "ADMIN";
 
   return (
     <div className="flex min-h-screen bg-background">

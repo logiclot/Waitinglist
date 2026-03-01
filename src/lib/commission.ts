@@ -2,7 +2,7 @@ export interface Expert {
   id: string;
   name: string;
   verified: boolean;
-  founding: boolean;
+  isFoundingExpert: boolean;
   founding_rank?: number | null;
   completed_sales_count: number;
   commission_override_percent?: number | null;
@@ -25,7 +25,7 @@ export const SALES_THRESHOLDS = {
 export type ExpertTier = 'standard' | 'proven' | 'elite' | 'founding';
 
 export function getExpertTierLabel(expert: Expert): ExpertTier {
-  if (expert.founding) return 'founding';
+  if (expert.isFoundingExpert) return 'founding';
   
   if (expert.completed_sales_count >= SALES_THRESHOLDS.ELITE) return 'elite';
   if (expert.completed_sales_count >= SALES_THRESHOLDS.PROVEN) return 'proven';
@@ -39,7 +39,7 @@ export function getCommissionPercent(expert: Expert): number {
   }
 
   // 2. Founding expert
-  if (expert.founding) {
+  if (expert.isFoundingExpert) {
     return TIER_THRESHOLDS.FOUNDING;
   }
 

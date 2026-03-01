@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { getCommissionPercent, getExpertTierLabel } from "@/lib/commission";
 import { getYouTubeEmbedUrl } from "@/lib/video";
-import { ShieldCheck, Award, Check, ExternalLink, Plus, Pencil, UserX, AlertTriangle, ChevronDown, ChevronUp, MapPin, Briefcase } from "lucide-react";
+import { ShieldCheck, Award, Check, ExternalLink, Plus, Pencil, UserX, AlertTriangle, ChevronDown, ChevronUp, MapPin, Briefcase, Search } from "lucide-react";
 import { Solution } from "@/types";
 import { ListingEditor } from "@/components/admin/ListingEditor";
 import { approveSpecialist, suspendSpecialist, verifySpecialist, makeFoundingSpecialist, updateSolutionVideoStatus } from "@/actions/admin";
 import { BRAND_NAME } from "@/lib/branding";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 
 interface AdminDashboardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,14 +60,14 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
 
   const makeFounding = async (id: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const currentFounders = expertList.filter((e: any) => e.founding).length;
+    const currentFounders = expertList.filter((e: any) => e.isFoundingExpert).length;
     if (currentFounders >= 20) {
       alert("Maximum of 20 Founding Experts reached.");
       return;
     }
     await makeFoundingSpecialist(id, currentFounders + 1);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setExpertList(expertList.map((e: any) => e.id === id ? { ...e, founding: true, foundingRank: currentFounders + 1 } : e));
+    setExpertList(expertList.map((e: any) => e.id === id ? { ...e, isFoundingExpert: true, foundingRank: currentFounders + 1 } : e));
     showMessage("Expert marked as Founding Expert.");
   };
 
@@ -100,6 +102,37 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
 
   const pendingSolutions = solutionList.filter(s => s.demo_video_status === 'pending');
   const activeSolutions = solutionList.filter(s => s.demo_video_status !== 'pending');
+
+  // --- Expert search + pagination ---
+  const [expertSearch, setExpertSearch] = useState("");
+  const filteredActiveExperts = useMemo(() => {
+    if (!expertSearch.trim()) return activeExperts;
+    const q = expertSearch.toLowerCase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return activeExperts.filter((e: any) =>
+      (e.displayName?.toLowerCase().includes(q)) ||
+      (e.legalFullName?.toLowerCase().includes(q)) ||
+      (e.tools?.some((t: string) => t.toLowerCase().includes(q)))
+    );
+  }, [activeExperts, expertSearch]);
+  const expertPag = usePagination(filteredActiveExperts, 20);
+
+  useEffect(() => { expertPag.setPage(1); }, [expertSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- Solution search + pagination ---
+  const [solutionSearch, setSolutionSearch] = useState("");
+  const filteredActiveSolutions = useMemo(() => {
+    if (!solutionSearch.trim()) return activeSolutions;
+    const q = solutionSearch.toLowerCase();
+    return activeSolutions.filter((s) =>
+      s.title?.toLowerCase().includes(q) ||
+      s.category?.toLowerCase().includes(q) ||
+      s.short_summary?.toLowerCase().includes(q)
+    );
+  }, [activeSolutions, solutionSearch]);
+  const solutionPag = usePagination(filteredActiveSolutions, 20);
+
+  useEffect(() => { solutionPag.setPage(1); }, [solutionSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (fullEditingSolution || isCreating) {
     return (
@@ -218,9 +251,9 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
                                 <ShieldCheck className="h-3 w-3" /> Verified
                               </span>
                             )}
-                            {expert.founding && (
+                            {expert.isFoundingExpert && (
                               <span className="inline-flex items-center gap-1 text-xs text-yellow-500 font-medium">
-                                <Award className="h-3 w-3" /> Founding #{expert.foundingRank}
+                                <Award className="h-3 w-3" /> Founding #{expert.isFoundingExpertRank}
                               </span>
                             )}
                           </div>
@@ -276,7 +309,7 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
                                </div>
                             )}
                             
-                            {!expert.founding && expert.status === 'APPROVED' && (
+                            {!expert.isFoundingExpert && expert.status === 'APPROVED' && (
                               <button 
                                 onClick={() => makeFounding(expert.id)}
                                 className="text-xs px-3 py-1.5 rounded-md border border-yellow-500/30 hover:bg-yellow-500/10 text-yellow-500 transition-colors w-24"
@@ -344,7 +377,7 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
         <h1 className="text-3xl font-bold">{BRAND_NAME} Admin</h1>
         <div className="text-sm text-muted-foreground">
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          Founding Experts: <span className="font-bold text-foreground">{expertList.filter((e: any) => e.founding).length}</span> / 20
+          Founding Experts: <span className="font-bold text-foreground">{expertList.filter((e: any) => e.isFoundingExpert).length}</span> / 20
         </div>
       </div>
 
@@ -376,7 +409,24 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
       {activeTab === 'experts' ? (
         <div className="space-y-8">
            {pendingExperts.length > 0 && renderExpertList(pendingExperts, true)}
-           {renderExpertList(activeExperts, false)}
+           <div className="relative">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+             <input
+               type="text"
+               placeholder="Search experts by name or tools..."
+               value={expertSearch}
+               onChange={(e) => setExpertSearch(e.target.value)}
+               className="w-full pl-9 pr-4 py-2 border border-border rounded-md bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+             />
+           </div>
+           {renderExpertList(expertPag.items, false)}
+           <PaginationControls
+             page={expertPag.page}
+             totalPages={expertPag.totalPages}
+             totalItems={expertPag.totalItems}
+             onPrev={expertPag.prevPage}
+             onNext={expertPag.nextPage}
+           />
         </div>
       ) : (
         <div className="space-y-8">
@@ -434,8 +484,20 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
 
           {/* Active Solutions List */}
           <div className="space-y-4">
-             <h2 className="font-bold text-lg">All Solutions</h2>
-             {activeSolutions.map((solution) => (
+             <div className="flex items-center justify-between gap-4">
+               <h2 className="font-bold text-lg">All Solutions</h2>
+               <div className="relative flex-1 max-w-sm">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                 <input
+                   type="text"
+                   placeholder="Search by title or category..."
+                   value={solutionSearch}
+                   onChange={(e) => setSolutionSearch(e.target.value)}
+                   className="w-full pl-9 pr-4 py-2 border border-border rounded-md bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                 />
+               </div>
+             </div>
+             {solutionPag.items.map((solution) => (
                 <div key={solution.id} className="bg-card border border-border rounded-xl p-6 flex flex-col md:flex-row gap-6">
                    <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -452,6 +514,13 @@ export function AdminDashboard({ initialExperts, initialSolutions }: AdminDashbo
                    </div>
                 </div>
              ))}
+             <PaginationControls
+               page={solutionPag.page}
+               totalPages={solutionPag.totalPages}
+               totalItems={solutionPag.totalItems}
+               onPrev={solutionPag.prevPage}
+               onNext={solutionPag.nextPage}
+             />
           </div>
         </div>
       )}

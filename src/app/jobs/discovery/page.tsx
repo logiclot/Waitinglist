@@ -19,10 +19,12 @@ import { CheckoutModal } from "@/components/jobs/discovery/CheckoutModal";
 import * as C from "./constants";
 
 export default function DiscoveryWizardPage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
   const [step, setStep] = useState(0); // 0 = Intro
-  const [pending, setPending] = useState(false);
+  const [, setPending] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pendingJobId, setPendingJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Form State - Mapping to new structure
@@ -181,13 +183,15 @@ export default function DiscoveryWizardPage() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     setError(null);
     if (validateStep(step)) {
       if (step < totalSteps) {
         setStep(step + 1);
         window.scrollTo(0, 0);
       } else {
+        // Create the job first, then show payment modal
+        await handlePaymentAndSubmit();
         setShowPaymentModal(true);
       }
     } else {
@@ -203,11 +207,8 @@ export default function DiscoveryWizardPage() {
   const handlePaymentAndSubmit = async () => {
     setError(null);
     setPending(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Serialize all data into a readable format for the expert
-    // We'll store this in the 'goal' field of JobPost since it's a large text block
     const serializedData = `
 # DISCOVERY SCAN REPORT
 
@@ -253,18 +254,18 @@ ${formData.finalClarifier || "None provided."}
     `;
 
     const payload = new FormData();
-    // Map to existing JobPost fields or use "goal" as the dump
-    payload.append("title", `Discovery Scan: ${formData.businessModel}`); 
-    payload.append("goal", serializedData); 
-    payload.append("category", "Discovery Scan"); 
-    payload.append("budgetRange", "Not applicable"); 
+    payload.append("title", `Discovery Scan: ${formData.businessModel}`);
+    payload.append("goal", serializedData);
+    payload.append("category", "Discovery Scan");
+    payload.append("budgetRange", "Not applicable");
     payload.append("timeline", "Not applicable");
-    // Also save structured data if you have columns, or just the dump for now
 
     const result = await createDiscoveryJobPost(payload);
 
-    if (result.success) {
-      router.push(`/jobs/${result.jobId}`);
+    if (result.success && result.jobId) {
+      setPendingJobId(result.jobId);
+      setPending(false);
+      // Show checkout modal for payment
     } else {
       setPending(false);
       setShowPaymentModal(false);
@@ -830,11 +831,11 @@ ${formData.finalClarifier || "None provided."}
       )}
 
       {/* Checkout Modal */}
-      {showPaymentModal && (
-        <CheckoutModal 
+      {showPaymentModal && pendingJobId && (
+        <CheckoutModal
+          jobId={pendingJobId}
+          type="discovery"
           onClose={() => setShowPaymentModal(false)}
-          onSubmit={handlePaymentAndSubmit}
-          pending={pending}
         />
       )}
     </div>

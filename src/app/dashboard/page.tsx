@@ -1,8 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { BusinessOverview } from "@/components/dashboard/BusinessOverview"; // Fallback only
+import { BusinessOverview } from "@/components/dashboard/BusinessOverview";
 import { ExpertOverview } from "@/components/dashboard/ExpertOverview";
+import { getExpertOverviewData } from "@/actions/expert";
+import { getPersonalizedRecommendations } from "@/lib/recommendation-engine";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -11,23 +13,29 @@ export default async function DashboardPage() {
     redirect("/auth/sign-in");
   }
 
-  // @ts-expect-error: role is part of user session
-  const role = session.user.role;
+  const role = (session.user as { role?: string }).role;
 
-  if (role === "SPECIALIST") {
-    return <ExpertOverview />;
+  if (role === "EXPERT") {
+    const data = await getExpertOverviewData();
+    if ("error" in data) redirect("/auth/sign-in");
+    return <ExpertOverview data={data} />;
   }
 
   if (role === "BUSINESS") {
-    // Middleware should have redirected to /business, but if not:
     redirect("/business");
   }
 
-  // Admin or others
   if (role === "ADMIN") {
     redirect("/admin");
   }
 
-  // Fallback
-  return <BusinessOverview />;
+  // Fallback (e.g. USER role before onboarding)
+  let recommendations: Awaited<ReturnType<typeof getPersonalizedRecommendations>> = [];
+  try {
+    recommendations = await getPersonalizedRecommendations(session.user.id);
+  } catch {
+    recommendations = [];
+  }
+
+  return <BusinessOverview recommendations={recommendations} />;
 }

@@ -14,8 +14,7 @@ export default async function BusinessLayout({
     redirect("/auth/sign-in?callbackUrl=/business");
   }
 
-  // @ts-expect-error: role is part of user session
-  const role = session.user.role || "BUSINESS"; 
+  const role = (session.user as { role?: string }).role || "BUSINESS";
 
   // Basic Gating
   if (role !== "BUSINESS" && role !== "ADMIN") {

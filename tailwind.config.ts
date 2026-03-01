@@ -53,9 +53,14 @@ const config: Config = {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-100%)" },
         },
+        "slide-in": {
+          "0%": { transform: "translateX(12px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
       },
       animation: {
         marquee: "marquee 40s linear infinite",
+        "slide-in": "slide-in 0.35s ease-out",
       },
     },
   },

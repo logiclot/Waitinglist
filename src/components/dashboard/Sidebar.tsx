@@ -10,8 +10,7 @@ import {
   Briefcase, 
   FileText, 
   CheckCircle, 
-  BarChart2, 
-  DollarSign, 
+  DollarSign,
   Bell, 
   Settings, 
   HelpCircle,
@@ -23,7 +22,7 @@ import {
 } from "lucide-react";
 
 interface SidebarProps {
-  role: "BUSINESS" | "SPECIALIST" | "ADMIN";
+  role: "BUSINESS" | "EXPERT" | "ADMIN";
 }
 
 export function Sidebar({ role }: SidebarProps) {
@@ -41,7 +40,6 @@ export function Sidebar({ role }: SidebarProps) {
     { label: "Active Bids", href: "/expert/active-bids", icon: FileText },
     { label: "My Solutions", href: "/expert/my-solutions", icon: Layers }, // Renamed from Solution Pool
     { label: "Completed", href: "/expert/completed", icon: CheckCircle },
-    { label: "Performance", href: "/expert/performance", icon: BarChart2 },
     { label: "Earnings", href: "/expert/earnings", icon: DollarSign },
   ];
 
@@ -59,8 +57,7 @@ export function Sidebar({ role }: SidebarProps) {
     expertPrimary[5], // Active Bids
     expertPrimary[4], // Active Projects
     expertPrimary[7], // Completed
-    expertPrimary[8], // Performance
-    expertPrimary[9], // Earnings
+    expertPrimary[8], // Earnings
   ];
 
   const expertBottom = [
@@ -76,7 +73,7 @@ export function Sidebar({ role }: SidebarProps) {
     { label: "Browse Solutions", href: "/business/solutions", icon: Search }, // Can use existing /solutions or wrap
     // Removed duplicate "Request Automation"
     { label: "My Projects", href: "/business/projects", icon: Briefcase },
-    { label: "Results", href: "/business/results", icon: BarChart2 },
+    { label: "Completed", href: "/business/projects?tab=completed", icon: CheckCircle },
     { label: "Billing", href: "/business/billing", icon: CreditCard }, // Renamed from Billing & Plans
     { label: "Help & Onboarding", href: "/business/help", icon: HelpCircle },
     { label: "Company Profile", href: "/business/company", icon: Building2 },
@@ -87,8 +84,8 @@ export function Sidebar({ role }: SidebarProps) {
     { label: "Settings", href: "/business/settings", icon: Settings },
   ];
 
-  const links = role === "SPECIALIST" ? expertLinks : businessLinks;
-  const bottomLinks = role === "SPECIALIST" ? expertBottom : businessBottom;
+  const links = role === "EXPERT" ? expertLinks : businessLinks;
+  const bottomLinks = role === "EXPERT" ? expertBottom : businessBottom;
 
   return (
     <aside className="w-64 bg-card border-r border-border h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto hidden md:flex flex-col">

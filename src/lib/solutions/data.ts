@@ -12,7 +12,8 @@ export async function getPublishedSolutions() {
         ]
       },
       include: {
-        expert: true
+        expert: true,
+        _count: { select: { orders: true } }
       },
       orderBy: {
         publishedAt: 'desc'
@@ -30,7 +31,9 @@ export async function getPublishedSolutions() {
       delivery_days: s.deliveryDays,
       support_days: s.supportDays,
       short_summary: s.shortSummary,
-      // expert relationship is included, but we might need to map fields if expert type differs
+      adoption_count: s._count.orders > 0 ? s._count.orders : undefined,
+      is_vetted: s.expert?.verified ?? false,
+      is_founding_expert: s.expert?.isFoundingExpert ?? false,
       expert: {
         ...s.expert,
         id: s.expert.id,
@@ -38,7 +41,7 @@ export async function getPublishedSolutions() {
         tools: s.expert.tools || [],
         verified: s.expert.verified,
         business_verified: s.expert.businessVerified,
-        founding: s.expert.founding,
+        founding: s.expert.isFoundingExpert,
         completed_sales_count: s.expert.completedSalesCount,
         // Ensure other required expert fields exist
       }

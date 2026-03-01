@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 export function Footer() {
   const pathname = usePathname();
 
-  if (pathname === "/waitlist" || pathname === "/") return null;
+  if (pathname === "/waitlist") return null;
 
   return (
     <footer className="border-t border-border bg-background py-12">

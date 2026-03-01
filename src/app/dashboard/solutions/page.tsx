@@ -4,9 +4,8 @@ import { authOptions } from "@/lib/auth";
 
 export default async function MySolutionsPage() {
   const session = await getServerSession(authOptions);
-  // @ts-expect-error: role is in session
-  const role = session?.user?.role;
-  const isExpert = role === "SPECIALIST";
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const isExpert = role === "EXPERT";
 
   if (!isExpert) {
      // Fallback for business users if they end up here

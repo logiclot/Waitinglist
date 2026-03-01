@@ -4,9 +4,8 @@ import { authOptions } from "@/lib/auth";
 
 export default async function EarningsPage() {
   const session = await getServerSession(authOptions);
-  // @ts-expect-error: role is in session
-  const role = session?.user?.role;
-  const isExpert = role === "SPECIALIST";
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const isExpert = role === "EXPERT";
 
   if (!isExpert) {
       return (
