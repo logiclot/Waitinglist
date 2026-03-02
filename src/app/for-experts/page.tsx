@@ -271,7 +271,7 @@ export default async function ForExpertsPage() {
               <div className="h-8 w-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 shrink-0">
                 <Award className="h-4 w-4" />
               </div>
-              <span className="font-medium text-sm">Permanent Founder badge</span>
+              <span className="font-medium text-sm">Permanent Founding Expert badge</span>
             </div>
             <div className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border border-yellow-500/10">
               <div className="h-8 w-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 shrink-0">

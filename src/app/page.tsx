@@ -7,6 +7,7 @@ import { CategoryGrid } from "@/components/marketing/CategoryGrid";
 import { FounderNote } from "@/components/marketing/FounderNote";
 import { AuditQuiz } from "@/components/audit/AuditQuiz";
 import { HireVsAutomateCarousel } from "@/components/marketing/HireVsAutomateCarousel";
+import { GlowBorder } from "@/components/ui/glow-border";
 import { ClipboardList, ShieldCheck, Clock } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -85,7 +86,9 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-              <AuditQuiz newTab />
+              <GlowBorder accentColor="#111827" backgroundColor="#FBFAF8">
+                <AuditQuiz newTab />
+              </GlowBorder>
             </div>
 
             {/* Vertical divider (desktop only) */}

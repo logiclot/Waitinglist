@@ -15,7 +15,7 @@ export async function fireExpertOnboardingNotifications(userId: string) {
   const checks = await Promise.all([
     wasRecentlyNotified(userId, "💳 Connect Stripe to get paid", ONCE),
     wasRecentlyNotified(userId, "📅 Connect your calendar", ONCE),
-    wasRecentlyNotified(userId, "🏅 Publish 3 solutions to unlock your Founder badge", ONCE),
+    wasRecentlyNotified(userId, "🏅 Publish 3 solutions to unlock your Founding Expert badge", ONCE),
   ]);
 
   const jobs = [];
@@ -48,7 +48,7 @@ export async function fireExpertOnboardingNotifications(userId: string) {
     jobs.push(
       createNotification(
         userId,
-        "🏅 Publish 3 solutions to unlock your Founder badge",
+        "🏅 Publish 3 solutions to unlock your Founding Expert badge",
         "Founding Experts get a reduced platform fee and priority placement. Publish your first 3 solutions to claim it.",
         "info",
         "/expert/solutions/new"

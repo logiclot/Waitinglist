@@ -15,6 +15,11 @@ export async function POST(
   _req: Request,
   { params }: { params: { jobId: string } }
 ) {
+  // Block in production or when Stripe is configured — simulation is dev-only
+  if (process.env.NODE_ENV === "production" || process.env.STRIPE_SECRET_KEY?.trim()) {
+    return NextResponse.json({ error: "Simulate only when Stripe not configured" }, { status: 400 });
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "BUSINESS") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -5,6 +5,7 @@ import { SolutionCard } from "@/components/SolutionCard";
 import { ShieldCheck, MessageSquare, ArrowLeft, Clock, CheckCircle } from "lucide-react";
 import { Solution } from "@/types";
 import { TierBadge } from "@/components/ui/TierBadge";
+import { mapPrismaExpert } from "@/lib/solutions/data";
 
 interface PageProps {
   params: {
@@ -52,8 +53,18 @@ export default async function ExpertProfilePage({ params }: PageProps) {
     );
   }
 
-  // Cast DB solution to UI type if needed, or ensure they match
-  const expertSolutions = expert.solutions as unknown as Solution[]; 
+  // Map DB solutions to UI type, injecting the parent expert data
+  const mappedExpert = mapPrismaExpert(expert);
+  const expertSolutions = expert.solutions.map(s => ({
+    ...s,
+    implementation_price: s.implementationPriceCents / 100,
+    monthly_cost_min: s.monthlyCostMinCents ? s.monthlyCostMinCents / 100 : 0,
+    monthly_cost_max: s.monthlyCostMaxCents ? s.monthlyCostMaxCents / 100 : 0,
+    delivery_days: s.deliveryDays,
+    support_days: s.supportDays,
+    short_summary: s.shortSummary,
+    expert: mappedExpert,
+  })) as unknown as Solution[];
 
   return (
     <div className="min-h-screen pb-20">

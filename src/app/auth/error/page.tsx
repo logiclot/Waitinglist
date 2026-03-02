@@ -20,8 +20,7 @@ export default async function AuthErrorPage({
   const msg = error ? messages[error] ?? messages.Default : messages.Default;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-md w-full space-y-6 text-center">
+    <div className="max-w-md w-full space-y-6 text-center">
         <h1 className="text-2xl font-bold text-foreground">Sign-in error</h1>
         <p className="text-muted-foreground">{msg}</p>
         {process.env.NODE_ENV === "development" && (!hasGoogleEnv || !hasLinkedInEnv) && (
@@ -35,7 +34,6 @@ export default async function AuthErrorPage({
         >
           Back to sign in
         </Link>
-      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getSolutionLockState } from "@/lib/solutions/lock";
 import { SolutionStatus, ModerationStatus } from "@/types";
+import { mapPrismaExpert } from "@/lib/solutions/data";
 
 export default async function ExpertMySolutionsPage({
   searchParams,
@@ -50,10 +51,13 @@ export default async function ExpertMySolutionsPage({
         monthly_cost_min: sol.monthlyCostMinCents ? sol.monthlyCostMinCents / 100 : 0,
         monthly_cost_max: sol.monthlyCostMaxCents ? sol.monthlyCostMaxCents / 100 : 0,
         delivery_days: sol.deliveryDays,
+        support_days: sol.supportDays,
+        short_summary: sol.shortSummary,
         status: sol.status as SolutionStatus,
         outcome: sol.outcome ?? undefined,
         longDescription: sol.longDescription ?? undefined,
-        moderationStatus: sol.moderationStatus as ModerationStatus | undefined
+        moderationStatus: sol.moderationStatus as ModerationStatus | undefined,
+        expert: sol.expert ? mapPrismaExpert(sol.expert) : undefined,
       } as unknown as import("@/types").Solution & { locked: boolean; lockedReason: string | undefined };
     })
   );

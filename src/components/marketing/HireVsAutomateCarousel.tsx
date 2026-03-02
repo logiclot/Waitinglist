@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, User, Zap } from "lucide-react";
 import { HIRE_VS_AUTOMATE_ROLES } from "@/data/hire-vs-automate";
+import { GlowBorder } from "@/components/ui/glow-border";
 
 const INTERVAL_MS = 5500;
 
@@ -93,71 +94,75 @@ export function HireVsAutomateCarousel() {
           className="animate-slide-in grid grid-cols-2 gap-4 h-full"
         >
           {/* Hire card */}
-          <div className="rounded-xl border border-border bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 p-5 flex flex-col transition-all duration-200">
-            <div className="flex items-center gap-2 mb-3">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                Hire
-              </p>
-            </div>
-            <ul className="space-y-2 flex-1">
-              {role.hire.bullets.map((b, i) => (
-                <li
-                  key={i}
-                  className="text-xs text-muted-foreground leading-relaxed flex gap-2"
-                >
-                  <span className="text-muted-foreground/40 shrink-0 leading-relaxed">
-                    &bull;
+          <GlowBorder accentColor="#111827" backgroundColor="#FBFAF8" borderRadius="1rem" className="h-full">
+            <div className="rounded-2xl bg-white p-5 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-3">
+                <User className="h-4 w-4 text-foreground" />
+                <p className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                  Hire
+                </p>
+              </div>
+              <ul className="space-y-2 flex-1">
+                {role.hire.bullets.map((b, i) => (
+                  <li
+                    key={i}
+                    className="text-xs text-foreground leading-relaxed flex gap-2"
+                  >
+                    <span className="text-foreground/30 shrink-0 leading-relaxed">
+                      &bull;
+                    </span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 pt-3 border-t border-black/[0.06]">
+                <p className="text-base font-bold text-foreground">
+                  &euro;{role.hire.monthlyCostLow.toLocaleString()}&ndash;
+                  {role.hire.monthlyCostHigh.toLocaleString()}
+                  <span className="text-xs font-normal text-foreground/50">
+                    /mo
                   </span>
-                  <span>{b}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 pt-3 border-t border-border/60">
-              <p className="text-base font-bold text-foreground">
-                &euro;{role.hire.monthlyCostLow.toLocaleString()}&ndash;
-                {role.hire.monthlyCostHigh.toLocaleString()}
-                <span className="text-xs font-normal text-muted-foreground">
-                  /mo
-                </span>
-              </p>
+                </p>
+              </div>
             </div>
-          </div>
+          </GlowBorder>
 
           {/* Automate card */}
-          <div className="rounded-xl border border-primary/20 bg-primary/[0.03] shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40 p-5 flex flex-col transition-all duration-200">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className="h-4 w-4 text-primary" />
-              <p className="text-sm font-semibold text-primary uppercase tracking-wider">
-                Automate
-              </p>
-            </div>
-            <ul className="space-y-2 flex-1">
-              {role.automate.bullets.map((b, i) => (
-                <li
-                  key={i}
-                  className="text-xs text-muted-foreground leading-relaxed flex gap-2"
-                >
-                  <span className="text-primary/40 shrink-0 leading-relaxed">
-                    &bull;
+          <GlowBorder accentColor="#111827" backgroundColor="#FBFAF8" borderRadius="1rem" className="h-full">
+            <div className="rounded-2xl bg-white p-5 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-3">
+                <Zap className="h-4 w-4 text-[#8DC63F]" />
+                <p className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                  Automate
+                </p>
+              </div>
+              <ul className="space-y-2 flex-1">
+                {role.automate.bullets.map((b, i) => (
+                  <li
+                    key={i}
+                    className="text-xs text-foreground leading-relaxed flex gap-2"
+                  >
+                    <span className="text-foreground/30 shrink-0 leading-relaxed">
+                      &bull;
+                    </span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 pt-3 border-t border-black/[0.06]">
+                <p className="text-base font-bold text-foreground">
+                  &euro;{role.automate.setupCostLow.toLocaleString()}&ndash;
+                  {role.automate.setupCostHigh.toLocaleString()}
+                  <span className="text-xs font-normal text-foreground/50">
+                    {" "}one-time
                   </span>
-                  <span>{b}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 pt-3 border-t border-primary/10">
-              <p className="text-base font-bold text-primary">
-                &euro;{role.automate.setupCostLow.toLocaleString()}&ndash;
-                {role.automate.setupCostHigh.toLocaleString()}
-                <span className="text-xs font-normal text-muted-foreground">
-                  {" "}one-time
-                </span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                + &euro;{role.automate.monthlyCost}/mo maintenance
-              </p>
+                </p>
+                <p className="text-xs text-foreground/50 mt-0.5">
+                  + &euro;{role.automate.monthlyCost}/mo maintenance
+                </p>
+              </div>
             </div>
-          </div>
+          </GlowBorder>
         </div>
       </div>
 

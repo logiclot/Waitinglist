@@ -2,6 +2,8 @@ interface LogoMarkProps {
   size?: number;
   className?: string;
   animate?: boolean;
+  /** External style override for the green center hub (used for morse code) */
+  greenDotStyle?: React.CSSProperties;
 }
 
 /**
@@ -9,7 +11,7 @@ interface LogoMarkProps {
  * 8 dark nodes arranged in an octagon, connected by light gray lines,
  * with a bright green center hub.
  */
-export function LogoMark({ size = 32, className = "", animate = false }: LogoMarkProps) {
+export function LogoMark({ size = 32, className = "", animate = false, greenDotStyle }: LogoMarkProps) {
   // 8 outer nodes at radius 36 from center (50,50), evenly spaced
   const outerRadius = 36;
   const cx = 50;
@@ -17,8 +19,8 @@ export function LogoMark({ size = 32, className = "", animate = false }: LogoMar
   const nodePositions: [number, number][] = Array.from({ length: 8 }, (_, i) => {
     const angle = (i * 45 * Math.PI) / 180;
     return [
-      cx + outerRadius * Math.sin(angle),
-      cy - outerRadius * Math.cos(angle),
+      Math.round((cx + outerRadius * Math.sin(angle)) * 10) / 10,
+      Math.round((cy - outerRadius * Math.cos(angle)) * 10) / 10,
     ];
   });
 
@@ -30,6 +32,7 @@ export function LogoMark({ size = 32, className = "", animate = false }: LogoMar
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      shapeRendering="geometricPrecision"
       aria-hidden="true"
     >
       {/* Octagon perimeter lines */}
@@ -43,7 +46,7 @@ export function LogoMark({ size = 32, className = "", animate = false }: LogoMar
             x2={next[0]}
             y2={next[1]}
             stroke="#BEC9D4"
-            strokeWidth="1.4"
+            strokeWidth="1.6"
             strokeLinecap="round"
           />
         );
@@ -58,7 +61,7 @@ export function LogoMark({ size = 32, className = "", animate = false }: LogoMar
           x2={pos[0]}
           y2={pos[1]}
           stroke="#BEC9D4"
-          strokeWidth="1.4"
+          strokeWidth="1.6"
           strokeLinecap="round"
         />
       ))}
@@ -81,6 +84,7 @@ export function LogoMark({ size = 32, className = "", animate = false }: LogoMar
         r="6.5"
         fill="#8DC63F"
         className={animate ? "animate-pulse" : undefined}
+        style={greenDotStyle}
       />
     </svg>
   );

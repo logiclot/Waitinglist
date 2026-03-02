@@ -20,34 +20,30 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full text-center space-y-4">
-          <h1 className="text-2xl font-bold">Invalid reset link</h1>
-          <p className="text-muted-foreground">This link is missing a token. Please request a new one.</p>
-          <Link href="/auth/forgot-password" className="text-primary hover:underline font-medium text-sm">
-            Request new link →
-          </Link>
-        </div>
+      <div className="max-w-md w-full text-center space-y-4">
+        <h1 className="text-2xl font-bold">Invalid reset link</h1>
+        <p className="text-muted-foreground">This link is missing a token. Please request a new one.</p>
+        <Link href="/auth/forgot-password" className="text-primary hover:underline font-medium text-sm">
+          Request new link →
+        </Link>
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="bg-green-500/10 text-green-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
-            <CheckCircle className="h-8 w-8" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">Password updated</h1>
-          <p className="text-muted-foreground">Your password has been changed. You can now sign in with your new password.</p>
-          <button
-            onClick={() => router.push("/auth/sign-in")}
-            className="w-full bg-primary text-primary-foreground py-2 rounded-md font-medium hover:bg-primary/90 transition-colors"
-          >
-            Sign in
-          </button>
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="bg-green-500/10 text-green-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+          <CheckCircle className="h-8 w-8" />
         </div>
+        <h1 className="text-3xl font-bold text-foreground">Password updated</h1>
+        <p className="text-muted-foreground">Your password has been changed. You can now sign in with your new password.</p>
+        <button
+          onClick={() => router.push("/auth/sign-in")}
+          className="w-full bg-primary text-primary-foreground py-2 rounded-md font-medium hover:bg-primary/90 transition-colors"
+        >
+          Sign in
+        </button>
       </div>
     );
   }
@@ -70,8 +66,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-sm w-full space-y-8">
+    <div className="max-w-sm w-full space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">Choose a new password</h1>
           <p className="text-muted-foreground mt-2">Make it strong — at least 8 characters.</p>
@@ -124,7 +119,6 @@ export default function ResetPasswordPage() {
             {loading ? "Updating…" : "Set new password"}
           </button>
         </form>
-      </div>
     </div>
   );
 }

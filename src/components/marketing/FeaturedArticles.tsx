@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, TrendingUp, Users, Zap, BarChart2, Shield } from "lucide-react";
+import { GlowBorder } from "@/components/ui/glow-border";
 
 const FEATURED_ARTICLES = [
   {
@@ -58,24 +59,25 @@ export function FeaturedArticles() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {FEATURED_ARTICLES.map(({ slug, title, description, icon: Icon }) => (
-            <Link
-              key={slug}
-              href={`/docs/${slug}`}
-              className="group flex gap-4 p-5 rounded-xl border border-border bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-            >
-              <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/8 border border-primary/15 flex items-center justify-center text-primary group-hover:bg-primary/15 transition-colors">
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors mb-1">
-                  {title}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                  {description}
-                </p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0 mt-0.5 transition-colors" />
-            </Link>
+            <GlowBorder key={slug} accentColor="#111827" backgroundColor="#ffffff" borderRadius="0.75rem">
+              <Link
+                href={`/docs/${slug}`}
+                className="group flex gap-4 p-5 rounded-xl bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              >
+                <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/8 border border-primary/15 flex items-center justify-center text-primary group-hover:bg-primary/15 transition-colors">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors mb-1">
+                    {title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                    {description}
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0 mt-0.5 transition-colors" />
+              </Link>
+            </GlowBorder>
           ))}
         </div>
 

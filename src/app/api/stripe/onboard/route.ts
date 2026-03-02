@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { log } from "@/lib/logger";
 import { APP_URL } from "@/lib/app-url";
+import { resolveStripeCountryCode } from "@/lib/stripe-countries";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- route handler signature requires req
 export async function POST(req: Request) {
@@ -25,20 +26,15 @@ export async function POST(req: Request) {
 
     let accountId = expert.stripeAccountId;
 
-    // Map country to ISO code or default to US if unknown/other
-    const countryMap: Record<string, string> = {
-      "United States": "US",
-      "United Kingdom": "GB",
-      "Canada": "CA",
-      "Australia": "AU",
-      "Germany": "DE",
-      "France": "FR",
-      "India": "IN",
-      "Brazil": "BR",
-      "Netherlands": "NL",
-      "Spain": "ES",
-    };
-    const countryCode = countryMap[expert.country] || "US";
+    // Resolve country to ISO code — never default to a wrong country
+    const countryCode = resolveStripeCountryCode(expert.country);
+    if (!countryCode) {
+      log.warn("stripe.onboard.country_not_resolved", { country: expert.country, expertId: expert.id });
+      return NextResponse.json(
+        { error: `Could not resolve country "${expert.country}" to a Stripe-supported country code. Please update your country in your profile settings.` },
+        { status: 400 }
+      );
+    }
 
     if (!accountId) {
       log.info("stripe.onboard.account_create", { expertId: expert.id });

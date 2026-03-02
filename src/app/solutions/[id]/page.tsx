@@ -10,6 +10,7 @@ import { getEcosystemsForSolution } from "@/actions/ecosystems";
 import { WorksBestWith } from "@/components/ecosystems/WorksBestWith";
 import { log } from "@/lib/logger";
 import { TierBadge } from "@/components/ui/TierBadge";
+import { mapPrismaExpert } from "@/lib/solutions/data";
 
 // Always fetch fresh data — suites and solution details can change at any time
 export const dynamic = "force-dynamic";
@@ -75,18 +76,7 @@ async function getSolution(idOrSlug: string) {
       short_summary: s.shortSummary,
       milestones: (s.milestones as unknown as Milestone[]) || [],
       demoPrice: s.demoPriceCents ? s.demoPriceCents / 100 : 2,
-      expert: {
-        ...s.expert,
-        id: s.expert.id,
-        name: s.expert.displayName || s.expert.legalFullName,
-        tools: s.expert.tools || [],
-        verified: s.expert.verified,
-        business_verified: s.expert.businessVerified,
-        founding: s.expert.isFoundingExpert,
-        completed_sales_count: s.expert.completedSalesCount,
-        calendarUrl: s.expert.calendarUrl || null,
-        tier: s.expert.tier || "STANDARD",
-      },
+      expert: mapPrismaExpert(s.expert),
       // Ensure businessGoals is mapped if it exists
       businessGoals: s.businessGoals || [],
     } as unknown as Solution & { milestones: Milestone[] };

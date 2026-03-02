@@ -7,6 +7,7 @@ export interface Milestone {
   status: 'pending_payment' | 'waiting_for_funds' | 'in_escrow' | 'releasing' | 'released';
   fundedAt?: string | null;
   releasedAt?: string | null;
+  stripePaymentIntentId?: string | null;
 }
 
 // ── Referral rewards (JSON stored in BusinessProfile.referralRewards) ─────────

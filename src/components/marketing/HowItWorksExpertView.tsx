@@ -1,5 +1,8 @@
+"use client";
+
 import { Award, TrendingUp, Crown, Sparkles, ArrowRight, UserCircle2, Search, FileText, Hammer, Banknote, Zap } from "lucide-react";
 import Link from "next/link";
+import { useMorseCode } from "@/hooks/useMorseCode";
 
 const ORBIT_STEPS = [
   {
@@ -56,6 +59,25 @@ const EARN_PATHS = [
 ];
 
 export function HowItWorksExpertView() {
+  const { on: morseOn } = useMorseCode();
+
+  /* Orbit math — 5 steps around a circle */
+  const size = 700;
+  const cx = size / 2;
+  const cy = size / 2;
+  const orbitR = 250;
+  const nodeR = 22;
+  const hubR = 70;
+
+  const nodePositions = ORBIT_STEPS.map((_, i) => {
+    const angleDeg = i * 72 - 90;
+    const angleRad = (angleDeg * Math.PI) / 180;
+    return {
+      x: cx + orbitR * Math.cos(angleRad),
+      y: cy + orbitR * Math.sin(angleRad),
+    };
+  });
+
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -79,32 +101,133 @@ export function HowItWorksExpertView() {
         </div>
 
         {/* ── Desktop: circular orbit ── */}
-        <div className="hidden lg:block relative mx-auto" style={{ width: 700, height: 700 }}>
-          <div
-            className="absolute rounded-full border-2 border-dashed border-primary/20 pointer-events-none"
-            style={{ inset: 105 }}
-          />
-          <div
-            className="absolute flex flex-col items-center justify-center text-center rounded-full bg-primary/8 border-2 border-primary/30 shadow-lg"
-            style={{ width: 140, height: 140, left: 280, top: 280 }}
+        <div className="hidden lg:block relative mx-auto" style={{ width: size, height: size }}>
+
+          {/* SVG layer — orbit ring + spoke lines */}
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            width={size}
+            height={size}
+            viewBox={`0 0 ${size} ${size}`}
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <Sparkles className="h-8 w-8 text-primary mb-1" />
-            <p className="text-sm font-bold text-primary leading-tight px-2">You<br/>Get Paid</p>
+            {/* Orbit circle */}
+            <circle
+              cx={cx}
+              cy={cy}
+              r={orbitR}
+              stroke="#E5E7EB"
+              strokeWidth="1.5"
+              strokeDasharray="6 6"
+              fill="none"
+            />
+
+            {/* Spoke lines — from hub edge to node edge */}
+            {nodePositions.map((pos, i) => {
+              const angle = Math.atan2(pos.y - cy, pos.x - cx);
+              const x1 = cx + hubR * Math.cos(angle);
+              const y1 = cy + hubR * Math.sin(angle);
+              const x2 = pos.x - nodeR * Math.cos(angle);
+              const y2 = pos.y - nodeR * Math.sin(angle);
+              return (
+                <line
+                  key={i}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke="#D1D5DB"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              );
+            })}
+
+            {/* Animated dots traveling along spokes */}
+            {nodePositions.map((pos, i) => {
+              const angle = Math.atan2(pos.y - cy, pos.x - cx);
+              const x1 = cx + hubR * Math.cos(angle);
+              const y1 = cy + hubR * Math.sin(angle);
+              const x2 = pos.x - nodeR * Math.cos(angle);
+              const y2 = pos.y - nodeR * Math.sin(angle);
+              return (
+                <circle key={`dot-${i}`} r="3" fill="#8DC63F" opacity="0.8">
+                  <animate
+                    attributeName="cx"
+                    values={`${x1};${x2};${x1}`}
+                    dur={`${3 + i * 0.5}s`}
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="cy"
+                    values={`${y1};${y2};${y1}`}
+                    dur={`${3 + i * 0.5}s`}
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0;0.8;0.8;0"
+                    dur={`${3 + i * 0.5}s`}
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              );
+            })}
+          </svg>
+
+          {/* Center hub — subtle light bulb effect (green accent for expert) */}
+          <div
+            className="absolute flex flex-col items-center justify-center text-center rounded-full bg-white"
+            style={{
+              width: hubR * 2,
+              height: hubR * 2,
+              left: cx - hubR,
+              top: cy - hubR,
+              border: "2px solid #E5E7EB",
+              boxShadow: morseOn
+                ? "0 0 14px 3px rgba(141, 198, 63, 0.18), 0 0 28px 6px rgba(141, 198, 63, 0.06)"
+                : "0 4px 16px rgba(0, 0, 0, 0.06)",
+              transition: "box-shadow 120ms ease",
+            }}
+          >
+            <Sparkles
+              className="h-8 w-8 mb-1"
+              style={{
+                color: morseOn ? "#8DC63F" : "#111827",
+                filter: morseOn
+                  ? "drop-shadow(0 0 3px rgba(141,198,63,0.3))"
+                  : "none",
+                transition: "color 120ms ease, filter 120ms ease",
+              }}
+            />
+            <p
+              className="text-sm font-bold leading-tight px-2"
+              style={{
+                color: "#111827",
+              }}
+            >
+              You<br/>Get Paid
+            </p>
           </div>
 
+          {/* 5 steps positioned around the circle */}
           {ORBIT_STEPS.map((item, i) => {
-            const angleDeg = i * 72 - 90;
-            const angleRad = (angleDeg * Math.PI) / 180;
-            const r = 250;
-            const cx = 350, cy = 350;
-            const left = cx + r * Math.cos(angleRad) - 80;
-            const top = cy + r * Math.sin(angleRad) - 60;
+            const pos = nodePositions[i];
+            const cardW = 160;
             return (
-              <div key={i} className="absolute text-center" style={{ width: 160, left, top }}>
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-primary/20 shadow-sm flex items-center justify-center mx-auto mb-2 text-primary">
+              <div
+                key={i}
+                className="absolute text-center"
+                style={{ width: cardW, left: pos.x - cardW / 2, top: pos.y - 60 }}
+              >
+                <div
+                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center mx-auto mb-2 text-foreground"
+                  style={{ border: "2px solid #E5E7EB" }}
+                >
                   {item.icon}
                 </div>
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{item.step}</span>
+                <span className="text-[10px] font-bold text-[#8DC63F] uppercase tracking-wider">{item.step}</span>
                 <h4 className="font-bold text-sm mt-1 text-foreground leading-snug">{item.title}</h4>
                 <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">{item.body}</p>
               </div>
@@ -198,7 +321,7 @@ export function HowItWorksExpertView() {
                 {
                   icon: <Award className="h-4 w-4" />,
                   title: "Permanent Badge",
-                  body: "Exclusive Founder badge that never expires.",
+                  body: "Exclusive Founding Expert badge that never expires.",
                 },
               ].map(({ icon, title, body }) => (
                 <div key={title} className="flex gap-4">

@@ -126,6 +126,8 @@ export async function POST(req: Request) {
       } catch (err) {
         log.error("webhook.job_posting_failed", { err: String(err), jobId });
         captureException(err, { context: "webhook.job_posting" });
+        // Return 500 so Stripe retries — buyer has paid but job wasn't activated
+        return NextResponse.json({ error: "Processing failed" }, { status: 500 });
       }
       return NextResponse.json({ received: true });
     }
@@ -207,6 +209,8 @@ export async function POST(req: Request) {
       } catch (err) {
         log.error("webhook.demo_booking_failed", { err: String(err) });
         captureException(err, { context: "webhook.demo_booking" });
+        // Return 500 so Stripe retries — buyer has paid but demo wasn't processed
+        return NextResponse.json({ error: "Processing failed" }, { status: 500 });
       }
 
     // ─── Milestone funding / version upgrade ───────────────────────────────────
@@ -238,11 +242,22 @@ export async function POST(req: Request) {
         milestones[idx].status = "in_escrow";
         milestones[idx].fundedAt = new Date().toISOString();
 
+        // Resolve the PaymentIntent ID for future refunds (stored per-milestone)
+        const paymentIntentId = typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent as Stripe.PaymentIntent | null)?.id ?? null;
+
+        if (paymentIntentId) {
+          milestones[idx].stripePaymentIntentId = paymentIntentId;
+        }
+
         await prisma.order.update({
           where: { id: orderId },
           data: {
             milestones: milestones as unknown as Prisma.InputJsonValue,
             status: "in_progress",
+            // Also keep order-level PaymentIntent as fallback for legacy/single-milestone orders
+            ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
           },
         });
 
@@ -304,7 +319,174 @@ export async function POST(req: Request) {
       } catch (err) {
         log.error("webhook.milestone_funding_failed", { err: String(err) });
         captureException(err, { context: "webhook.milestone_funding" });
+        // Return 500 so Stripe will retry this critical payment event
+        return NextResponse.json({ error: "Processing failed" }, { status: 500 });
       }
+    }
+
+  // ═══ charge.dispute.created ═══════════════════════════════════════════════
+  // A buyer filed a chargeback with their bank.  Mark the affected order as
+  // disputed so the admin can act before Stripe's deadline.
+  } else if (event.type === "charge.dispute.created") {
+    const dispute = event.data.object as Stripe.Dispute;
+    try {
+      // Resolve the PaymentIntent that was disputed
+      const paymentIntentId = typeof dispute.payment_intent === "string"
+        ? dispute.payment_intent
+        : (dispute.payment_intent as Stripe.PaymentIntent | null)?.id ?? null;
+
+      if (!paymentIntentId) {
+        log.warn("webhook.dispute_no_pi", { disputeId: dispute.id });
+        return NextResponse.json({ received: true });
+      }
+
+      // Find the order by its per-milestone or order-level PaymentIntent
+      const order = await prisma.order.findFirst({
+        where: { stripePaymentIntentId: paymentIntentId },
+        include: {
+          seller: { select: { userId: true, displayName: true } },
+          solution: { select: { title: true } },
+        },
+      });
+
+      if (!order) {
+        // Might be a job posting or demo — log and acknowledge
+        log.warn("webhook.dispute_order_not_found", { paymentIntentId, disputeId: dispute.id });
+        return NextResponse.json({ received: true });
+      }
+
+      // Idempotency: skip if already disputed or resolved
+      if (["disputed", "refunded"].includes(order.status)) {
+        return NextResponse.json({ received: true });
+      }
+
+      // Create platform dispute record + update order status
+      const existingDispute = await prisma.dispute.findUnique({ where: { orderId: order.id } });
+      if (!existingDispute) {
+        await prisma.$transaction([
+          prisma.order.update({
+            where: { id: order.id },
+            data: { status: "disputed" },
+          }),
+          prisma.dispute.create({
+            data: {
+              orderId: order.id,
+              reason: `Stripe chargeback filed by buyer's bank. Reason: ${dispute.reason || "unknown"}. Stripe Dispute ID: ${dispute.id}. Amount: €${((dispute.amount || 0) / 100).toFixed(2)}.`,
+            },
+          }),
+        ]);
+      }
+
+      // Notify admin + both parties
+      const projectName = order.solution?.title || "a project";
+      const amountStr = `€${((dispute.amount || 0) / 100).toFixed(2)}`;
+
+      await Promise.all([
+        createNotification(
+          order.buyerId,
+          "⚠️ Chargeback received",
+          `Your bank has filed a chargeback for ${amountStr} on "${projectName}". Our team will review this.`,
+          "alert",
+          "/business/projects"
+        ),
+        order.seller?.userId
+          ? createNotification(
+              order.seller.userId,
+              "⚠️ Chargeback received",
+              `A chargeback of ${amountStr} has been filed on "${projectName}". Funds are on hold pending review.`,
+              "alert",
+              "/expert/projects"
+            )
+          : Promise.resolve(),
+      ]);
+
+      log.warn("webhook.chargeback_received", {
+        orderId: order.id,
+        disputeId: dispute.id,
+        amount: dispute.amount,
+        reason: dispute.reason,
+      });
+    } catch (err) {
+      log.error("webhook.dispute_handler_failed", { err: String(err), disputeId: dispute.id });
+      captureException(err, { context: "webhook.charge_dispute_created" });
+      return NextResponse.json({ error: "Processing failed" }, { status: 500 });
+    }
+
+  // ═══ account.updated ════════════════════════════════════════════════════════
+  // Expert's Stripe Connect account status changed (onboarding completed,
+  // account disabled, etc.).  Sync capabilities to our DB.
+  } else if (event.type === "account.updated") {
+    const account = event.data.object as Stripe.Account;
+    try {
+      const expert = await prisma.specialistProfile.findFirst({
+        where: { stripeAccountId: account.id },
+        select: {
+          id: true,
+          userId: true,
+          stripeDetailsSubmitted: true,
+          stripeChargesEnabled: true,
+          stripePayoutsEnabled: true,
+        },
+      });
+
+      if (!expert) {
+        // Not our account — acknowledge silently
+        return NextResponse.json({ received: true });
+      }
+
+      const detailsSubmitted = account.details_submitted ?? false;
+      const chargesEnabled = account.charges_enabled ?? false;
+      const payoutsEnabled = account.payouts_enabled ?? false;
+
+      // Only update if something actually changed
+      const changed =
+        expert.stripeDetailsSubmitted !== detailsSubmitted ||
+        expert.stripeChargesEnabled !== chargesEnabled ||
+        expert.stripePayoutsEnabled !== payoutsEnabled;
+
+      if (changed) {
+        await prisma.specialistProfile.update({
+          where: { id: expert.id },
+          data: {
+            stripeDetailsSubmitted: detailsSubmitted,
+            stripeChargesEnabled: chargesEnabled,
+            stripePayoutsEnabled: payoutsEnabled,
+          },
+        });
+
+        log.info("webhook.account_updated_synced", {
+          expertId: expert.id,
+          detailsSubmitted,
+          chargesEnabled,
+          payoutsEnabled,
+        });
+
+        // Notify expert if their account was disabled (was enabled, now isn't)
+        if (expert.stripeChargesEnabled && !chargesEnabled) {
+          await createNotification(
+            expert.userId,
+            "⚠️ Stripe account needs attention",
+            "Your Stripe account can no longer receive payments. Please check your Stripe dashboard or reconnect in Settings.",
+            "alert",
+            "/expert/settings"
+          );
+        }
+
+        // Notify expert when onboarding completes for the first time
+        if (!expert.stripeDetailsSubmitted && detailsSubmitted) {
+          await createNotification(
+            expert.userId,
+            "Stripe connected!",
+            "Your Stripe account is set up. You can now receive payouts when milestones are released.",
+            "success",
+            "/expert/settings"
+          );
+        }
+      }
+    } catch (err) {
+      log.error("webhook.account_updated_failed", { err: String(err), accountId: account.id });
+      captureException(err, { context: "webhook.account_updated" });
+      // Non-critical — don't return 500, we'll sync on next event or status check
     }
   }
 

@@ -11,17 +11,14 @@ export default async function VerifyPage({
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Invalid verification link.</p>
-      </div>
+      <p className="text-center text-muted-foreground">Invalid verification link.</p>
     );
   }
 
   const result = await verifyEmail(token);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-md w-full text-center space-y-6">
+    <div className="max-w-md w-full text-center space-y-6">
         {result.success ? (
           <>
             <div className="bg-green-500/10 text-green-500 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
@@ -50,7 +47,6 @@ export default async function VerifyPage({
             </Link>
           </>
         )}
-      </div>
     </div>
   );
 }

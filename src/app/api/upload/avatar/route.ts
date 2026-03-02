@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { prisma } from "@/lib/prisma";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
@@ -61,6 +62,26 @@ export async function POST(req: NextRequest) {
       { error: error.message || "Upload failed" },
       { status: 500 }
     );
+  }
+
+  // Delete the previous avatar from the bucket (fire-and-forget)
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { profileImageUrl: true },
+    });
+    if (user?.profileImageUrl) {
+      const bucketPrefix = `/storage/v1/object/public/${BUCKET}/`;
+      const idx = user.profileImageUrl.indexOf(bucketPrefix);
+      if (idx !== -1) {
+        const oldPath = decodeURIComponent(
+          user.profileImageUrl.substring(idx + bucketPrefix.length)
+        );
+        await supabase.storage.from(BUCKET).remove([oldPath]);
+      }
+    }
+  } catch (e) {
+    log.error("upload.old_avatar_cleanup_failed", { error: String(e) });
   }
 
   const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(data.path);

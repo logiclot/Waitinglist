@@ -23,18 +23,32 @@ export async function GET(req: Request) {
     }
 
     let isConnected = expert.stripeDetailsSubmitted;
+    let chargesEnabled = expert.stripeChargesEnabled;
+    let payoutsEnabled = expert.stripePayoutsEnabled;
 
-    // If we have an account ID but details_submitted is false in DB,
-    // let's double-check with Stripe directly (e.g. if webhook missed).
-    if (expert.stripeAccountId && !isConnected) {
+    // If we have an account ID, sync the full status from Stripe directly.
+    // This catches cases where the account.updated webhook was missed.
+    if (expert.stripeAccountId) {
       try {
         const account = await stripe.accounts.retrieve(expert.stripeAccountId);
-        if (account.details_submitted) {
-          isConnected = true;
-          // Sync back to DB
+
+        const needsSync =
+          expert.stripeDetailsSubmitted !== (account.details_submitted ?? false) ||
+          expert.stripeChargesEnabled !== (account.charges_enabled ?? false) ||
+          expert.stripePayoutsEnabled !== (account.payouts_enabled ?? false);
+
+        if (needsSync) {
+          isConnected = account.details_submitted ?? false;
+          chargesEnabled = account.charges_enabled ?? false;
+          payoutsEnabled = account.payouts_enabled ?? false;
+
           await prisma.specialistProfile.update({
             where: { id: expert.id },
-            data: { stripeDetailsSubmitted: true },
+            data: {
+              stripeDetailsSubmitted: isConnected,
+              stripeChargesEnabled: chargesEnabled,
+              stripePayoutsEnabled: payoutsEnabled,
+            },
           });
         }
       } catch (stripeError) {
@@ -43,9 +57,11 @@ export async function GET(req: Request) {
       }
     }
 
-    return NextResponse.json({ 
-      isConnected, 
-      accountId: expert.stripeAccountId 
+    return NextResponse.json({
+      isConnected,
+      chargesEnabled,
+      payoutsEnabled,
+      accountId: expert.stripeAccountId,
     });
   } catch (error) {
     log.error("stripe.status_check_failed", { error: error instanceof Error ? error.message : String(error) });

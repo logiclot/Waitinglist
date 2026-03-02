@@ -1,7 +1,6 @@
 "use client";
 
 import { clsx } from "clsx";
-import Image from "next/image";
 
 interface AvatarProps {
   src?: string | null;
@@ -37,12 +36,11 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
       )}
     >
       {src ? (
-        <Image
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
           src={src}
           alt={name}
-          fill
-          className="object-cover object-center"
-          sizes="48px"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
       ) : (
         <span>{getInitials(name)}</span>

@@ -20,33 +20,30 @@ export default function ForgotPasswordPage() {
 
   if (state?.success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="bg-green-500/10 text-green-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
-            <CheckCircle className="h-8 w-8" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">Check your inbox</h1>
-          <p className="text-muted-foreground leading-relaxed">
-            If an account exists for that email, we&apos;ve sent a password reset link. It expires in 1 hour.
-          </p>
-          <div className="bg-secondary/50 rounded-xl border border-border p-4 text-sm text-muted-foreground">
-            Didn&apos;t receive it? Check your spam folder, or{" "}
-            <Link href="/auth/forgot-password" className="text-primary hover:underline font-medium">
-              try again
-            </Link>
-            .
-          </div>
-          <Link href="/auth/sign-in" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-            ← Back to Sign In
-          </Link>
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="bg-green-500/10 text-green-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+          <CheckCircle className="h-8 w-8" />
         </div>
+        <h1 className="text-3xl font-bold text-foreground">Check your inbox</h1>
+        <p className="text-muted-foreground leading-relaxed">
+          If an account exists for that email, we&apos;ve sent a password reset link. It expires in 1 hour.
+        </p>
+        <div className="bg-secondary/50 rounded-xl border border-border p-4 text-sm text-muted-foreground">
+          Didn&apos;t receive it? Check your spam folder, or{" "}
+          <Link href="/auth/forgot-password" className="text-primary hover:underline font-medium">
+            try again
+          </Link>
+          .
+        </div>
+        <Link href="/auth/sign-in" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+          ← Back to Sign In
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-sm w-full space-y-8">
+    <div className="max-w-sm w-full space-y-8">
         <div className="text-center">
           <div className="bg-primary/10 text-primary p-3 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-4">
             <Mail className="h-7 w-7" />
@@ -92,7 +89,6 @@ export default function ForgotPasswordPage() {
             Sign in
           </Link>
         </p>
-      </div>
     </div>
   );
 }

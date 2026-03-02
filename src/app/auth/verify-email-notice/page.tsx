@@ -49,8 +49,7 @@ export default function VerifyEmailNoticePage() {
   }, [email, loading, cooldown]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-md w-full text-center space-y-6">
+    <div className="max-w-md w-full text-center space-y-6">
         <div className="bg-primary/10 text-primary p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
           <Mail className="h-8 w-8" />
         </div>
@@ -109,7 +108,6 @@ export default function VerifyEmailNoticePage() {
         >
           ← Back to Sign In
         </Link>
-      </div>
     </div>
   );
 }

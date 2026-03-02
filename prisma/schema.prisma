@@ -222,10 +222,12 @@ model SpecialistProfile {
   // Stripe Connect
   stripeAccountId           String?
   stripeDetailsSubmitted    Boolean   @default(false)
+  stripeChargesEnabled      Boolean   @default(false)
+  stripePayoutsEnabled      Boolean   @default(false)
   
   // Founding Expert Campaign
   isFoundingExpert          Boolean   @default(false)
-  platformFeePercentage     Int       @default(20)
+  platformFeePercentage     Int       @default(15)
 
   // Calendar
   calendarUrl               String?   // e.g. Calendly link
@@ -376,6 +378,9 @@ model Order {
   
   // Milestones — Array of { title, description, priceCents, status, fundedAt, releasedAt }
   milestones      Json?
+
+  // Stripe PaymentIntent ID — needed for refunds
+  stripePaymentIntentId  String?
 
   approvedAt      DateTime?
   refundedAt      DateTime?

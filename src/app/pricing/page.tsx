@@ -156,7 +156,7 @@ export default function PricingPage() {
               <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center">
                 <Award className="h-4 w-4 text-white" />
               </div>
-              <h3 className="font-bold text-base text-white">Founder</h3>
+              <h3 className="font-bold text-base text-white">Founding Expert</h3>
             </div>
             <div className="text-5xl font-bold mb-1 text-white">{TIER_THRESHOLDS.FOUNDING}%</div>
             <p className="text-[10px] text-white/50 uppercase tracking-wider font-bold mb-auto">Lifetime Commission</p>

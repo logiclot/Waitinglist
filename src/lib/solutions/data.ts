@@ -1,12 +1,35 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import { Solution } from "@/types";
+import { Expert, Solution } from "@/types";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
 type SolutionWithExpertAndEcosystems = Prisma.SolutionGetPayload<{
   include: { expert: true; ecosystemItems: { select: { ecosystemId: true } } };
 }>;
+
+type PrismaExpert = Prisma.SpecialistProfileGetPayload<{}>;
+
+/** Map a raw Prisma SpecialistProfile to the client-side Expert interface */
+export function mapPrismaExpert(e: PrismaExpert): Expert {
+  return {
+    id: e.id,
+    user_id: e.userId,
+    slug: e.slug ?? undefined,
+    name: e.displayName || e.legalFullName,
+    bio: e.bio ?? undefined,
+    response_time: e.responseTime ?? undefined,
+    verified: e.verified,
+    business_verified: e.businessVerified,
+    founding: e.isFoundingExpert,
+    founding_rank: e.foundingRank ?? null,
+    completed_sales_count: e.completedSalesCount,
+    commission_override_percent: e.commissionOverridePercent ? Number(e.commissionOverridePercent) : null,
+    tools: e.tools || [],
+    calendarUrl: e.calendarUrl ?? undefined,
+    tier: e.tier || "STANDARD",
+  };
+}
 
 export async function getPublishedSolutions() {
   try {
@@ -37,18 +60,7 @@ export async function getPublishedSolutions() {
       delivery_days: s.deliveryDays,
       support_days: s.supportDays,
       short_summary: s.shortSummary,
-      // expert relationship is included, but we might need to map fields if expert type differs
-      expert: {
-        ...s.expert,
-        id: s.expert.id,
-        name: s.expert.displayName || s.expert.legalFullName,
-        tools: s.expert.tools || [],
-        verified: s.expert.verified,
-        business_verified: s.expert.businessVerified,
-        founding: s.expert.isFoundingExpert,
-        completed_sales_count: s.expert.completedSalesCount,
-        tier: s.expert.tier || "STANDARD",
-      },
+      expert: mapPrismaExpert(s.expert),
       ecosystemIds: s.ecosystemItems.map((i: { ecosystemId: string }) => i.ecosystemId),
     })) as unknown as Solution[];
 

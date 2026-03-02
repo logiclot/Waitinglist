@@ -4,7 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { createNotification } from "@/lib/notifications";
-import { SALES_THRESHOLDS, TIER_THRESHOLDS, formatCentsToCurrency } from "@/lib/commission";
+import { SALES_THRESHOLDS, TIER_THRESHOLDS, formatCentsToCurrency, getCommissionPercent } from "@/lib/commission";
+import type { Expert } from "@/lib/commission";
 import { apiWriteLimiter } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
 import { ReleaseMilestoneSchema } from "@/lib/schemas/api";
@@ -97,29 +98,26 @@ export async function POST(req: Request) {
     const milestones = claimedMilestones as import("@/types").Milestone[];
     const milestone = claimedMilestone as import("@/types").Milestone;
 
-    // ─── STEP 2: Calculate payout ──────────────────────────────────────────────
+    // ─── STEP 2: Calculate payout (single source of truth: commission.ts) ──────
     const amountCents = typeof milestone.priceCents === "number"
       ? milestone.priceCents
       : Math.round((milestone.price ?? 0) * 100);
 
-    let feePercent = order.seller.platformFeePercentage || TIER_THRESHOLDS.STANDARD;
+    // Build an Expert shape for the canonical commission calculator
+    const expertForCommission: Expert = {
+      id: order.sellerId,
+      name: order.seller.displayName || "",
+      verified: true,
+      founding: false,
+      isFoundingExpert: order.seller.isFoundingExpert,
+      completed_sales_count: order.seller.completedSalesCount,
+      commission_override_percent: order.seller.commissionOverridePercent != null
+        ? Number(order.seller.commissionOverridePercent)
+        : undefined,
+      tools: [],
+    };
 
-    const tier = order.seller.tier;
-    const isFounding = order.seller.isFoundingExpert;
-
-    if (tier === "PROVEN") {
-      feePercent = Math.min(feePercent, TIER_THRESHOLDS.PROVEN);
-    } else if (tier === "ELITE") {
-      feePercent = Math.min(feePercent, TIER_THRESHOLDS.ELITE);
-    } else {
-      feePercent = Math.min(feePercent, TIER_THRESHOLDS.STANDARD);
-    }
-
-    if (isFounding) feePercent = TIER_THRESHOLDS.FOUNDING;
-
-    if (order.seller.commissionOverridePercent) {
-      feePercent = Number(order.seller.commissionOverridePercent);
-    }
+    let feePercent = getCommissionPercent(expertForCommission);
 
     // Referral discount check
     let expertDiscountApplied = false;
@@ -145,15 +143,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Seller has no Stripe account" }, { status: 400 });
     }
 
+    // Verify the expert's Stripe account can actually receive transfers
+    if (!order.seller.stripeChargesEnabled) {
+      milestones[idx] = { ...milestone, status: "in_escrow" };
+      await prisma.order.update({ where: { id: orderId }, data: { milestones: milestones as unknown as Prisma.InputJsonValue } });
+      log.warn("milestone.seller_charges_disabled", { orderId, sellerId: order.sellerId });
+      return NextResponse.json({ error: "Expert's Stripe account cannot receive payments. They have been notified to resolve this." }, { status: 400 });
+    }
+
     // ─── STEP 3: Execute Stripe transfer ──────────────────────────────────────
     // This is outside the DB transaction because Stripe is an external call.
     // If it fails, we revert the milestone to "in_escrow" so it can be retried.
+    // The idempotency key uses fundedAt so that after a failure-and-revert cycle,
+    // a fresh attempt gets a new key. The Serializable DB transaction (Step 1)
+    // is the primary guard against double-payments; the key is defense-in-depth.
+    const fundedAt = milestone.fundedAt || "0";
     try {
       await stripe.transfers.create({
         amount: transferAmount,
         currency: "eur",
         destination: order.seller.stripeAccountId,
         description: `Release for ${order.id} - ${milestone.title}`,
+        transfer_group: `order_${order.id}`,
+      }, {
+        idempotencyKey: `release-${orderId}-${idx}-${fundedAt}`,
       });
     } catch (stripeErr) {
       log.error("milestone.stripe_transfer_failed", { orderId, milestoneIdx: idx, error: String(stripeErr) });

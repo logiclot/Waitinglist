@@ -5,4 +5,4 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   typescript: true,
 });
 
-export const PLATFORM_FEE_PERCENT = 15;
+// Commission rates are managed in lib/commission.ts (single source of truth)

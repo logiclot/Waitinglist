@@ -48,12 +48,11 @@ export function SignInForm({ hasGoogle, hasLinkedIn }: SignInFormProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-sm w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>
-          <p className="text-muted-foreground mt-2">Sign in to your account</p>
-        </div>
+    <div className="max-w-sm w-full space-y-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>
+        <p className="text-muted-foreground mt-2">Sign in to your account</p>
+      </div>
 
         {hasSocial && (
           <>
@@ -156,7 +155,6 @@ export function SignInForm({ hasGoogle, hasLinkedIn }: SignInFormProps) {
             Sign up
           </Link>
         </p>
-      </div>
     </div>
   );
 }

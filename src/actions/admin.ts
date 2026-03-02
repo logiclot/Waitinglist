@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { stripe } from "@/lib/stripe";
+import { getCommissionPercent } from "@/lib/commission";
 import { createNotification } from "@/lib/notifications";
 import { DISCOVERY_SCAN_PRICE_CENTS, CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 import { APP_URL } from "@/lib/app-url";
@@ -462,7 +463,13 @@ export async function resolveDispute(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        seller: { select: { userId: true, stripeAccountId: true, displayName: true } },
+        seller: {
+          select: {
+            userId: true, stripeAccountId: true, stripeChargesEnabled: true, displayName: true,
+            isFoundingExpert: true, tier: true, completedSalesCount: true,
+            commissionOverridePercent: true, platformFeePercentage: true,
+          },
+        },
         dispute: true,
       },
     });
@@ -471,59 +478,150 @@ export async function resolveDispute(
     if (!order.dispute) return { error: "No dispute found for this order" };
     if (order.dispute.status === "resolved") return { error: "Dispute already resolved" };
 
-    const milestones = (order.milestones as import("@/types").Milestone[]) || [];
-    const escrowedCents = milestones
-      .filter((m: { status?: string }) => m.status === "in_escrow")
-      .reduce((sum: number, m: { priceCents?: number; price?: number }) => {
-        const cents = m.priceCents ?? (m.price ? Math.round(m.price * 100) : 0);
-        return sum + cents;
-      }, 0);
+    const milestones = (order.milestones as unknown as import("@/types").Milestone[]) || [];
+    const escrowedMilestones = milestones
+      .map((m, i) => ({ ...m, _idx: i }))
+      .filter((m) => m.status === "in_escrow");
+    const escrowedCents = escrowedMilestones.reduce((sum, m) => {
+      const cents = m.priceCents ?? (m.price ? Math.round(m.price * 100) : 0);
+      return sum + cents;
+    }, 0);
 
     let newOrderStatus = order.status;
 
     // Execute resolution
     if (resolution === "full_refund") {
-      // Refund all escrowed milestones
+      // Refund each escrowed milestone against its own PaymentIntent.
+      // Multi-milestone orders have separate PaymentIntents per milestone.
       if (escrowedCents > 0) {
-        // Find the payment intent for this order (from milestone funding sessions)
-        // Stripe refund needs the payment intent; look for funded milestones
-        try {
-          await stripe.refunds.create({
-            payment_intent: undefined, // Will use the charge directly
-            amount: escrowedCents,
-            reason: "requested_by_customer",
-            metadata: { orderId, resolution: "admin_full_refund" },
-          });
-        } catch {
-          // If direct refund fails, log and continue — admin can handle manually
-          log.warn("dispute.refund_failed_will_process_manually", { orderId, escrowedCents });
+        // Group escrowed milestones by PaymentIntent for batched refunds
+        const refundsByPI: Record<string, number> = {};
+        const milestonesWithoutPI: { title: string; cents: number }[] = [];
+
+        for (const m of escrowedMilestones) {
+          const cents = m.priceCents ?? (m.price ? Math.round(m.price * 100) : 0);
+          if (cents <= 0) continue;
+
+          // Per-milestone PI (new), then fallback to order-level PI (legacy)
+          const pi = m.stripePaymentIntentId || order.stripePaymentIntentId;
+          if (pi) {
+            refundsByPI[pi] = (refundsByPI[pi] || 0) + cents;
+          } else {
+            milestonesWithoutPI.push({ title: m.title, cents });
+          }
+        }
+
+        if (Object.keys(refundsByPI).length === 0 && milestonesWithoutPI.length > 0) {
+          log.warn("dispute.refund_no_payment_intents", { orderId, escrowedCents });
+          return { error: "No Stripe PaymentIntent on record for any milestone. Refund must be processed manually via Stripe dashboard." };
+        }
+
+        // Issue one refund per PaymentIntent
+        const failedRefunds: string[] = [];
+        for (const [pi, amount] of Object.entries(refundsByPI)) {
+          try {
+            await stripe.refunds.create({
+              payment_intent: pi,
+              amount,
+              reason: "requested_by_customer",
+              metadata: { orderId, resolution: "admin_full_refund" },
+            });
+          } catch (refundErr) {
+            log.warn("dispute.refund_failed_for_pi", { orderId, paymentIntent: pi, amount, error: String(refundErr) });
+            failedRefunds.push(`PI ${pi.slice(-8)}: €${(amount / 100).toFixed(2)}`);
+          }
+        }
+
+        if (milestonesWithoutPI.length > 0) {
+          const missingNames = milestonesWithoutPI.map((m) => `"${m.title}"`).join(", ");
+          log.warn("dispute.refund_missing_pi_for_milestones", { orderId, milestones: missingNames });
+          failedRefunds.push(`No PaymentIntent for: ${missingNames}`);
+        }
+
+        if (failedRefunds.length > 0) {
+          return { error: `Some refunds failed and need manual processing: ${failedRefunds.join("; ")}` };
         }
       }
       newOrderStatus = "refunded";
     } else if (resolution === "release_to_seller") {
-      // Release escrowed funds to seller
+      // Release escrowed funds to seller — apply commission
       if (escrowedCents > 0 && order.seller.stripeAccountId) {
+        // Verify the expert's Stripe account can receive transfers
+        if (!order.seller.stripeChargesEnabled) {
+          return { error: "Expert's Stripe account cannot receive payments. Ask the expert to resolve their Stripe account issues before releasing funds." };
+        }
+        // Use the canonical commission calculator
+        const expertForCommission: import("@/lib/commission").Expert = {
+          id: order.sellerId,
+          name: order.seller.displayName || "",
+          verified: true,
+          founding: false,
+          isFoundingExpert: order.seller.isFoundingExpert,
+          completed_sales_count: order.seller.completedSalesCount,
+          commission_override_percent: order.seller.commissionOverridePercent != null
+            ? Number(order.seller.commissionOverridePercent)
+            : undefined,
+          tools: [],
+        };
+        const commissionPercent = getCommissionPercent(expertForCommission);
+        const platformFee = Math.round(escrowedCents * (commissionPercent / 100));
+        const transferAmount = escrowedCents - platformFee;
+
         try {
           await stripe.transfers.create({
-            amount: escrowedCents,
+            amount: transferAmount,
             currency: "eur",
             destination: order.seller.stripeAccountId,
-            metadata: { orderId, resolution: "admin_release" },
+            metadata: { orderId, resolution: "admin_release", commissionPercent: String(commissionPercent) },
+          }, {
+            idempotencyKey: `dispute-release-${orderId}`,
           });
-        } catch {
-          log.warn("dispute.transfer_failed_will_process_manually", { orderId, escrowedCents });
+        } catch (transferErr) {
+          log.warn("dispute.transfer_failed_will_process_manually", { orderId, escrowedCents, error: String(transferErr) });
+          return { error: "Stripe transfer failed. Please process manually via Stripe dashboard." };
         }
       }
       newOrderStatus = "approved";
     } else if (resolution === "partial_refund" && partialAmountCents) {
-      try {
-        await stripe.refunds.create({
-          amount: partialAmountCents,
-          reason: "requested_by_customer",
-          metadata: { orderId, resolution: "admin_partial_refund" },
-        });
-      } catch {
-        log.warn("dispute.partial_refund_failed", { orderId, partialAmountCents });
+      // For partial refunds, try per-milestone PIs first, then fall back to order-level PI.
+      // Distribute the partial amount across escrowed milestones in order until exhausted.
+      let remaining = partialAmountCents;
+      const failedRefunds: string[] = [];
+      let anyRefundIssued = false;
+
+      for (const m of escrowedMilestones) {
+        if (remaining <= 0) break;
+        const mCents = m.priceCents ?? (m.price ? Math.round(m.price * 100) : 0);
+        if (mCents <= 0) continue;
+
+        const pi = m.stripePaymentIntentId || order.stripePaymentIntentId;
+        if (!pi) {
+          failedRefunds.push(`No PaymentIntent for "${m.title}"`);
+          continue;
+        }
+
+        const refundAmount = Math.min(remaining, mCents);
+        try {
+          await stripe.refunds.create({
+            payment_intent: pi,
+            amount: refundAmount,
+            reason: "requested_by_customer",
+            metadata: { orderId, resolution: "admin_partial_refund", milestoneTitle: m.title },
+          });
+          remaining -= refundAmount;
+          anyRefundIssued = true;
+        } catch (refundErr) {
+          log.warn("dispute.partial_refund_failed_for_pi", { orderId, paymentIntent: pi, amount: refundAmount, error: String(refundErr) });
+          failedRefunds.push(`PI ${pi.slice(-8)}: €${(refundAmount / 100).toFixed(2)}`);
+        }
+      }
+
+      if (!anyRefundIssued) {
+        return { error: `Partial refund failed entirely. Process manually via Stripe dashboard. Details: ${failedRefunds.join("; ")}` };
+      }
+      if (failedRefunds.length > 0) {
+        log.warn("dispute.partial_refund_some_failed", { orderId, failedRefunds });
+        // Continue — some refunds succeeded. Admin will see in Stripe.
       }
       newOrderStatus = "refunded";
     } else if (resolution === "dismissed") {

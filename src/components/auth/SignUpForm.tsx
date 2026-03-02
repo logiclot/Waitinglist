@@ -33,38 +33,35 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
 
   if (state?.success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full text-center space-y-6">
-          <div className="bg-emerald-50 text-emerald-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto text-2xl border border-emerald-100">
-            ✉️
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">Verify your email</h1>
-          <p className="text-muted-foreground">
-            We sent a verification link to <span className="font-semibold text-foreground">{state.email}</span>.
-            <br />
-            Please verify to continue.
-          </p>
-          <div className="text-sm text-muted-foreground bg-secondary/50 p-4 rounded-md border border-border">
-            Didn&apos;t receive it?{" "}
-            <Link href={`/auth/verify-email-notice?email=${encodeURIComponent(state?.email ?? "")}`} className="text-primary hover:underline font-medium">
-              Resend verification email
-            </Link>
-          </div>
-          <Link href="/auth/sign-in" className="text-primary hover:underline font-medium">
-            Back to Sign In
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="bg-emerald-50 text-emerald-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto text-2xl border border-emerald-100">
+          ✉️
+        </div>
+        <h1 className="text-3xl font-bold text-foreground">Verify your email</h1>
+        <p className="text-muted-foreground">
+          We sent a verification link to <span className="font-semibold text-foreground">{state.email}</span>.
+          <br />
+          Please verify to continue.
+        </p>
+        <div className="text-sm text-muted-foreground bg-secondary/50 p-4 rounded-md border border-border">
+          Didn&apos;t receive it?{" "}
+          <Link href={`/auth/verify-email-notice?email=${encodeURIComponent(state?.email ?? "")}`} className="text-primary hover:underline font-medium">
+            Resend verification email
           </Link>
         </div>
+        <Link href="/auth/sign-in" className="text-primary hover:underline font-medium">
+          Back to Sign In
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-sm w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Create an account</h1>
-          <p className="text-muted-foreground mt-2">Start your automation journey</p>
-        </div>
+    <div className="max-w-sm w-full space-y-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-foreground">Create an account</h1>
+        <p className="text-muted-foreground mt-2">Start your automation journey</p>
+      </div>
 
         {hasSocial && (
           <>
@@ -183,7 +180,6 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
             Sign in
           </Link>
         </p>
-      </div>
     </div>
   );
 }
