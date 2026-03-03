@@ -1,22 +1,24 @@
 import { BRAND_NAME } from "@/lib/branding";
 import { AuditQuiz } from "@/components/audit/AuditQuiz";
 import { ClipboardList, ShieldCheck, Clock } from "lucide-react";
+import { getPublishedSolutions } from "@/lib/solutions/data";
 
 export const metadata = {
   title: `Free Automation Audit | ${BRAND_NAME}`,
   description:
-    "Find out where your business is losing time and money to manual work. Free 5-question audit — instant results, no account needed.",
+    "Find out where your business is losing time and money to manual work. Free 5-question audit, instant results, no account needed.",
 };
 
-export default function AuditPage() {
+export default async function AuditPage() {
+  const solutions = await getPublishedSolutions();
   return (
     <div className="min-h-screen bg-[#FBFAF8]">
       {/* Top accent line */}
       <div className="h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/30" />
 
-      <div className="container mx-auto px-4 py-16 max-w-2xl">
+      <div className="container mx-auto px-4 py-16 max-w-5xl">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 max-w-2xl mx-auto">
           <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-4">
             Free Automation Audit
           </p>
@@ -27,7 +29,7 @@ export default function AuditPage() {
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">
             5 questions. Instant results. Find out what&apos;s costing you the
-            most — and whether automation is worth it for your stage of growth.
+            most, and whether automation is worth it for your stage of growth.
           </p>
 
           {/* Trust chips */}
@@ -49,7 +51,7 @@ export default function AuditPage() {
         </div>
 
         {/* Quiz */}
-        <AuditQuiz />
+        <AuditQuiz solutions={solutions} />
       </div>
     </div>
   );

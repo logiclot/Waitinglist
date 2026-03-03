@@ -7,7 +7,7 @@ import { Solution } from "@prisma/client";
 import { getSolutionLockState } from "@/lib/solutions/lock";
 import { createNotification } from "@/lib/notifications";
 import { validateSolutionForPublish } from "@/lib/validation";
-import { checkAndFireSuitesNotification } from "@/lib/onboarding-notifications";
+import { checkAndFireSuitesNotification, checkAndFirePortfolioNotification } from "@/lib/onboarding-notifications";
 
 import { checkExpertReferralCondition } from "@/actions/referral";
 import { log } from "@/lib/logger";
@@ -23,6 +23,7 @@ export async function createSolutionDraft(formData: FormData) {
   });
 
   if (!expert) return { error: "Expert profile not found" };
+  if (expert.status !== "APPROVED") return { error: "Your expert account must be approved to create solutions" };
 
   // Basic validation/extraction
   const title = formData.get("title") as string;
@@ -59,7 +60,8 @@ export async function createSolutionDraft(formData: FormData) {
         outline: [],
         structureConsistent: [],
         structureCustom: []
-      } as Record<string, unknown>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any
     });
 
     return { success: true, solutionId: solution.id };
@@ -94,9 +96,20 @@ export async function updateSolutionDraft(solutionId: string, data: Partial<Solu
   }
 
   try {
+    // If the video URL changed on a published solution, reset status to pending
+    const updateData = data as Record<string, unknown>;
+    if (
+      updateData.demoVideoUrl &&
+      updateData.demoVideoUrl !== (existing as Record<string, unknown>).demoVideoUrl &&
+      existing.status === "published"
+    ) {
+      updateData.demoVideoStatus = "pending";
+      updateData.demoVideoReviewedAt = null;
+    }
+
     await prisma.solution.update({
       where: { id: solutionId },
-      data: data as Record<string, unknown>
+      data: updateData,
     });
     return { success: true };
   } catch (e) {
@@ -111,7 +124,8 @@ export async function publishSolution(solutionId: string) {
   if (!session?.user?.id) return { error: "Not authenticated" };
 
   const expert = await prisma.specialistProfile.findUnique({
-    where: { userId: session.user.id }
+    where: { userId: session.user.id },
+    select: { id: true, status: true, isFoundingExpert: true, foundingRank: true, slug: true },
   });
 
   const solution = await prisma.solution.findUnique({
@@ -121,6 +135,7 @@ export async function publishSolution(solutionId: string) {
   if (!solution || solution.expertId !== expert?.id) {
     return { error: "Unauthorized" };
   }
+  if (expert.status !== "APPROVED") return { error: "Your expert account must be approved to publish solutions" };
 
   // Final validation — delegated to shared pure function (also tested)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,6 +163,9 @@ export async function publishSolution(solutionId: string) {
   const moderationStatus = "auto_approved";
   const approvedAt = new Date();
 
+  // If the solution has a demo video URL, set status to "pending" for admin review
+  const hasVideo = !!(solution as Record<string, unknown>).demoVideoUrl;
+
   try {
     await prisma.solution.update({
       where: { id: solutionId },
@@ -155,9 +173,21 @@ export async function publishSolution(solutionId: string) {
         status: "published",
         publishedAt: new Date(),
         moderationStatus,
-        approvedAt
+        approvedAt,
+        ...(hasVideo ? { demoVideoStatus: "pending" } : {}),
       } as Record<string, unknown>
     });
+
+    // Notify expert that their video is under review
+    if (hasVideo) {
+      await createNotification(
+        session.user.id,
+        "Solution published — video under review",
+        `Your solution "${solution.title}" is now live! The demo video is pending admin approval and will appear on your listing once approved.`,
+        "success",
+        `/solutions/${solutionId}`,
+      );
+    }
 
     // Handle Version Notifications
     if (solution.version > 1 && solution.parentId) {
@@ -191,7 +221,7 @@ export async function publishSolution(solutionId: string) {
       }
     });
 
-    if (publishedCount >= 3 && !expert.isFoundingExpert) {
+    if (publishedCount >= 3 && !expert.isFoundingExpert && expert.foundingRank === null) {
       const foundingCount = await prisma.specialistProfile.count({
         where: { isFoundingExpert: true }
       });
@@ -201,7 +231,6 @@ export async function publishSolution(solutionId: string) {
           where: { id: expert.id },
           data: {
             isFoundingExpert: true,
-            platformFeePercentage: 11,
             foundingRank: foundingCount + 1
           }
         });
@@ -221,6 +250,9 @@ export async function publishSolution(solutionId: string) {
 
     // Fire Suites notification once the expert has 3+ published solutions
     checkAndFireSuitesNotification(session.user.id, publishedCount).catch(() => {});
+
+    // Fire Portfolio customization unlock notification
+    checkAndFirePortfolioNotification(session.user.id, publishedCount, expert.slug).catch(() => {});
 
     return { success: true };
   } catch (e) {
@@ -288,7 +320,7 @@ export async function createSolutionVersion(solutionId: string, changelog: strin
   try {
     // Clone the solution
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, createdAt, updatedAt, publishedAt, approvedAt, orders, conversations, bids, savedByUsers, ...dataToClone } = parentSolution as Record<string, unknown>;
+    const { id, createdAt, updatedAt, publishedAt, approvedAt, orders, conversations, bids, savedByUsers, demoVideoStatus, demoVideoReviewedAt, demoVideoReviewedBy, ...dataToClone } = parentSolution as Record<string, unknown>;
 
     const newSolution = await prisma.solution.create({
       data: {
@@ -301,7 +333,8 @@ export async function createSolutionVersion(solutionId: string, changelog: strin
         status: "draft",
         moderationStatus: "pending",
         lastStep: 1 // Start wizard at step 1 for review
-      } as Record<string, unknown>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any
     });
 
     return { success: true, solutionId: newSolution.id };

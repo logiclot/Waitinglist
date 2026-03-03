@@ -1,4 +1,5 @@
-import { ShieldCheck, RefreshCw, MessageSquare, Euro, HelpCircle, Award, TrendingUp, Star } from "lucide-react";
+import Link from "next/link";
+import { ShieldCheck, RefreshCw, MessageSquare, Euro, HelpCircle, Award, TrendingUp, Star, ArrowRight } from "lucide-react";
 import { TIER_THRESHOLDS, SALES_THRESHOLDS } from "@/lib/commission";
 import { BRAND_NAME } from "@/lib/branding";
 
@@ -256,6 +257,26 @@ export default function PricingPage() {
               Experts receive their payout typically 3 days after you mark the project as complete. This cooling-off period ensures that everything is working correctly before funds are final.
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Bottom CTA */}
+      <div className="max-w-3xl mx-auto border-t border-border pt-16 mt-16 text-center">
+        <h3 className="text-xl font-bold mb-2 text-foreground">Ready to get started?</h3>
+        <p className="text-muted-foreground text-sm mb-8">Browse what&apos;s available, or join as an expert and start earning.</p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            href="/solutions"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-foreground text-background font-bold hover:opacity-90 transition-opacity text-sm"
+          >
+            Browse Solutions <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/auth/sign-up"
+            className="px-6 py-3 rounded-xl border border-border bg-white hover:bg-secondary/50 transition-colors font-medium text-sm"
+          >
+            Join as an Expert
+          </Link>
         </div>
       </div>
     </div>

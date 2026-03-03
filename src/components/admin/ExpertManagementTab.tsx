@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  ShieldCheck, Award, UserX, AlertTriangle, ChevronDown, ChevronUp,
+  Award, UserX, AlertTriangle, ChevronDown, ChevronUp,
   MapPin, Briefcase, ExternalLink, Trash2, ThumbsUp, ThumbsDown, ShieldOff, Search,
 } from "lucide-react";
 import { usePagination } from "@/hooks/usePagination";
@@ -38,7 +38,6 @@ interface ExpertManagementTabProps {
   setExpandedExpertId: (id: string | null) => void;
   onApprove: (id: string) => void;
   onSuspend: (id: string) => void;
-  onToggleVerified: (id: string, current: boolean) => void;
   onMakeFounding: (id: string) => void;
   onRemoveFounding: (id: string) => void;
   onSetFee: (id: string, fee: number) => void;
@@ -92,7 +91,6 @@ export function ExpertManagementTab({
   setExpandedExpertId,
   onApprove,
   onSuspend,
-  onToggleVerified,
   onMakeFounding,
   onRemoveFounding,
   onSetFee,
@@ -196,7 +194,6 @@ export function ExpertManagementTab({
                         </span>
                       )}
                       {expert.status === "SUSPENDED" && <span className="inline-flex w-fit px-2 py-0.5 rounded bg-red-500/10 text-red-500 text-xs font-medium border border-red-500/20">Suspended</span>}
-                      {expert.verified && <span className="inline-flex items-center gap-1 text-xs text-blue-400"><ShieldCheck className="h-3 w-3" /> Verified</span>}
                       {expert.isFoundingExpert && <span className="inline-flex items-center gap-1 text-xs text-yellow-500"><Award className="h-3 w-3" /> Founding #{expert.foundingRank}</span>}
                     </div>
                   </td>
@@ -244,17 +241,9 @@ export function ExpertManagementTab({
                       )}
 
                       {expert.status === "APPROVED" && (
-                        <>
-                          <button
-                            onClick={() => onToggleVerified(expert.id, expert.verified)}
-                            className={`text-xs px-3 py-1 rounded border transition-colors ${expert.verified ? "border-muted text-muted-foreground" : "border-blue-500/30 text-blue-400 hover:bg-blue-500/10"}`}
-                          >
-                            {expert.verified ? "Unverify" : "✓ Verify"}
-                          </button>
-                          <button onClick={() => onSuspend(expert.id)} className="text-xs text-destructive hover:underline flex items-center gap-1">
-                            <UserX className="h-3 w-3" /> Suspend
-                          </button>
-                        </>
+                        <button onClick={() => onSuspend(expert.id)} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                          <UserX className="h-3 w-3" /> Suspend
+                        </button>
                       )}
                       {/* Lift bid ban if active */}
                       {expert.bidBannedUntil && new Date(expert.bidBannedUntil) > new Date() && (

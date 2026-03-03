@@ -17,17 +17,25 @@ export default async function DashboardLayout({
   const role = (session.user.role || "BUSINESS") as "ADMIN" | "BUSINESS" | "EXPERT";
   
   let isFoundingExpert = false;
+  let portfolioSlug: string | null = null;
+  let publishedSolutionCount = 0;
   if (role === "EXPERT") {
     const expert = await prisma.specialistProfile.findUnique({
       where: { userId: session.user.id },
-      select: { isFoundingExpert: true }
+      select: { isFoundingExpert: true, slug: true, id: true }
     });
     isFoundingExpert = expert?.isFoundingExpert || false;
+    portfolioSlug = expert?.slug || null;
+    if (expert) {
+      publishedSolutionCount = await prisma.solution.count({
+        where: { expertId: expert.id, status: "published" },
+      });
+    }
   }
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar role={role} isFoundingExpert={isFoundingExpert} />
+      <Sidebar role={role} isFoundingExpert={isFoundingExpert} portfolioSlug={portfolioSlug} publishedSolutionCount={publishedSolutionCount} />
       <main className="flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
         {children}
       </main>

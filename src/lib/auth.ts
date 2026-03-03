@@ -10,6 +10,13 @@ import { log } from "@/lib/logger";
 // Keeps session data live without hitting DB on every single request.
 const TOKEN_REFRESH_AGE_MS = 60 * 1000; // 1 minute
 
+/** Converts "JOHN DOE" or "john doe" → "John Doe" */
+function toTitleCase(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim());
 export const hasLinkedIn = !!(process.env.LINKEDIN_CLIENT_ID?.trim() && process.env.LINKEDIN_CLIENT_SECRET?.trim());
 
@@ -33,7 +40,7 @@ export const authOptions: NextAuthOptions = {
       issuer: "https://www.linkedin.com",
       profile: (profile) => ({
         id: profile.sub,
-        name: profile.name,
+        name: profile.name ? toTitleCase(profile.name) : profile.name,
         email: profile.email,
         image: profile.picture,
         role: "USER",
@@ -130,34 +137,43 @@ export const authOptions: NextAuthOptions = {
           // we allow sign in. We might want to link the account here if we had an Account model,
           // but for now we just ensure the user record exists.
           
-          // Update verified status if coming from trusted provider
-          if (!existingUser.emailVerifiedAt) {
+          // Update verified status + backfill profile image from OAuth if missing
+          const needsUpdate = !existingUser.emailVerifiedAt || (!existingUser.profileImageUrl && user.image);
+          if (needsUpdate) {
              await prisma.user.update({
                where: { id: existingUser.id },
-               data: { emailVerifiedAt: new Date() }
+               data: {
+                 ...(!existingUser.emailVerifiedAt && { emailVerifiedAt: new Date() }),
+                 ...(!existingUser.profileImageUrl && user.image && { profileImageUrl: user.image }),
+               },
              });
           }
-          
-          // Inject role and profile into user object for session callback
+
+          // Inject role and profile into user object for session/jwt callbacks
           user.id = existingUser.id;
           user.role = existingUser.role;
+          user.emailVerifiedAt = existingUser.emailVerifiedAt ?? new Date();
           user.onboardingCompletedAt = existingUser.onboardingCompletedAt;
           user.image = existingUser.profileImageUrl || user.image;
-          
+
           return true;
         } else {
-          // Create new user
+          // Create new user — persist OAuth profile image
           const newUser = await prisma.user.create({
             data: {
               email: user.email,
               passwordHash: "", // No password for OAuth users
               emailVerifiedAt: new Date(), // Trusted provider
               role: "USER", // Default role
+              profileImageUrl: user.image || null,
             },
           });
-          
+
           user.id = newUser.id;
           user.role = newUser.role;
+          user.emailVerifiedAt = newUser.emailVerifiedAt;
+          user.onboardingCompletedAt = null;
+          user.image = newUser.profileImageUrl || user.image;
           return true;
         }
       }
@@ -187,13 +203,21 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { role: true, emailVerifiedAt: true, onboardingCompletedAt: true, profileImageUrl: true },
+            select: {
+              role: true, emailVerifiedAt: true, onboardingCompletedAt: true, profileImageUrl: true,
+              businessProfile: { select: { firstName: true, lastName: true } },
+              specialistProfile: { select: { displayName: true } },
+            },
           });
           if (dbUser) {
             token.role = dbUser.role;
             token.emailVerifiedAt = dbUser.emailVerifiedAt as unknown as string;
             token.onboardingCompletedAt = dbUser.onboardingCompletedAt as unknown as string;
             token.image = dbUser.profileImageUrl ?? token.image;
+            // Derive display name from profile
+            const profileName = dbUser.specialistProfile?.displayName
+              || (dbUser.businessProfile ? `${dbUser.businessProfile.firstName} ${dbUser.businessProfile.lastName}`.trim() : null);
+            if (profileName) token.name = profileName;
           }
         } catch {
           // Non-fatal — keep using cached token values if DB is unreachable
@@ -210,6 +234,7 @@ export const authOptions: NextAuthOptions = {
         session.user.emailVerifiedAt = token.emailVerifiedAt ?? null;
         session.user.onboardingCompletedAt = token.onboardingCompletedAt ?? null;
         session.user.image = (token.image as string) ?? null;
+        if (token.name) session.user.name = token.name as string;
       }
       return session;
     },

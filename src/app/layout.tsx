@@ -9,6 +9,7 @@ import { Providers } from "@/components/providers/SessionProvider";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 import { prisma } from "@/lib/prisma";
 import { Toaster } from "sonner";
+import { SavedSolutionsProvider } from "@/hooks/SavedSolutionsContext";
 
 
 const geistSans = localFont({
@@ -84,6 +85,7 @@ export default async function RootLayout({
       >
         <Providers>
           <PostHogProvider>
+          <SavedSolutionsProvider>
           <Navbar user={session?.user} isFoundingExpert={isFoundingExpert} />
           <main className="flex-1">{children}</main>
           <Footer />
@@ -100,6 +102,7 @@ export default async function RootLayout({
               }
             }}
           />
+          </SavedSolutionsProvider>
           </PostHogProvider>
         </Providers>
       </body>

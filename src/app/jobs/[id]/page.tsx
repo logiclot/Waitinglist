@@ -505,7 +505,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
           <p className="text-muted-foreground mb-8 max-w-md mx-auto text-sm">
             Job requests are available to Elite and Founding experts. Deliver great solutions to level up.
           </p>
-          <Link href="/expert/performance" className="text-primary font-medium hover:underline text-sm">
+          <Link href="/dashboard" className="text-primary font-medium hover:underline text-sm">
             View ranking requirements →
           </Link>
         </div>

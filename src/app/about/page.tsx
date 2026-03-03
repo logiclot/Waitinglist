@@ -77,7 +77,7 @@ export default function AboutPage() {
               Browse Solutions
             </Link>
             <Link
-              href="/onboarding/expert"
+              href="/auth/sign-up"
               className="px-6 py-3 rounded-xl border border-border bg-white hover:bg-secondary/50 transition-colors font-medium text-sm"
             >
               Join as an Expert

@@ -22,6 +22,7 @@ export interface Expert {
   user_id?: string;
   slug?: string;
   name: string;
+  profile_image_url?: string;
   bio?: string;
   response_time?: string;
   verified: boolean;
@@ -52,12 +53,12 @@ export interface Solution {
   longDescription?: string; // Add this mapping explicitly
   category: string;
 
-  // New pricing fields (source of truth)
+  // Pricing — cents are source of truth (from DB), euros are derived for display
   implementation_price_cents: number;
   monthly_cost_min_cents?: number;
   monthly_cost_max_cents?: number;
 
-  // Legacy fields (kept for compatibility with existing components for now)
+  // Derived euro values (always = cents / 100, set at fetch time)
   implementation_price: number;
   monthly_cost_min: number;
   monthly_cost_max: number;

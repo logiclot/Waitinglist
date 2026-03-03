@@ -78,6 +78,26 @@ export async function checkAndFireSuitesNotification(
   );
 }
 
+// ── Expert: post-3-solutions — portfolio customization ────────────────────────
+
+export async function checkAndFirePortfolioNotification(
+  userId: string,
+  publishedCount: number,
+  slug: string | null
+) {
+  if (publishedCount < 3) return;
+  const already = await wasRecentlyNotified(userId, "🎨 Portfolio customization unlocked", ONCE);
+  if (already) return;
+
+  await createNotification(
+    userId,
+    "🎨 Portfolio customization unlocked",
+    "You now have 3 published solutions — personalize your portfolio page with custom colors, fonts, cover image, and featured pins.",
+    "success",
+    slug ? `/p/${slug}` : "/dashboard"
+  );
+}
+
 // ── Business onboarding ───────────────────────────────────────────────────────
 
 export async function fireBusinessOnboardingNotifications(userId: string) {

@@ -13,7 +13,7 @@ export function ExpertBadge({ isFoundingExpert, tier, className }: ExpertBadgePr
       <Badge
         variant="founding"
         label="Founding Expert"
-        icon={<Crown className="h-3 w-3" />}
+        icon={<Crown className="h-3 w-3 text-amber-400" />}
         className={className}
       />
     );

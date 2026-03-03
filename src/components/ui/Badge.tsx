@@ -18,7 +18,7 @@ interface BadgeProps {
 
 const variantStyles: Record<BadgeVariant, string> = {
   founding:
-    "bg-amber-100 text-amber-700 border-amber-200",
+    "bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-neutral-700",
   proven:
     "bg-blue-50 text-blue-700 border-blue-200",
   elite:

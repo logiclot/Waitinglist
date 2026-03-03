@@ -9,10 +9,47 @@ import { useSession } from "next-auth/react";
 const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com";
 
-// ── Page view tracker ─────────────────────────────────────────────────────────
-// Captures $pageview on every route change (App Router doesn't reload the page).
+// ── Session ID for local DB tracking ──────────────────────────────────────────
 
-function PageViewTracker() {
+function getSessionId() {
+  const SK = "__lol_sid";
+  let sid = sessionStorage.getItem(SK);
+  if (!sid) {
+    sid = crypto.randomUUID();
+    sessionStorage.setItem(SK, sid);
+  }
+  return sid;
+}
+
+// ── Local DB page view tracker (fires for ALL visitors) ───────────────────────
+
+function DbPageViewTracker() {
+  const pathname = usePathname();
+  const isFirst = useRef(true);
+
+  useEffect(() => {
+    try {
+      const blob = new Blob(
+        [JSON.stringify({
+          sessionId: getSessionId(),
+          pathname,
+          referrer: isFirst.current ? document.referrer || null : null,
+        })],
+        { type: "application/json" },
+      );
+      isFirst.current = false;
+      navigator.sendBeacon("/api/track", blob);
+    } catch {
+      // silently ignore
+    }
+  }, [pathname]);
+
+  return null;
+}
+
+// ── PostHog page view tracker ─────────────────────────────────────────────────
+
+function PostHogPageViewTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const ph = usePostHog();
@@ -27,7 +64,6 @@ function PageViewTracker() {
 }
 
 // ── User identity sync ────────────────────────────────────────────────────────
-// Identifies the logged-in user so events are linked to a person in PostHog.
 
 function UserIdentifier() {
   const { data: session } = useSession();
@@ -36,7 +72,7 @@ function UserIdentifier() {
 
   useEffect(() => {
     if (!ph || !session?.user?.id) return;
-    if (identified.current === session.user.id) return; // already identified this session
+    if (identified.current === session.user.id) return;
 
     ph.identify(session.user.id, {
       email: session.user.email,
@@ -52,15 +88,15 @@ function UserIdentifier() {
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    if (!KEY) return; // Skip silently in dev if key not configured
+    if (!KEY) return;
 
     posthog.init(KEY, {
       api_host: HOST,
-      person_profiles: "identified_only", // Don't create anonymous profiles
-      capture_pageview: false,            // We track manually via PageViewTracker
+      person_profiles: "identified_only",
+      capture_pageview: false,
       capture_pageleave: true,
       session_recording: {
-        maskAllInputs: true,              // GDPR: never record passwords or form fields
+        maskAllInputs: true,
         maskTextSelector: "[data-ph-mask]",
       },
       loaded: (ph) => {
@@ -69,11 +105,20 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  if (!KEY) return <>{children}</>;
+  // DbPageViewTracker always renders (tracks all visitors to local DB)
+  if (!KEY) {
+    return (
+      <>
+        <DbPageViewTracker />
+        {children}
+      </>
+    );
+  }
 
   return (
     <PHProvider client={posthog}>
-      <PageViewTracker />
+      <DbPageViewTracker />
+      <PostHogPageViewTracker />
       <UserIdentifier />
       {children}
     </PHProvider>

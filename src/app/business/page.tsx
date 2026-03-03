@@ -13,7 +13,7 @@ export default async function BusinessDashboardPage() {
     redirect("/auth/sign-in");
   }
 
-  const [referralStats, activeCoupons, activeOrdersRaw, recommendedSolutionsRaw] = await Promise.all([
+  const [referralStats, activeCoupons, activeOrdersRaw, recommendedSolutionsRaw, completedProjectCount] = await Promise.all([
     getReferralStats(session.user.id),
     getActiveCoupons(),
     // Orders that still need attention
@@ -53,6 +53,10 @@ export default async function BusinessDashboardPage() {
         .sort((a, b) => b._count.orders - a._count.orders)
         .slice(0, 3)
     ),
+    // Count completed projects for re-engagement prompt
+    prisma.order.count({
+      where: { buyerId: session.user.id, status: "approved" },
+    }),
   ]);
 
   const activeOrders = activeOrdersRaw.map((o) => ({
@@ -81,6 +85,7 @@ export default async function BusinessDashboardPage() {
       activeOrders={activeOrders}
       recommendedSolutions={recommendedSolutions}
       activeCoupons={activeCoupons}
+      completedProjectCount={completedProjectCount}
     />
   );
 }

@@ -248,6 +248,120 @@ export function reEngagementEmail({
   `);
 }
 
+// ── Audit report email ──────────────────────────────────────────────────────
+
+interface AuditBottleneck {
+  headline: string;
+  detail: string;
+  outcome: string;
+  before: string;
+  after: string;
+}
+
+interface AuditReportData {
+  overall: number;
+  scoreLabel: string;
+  scoreExplanation: string;
+  financialEstimate: number;
+  recoveryLow: number;
+  recoveryHigh: number;
+  annualWaste: number;
+  typicalFixCost: number;
+  roiMultiplier: number;
+  urgencyMonthly: number;
+  socialProofPct: number;
+  bottlenecks: AuditBottleneck[];
+  barrier: { label: string; message: string } | null;
+}
+
+export function auditReportEmail({ data }: { data: AuditReportData }): string {
+  const bottleneckRows = data.bottlenecks
+    .map(
+      (b, i) =>
+        `<tr><td style="padding:12px 0;border-bottom:1px solid #e5e7eb;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">${i + 1}. ${b.headline}</p>
+          <p style="margin:0 0 6px;font-size:13px;color:#64748b;line-height:1.6;">${b.detail}</p>
+          <p style="margin:0 0 2px;font-size:12px;color:#64748b;"><strong style="color:#0f172a;">Today:</strong> ${b.before}</p>
+          <p style="margin:0 0 6px;font-size:12px;color:#64748b;"><strong style="color:#2563EB;">After:</strong> ${b.after}</p>
+          <p style="margin:0;font-size:13px;color:#0f172a;background:#f0f9ff;padding:8px 12px;border-radius:6px;">&rarr; ${b.outcome}</p>
+        </td></tr>`
+    )
+    .join("");
+
+  const barrierSection = data.barrier
+    ? `<tr><td style="padding:16px 0 8px;">
+        <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:600;">Your Main Barrier</p>
+        <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#0f172a;">${data.barrier.label}</p>
+        <p style="margin:0;font-size:13px;color:#64748b;line-height:1.7;">${data.barrier.message}</p>
+      </td></tr>`
+    : "";
+
+  return shell(`
+    <tr>
+      <td style="padding:36px 28px;">
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a;text-align:center;">Your Automation Audit Report</h1>
+        <p style="margin:0 0 24px;font-size:13px;color:#94a3b8;text-align:center;">Here are your results from the LogicLot Free Automation Audit.</p>
+
+        <!-- Score -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:10px;margin-bottom:24px;">
+          <tr><td style="padding:24px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:48px;font-weight:900;color:#0f172a;">${data.overall}<span style="font-size:20px;color:#94a3b8;">/100</span></p>
+            <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#0f172a;">${data.scoreLabel}</p>
+            <p style="margin:0;font-size:12px;color:#64748b;">${data.socialProofPct}% of companies your size have already automated this</p>
+          </td></tr>
+        </table>
+
+        <!-- Financial -->
+        <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:600;">What Manual Work Is Costing You</p>
+        <p style="margin:0 0 8px;font-size:28px;font-weight:900;color:#0f172a;">~&euro;${data.financialEstimate.toLocaleString()}<span style="font-size:14px;font-weight:500;color:#94a3b8;">/month</span></p>
+        <p style="margin:0 0 4px;font-size:14px;color:#0f172a;font-weight:600;">Automation typically recovers 60&ndash;80% of this:</p>
+        <p style="margin:0 0 16px;font-size:16px;font-weight:700;color:#2563EB;">~&euro;${data.recoveryLow.toLocaleString()} &ndash; &euro;${data.recoveryHigh.toLocaleString()}/month back</p>
+
+        <!-- Annual ROI -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+          <tr>
+            <td style="background:#f8fafc;padding:12px;border-radius:8px;text-align:center;width:40%;">
+              <p style="margin:0;font-size:11px;color:#64748b;">Lost per year</p>
+              <p style="margin:0;font-size:18px;font-weight:900;color:#0f172a;">&euro;${data.annualWaste.toLocaleString()}</p>
+            </td>
+            <td style="text-align:center;width:20%;font-size:14px;color:#94a3b8;font-weight:600;">vs</td>
+            <td style="background:#f8fafc;padding:12px;border-radius:8px;text-align:center;width:40%;">
+              <p style="margin:0;font-size:11px;color:#64748b;">Typical one-time fix</p>
+              <p style="margin:0;font-size:18px;font-weight:900;color:#0f172a;">&euro;${data.typicalFixCost.toLocaleString()}</p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0 0 24px;text-align:center;font-size:16px;font-weight:700;color:#0f172a;">= ${data.roiMultiplier}x ROI</p>
+
+        <!-- Urgency -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:24px;">
+          <tr><td style="padding:12px 16px;font-size:13px;color:#64748b;">
+            Every month you wait = <strong style="color:#0f172a;">&euro;${data.urgencyMonthly.toLocaleString()}</strong> more spent on work a machine should do
+          </td></tr>
+        </table>
+
+        <!-- Bottlenecks -->
+        ${data.bottlenecks.length > 0 ? `
+        <p style="margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:600;">Your Top Bottlenecks</p>
+        <table width="100%" cellpadding="0" cellspacing="0">${bottleneckRows}</table>
+        ` : ""}
+
+        ${barrierSection}
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">
+          <tr><td style="text-align:center;padding:16px 0;">
+            <a href="${BASE_URL}/solutions" style="${BTN_STYLE}">Browse Automation Solutions &rarr;</a>
+          </td></tr>
+          <tr><td style="text-align:center;">
+            <a href="${BASE_URL}/audit" style="font-size:13px;color:#64748b;text-decoration:underline;">Retake the audit</a>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+  `);
+}
+
 // ── Demo booking email ───────────────────────────────────────────────────────
 
 export function demoBookedEmail({

@@ -5,6 +5,7 @@ export interface SolutionFilters {
   category: string | null;
   minPrice: number | null;
   maxPrice: number | null;
+  deliveryMinDays: number | null;
   deliveryMaxDays: number | null;
   businessGoals: string[];
   tools: string[];
@@ -22,6 +23,7 @@ export const INITIAL_FILTERS: SolutionFilters = {
   category: null,
   minPrice: null,
   maxPrice: null,
+  deliveryMinDays: null,
   deliveryMaxDays: null,
   businessGoals: [],
   tools: [],
@@ -45,6 +47,7 @@ export function parseFiltersFromSearchParams(searchParams: URLSearchParams): Sol
     category: searchParams.get("category"),
     minPrice: searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : null,
     maxPrice: searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : null,
+    deliveryMinDays: searchParams.get("deliveryMinDays") ? Number(searchParams.get("deliveryMinDays")) : null,
     deliveryMaxDays: searchParams.get("deliveryMaxDays") ? Number(searchParams.get("deliveryMaxDays")) : null,
     businessGoals: getAll("goals"),
     tools: getAll("tools"),
@@ -65,6 +68,7 @@ export function serializeFiltersToSearchParams(filters: SolutionFilters): URLSea
   if (filters.category) params.set("category", filters.category);
   if (filters.minPrice) params.set("minPrice", filters.minPrice.toString());
   if (filters.maxPrice) params.set("maxPrice", filters.maxPrice.toString());
+  if (filters.deliveryMinDays) params.set("deliveryMinDays", filters.deliveryMinDays.toString());
   if (filters.deliveryMaxDays) params.set("deliveryMaxDays", filters.deliveryMaxDays.toString());
   
   if (filters.businessGoals.length > 0) params.set("goals", filters.businessGoals.join(","));
@@ -103,7 +107,8 @@ export function applySolutionFilters(solutions: Solution[], filters: SolutionFil
     if (filters.minPrice !== null && s.implementation_price < filters.minPrice) return false;
     if (filters.maxPrice !== null && s.implementation_price > filters.maxPrice) return false;
 
-    // 4. Delivery Time
+    // 4. Delivery Time (exclusive ranges)
+    if (filters.deliveryMinDays !== null && s.delivery_days < filters.deliveryMinDays) return false;
     if (filters.deliveryMaxDays !== null && s.delivery_days > filters.deliveryMaxDays) return false;
 
     // 5. Business Goals
@@ -123,7 +128,13 @@ export function applySolutionFilters(solutions: Solution[], filters: SolutionFil
     if (filters.expertTier && s.expertTier !== filters.expertTier) return false;
 
     // 10. Payback
-    if (filters.paybackPeriod && s.paybackPeriod !== filters.paybackPeriod) return false;
+    if (filters.paybackPeriod) {
+      if (filters.paybackPeriod === "__none__") {
+        if (s.paybackPeriod) return false; // only show solutions WITHOUT payback set
+      } else {
+        if (s.paybackPeriod !== filters.paybackPeriod) return false;
+      }
+    }
 
     // 11. Industries
     if (filters.industries.length > 0) {

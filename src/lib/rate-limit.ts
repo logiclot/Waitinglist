@@ -79,3 +79,9 @@ export const publicFormLimiter = createRateLimiter({ limit: 5, windowMs: 10 * 60
 
 /** API writes: 60 per user per minute (general protection) */
 export const apiWriteLimiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
+
+/** Audit tracking: 20 events per IP per 10 minutes (full quiz = ~7 events) */
+export const auditTrackLimiter = createRateLimiter({ limit: 20, windowMs: 10 * 60_000 });
+
+/** Page view tracking: 120 views per IP per minute (generous, covers fast navigation) */
+export const pageViewLimiter = createRateLimiter({ limit: 120, windowMs: 60_000 });

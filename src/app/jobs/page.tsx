@@ -138,7 +138,7 @@ export default async function JobsIndexPage() {
             Complete <strong>10 projects</strong> to unlock Custom Projects.
           </p>
           <Link
-            href="/expert/performance"
+            href="/dashboard"
             className="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors text-sm"
           >
             View my progress
@@ -274,7 +274,7 @@ function JobCard({ job, isBuyer, alreadyBid = false, isCustomProjectLocked = fal
             <p className="text-xs text-muted-foreground">
               Complete 10 projects to unlock Custom Projects.
             </p>
-            <Link href="/expert/performance" className="text-xs text-primary hover:underline mt-2 block">
+            <Link href="/dashboard" className="text-xs text-primary hover:underline mt-2 block">
               View my progress →
             </Link>
           </div>

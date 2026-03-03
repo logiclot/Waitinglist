@@ -16,8 +16,8 @@ export function TierBadge({ tier, isFoundingExpert = false, size = "sm" }: TierB
   const iconSize = size === "md" ? "h-3.5 w-3.5" : "h-3 w-3";
 
   const foundingBadge = isFoundingExpert ? (
-    <span className={`${base} bg-[#111827] text-white border-[#111827]`}>
-      <Crown className={iconSize} />
+    <span className={`${base} bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-neutral-700`}>
+      <Crown className={`${iconSize} text-amber-400`} />
       Founding Expert
     </span>
   ) : null;

@@ -49,7 +49,7 @@ export default async function ExpertCustomProjectsPage() {
               View Discovery Scan posts →
             </Link>
             <Link
-              href="/expert/performance"
+              href="/dashboard"
               className="px-5 py-2 bg-secondary text-secondary-foreground rounded-md text-sm font-medium hover:bg-secondary/80 transition-colors"
             >
               How to reach Elite

@@ -9,23 +9,29 @@ interface ImageCropModalProps {
   imageUrl: string;
   onConfirm: (croppedBlob: Blob) => void;
   onCancel: () => void;
+  /** Aspect ratio for the crop area (default: 1 for square) */
+  aspect?: number;
+  /** Shape of the crop area (default: "round") */
+  cropShape?: "round" | "rect";
+  /** Modal title (default: "Edit image") */
+  title?: string;
 }
 
-const MAX_OUTPUT = 1024;
-const MIN_OUTPUT = 400;
+const MAX_OUTPUT_WIDTH = 1920;
+const MIN_OUTPUT_WIDTH = 400;
 
-/** Crop the image at native resolution (no upscaling) and return a JPEG Blob */
-async function getCroppedImg(imageSrc: string, cropArea: Area): Promise<Blob> {
+/** Crop the image at native resolution (no upscaling) and return a PNG Blob */
+async function getCroppedImg(imageSrc: string, cropArea: Area, aspect: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      // Use the crop's native pixel size, clamped between MIN and MAX
-      const size = Math.max(MIN_OUTPUT, Math.min(MAX_OUTPUT, Math.round(cropArea.width)));
+      const outputWidth = Math.max(MIN_OUTPUT_WIDTH, Math.min(MAX_OUTPUT_WIDTH, Math.round(cropArea.width)));
+      const outputHeight = Math.round(outputWidth / aspect);
 
       const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         reject(new Error("Canvas not supported"));
@@ -44,8 +50,8 @@ async function getCroppedImg(imageSrc: string, cropArea: Area): Promise<Blob> {
         cropArea.height,
         0,
         0,
-        size,
-        size
+        outputWidth,
+        outputHeight
       );
 
       canvas.toBlob(
@@ -58,7 +64,14 @@ async function getCroppedImg(imageSrc: string, cropArea: Area): Promise<Blob> {
   });
 }
 
-export function ImageCropModal({ imageUrl, onConfirm, onCancel }: ImageCropModalProps) {
+export function ImageCropModal({
+  imageUrl,
+  onConfirm,
+  onCancel,
+  aspect = 1,
+  cropShape = "round",
+  title = "Edit image",
+}: ImageCropModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -72,7 +85,7 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: ImageCropModal
     if (!croppedAreaPixels) return;
     setSaving(true);
     try {
-      const blob = await getCroppedImg(imageUrl, croppedAreaPixels);
+      const blob = await getCroppedImg(imageUrl, croppedAreaPixels, aspect);
       onConfirm(blob);
     } catch {
       setSaving(false);
@@ -84,7 +97,7 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: ImageCropModal
       <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h3 className="text-lg font-bold text-foreground">Edit image</h3>
+          <h3 className="text-lg font-bold text-foreground">{title}</h3>
           <button
             onClick={onCancel}
             className="p-1.5 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
@@ -99,9 +112,9 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: ImageCropModal
             image={imageUrl}
             crop={crop}
             zoom={zoom}
-            aspect={1}
-            cropShape="round"
-            showGrid={false}
+            aspect={aspect}
+            cropShape={cropShape}
+            showGrid={cropShape === "rect"}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}

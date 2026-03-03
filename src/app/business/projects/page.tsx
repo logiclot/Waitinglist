@@ -10,7 +10,7 @@ import { ReviewSection } from "@/components/reviews/ReviewSection";
 import Link from "next/link";
 import { SuccessToast } from "@/components/SuccessToast";
 
-type MilestoneStatus = "pending_payment" | "in_escrow" | "released" | "waiting_for_funds";
+type MilestoneStatus = "pending_payment" | "in_escrow" | "releasing" | "released" | "waiting_for_funds";
 function normalizeMilestones(raw: Record<string, unknown>[]): { title: string; description: string; price: number; status: MilestoneStatus }[] {
   return raw.map((m) => {
     const price = typeof (m as { priceCents?: number }).priceCents === "number"
@@ -19,7 +19,6 @@ function normalizeMilestones(raw: Record<string, unknown>[]): { title: string; d
     const statusMap: Record<string, string> = {
       pending: "pending_payment",
       waiting: "waiting_for_funds",
-      releasing: "in_escrow",
     };
     const status = (statusMap[(m as { status?: string }).status ?? ""] ?? (m as { status?: string }).status ?? "pending_payment") as MilestoneStatus;
     return {

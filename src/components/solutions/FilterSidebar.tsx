@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Filter, X, Search, ChevronDown, ChevronUp } from "lucide-react";
-import { SolutionFilters } from "@/lib/solutions/filters";
+import { SolutionFilters, applySolutionFilters } from "@/lib/solutions/filters";
 import { Category, Solution } from "@/types";
 
 interface FilterSidebarProps {
@@ -11,23 +11,23 @@ interface FilterSidebarProps {
   categories: Category[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ecosystems?: any[];
-  solutions?: Solution[]; // Add solutions prop for counters
+  solutions?: Solution[]; // ALL solutions (unfiltered) — counts are computed with faceted logic
   className?: string;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
 }
 
-export function FilterSidebar({ 
-  filters, 
-  onChange, 
-  categories, 
+export function FilterSidebar({
+  filters,
+  onChange,
+  categories,
   ecosystems,
   solutions = [], // Default to empty array
   className = "",
   isMobileOpen = false,
   onMobileClose
 }: FilterSidebarProps) {
-  
+
   // Handlers for specific filter types
   const update = (key: keyof SolutionFilters, val: string | number | null | string[]) => {
     onChange({ ...filters, [key]: val });
@@ -42,28 +42,77 @@ export function FilterSidebar({
     }
   };
 
-  // Helper to count matches
-  const getCount = (key: keyof Solution | 'delivery' | 'expertTier', value: string | number | null | boolean) => {
+  // ── Local price state with debounce (prevents cursor jump on every keystroke) ──
+  const [localMinPrice, setLocalMinPrice] = useState(filters.minPrice?.toString() || "");
+  const [localMaxPrice, setLocalMaxPrice] = useState(filters.maxPrice?.toString() || "");
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Sync local state when filters change externally (URL nav, preset click, clear)
+  useEffect(() => {
+    setLocalMinPrice(filters.minPrice?.toString() || "");
+    setLocalMaxPrice(filters.maxPrice?.toString() || "");
+  }, [filters.minPrice, filters.maxPrice]);
+
+  const debouncedPriceUpdate = useCallback((key: "minPrice" | "maxPrice", raw: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      update(key, raw ? Number(raw) : null);
+    }, 500);
+  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Faceted counts: for each dimension, apply all OTHER active filters ──
+  // This gives users accurate counts — "if I click this, how many results will I see?"
+  const countBaseSets = useMemo(() => {
+    const dimensions = ["category", "delivery", "businessGoals", "integrations", "expertTier", "paybackPeriod"] as const;
+    const bases: Record<string, Solution[]> = {};
+    for (const dim of dimensions) {
+      const f: SolutionFilters = { ...filters };
+      switch (dim) {
+        case "category": f.category = null; break;
+        case "delivery": f.deliveryMinDays = null; f.deliveryMaxDays = null; break;
+        case "businessGoals": f.businessGoals = []; break;
+        case "integrations": f.tools = []; break;
+        case "expertTier": f.expertTier = null; break;
+        case "paybackPeriod": f.paybackPeriod = null; break;
+      }
+      bases[dim] = applySolutionFilters(solutions, f);
+    }
+    return bases;
+  }, [solutions, filters]);
+
+  // Count matches within the faceted base set for each dimension
+  const getCount = (key: keyof Solution | "delivery" | "expertTier", value: unknown) => {
     if (!solutions) return 0;
-    return solutions.filter(s => {
-      if (key === 'category') {
-        // Normalize category comparison
+    const dimension = key === "delivery" ? "delivery"
+      : key === "expertTier" ? "expertTier"
+      : key === "integrations" ? "integrations"
+      : (key as string);
+    const base = countBaseSets[dimension] || solutions;
+    return base.filter(s => {
+      if (key === "category") {
         const sSlug = s.category.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-").replace(/[^\w-]+/g, "");
         return sSlug === value;
       }
-      if (key === 'delivery') {
-        if (value === null) return true;
-        return s.delivery_days <= (value as number);
+      if (key === "delivery") {
+        // Exclusive range: { min, max }
+        const range = value as { min: number | null; max: number | null };
+        if (range.min !== null && s.delivery_days < range.min) return false;
+        if (range.max !== null && s.delivery_days > range.max) return false;
+        return true;
       }
-      if (key === 'expertTier') return s.expertTier === value;
-      if (key === 'paybackPeriod') return s.paybackPeriod === value;
-      
-      // Arrays
-      if (key === 'businessGoals') return s.businessGoals?.includes(value as string);
-      if (key === 'integrations') return s.integrations?.includes(value as string); // tools
+      if (key === "expertTier") return s.expertTier === value;
+      if (key === "paybackPeriod") {
+        if (value === "__none__") return !s.paybackPeriod;
+        return s.paybackPeriod === value;
+      }
+      if (key === "businessGoals") return s.businessGoals?.includes(value as string);
+      if (key === "integrations") return s.integrations?.includes(value as string);
       return false;
     }).length;
   };
+
+  // Count of solutions matching all filters (for "All Categories" label)
+  const totalFiltered = useMemo(() => applySolutionFilters(solutions, filters).length, [solutions, filters]);
 
   // Section visibility state (all open by default for now)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -134,7 +183,7 @@ export function FilterSidebar({
           value={filters.category || ""}
           onChange={(e) => update("category", e.target.value || null)}
         >
-          <option value="">All Categories ({solutions.length})</option>
+          <option value="">All Categories ({totalFiltered})</option>
           {categories.map(c => (
             <option key={c.id} value={c.slug}>
               {c.name} ({getCount('category', c.slug)})
@@ -146,20 +195,34 @@ export function FilterSidebar({
       {/* 1. Price */}
       <Section id="price" title="Price (One-time)">
         <div className="flex items-center gap-2 mb-2">
-          <input 
-            type="number" 
-            placeholder="Min" 
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="Min"
             className="w-full bg-background border border-border rounded px-2 py-1 text-sm"
-            value={filters.minPrice || ""}
-            onChange={(e) => update("minPrice", e.target.value ? Number(e.target.value) : null)}
+            value={localMinPrice}
+            onChange={(e) => {
+              const v = e.target.value.replace(/[^0-9]/g, "");
+              setLocalMinPrice(v);
+              debouncedPriceUpdate("minPrice", v);
+            }}
+            onBlur={() => update("minPrice", localMinPrice ? Number(localMinPrice) : null)}
           />
-          <span className="text-muted-foreground">-</span>
-          <input 
-            type="number" 
-            placeholder="Max" 
+          <span className="text-muted-foreground">–</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="Max"
             className="w-full bg-background border border-border rounded px-2 py-1 text-sm"
-            value={filters.maxPrice || ""}
-            onChange={(e) => update("maxPrice", e.target.value ? Number(e.target.value) : null)}
+            value={localMaxPrice}
+            onChange={(e) => {
+              const v = e.target.value.replace(/[^0-9]/g, "");
+              setLocalMaxPrice(v);
+              debouncedPriceUpdate("maxPrice", v);
+            }}
+            onBlur={() => update("maxPrice", localMaxPrice ? Number(localMaxPrice) : null)}
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -169,11 +232,10 @@ export function FilterSidebar({
             { label: "€3k–€5k", min: 3000, max: 5000 },
             { label: "€5k+", min: 5000, max: null }
           ].map(preset => (
-            <button 
+            <button
               key={preset.label}
               onClick={() => {
-                update("minPrice", preset.min);
-                update("maxPrice", preset.max);
+                onChange({ ...filters, minPrice: preset.min, maxPrice: preset.max });
               }}
               className="text-xs px-2 py-1 bg-secondary rounded border border-border hover:border-primary/50 transition-colors"
             >
@@ -183,30 +245,34 @@ export function FilterSidebar({
         </div>
       </Section>
 
-      {/* 2. Delivery Time */}
+      {/* 2. Delivery Time (exclusive ranges) */}
       <Section id="delivery" title="Delivery Time">
         {[
-          { label: "Up to 3 days", val: 3 },
-          { label: "Up to 7 days", val: 7 },
-          { label: "Up to 2 weeks", val: 14 },
-          { label: "2+ weeks", val: null } // Just clears the max filter effectively
-        ].map(opt => (
-          <label key={opt.label} className="flex items-center gap-2 text-sm cursor-pointer mb-1 justify-between group">
-            <div className="flex items-center gap-2">
-              <input 
-                type="radio" 
-                name="delivery"
-                checked={filters.deliveryMaxDays === opt.val}
-                onChange={() => update("deliveryMaxDays", opt.val)}
-                className="text-primary focus:ring-primary"
-              />
-              {opt.label}
-            </div>
-            {opt.val && (
-              <span className="text-xs text-muted-foreground group-hover:text-foreground">{getCount('delivery', opt.val)}</span>
-            )}
-          </label>
-        ))}
+          { label: "Up to 3 days", min: null, max: 3 },
+          { label: "4–7 days", min: 4, max: 7 },
+          { label: "1–2 weeks", min: 8, max: 14 },
+          { label: "2+ weeks", min: 15, max: null }
+        ].map(opt => {
+          const isSelected = filters.deliveryMinDays === opt.min && filters.deliveryMaxDays === opt.max;
+          const count = getCount('delivery', { min: opt.min, max: opt.max });
+          return (
+            <label key={opt.label} className="flex items-center gap-2 text-sm cursor-pointer mb-1 justify-between group">
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="delivery"
+                  checked={isSelected}
+                  onChange={() => {
+                    onChange({ ...filters, deliveryMinDays: opt.min, deliveryMaxDays: opt.max });
+                  }}
+                  className="text-primary focus:ring-primary"
+                />
+                {opt.label}
+              </div>
+              <span className="text-xs text-muted-foreground group-hover:text-foreground">{count}</span>
+            </label>
+          );
+        })}
       </Section>
 
       {/* 3. Business Goal */}
@@ -262,9 +328,10 @@ export function FilterSidebar({
       {/* 5. Expert Tier */}
       <Section id="tier" title="Expert Tier">
         {[
-          { label: "Vetted Expert", val: "vetted" },
-          { label: "Founding Expert", val: "founding" },
-          { label: "Agency-ready", val: "agency" }
+          { label: "Standard", val: "standard" },
+          { label: "Proven (5+ sales)", val: "proven" },
+          { label: "Elite (10+ sales)", val: "elite" },
+          { label: "Founding Expert", val: "founding" }
         ].map(tier => (
           <label key={tier.val} className="flex items-center gap-2 text-sm cursor-pointer mb-1 justify-between group">
             <div className="flex items-center gap-2">
@@ -288,12 +355,13 @@ export function FilterSidebar({
           { label: "< 1 month", val: "lt_1m" },
           { label: "1–3 months", val: "1_3m" },
           { label: "4–6 months", val: "4_6m" },
-          { label: "Long-term efficiency", val: "long_term" }
+          { label: "Long-term efficiency", val: "long_term" },
+          { label: "Not specified", val: "__none__" }
         ].map(roi => (
           <label key={roi.val} className="flex items-center gap-2 text-sm cursor-pointer mb-1 justify-between group">
             <div className="flex items-center gap-2">
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 name="roi"
                 checked={filters.paybackPeriod === roi.val}
                 onChange={() => update("paybackPeriod", roi.val)}

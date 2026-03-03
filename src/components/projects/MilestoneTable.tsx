@@ -9,8 +9,8 @@ import * as Sentry from "@sentry/nextjs";
 interface Milestone {
   title: string;
   description: string;
-  price: number;
-  status: "pending_payment" | "waiting_for_funds" | "in_escrow" | "released";
+  price: number; // EUR (not cents) — callers must normalize priceCents before passing
+  status: "pending_payment" | "waiting_for_funds" | "in_escrow" | "releasing" | "released";
   fundedAt?: string;
   releasedAt?: string;
 }
@@ -120,6 +120,11 @@ export function MilestoneTable({ orderId, milestones, isBuyer, isSeller }: Miles
                 {m.status === "in_escrow" && (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
                     <Lock className="w-3 h-3" /> In Escrow
+                  </span>
+                )}
+                {m.status === "releasing" && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                    <Clock className="w-3 h-3" /> Releasing…
                   </span>
                 )}
                 {(m.status === "waiting_for_funds" || m.status === "pending_payment") && (

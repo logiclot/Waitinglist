@@ -23,7 +23,16 @@ export default async function DashboardPage() {
   if (role === "EXPERT") {
     const expert = await prisma.specialistProfile.findUnique({
       where: { userId: session.user.id },
-      select: { id: true, calendarUrl: true, isFoundingExpert: true, completedSalesCount: true },
+      select: {
+        id: true,
+        slug: true,
+        calendarUrl: true,
+        isFoundingExpert: true,
+        completedSalesCount: true,
+        stripeAccountId: true,
+        stripeDetailsSubmitted: true,
+        _count: { select: { solutions: { where: { status: "published" } } } },
+      },
     });
 
     if (!expert) redirect("/onboarding");
@@ -102,13 +111,16 @@ export default async function DashboardPage() {
         referralStats={referralStats}
         activeCoupons={activeCoupons}
         hasCalendarUrl={!!expert.calendarUrl}
+        hasStripeConnected={!!expert.stripeAccountId && expert.stripeDetailsSubmitted}
         isFoundingExpert={expert.isFoundingExpert ?? false}
+        publishedSolutionCount={expert._count.solutions}
         earningsThisMonthCents={earningsThisMonthCents}
         inEscrowCents={inEscrowCents}
         activeOrders={activeOrders}
         topSolution={topSolution}
         recentJobs={recentJobs}
         totalCompletedSales={expert.completedSalesCount}
+        portfolioSlug={expert.slug ?? null}
       />
     );
   }

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { CheckCircle, Zap, Euro, ShieldCheck, Award, Info, PlayCircle, Star, ChevronDown, MessageSquare, Layers } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import { CheckCircle, Zap, Euro, ShieldCheck, Award, Info, PlayCircle, Star, ChevronDown, MessageSquare, Layers, ArrowRight } from "lucide-react";
 import { DemoVideoSection } from "@/components/DemoVideoSection";
 import { SimilarSolutions } from "@/components/SimilarSolutions";
 import { BRAND_NAME } from "@/lib/branding";
@@ -10,7 +10,9 @@ import { getEcosystemsForSolution } from "@/actions/ecosystems";
 import { WorksBestWith } from "@/components/ecosystems/WorksBestWith";
 import { log } from "@/lib/logger";
 import { TierBadge } from "@/components/ui/TierBadge";
+import { CategoryBadge } from "@/components/ui/CategoryBadge";
 import { mapPrismaExpert } from "@/lib/solutions/data";
+import { BackToBrowse } from "@/components/BackToBrowse";
 
 // Always fetch fresh data — suites and solution details can change at any time
 export const dynamic = "force-dynamic";
@@ -52,13 +54,13 @@ async function getSolution(idOrSlug: string) {
   try {
     let s = await prisma.solution.findUnique({
       where: { id: idOrSlug },
-      include: { expert: true }
+      include: { expert: { include: { user: { select: { profileImageUrl: true } } } } }
     });
 
     if (!s) {
       s = await prisma.solution.findUnique({
         where: { slug: idOrSlug },
-        include: { expert: true }
+        include: { expert: { include: { user: { select: { profileImageUrl: true } } } } }
       });
     }
 
@@ -104,6 +106,24 @@ export default async function SolutionPage({ params }: PageProps) {
 
   if (!solution) {
     notFound();
+  }
+
+  // If this solution has a newer published version, redirect to it
+  const newerVersion = await prisma.solution.findFirst({
+    where: {
+      parentId: solution.id,
+      status: "published",
+      OR: [
+        { moderationStatus: "auto_approved" },
+        { moderationStatus: "approved" }
+      ]
+    },
+    select: { id: true },
+    orderBy: { version: "desc" }
+  });
+
+  if (newerVersion) {
+    redirect(`/solutions/${newerVersion.id}`);
   }
 
   const versionHistory = await getVersionChain(
@@ -155,6 +175,10 @@ export default async function SolutionPage({ params }: PageProps) {
   return (
     <div className="min-h-screen pb-20">
       <div className="container mx-auto px-4 py-8">
+
+        {/* Back to Browse */}
+        <BackToBrowse />
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
           {/* Main Content (Left Column) */}
@@ -163,9 +187,7 @@ export default async function SolutionPage({ params }: PageProps) {
             {/* 1. Title + Meta */}
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-1 rounded">
-                  {solution.category}
-                </span>
+                <CategoryBadge category={solution.category} size="md" />
                 <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
                   v{solution.version || 1}.0
                 </span>
@@ -354,7 +376,21 @@ export default async function SolutionPage({ params }: PageProps) {
                   ))}
                 </div>
                 <p className="font-medium text-foreground mb-1">No reviews yet</p>
-                <p className="text-sm text-muted-foreground">Be the first to review after implementation.</p>
+                <p className="text-sm text-muted-foreground mb-5">Reviews appear after project delivery.</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Link
+                    href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}`}
+                    className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                  >
+                    <MessageSquare className="h-4 w-4" /> Ask a question
+                  </Link>
+                  <a
+                    href="#action-card"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors"
+                  >
+                    Start your project <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
+                </div>
               </div>
             </section>
 
@@ -383,7 +419,7 @@ export default async function SolutionPage({ params }: PageProps) {
             <div className="sticky top-24 space-y-6">
 
               {/* Action Card */}
-              <div className="bg-card border border-border rounded-xl p-6 shadow-lg">
+              <div id="action-card" className="bg-card border border-border rounded-xl p-6 shadow-lg">
                 <div className="mb-6">
                   <p className="text-sm text-muted-foreground mb-1">Total Project Price</p>
                   <div className="text-4xl font-bold text-foreground">€{solution.implementation_price.toLocaleString("de-DE")}</div>
@@ -464,8 +500,13 @@ export default async function SolutionPage({ params }: PageProps) {
               {solution.expert && (
                 <div className="bg-card border border-border rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center font-bold text-lg relative shrink-0">
-                      {solution.expert.name.substring(0, 2).toUpperCase()}
+                    <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center font-bold text-lg relative shrink-0 overflow-hidden">
+                      {solution.expert.profile_image_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={solution.expert.profile_image_url} alt={solution.expert.name} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        solution.expert.name.substring(0, 2).toUpperCase()
+                      )}
                       {solution.expert.verified && (
                         <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
                           <ShieldCheck className="h-3 w-3 text-blue-400 fill-blue-400/10" />

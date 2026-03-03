@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import {
   CheckCircle2,
   ArrowRight,
@@ -9,7 +10,15 @@ import {
   Zap,
   AlertCircle,
   BarChart2,
+  Clock,
+  Users,
+  Mail,
+  Loader2,
+  UserPlus,
 } from "lucide-react";
+import { Solution } from "@/types";
+import { getAuditRecommendations } from "@/lib/solutions/related-matcher";
+import { SmartEmptyState } from "@/components/solutions/SmartEmptyState";
 
 // ---------------------------------------------------------------------------
 // Questions
@@ -139,7 +148,7 @@ const QUESTIONS: Question[] = [
 
 const TASK_COPY: Record<
   string,
-  { headline: string; detail: string; outcome: string }
+  { headline: string; detail: string; outcome: string; before: string; after: string }
 > = {
   invoicing: {
     headline: "Invoicing & Billing",
@@ -147,6 +156,8 @@ const TASK_COPY: Record<
       "Your billing cycle likely has 4–6 manual touchpoints per client. Every missed follow-up is revenue delayed or lost.",
     outcome:
       "What changes: invoices go out automatically on trigger, payment reminders chase themselves, reconciliation happens in the background.",
+    before: "Manually creating, sending, and chasing every invoice",
+    after: "Invoices sent and followed up automatically",
   },
   sales_followup: {
     headline: "Sales Follow-up",
@@ -154,6 +165,8 @@ const TASK_COPY: Record<
       "Leads go cold in 24–48 hours without contact. Manual follow-up means the busier your team gets, the more deals slip through.",
     outcome:
       "What changes: every lead gets a personalised sequence the moment they enter your pipeline, whether your team is in a meeting or off for the weekend.",
+    before: "Remembering to follow up on every lead manually",
+    after: "Leads contacted automatically within minutes",
   },
   scheduling: {
     headline: "Scheduling & Appointments",
@@ -161,6 +174,8 @@ const TASK_COPY: Record<
       "Back-and-forth booking takes 2–4 hours per week on average. That's 100+ hours a year spent on something that should take zero.",
     outcome:
       "What changes: clients book directly into your calendar, reminders go out automatically, and rescheduling happens without a single email.",
+    before: "Back-and-forth emails to find a time that works",
+    after: "Clients book directly, reminders go out on their own",
   },
   reporting: {
     headline: "Reporting & Data Entry",
@@ -168,6 +183,8 @@ const TASK_COPY: Record<
       "Manual reporting is slow and error-prone. By the time a report reaches a decision-maker, it's already out of date.",
     outcome:
       "What changes: live dashboards updated in real time, your weekly numbers ready without anyone pulling them together.",
+    before: "Pulling numbers from multiple tools into a spreadsheet",
+    after: "Live dashboards updated in real time",
   },
   hr_onboarding: {
     headline: "HR & Onboarding",
@@ -175,6 +192,8 @@ const TASK_COPY: Record<
       "A new hire typically touches 10+ manual steps before their first day. Delays here cost you their early productivity and your credibility as an employer.",
     outcome:
       "What changes: contracts sent, accounts created, training assigned, and day-one check-ins scheduled, all done before they walk through the door.",
+    before: "10+ manual tasks per new hire before day one",
+    after: "Contracts, accounts, and training handled automatically",
   },
   customer_support: {
     headline: "Customer Support",
@@ -182,6 +201,8 @@ const TASK_COPY: Record<
       "Up to 70% of support queries are repetitive. Every one your team handles manually is time taken away from the issues that actually need them.",
     outcome:
       "What changes: common queries answered instantly, tickets routed correctly, your team spending their time only on what genuinely needs a human.",
+    before: "Every query handled by a person, even repeat questions",
+    after: "Common questions answered instantly, team handles the rest",
   },
   social_media: {
     headline: "Social Media & Content",
@@ -189,6 +210,8 @@ const TASK_COPY: Record<
       "Inconsistent posting kills reach. Managing content manually across multiple platforms is unsustainable for most small teams.",
     outcome:
       "What changes: content approved once and distributed on schedule across every channel, no one logging into five different platforms every day.",
+    before: "Logging into each platform to post and schedule manually",
+    after: "Content approved once, published everywhere on schedule",
   },
   inventory: {
     headline: "Inventory & Orders",
@@ -196,6 +219,8 @@ const TASK_COPY: Record<
       "Manual inventory tracking leads to stockouts, overselling, and customer complaints that rarely come back.",
     outcome:
       "What changes: stock levels monitored around the clock, reorders triggered automatically, overselling prevented across every channel at once.",
+    before: "Checking stock levels and placing reorders by hand",
+    after: "Stock monitored 24/7, reorders triggered automatically",
   },
 };
 
@@ -260,7 +285,7 @@ function computeResults(answers: Answers) {
     very_high: 172,
   };
   const hoursMonth = hoursMonthMap[answers.hours] ?? 43;
-  const financialEstimate = Math.round((hoursMonth * 35) / 100) * 100;
+  const financialEstimate = Math.round((hoursMonth * 25) / 100) * 100;
   const recoveryLow = Math.round((financialEstimate * 0.6) / 100) * 100;
   const recoveryHigh = Math.round((financialEstimate * 0.8) / 100) * 100;
 
@@ -281,18 +306,35 @@ function computeResults(answers: Answers) {
     scoreExplanation =
       "Based on what you described, there are multiple areas in your business where automation would have a measurable, near-term impact. The ROI case is clear.";
   } else if (overall >= 45) {
-    scoreLabel = "Selective Opportunity";
+    scoreLabel = "Targeted Wins Available";
     scoreExplanation =
-      "There are specific areas worth addressing, but automation is not a blanket solution for your situation. Two or three targeted fixes are likely more valuable than a broad implementation.";
+      "You have two or three areas where a focused automation fix would pay for itself quickly. The smartest move is to start with the highest-impact bottleneck and build from there.";
   } else if (overall >= 25) {
-    scoreLabel = "Limited Immediate Fit";
+    scoreLabel = "Early Stage - Build the Foundation";
     scoreExplanation =
-      "Based on your answers, most of your workload involves judgment, relationships, or complexity that automation does not handle well yet. There may be one or two tasks at the edges worth looking at, but it should not be a priority right now.";
+      "You are at the stage where one or two well-chosen automations could free up real time. The key is picking the right starting point, and that is what the recommendations below are for.";
   } else {
-    scoreLabel = "Not the Right Moment";
+    scoreLabel = "Laying the Groundwork";
     scoreExplanation =
-      "Honestly, automation is probably not where your attention should go right now. Your work appears to rely heavily on human judgment and interaction. Focus on building your processes first, and revisit this when the manual, repeatable work starts to pile up.";
+      "Your business is still building the processes that automation works best on top of. When the same manual tasks start repeating weekly, that is the right moment to act, and we will be here when you are ready.";
   }
+
+  // Annual ROI comparison
+  const annualWaste = financialEstimate * 12;
+  const typicalFixCost = 2500; // slightly above average so real prices feel like a deal
+  const roiMultiplier = Math.round((annualWaste / typicalFixCost) * 10) / 10;
+
+  // Urgency: monthly cost of inaction
+  const urgencyMonthly = financialEstimate;
+
+  // Social proof: % of similar companies already automating
+  const socialProofMap: Record<string, number> = {
+    solo: 34,
+    small: 52,
+    medium: 67,
+    large: 81,
+  };
+  const socialProofPct = socialProofMap[answers.teamSize] ?? 50;
 
   // Top 3 bottlenecks from selected tasks
   const bottlenecks = answers.tasks
@@ -307,7 +349,7 @@ function computeResults(answers: Answers) {
       barrier = {
         label: "You're building it all by hand",
         message:
-          "Every week, someone on your team is doing work that a $50/month tool handles automatically. Your competitors who have already set this up are spending that time on things that actually move the needle. One properly implemented solution can pay for itself within the first month, no developer required.",
+          "Every week, someone on your team is doing work that a €50/month tool handles automatically. Your competitors who have already set this up are spending that time on things that actually move the needle. One properly implemented solution can pay for itself within the first month, no developer required.",
       };
     } else if (technicalReadiness < 65) {
       barrier = {
@@ -337,6 +379,11 @@ function computeResults(answers: Answers) {
     benchmark,
     bottlenecks,
     barrier,
+    annualWaste,
+    typicalFixCost,
+    roiMultiplier,
+    urgencyMonthly,
+    socialProofPct,
   };
 }
 
@@ -344,7 +391,8 @@ function computeResults(answers: Answers) {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
+export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean; solutions?: Solution[] } = {}) {
+  const { data: session } = useSession();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<Answers>>({
     tasks: [],
@@ -353,6 +401,12 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [subScoresVisible, setSubScoresVisible] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const [email, setEmail] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [sessionId] = useState(() => crypto.randomUUID());
+  const hasTrackedStart = useRef(false);
 
   // On the /audit page, read answers from URL params and jump straight to results
   useEffect(() => {
@@ -372,11 +426,29 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
 
   const currentQuestion = QUESTIONS[step];
 
+  function trackAudit(event: string, extra?: Record<string, unknown>) {
+    const payload = JSON.stringify({ sessionId, event, ...extra });
+    if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+      navigator.sendBeacon("/api/audit/track", new Blob([payload], { type: "application/json" }));
+    } else {
+      fetch("/api/audit/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    }
+  }
+
   function advance(newAnswers: Partial<Answers>) {
     setAnswers(newAnswers);
+    trackAudit("step_complete", { step });
     if (step < QUESTIONS.length - 1) {
       setTimeout(() => setStep(step + 1), 200);
     } else if (newTab) {
+      // Track completion before opening new tab
+      const r = computeResults(newAnswers as Answers);
+      trackAudit("quiz_complete", { score: r.overall, scoreLabel: r.scoreLabel, answers: newAnswers });
       // Open results in a new tab, then reset the homepage quiz
       const encoded = btoa(JSON.stringify(newAnswers));
       window.open(`/audit?a=${encoded}`, "_blank");
@@ -385,6 +457,8 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
         setAnswers({ tasks: [] });
       }, 300);
     } else {
+      const r = computeResults(newAnswers as Answers);
+      trackAudit("quiz_complete", { score: r.overall, scoreLabel: r.scoreLabel, answers: newAnswers });
       setTimeout(() => {
         setShowResults(true);
         setTimeout(() => {
@@ -395,6 +469,10 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
   }
 
   function handleSingleSelect(questionId: string, optionId: string) {
+    if (!hasTrackedStart.current) {
+      trackAudit("quiz_start");
+      hasTrackedStart.current = true;
+    }
     setAnswers({ ...answers, [questionId]: optionId });
   }
 
@@ -403,6 +481,10 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
   }
 
   function handleMultiToggle(optionId: string) {
+    if (!hasTrackedStart.current) {
+      trackAudit("quiz_start");
+      hasTrackedStart.current = true;
+    }
     const current = (answers.tasks ?? []) as string[];
     const updated = current.includes(optionId)
       ? current.filter((id) => id !== optionId)
@@ -412,6 +494,29 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
 
   function handleNext() {
     advance(answers);
+  }
+
+  async function handleSendReport() {
+    if (!email || emailSending) return;
+    setEmailSending(true);
+    setEmailError("");
+    try {
+      const res = await fetch("/api/audit/send-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, answers }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to send");
+      }
+      setEmailSent(true);
+      trackAudit("email_sent", { email });
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setEmailSending(false);
+    }
   }
 
   // Animate score counter
@@ -435,13 +540,19 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
   const results = showResults ? computeResults(answers as Answers) : null;
   const multiSelected = (answers.tasks ?? []) as string[];
 
+  // Compute solution recommendations based on audit answers
+  const recommendedSolutions = useMemo(() => {
+    if (!showResults || !answers.tasks || answers.tasks.length === 0) return [];
+    return getAuditRecommendations(solutions, answers.tasks as string[], 6);
+  }, [showResults, answers.tasks, solutions]);
+
   return (
     <div>
       {/* ------------------------------------------------------------------ */}
       {/* Quiz card                                                           */}
       {/* ------------------------------------------------------------------ */}
       {!showResults && (
-        <div className="bg-white border border-border rounded-2xl shadow-sm p-8 md:p-10">
+        <div className="bg-white border border-border rounded-2xl shadow-sm p-8 md:p-10 max-w-2xl mx-auto">
           {/* Progress bar */}
           <div className="flex items-center gap-1.5 mb-8">
             {QUESTIONS.map((_, i) => (
@@ -615,6 +726,9 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
       {showResults && results && (
         <div ref={resultsRef} className="space-y-5">
 
+          {/* Score, financial, bottlenecks — keep narrow and centered */}
+          <div className="max-w-2xl mx-auto space-y-5">
+
           {/* Score card */}
           <div className="bg-white border border-border rounded-2xl shadow-sm p-8 md:p-10">
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-6 text-center">
@@ -639,9 +753,17 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
                 {results.benchmark}/100
               </span>
             </p>
-            <p className="text-xs text-muted-foreground text-center bg-secondary/30 rounded-lg px-4 py-2 mb-8">
+            <p className="text-xs text-muted-foreground text-center bg-secondary/30 rounded-lg px-4 py-2 mb-4">
               {results.scoreExplanation}
             </p>
+
+            {/* Social proof */}
+            <div className="flex items-center justify-center gap-2 mb-8 text-sm">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">
+                <span className="font-semibold text-foreground">{results.socialProofPct}%</span> of companies your size have already automated this
+              </span>
+            </div>
 
             {/* Sub-scores */}
             <div className="space-y-5 border-t border-border pt-6">
@@ -692,14 +814,14 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
           </div>
 
           {/* Financial estimate */}
-          <div className="bg-primary/5 border border-primary/15 rounded-2xl p-6 md:p-8">
-            <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-1">
+          <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
+            <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-1">
               What Manual Work Is Costing You
             </p>
             <p className="text-xs text-muted-foreground mb-4">Per month, in lost productivity</p>
             <div className="flex items-baseline gap-1 mb-4">
               <span className="text-4xl font-black text-foreground">
-                ~${results.financialEstimate.toLocaleString()}
+                ~&euro;{results.financialEstimate.toLocaleString()}
               </span>
               <span className="text-base font-medium text-muted-foreground">
                 /month
@@ -707,15 +829,46 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               This is not how much automation costs. It&apos;s how much you&apos;re
-              already spending on work that automation handles automatically, calculated
-              on your team&apos;s manual hours at a blended $35/hr productivity rate.
+              already spending on work that automation handles automatically, based
+              on your team&apos;s manual hours at a blended &euro;25/hr productivity rate.
             </p>
-            <div className="border-t border-primary/15 pt-4">
+            <div className="border-t border-border pt-4 mb-4">
               <p className="text-sm font-semibold text-foreground">
                 Automation typically recovers 60–80% of this:
               </p>
               <p className="text-lg font-bold text-primary mt-0.5">
-                ~${results.recoveryLow.toLocaleString()} – ${results.recoveryHigh.toLocaleString()}/month back into your business
+                ~&euro;{results.recoveryLow.toLocaleString()} – &euro;{results.recoveryHigh.toLocaleString()}/month back into your business
+              </p>
+            </div>
+
+            {/* Annual ROI comparison */}
+            <div className="border-t border-border pt-4">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
+                Annual Comparison
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex-1 min-w-[120px] bg-secondary/50 border border-border rounded-xl px-4 py-3 text-center">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Lost per year</p>
+                  <p className="text-lg font-black text-foreground">&euro;{results.annualWaste.toLocaleString()}</p>
+                </div>
+                <span className="text-muted-foreground font-bold text-lg">vs</span>
+                <div className="flex-1 min-w-[120px] bg-secondary/50 border border-border rounded-xl px-4 py-3 text-center">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Typical one-time fix</p>
+                  <p className="text-lg font-black text-foreground">&euro;{results.typicalFixCost.toLocaleString()}</p>
+                </div>
+                <span className="text-muted-foreground font-bold text-lg">=</span>
+                <div className="flex-1 min-w-[80px] bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-center">
+                  <p className="text-xs text-primary font-medium mb-1">ROI</p>
+                  <p className="text-lg font-black text-primary">{results.roiMultiplier}x</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Urgency note */}
+            <div className="flex items-center gap-2 border-t border-border pt-4 mt-4">
+              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Every month you wait = <span className="font-semibold text-foreground">&euro;{results.urgencyMonthly.toLocaleString()}</span> more spent on work a machine should do
               </p>
             </div>
           </div>
@@ -739,6 +892,13 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
                       <p className="text-sm text-muted-foreground leading-relaxed mb-2">
                         {b.detail}
                       </p>
+
+                      {/* Before / After */}
+                      <div className="text-xs text-muted-foreground mb-2 space-y-1">
+                        <p><span className="font-semibold text-foreground">Today:</span> {b.before}</p>
+                        <p><span className="font-semibold text-primary">After:</span> {b.after}</p>
+                      </div>
+
                       <p className="text-sm text-primary font-medium leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
                         → {b.outcome}
                       </p>
@@ -767,59 +927,130 @@ export function AuditQuiz({ newTab = false }: { newTab?: boolean } = {}) {
             </div>
           )}
 
-          {/* CTA */}
-          <div className="bg-gradient-to-br from-primary/8 via-primary/3 to-background border border-border rounded-2xl p-8 md:p-10 text-center">
-            <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-3">
-              What&apos;s Next
-            </p>
-            {results.overall >= 45 ? (
-              <>
+          {/* Email capture — send report */}
+          <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
+            <div className="flex items-start gap-3 mb-4">
+              <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-foreground text-sm">Send my report</p>
+                <p className="text-xs text-muted-foreground">
+                  Get these results in your inbox so you can share them with your team or come back later.
+                </p>
+              </div>
+            </div>
+            {emailSent ? (
+              <div>
+                <div className="flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-lg px-4 py-3 text-sm text-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                  <span>Report sent to <span className="font-semibold">{email}</span>. Check your inbox (and spam folder).</span>
+                </div>
+                <div className="flex gap-4 mt-2">
+                  <button
+                    onClick={() => { setEmailSent(false); setEmailError(""); }}
+                    className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+                  >
+                    Resend
+                  </button>
+                  <button
+                    onClick={() => { setEmailSent(false); setEmail(""); setEmailError(""); }}
+                    className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+                  >
+                    Use a different email
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="you@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendReport()}
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  onClick={handleSendReport}
+                  disabled={!email || emailSending}
+                  className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {emailSending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
+                  Send
+                </button>
+              </div>
+            )}
+            {emailError && (
+              <p className="text-xs text-red-600 mt-2">{emailError}</p>
+            )}
+          </div>
+
+          {/* Account creation nudge — only for anonymous visitors */}
+          {!session?.user && (
+            <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8 flex items-start gap-4">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <UserPlus className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-foreground text-sm mb-1">Save your results</p>
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                  Create a free account to save your audit results and get matched with experts who specialise in your bottlenecks.
+                </p>
+                <Link
+                  href="/auth/sign-up"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
+                >
+                  Create Free Account <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          </div>{/* end narrow wrapper */}
+
+          {/* CTA — Personalized recommendations based on audit answers */}
+          {results.overall >= 45 ? (
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
+                  What&apos;s Next
+                </p>
                 <h3 className="text-xl font-bold text-foreground mb-2">
                   You know where the gaps are.
                   <br />
                   Now get expert opinions on how to close them.
                 </h3>
-                <p className="text-sm text-muted-foreground mb-7 max-w-md mx-auto leading-relaxed">
-                  A Discovery Scan connects you with automation experts who review
-                  your situation and submit bids, so you get real options, not
-                  generic advice.
+                <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                  We matched these solutions to the specific bottlenecks you described.
+                  Each one is built for the kind of work you said you&apos;re still doing manually.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Link
-                    href="/solutions"
-                    className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-md shadow-primary/20 hover:-translate-y-0.5 flex items-center gap-2 duration-200"
-                  >
-                    Book a Discovery Scan <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href="/solutions"
-                    className="px-6 py-3 rounded-xl border border-border bg-white hover:bg-secondary/30 transition-colors font-medium text-sm"
-                  >
-                    Browse Ready-Made Solutions
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  Come back when the time is right.
-                </h3>
-                <p className="text-sm text-muted-foreground mb-7 max-w-md mx-auto leading-relaxed">
-                  When your manual workload starts piling up and the same tasks
-                  keep repeating, that is when automation earns its place. Bookmark
-                  this and retake it in a few months.
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Link
-                    href="/solutions"
-                    className="px-6 py-3 rounded-xl border border-border bg-white hover:bg-secondary/30 transition-colors font-medium text-sm flex items-center gap-2"
-                  >
-                    Browse What&apos;s Possible <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
+              </div>
+              <SmartEmptyState relatedSolutions={recommendedSolutions} />
+            </div>
+          ) : (
+            <div className="text-center max-w-2xl mx-auto">
+              <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
+                What&apos;s Next
+              </p>
+              <h3 className="text-xl font-bold text-foreground mb-2">
+                Come back when the time is right.
+              </h3>
+              <p className="text-sm text-muted-foreground mb-7 max-w-md mx-auto leading-relaxed">
+                When your manual workload starts piling up and the same tasks
+                keep repeating, that is when automation earns its place. Bookmark
+                this and retake it in a few months.
+              </p>
+              <Link
+                href="/solutions"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border bg-white hover:bg-secondary/30 transition-colors font-medium text-sm"
+              >
+                Browse What&apos;s Possible <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
 
           {/* Retake */}
           <p className="text-center text-xs text-muted-foreground pb-4">

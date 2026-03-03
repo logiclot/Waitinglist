@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock, Wrench, Lock } from "lucide-react";
+import { CategoryBadge } from "@/components/ui/CategoryBadge";
 
 // Types for the form data (subset of Solution)
 export interface SolutionFormData {
@@ -52,9 +53,13 @@ export function SolutionPreview({ data }: { data: SolutionFormData }) {
 
           {/* Header Row */}
           <div className="flex items-start justify-between mb-4 gap-2">
-            <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded border border-border bg-secondary text-muted-foreground truncate max-w-[140px]">
-              {data.category || "Category"}
-            </span>
+            {data.category ? (
+              <CategoryBadge category={data.category} size="sm" />
+            ) : (
+              <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded border border-border bg-secondary text-muted-foreground">
+                Category
+              </span>
+            )}
 
             <div className="flex items-center gap-1.5 shrink-0">
               {badges.map((badge, idx) => (

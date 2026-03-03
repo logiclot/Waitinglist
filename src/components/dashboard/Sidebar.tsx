@@ -23,15 +23,21 @@ import {
   ShieldCheck,
   MessageCircle,
   Users,
+  Activity,
+  Globe,
+  Lock,
 } from "lucide-react";
 
 interface SidebarProps {
   role: "BUSINESS" | "EXPERT" | "ADMIN";
   isFoundingExpert?: boolean;
+  portfolioSlug?: string | null;
+  publishedSolutionCount?: number;
 }
 
-export function Sidebar({ role, isFoundingExpert: _isFoundingExpert }: SidebarProps) {
+export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSlug, publishedSolutionCount = 0 }: SidebarProps) {
   void _isFoundingExpert;
+  const suitesLocked = role === "EXPERT" && publishedSolutionCount < 3;
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -58,9 +64,9 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert }: SidebarPr
     { label: "Find Work",       href: "/jobs",                icon: Search },
     { label: "Add Solution",    href: "/expert/add-solution", icon: PlusCircle },
     { label: "My Solutions",    href: "/expert/my-solutions", icon: Layers },
+    ...(portfolioSlug ? [{ label: "My Portfolio", href: `/p/${portfolioSlug}`, icon: Globe }] : []),
     { label: "Suites",          href: "/expert/ecosystems",   icon: Package },
     { label: "Completed",       href: "/expert/completed",    icon: CheckCircle },
-    { label: "Performance",     href: "/expert/performance",  icon: BarChart2 },
     { label: "Earnings",        href: "/expert/earnings",     icon: DollarSign },
   ];
 
@@ -93,8 +99,11 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert }: SidebarPr
 
   const adminLinks = role === "ADMIN"
     ? [
-        { label: "Admin",          href: "/admin",                icon: ShieldCheck },
-        { label: "Post on Behalf", href: "/admin/post-on-behalf", icon: Users },
+        { label: "Admin",           href: "/admin",                 icon: ShieldCheck },
+        { label: "Post on Behalf",  href: "/admin/post-on-behalf",  icon: Users },
+        { label: "Audit Analytics", href: "/admin/audit-analytics", icon: BarChart2 },
+        { label: "Job Analytics",   href: "/admin/job-analytics",   icon: Activity },
+        { label: "Traffic",         href: "/admin/traffic",         icon: Globe },
       ]
     : [];
 
@@ -104,19 +113,25 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert }: SidebarPr
         {links.map((link) => {
           const Icon = link.icon;
           const active = isActive(link.href);
-          
+          const isLockedSuites = link.label === "Suites" && suitesLocked;
+
           return (
             <Link
               key={link.href}
               href={link.href}
               className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                active 
-                  ? "bg-primary/10 text-primary" 
+                active
+                  ? "bg-primary/10 text-primary"
+                  : isLockedSuites
+                  ? "text-muted-foreground/50 hover:bg-secondary hover:text-muted-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
               <Icon className="h-4 w-4" />
-              {link.label}
+              <span className="flex-1">{link.label}</span>
+              {isLockedSuites && (
+                <Lock className="h-3.5 w-3.5 text-muted-foreground/40" />
+              )}
             </Link>
           );
         })}
@@ -156,7 +171,7 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert }: SidebarPr
               <span className="relative">
                 <Icon className="h-4 w-4" />
                 {showUnreadDot && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-amber-500 rounded-full border border-background animate-pulse" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full border border-background animate-pulse" />
                 )}
               </span>
               {link.label}

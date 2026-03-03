@@ -16,6 +16,13 @@ import {
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
 
+/** Converts "JOHN DOE" or "john doe" → "John Doe" */
+function toTitleCase(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 async function sendWelcomeEmail(userId: string, role: "business" | "expert") {
   if (!FROM_EMAIL) return;
   try {
@@ -87,8 +94,9 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
   const intent = formData.get("intent") as string; // decisionContext
   const profileImageUrl = (formData.get("profileImageUrl") as string) || null;
 
-  // Derived fields
-  const nameParts = fullName ? fullName.trim().split(" ") : ["Business", "User"];
+  // Derived fields — normalize casing ("JOHN DOE" → "John Doe")
+  const normalizedName = fullName ? toTitleCase(fullName.trim()) : "";
+  const nameParts = normalizedName ? normalizedName.split(" ") : ["Business", "User"];
   const firstName = nameParts[0];
   const lastName = nameParts.slice(1).join(" ") || "";
   
@@ -154,9 +162,11 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Not authenticated" };
 
-  // --- Step 1: Identity ---
-  const legalFullName = formData.get("legalFullName") as string;
-  const displayNameInput = (formData.get("displayName") as string) || legalFullName;
+  // --- Step 1: Identity — normalize casing ("JOHN DOE" → "John Doe") ---
+  const rawName = formData.get("legalFullName") as string;
+  const legalFullName = rawName ? toTitleCase(rawName.trim()) : rawName;
+  const rawDisplay = (formData.get("displayName") as string) || legalFullName;
+  const displayNameInput = rawDisplay ? toTitleCase(rawDisplay.trim()) : rawDisplay;
   const country = formData.get("country") as string;
   const isAgency = formData.get("roleType") === "Agency";
   

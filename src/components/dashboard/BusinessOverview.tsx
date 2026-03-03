@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Zap, CheckCircle2, Clock, Users, Copy, Gift, ArrowRight } from "lucide-react";
+import { Zap, CheckCircle2, Clock, Users, Copy, Gift, ArrowRight, BarChart2 } from "lucide-react";
 import { ActiveCoupons } from "./ActiveCoupons";
 import { toast } from "sonner";
 
@@ -40,6 +40,7 @@ interface BusinessOverviewProps {
   activeCoupons?: { code: string; title: string }[];
   activeOrders?: ActiveOrder[];
   recommendedSolutions?: RecommendedSolution[];
+  completedProjectCount?: number;
 }
 
 export function BusinessOverview({
@@ -47,6 +48,7 @@ export function BusinessOverview({
   activeCoupons = [],
   activeOrders = [],
   recommendedSolutions = [],
+  completedProjectCount = 0,
 }: BusinessOverviewProps) {
   const hasActiveWork = activeOrders.length > 0;
 
@@ -240,6 +242,37 @@ export function BusinessOverview({
               <div>
                 <h3 className="font-bold mb-1 text-sm">Review &amp; go live</h3>
                 <p className="text-sm text-muted-foreground">Approve the work before funds are released. No lock-in.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Re-engagement — shown after completing at least one project with no active work */}
+      {completedProjectCount > 0 && !hasActiveWork && (
+        <section className="bg-primary/5 border border-primary/15 rounded-2xl p-6 md:p-8">
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <BarChart2 className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-base text-foreground mb-1">What to automate next?</h3>
+              <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                You&apos;ve completed {completedProjectCount} project{completedProjectCount !== 1 ? "s" : ""}. Take our free audit to find your next highest-ROI automation opportunity.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/audit"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
+                >
+                  Take the Free Audit <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/solutions"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border bg-background hover:bg-secondary/50 transition-colors text-sm font-medium"
+                >
+                  Browse Solutions
+                </Link>
               </div>
             </div>
           </div>

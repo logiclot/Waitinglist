@@ -237,6 +237,16 @@ model SpecialistProfile {
   invoiceAddress            String?   // Full address for invoices
   invoiceVatNumber          String?   // VAT/Tax ID if applicable
 
+  // Portfolio Customization
+  portfolioBackground       String?   // "gradient_default" | "grid" | "dots" | "wave" | "stripe"
+  portfolioBorderColor      String?   // hex from preset palette, e.g. "#8DC63F"
+  portfolioFont             String?   // "default" | "inter" | "dm_sans" | "space_grotesk" | "lora" | "jetbrains_mono"
+  portfolioCoverImage       String?   // Supabase public URL for hero cover image
+  portfolioBackgroundColor  String?   // hex color for full page background, e.g. "#F0FDF4"
+  portfolioPatternColor     String?   // hex color for background pattern, e.g. "#64748B"
+  featuredSolutionIds       String[]  // Max 2 pinned solution IDs (shown first on portfolio)
+  portfolioViewCount        Int       @default(0)
+
   // Bid quality moderation
   bidBannedUntil            DateTime? // Set when expert accumulates too many thumbs-down
 
@@ -617,4 +627,37 @@ model EcosystemItem {
 
   @@unique([ecosystemId, solutionId])
   @@index([solutionId])
+}
+
+// ── Traffic Analytics ────────────────────────────────────────────────────────
+
+model PageView {
+  id        String   @id @default(uuid())
+  sessionId String   // browser sessionStorage ID (persists per tab)
+  pathname  String
+  referrer  String?  // document.referrer (external referrer on first hit)
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([pathname])
+  @@index([createdAt])
+}
+
+// ── Audit Quiz Analytics ─────────────────────────────────────────────────────
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  sessionId  String
+  event      String   // "quiz_start" | "step_complete" | "quiz_complete" | "email_sent"
+  step       Int?
+  score      Int?
+  scoreLabel String?
+  answers    Json?
+  email      String?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([event])
+  @@index([sessionId])
+  @@index([createdAt])
 }

@@ -36,7 +36,15 @@ export default async function EditSolutionPage({ params }: { params: { id: strin
   // Check Lock State
   const lockState = await getSolutionLockState(solution.id);
 
-  const milestones = (solution.milestones as import("@/types").Milestone[]) || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawMilestones = (solution.milestones as any[]) || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const milestones = rawMilestones.map((m: any) => ({
+    title: m.title || "",
+    description: m.description || "",
+    price: m.price ?? (m.priceCents ? m.priceCents / 100 : 0),
+    deliveryTime: m.deliveryTime || undefined,
+  }));
 
   // Map Solution to WizardState — all fields must be populated to avoid wizard reverting saved data
   const initialData: Partial<WizardState> = {

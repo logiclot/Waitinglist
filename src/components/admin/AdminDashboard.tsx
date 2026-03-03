@@ -8,7 +8,7 @@ import { ListingEditor } from "@/components/admin/ListingEditor";
 import { ExpertManagementTab } from "@/components/admin/ExpertManagementTab";
 import { SolutionManagementTab } from "@/components/admin/SolutionManagementTab";
 import {
-  approveSpecialist, suspendSpecialist, verifySpecialist,
+  approveSpecialist, suspendSpecialist,
   makeFoundingSpecialist, removeFoundingExpert,
   setExpertFee, setExpertTier,
   adminDeleteUser, adminDeleteOrder, adminDeleteSolution,
@@ -120,12 +120,6 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
     showMessage("Expert suspended.");
   };
 
-  const handleToggleVerified = async (id: string, current: boolean) => {
-    await verifySpecialist(id, !current);
-    setExpertList(expertList.map((e) => e.id === id ? { ...e, verified: !current } : e));
-    showMessage("Verification updated.");
-  };
-
   const handleMakeFounding = async (id: string) => {
     const currentFounders = expertList.filter((e) => e.isFoundingExpert).length;
     if (currentFounders >= 20) { showMessage("Maximum of 20 Founding Experts reached.", true); return; }
@@ -218,14 +212,23 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
   }
 
   const foundingCount = expertList.filter((e) => e.isFoundingExpert).length;
+  const provenCount = expertList.filter((e) => e.tier === "PROVEN").length;
+  const eliteCount = expertList.filter((e) => e.tier === "ELITE").length;
+  const standardCount = expertList.filter((e) => e.tier === "STANDARD" || !e.tier).length;
 
   return (
     <div className="container mx-auto px-4 py-10">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">{BRAND_NAME} Admin</h1>
-        <div className="text-sm text-muted-foreground">
-          Founding Experts: <span className="font-bold text-foreground">{foundingCount}</span> / 20
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <span>Founding: <span className="font-bold text-foreground">{foundingCount}</span>/20</span>
+          <span className="text-border">|</span>
+          <span>Elite: <span className="font-bold text-foreground">{eliteCount}</span></span>
+          <span className="text-border">|</span>
+          <span>Proven: <span className="font-bold text-foreground">{provenCount}</span></span>
+          <span className="text-border">|</span>
+          <span>Standard: <span className="font-bold text-foreground">{standardCount}</span></span>
         </div>
       </div>
 
@@ -288,7 +291,6 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
           setExpandedExpertId={setExpandedExpertId}
           onApprove={handleApprove}
           onSuspend={handleSuspend}
-          onToggleVerified={handleToggleVerified}
           onMakeFounding={handleMakeFounding}
           onRemoveFounding={handleRemoveFounding}
           onSetFee={handleSetFee}

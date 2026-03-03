@@ -5,7 +5,7 @@ import { Menu, X, LogOut } from "lucide-react";
 import { LogoBrand } from "@/components/LogoBrand";
 import { ExpertBadge } from "@/components/ui/ExpertBadge";
 import { Avatar } from "@/components/ui/Avatar";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
@@ -15,7 +15,19 @@ import { Session } from "next-auth";
 export function Navbar({ user, isFoundingExpert }: { user?: Session["user"] & { role?: string }, isFoundingExpert?: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!isProfileOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [isProfileOpen]);
 
   if (process.env.NODE_ENV !== "development" && (pathname === "/waitlist" || pathname === "/")) return null;
 
@@ -31,7 +43,7 @@ export function Navbar({ user, isFoundingExpert }: { user?: Session["user"] & { 
   return (
     <nav className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <LogoBrand href={user ? (user.role === "ADMIN" ? "/admin" : "/dashboard") : "/"} size="md" />
+        <LogoBrand href={user ? (user.role === "ADMIN" ? "/admin" : "/dashboard") : "/"} size="lg" />
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-6">
@@ -62,7 +74,7 @@ export function Navbar({ user, isFoundingExpert }: { user?: Session["user"] & { 
           {user ? (
             <div className="flex items-center gap-3 pl-2 border-l border-border">
               <NotificationDropdown />
-              <div className="relative">
+              <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-background hover:bg-secondary transition-colors text-sm font-medium text-foreground"

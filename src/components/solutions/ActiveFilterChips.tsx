@@ -10,10 +10,10 @@ interface ActiveFilterChipsProps {
 }
 
 export function ActiveFilterChips({ filters, onRemove, onClear }: ActiveFilterChipsProps) {
-  const activeCount = 
+  const activeCount =
     (filters.category ? 1 : 0) +
     (filters.minPrice || filters.maxPrice ? 1 : 0) +
-    (filters.deliveryMaxDays ? 1 : 0) +
+    (filters.deliveryMinDays !== null || filters.deliveryMaxDays !== null ? 1 : 0) +
     filters.businessGoals.length +
     filters.tools.length +
     (filters.expertTier ? 1 : 0) +
@@ -36,8 +36,11 @@ export function ActiveFilterChips({ filters, onRemove, onClear }: ActiveFilterCh
         />
       )}
 
-      {filters.deliveryMaxDays && (
-        <Chip label={`Delivery: < ${filters.deliveryMaxDays} days`} onRemove={() => onRemove("deliveryMaxDays", null)} />
+      {(filters.deliveryMinDays !== null || filters.deliveryMaxDays !== null) && (
+        <Chip
+          label={`Delivery: ${filters.deliveryMinDays ? `${filters.deliveryMinDays}` : '0'}–${filters.deliveryMaxDays ? `${filters.deliveryMaxDays}` : '∞'} days`}
+          onRemove={() => { onRemove("deliveryMinDays", null); onRemove("deliveryMaxDays", null); }}
+        />
       )}
 
       {filters.businessGoals.map(g => (

@@ -387,6 +387,9 @@ export async function awardBid(jobId: string, bidId: string) {
     if (bid.status === "accepted") {
       return { error: "This proposal is already accepted." };
     }
+    if (bid.specialist.status === "SUSPENDED") {
+      return { error: "This expert's account is currently suspended. Please choose a different proposal." };
+    }
 
     // Parse proposal phases to build milestone payment plan
     interface ProposalPhase {
@@ -603,7 +606,7 @@ export async function rateProposal(
           "Proposal submissions temporarily paused",
           `You've received ${THUMBS_DOWN_BAN_THRESHOLD} low-quality flags from clients in the past ${THUMBS_DOWN_WINDOW_DAYS} days. Proposal submissions are paused for ${BAN_DURATION_DAYS} days while you review your approach. Focus on quality over quantity.`,
           "alert",
-          "/expert/performance"
+          "/dashboard"
         );
       }
     } else if (feedback === "up" && previousFeedback === "down") {

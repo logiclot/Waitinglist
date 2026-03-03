@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Clock, PlayCircle, ShieldCheck, Heart, TrendingUp, Users, Wrench, Lock, Edit, Trash2, ArrowUpCircle } from "lucide-react";
 import { Solution } from "@/types";
 import { TierBadge } from "@/components/ui/TierBadge";
-import { useSavedSolutions } from "@/hooks/useSavedSolutions";
+import { CategoryBadge } from "@/components/ui/CategoryBadge";
+import { useSavedSolutionsContext } from "@/hooks/SavedSolutionsContext";
 import { useRouter } from "next/navigation";
 import { useState, MouseEvent } from "react";
 import { archiveSolution, createSolutionVersion } from "@/actions/solutions";
@@ -18,7 +19,7 @@ interface SolutionCardProps {
 }
 
 export function SolutionCard({ solution, editHref, isLocked, lockReason }: SolutionCardProps) {
-  const { savedIds, toggleSaved } = useSavedSolutions();
+  const { savedIds, toggleSaved } = useSavedSolutionsContext();
   const router = useRouter();
   const isSaved = savedIds.has(solution.id);
   const [isSaving, setIsSaving] = useState(false);
@@ -69,9 +70,6 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
 
   // Badge Logic (Max 3, Priority Order)
   const badges = [];
-  
-  // Version Badge
-  badges.push({ label: `v${solution.version || 1}.0`, icon: Clock, tooltip: "Current Version", className: "text-slate-700 bg-slate-100 border-slate-200" });
 
   // Status Badge for Owner View
   if (solution.status === "draft") {
@@ -80,8 +78,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
 
   if (solution.is_vetted) badges.push({ label: "Vetted", icon: ShieldCheck, tooltip: "Verified portfolio and identity; performance tracked on‑platform.", className: "text-blue-700 bg-blue-50 border-blue-200" });
   if (solution.requires_nda) badges.push({ label: "NDA", icon: LockIcon, tooltip: "Covered by platform NDA; files and chat protected.", className: "text-purple-700 bg-purple-50 border-purple-200" });
-  if (solution.support_days) badges.push({ label: `Support: ${solution.support_days}d`, icon: Wrench, tooltip: "Includes post‑delivery support (bug‑fix scope).", className: "text-emerald-700 bg-emerald-50 border-emerald-200" });
-  badges.push({ label: "Escrow", icon: Lock, tooltip: "Milestone escrow — funds release only after buyer approval.", className: "text-slate-700 bg-slate-50 border-slate-200" });
+  if (solution.support_days) badges.push({ label: `Support: ${solution.support_days}d`, icon: Wrench, tooltip: "Includes post‑delivery support (bug‑fix scope).", className: "text-slate-600 bg-slate-50 border-slate-200" });
 
   const displayBadges = badges.slice(0, 3);
 
@@ -117,9 +114,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
         
         {/* Header Row: Category & Badges */}
         <div className="flex items-start justify-between mb-4 gap-2">
-          <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md bg-primary/10 text-primary truncate max-w-[140px]">
-            {solution.category}
-          </span>
+          <CategoryBadge category={solution.category} size="sm" />
           
           <div className="flex items-center gap-1.5 shrink-0">
             {displayBadges.map((badge, idx) => (
@@ -198,8 +193,13 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
         {/* Expert Attribution */}
         {solution.expert && (
           <div className="flex items-center gap-2 pb-3 pt-0">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15">
-              {(solution.expert.name || "?").slice(0, 2).toUpperCase()}
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15 overflow-hidden relative">
+              {solution.expert.profile_image_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={solution.expert.profile_image_url} alt={solution.expert.name} className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                (solution.expert.name || "?").slice(0, 2).toUpperCase()
+              )}
             </div>
             <span className="text-xs font-medium text-muted-foreground truncate flex-1">{solution.expert.name}</span>
             {(solution.expert.founding || (solution.expert.tier && solution.expert.tier !== "STANDARD")) && (
@@ -214,7 +214,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
         <div className="flex items-end justify-between py-4 border-t border-border">
           <div>
             <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Implementation</p>
-            <p className="font-bold text-xl text-foreground tracking-tight">€{(solution.implementation_price || (solution.implementation_price_cents ?? 0) / 100).toLocaleString("de-DE")}</p>
+            <p className="font-bold text-xl text-foreground tracking-tight">€{solution.implementation_price.toLocaleString("de-DE")}</p>
             
             {/* Delivery & ROI Lines & Support */}
             <div className="flex flex-col gap-0.5 mt-1.5">
@@ -244,6 +244,9 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
             <p className="font-medium text-sm text-foreground">
               €{solution.monthly_cost_min || 0}–€{solution.monthly_cost_max || 0}
             </p>
+            {(solution.version || 1) > 1 && (
+              <p className="text-[10px] text-muted-foreground mt-1.5">v{solution.version}.0</p>
+            )}
           </div>
         </div>
 

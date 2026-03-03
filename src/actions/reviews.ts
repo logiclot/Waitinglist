@@ -113,9 +113,9 @@ export async function submitBuyerReview(
             : {}),
         },
       }),
-      // Transition order to approved
+      // Transition order to approved — guard against race (e.g. admin refunded between fetch and commit)
       prisma.order.update({
-        where: { id: orderId },
+        where: { id: orderId, status: "delivered" },
         data: { status: "approved", approvedAt: new Date() },
       }),
     ]);

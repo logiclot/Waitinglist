@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { CategoryBadge } from "@/components/ui/CategoryBadge";
 
 interface SimilarSolution {
   id: string;
@@ -31,9 +32,7 @@ export function SimilarSolutions({ solutions }: SimilarSolutionsProps) {
               className="group block h-full bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-all hover:shadow-md flex flex-col"
             >
               <div className="mb-3 flex items-start justify-between">
-                <span className="text-xs bg-secondary px-2 py-1 rounded-full text-muted-foreground">
-                  {solution.category}
-                </span>
+                <CategoryBadge category={solution.category} size="sm" />
                 <span className="text-sm font-semibold">
                   ${solution.implementation_price.toLocaleString()}
                 </span>

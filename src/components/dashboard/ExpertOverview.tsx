@@ -14,6 +14,9 @@ import {
   Gift,
   CheckCircle,
   ArrowRight,
+  CreditCard,
+  Award,
+  Paintbrush,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCentsToCurrency } from "@/lib/commission";
@@ -56,26 +59,32 @@ interface ExpertOverviewProps {
   referralStats?: ReferralStats;
   activeCoupons?: { code: string; title: string }[];
   hasCalendarUrl?: boolean;
+  hasStripeConnected?: boolean;
   isFoundingExpert?: boolean;
+  publishedSolutionCount?: number;
   earningsThisMonthCents?: number;
   inEscrowCents?: number;
   activeOrders?: ActiveOrder[];
   topSolution?: TopSolution | null;
   recentJobs?: RecentJob[];
   totalCompletedSales?: number;
+  portfolioSlug?: string | null;
 }
 
 export function ExpertOverview({
   referralStats,
   activeCoupons = [],
   hasCalendarUrl,
+  hasStripeConnected,
   isFoundingExpert,
+  publishedSolutionCount = 0,
   earningsThisMonthCents = 0,
   inEscrowCents = 0,
   activeOrders = [],
   topSolution,
   recentJobs = [],
   totalCompletedSales = 0,
+  portfolioSlug,
 }: ExpertOverviewProps) {
   const [referralLink, setReferralLink] = useState("");
   useEffect(() => {
@@ -107,11 +116,11 @@ export function ExpertOverview({
 
         <div className="flex gap-3">
           {isFoundingExpert && (
-            <div className="bg-amber-100 border border-amber-200 rounded-xl p-4 min-w-[130px] flex flex-col justify-center">
-              <p className="text-xs text-amber-800 uppercase tracking-wider font-bold mb-1 flex items-center gap-1">
-                <Crown className="w-3 h-3" /> Founder
+            <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 border border-neutral-700 rounded-xl p-4 min-w-[130px] flex flex-col justify-center">
+              <p className="text-xs text-neutral-300 uppercase tracking-wider font-bold mb-1 flex items-center gap-1">
+                <Crown className="w-3 h-3 text-amber-400" /> Founder
               </p>
-              <p className="text-sm font-medium text-amber-900">11% Fee Locked</p>
+              <p className="text-sm font-medium text-white">11% Fee Locked</p>
             </div>
           )}
           <div className="bg-card border border-border rounded-xl p-4 min-w-[130px]">
@@ -129,7 +138,8 @@ export function ExpertOverview({
         </div>
       </section>
 
-      {/* Referral Section */}
+      {/* Referral Section — shown only after first sale */}
+      {totalCompletedSales >= 1 && (
       <section className="bg-card border border-border rounded-xl p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -178,27 +188,72 @@ export function ExpertOverview({
           </div>
         </div>
       </section>
+      )}
 
       {/* Priority Actions */}
-      {(!hasCalendarUrl) && (
+      {(!hasStripeConnected || !hasCalendarUrl || (!isFoundingExpert && publishedSolutionCount < 3) || publishedSolutionCount < 3) && (
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-5 h-5 text-yellow-500" />
+            <Zap className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-bold">Priority Actions</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {!hasCalendarUrl && (
-              <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-purple-500" />
-                  <div>
-                    <p className="font-bold text-sm">Link Work Calendar</p>
-                    <p className="text-xs text-muted-foreground">Let clients book demos and calls</p>
-                  </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
+            {!hasStripeConnected && (
+              <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
+                <CreditCard className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm">Connect Stripe</p>
+                  <p className="text-xs text-muted-foreground truncate">Required to receive payouts</p>
                 </div>
-                <Link href="/expert/settings" className="px-3 py-1.5 bg-background border border-border rounded-md text-xs font-bold hover:bg-secondary transition-colors">
+                <Link href="/expert/settings" className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors">
+                  Connect
+                </Link>
+              </div>
+            )}
+            {!hasCalendarUrl && (
+              <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
+                <Calendar className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm">Link Work Calendar</p>
+                  <p className="text-xs text-muted-foreground truncate">Let clients book demos and calls</p>
+                </div>
+                <Link href="/expert/settings" className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors">
                   Link
                 </Link>
+              </div>
+            )}
+            {!isFoundingExpert && publishedSolutionCount < 3 && (
+              <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
+                <Award className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm">Founding Expert Badge</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    Publish {3 - publishedSolutionCount} more solution{3 - publishedSolutionCount !== 1 ? "s" : ""} to unlock 11% fee
+                  </p>
+                </div>
+                <Link href="/expert/my-solutions/new" className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors">
+                  Create
+                </Link>
+              </div>
+            )}
+            {publishedSolutionCount < 3 && (
+              <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
+                <Paintbrush className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm">Customize Portfolio</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    Publish {3 - publishedSolutionCount} more solution{3 - publishedSolutionCount !== 1 ? "s" : ""} to unlock
+                  </p>
+                </div>
+                {portfolioSlug ? (
+                  <Link href={`/p/${portfolioSlug}`} className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors">
+                    View
+                  </Link>
+                ) : (
+                  <Link href="/expert/add-solution" className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors">
+                    Create
+                  </Link>
+                )}
               </div>
             )}
           </div>

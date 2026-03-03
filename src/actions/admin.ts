@@ -110,10 +110,9 @@ export async function approveSpecialist(id: string, grantProven = true) {
     select: { tier: true },
   });
 
-  const updates: { status: "APPROVED"; tier?: "PROVEN"; platformFeePercentage?: number } = { status: "APPROVED" };
+  const updates: { status: "APPROVED"; tier?: "PROVEN" } = { status: "APPROVED" };
   if (grantProven && existing?.tier === "STANDARD") {
     updates.tier = "PROVEN";
-    updates.platformFeePercentage = 13;
   }
 
   const specialist = await prisma.specialistProfile.update({
@@ -141,10 +140,19 @@ export async function approveSpecialist(id: string, grantProven = true) {
 export async function suspendSpecialist(id: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  await prisma.specialistProfile.update({
+  const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { status: "SUSPENDED" }
+    data: { status: "SUSPENDED" },
+    select: { userId: true },
   });
+
+  await createNotification(
+    specialist.userId,
+    "Account suspended",
+    "Your expert account has been suspended. If you believe this is an error, please contact support.",
+    "alert",
+  );
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -152,10 +160,22 @@ export async function suspendSpecialist(id: string) {
 export async function verifySpecialist(id: string, verified: boolean) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  await prisma.specialistProfile.update({
+  const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { verified }
+    data: { verified },
+    select: { userId: true },
   });
+
+  await createNotification(
+    specialist.userId,
+    verified ? "Profile verified" : "Verification removed",
+    verified
+      ? "Your expert profile is now verified. A verified badge will appear on your listings."
+      : "Your verified badge has been removed from your profile.",
+    verified ? "success" : "info",
+    "/dashboard",
+  );
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -163,10 +183,20 @@ export async function verifySpecialist(id: string, verified: boolean) {
 export async function makeFoundingSpecialist(id: string, rank: number) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  await prisma.specialistProfile.update({
+  const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { isFoundingExpert: true, foundingRank: rank, platformFeePercentage: 11 },
+    data: { isFoundingExpert: true, foundingRank: rank },
+    select: { userId: true },
   });
+
+  await createNotification(
+    specialist.userId,
+    "Founding Expert status granted!",
+    `You are now Founding Expert #${rank}. You'll enjoy an 11% platform fee for life and a permanent Founding Expert badge on your profile.`,
+    "success",
+    "/dashboard",
+  );
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -174,10 +204,20 @@ export async function makeFoundingSpecialist(id: string, rank: number) {
 export async function removeFoundingExpert(id: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  await prisma.specialistProfile.update({
+  const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { isFoundingExpert: false, foundingRank: null },
+    data: { isFoundingExpert: false },
+    select: { userId: true },
   });
+
+  await createNotification(
+    specialist.userId,
+    "Founding Expert status removed",
+    "Your Founding Expert status has been removed. Your platform fee has been adjusted to match your current tier.",
+    "alert",
+    "/dashboard",
+  );
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -185,10 +225,20 @@ export async function removeFoundingExpert(id: string) {
 export async function setExpertFee(id: string, fee: number) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  await prisma.specialistProfile.update({
+  const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { platformFeePercentage: fee },
+    data: { commissionOverridePercent: fee, platformFeePercentage: fee },
+    select: { userId: true },
   });
+
+  await createNotification(
+    specialist.userId,
+    "Platform fee updated",
+    `Your platform fee has been adjusted to ${fee}%.`,
+    "info",
+    "/dashboard",
+  );
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -196,10 +246,26 @@ export async function setExpertFee(id: string, fee: number) {
 export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "ELITE") {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  await prisma.specialistProfile.update({
+  const specialist = await prisma.specialistProfile.update({
     where: { id },
     data: { tier },
+    select: { userId: true },
   });
+
+  const tierLabels: Record<string, string> = {
+    STANDARD: "Standard",
+    PROVEN: "Proven (5+ sales — 13% fee)",
+    ELITE: "Elite (10+ sales — 12% fee)",
+  };
+
+  await createNotification(
+    specialist.userId,
+    "Expert tier updated",
+    `Your tier has been changed to ${tierLabels[tier] ?? tier}.`,
+    "info",
+    "/dashboard",
+  );
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -215,7 +281,23 @@ export async function adminDeleteUser(userId: string) {
 export async function adminDeleteSolution(solutionId: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
+  const solution = await prisma.solution.findUnique({
+    where: { id: solutionId },
+    select: { title: true, expert: { select: { userId: true } } },
+  });
+
   await prisma.solution.delete({ where: { id: solutionId } });
+
+  if (solution) {
+    await createNotification(
+      solution.expert.userId,
+      "Solution removed",
+      `Your solution "${solution.title}" has been removed by an administrator. Contact support if you have questions.`,
+      "alert",
+      "/expert/my-solutions",
+    );
+  }
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -223,7 +305,37 @@ export async function adminDeleteSolution(solutionId: string) {
 export async function adminDeleteOrder(orderId: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      buyerId: true,
+      seller: { select: { userId: true } },
+      solution: { select: { title: true } },
+    },
+  });
+
   await prisma.order.delete({ where: { id: orderId } });
+
+  if (order) {
+    const title = order.solution?.title ?? "an order";
+    await Promise.all([
+      createNotification(
+        order.buyerId,
+        "Order removed",
+        `Your order for "${title}" has been removed by an administrator. Contact support if you have questions.`,
+        "alert",
+        "/business/projects",
+      ),
+      createNotification(
+        order.seller.userId,
+        "Order removed",
+        `An order for "${title}" has been removed by an administrator. Contact support if you have questions.`,
+        "alert",
+        "/dashboard",
+      ),
+    ]);
+  }
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -231,10 +343,20 @@ export async function adminDeleteOrder(orderId: string) {
 export async function liftBidBan(specialistId: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  await prisma.specialistProfile.update({
+  const specialist = await prisma.specialistProfile.update({
     where: { id: specialistId },
     data: { bidBannedUntil: null },
+    select: { userId: true },
   });
+
+  await createNotification(
+    specialist.userId,
+    "Proposal ban lifted",
+    "Your proposal ban has been lifted. You can now submit proposals on new projects.",
+    "success",
+    "/jobs",
+  );
+
   revalidatePath("/admin");
   return { success: true };
 }
@@ -268,15 +390,13 @@ export async function updateSolutionVideoStatus(
         rejectionReason ? ` Reason: ${rejectionReason}` : " Please review our guidelines and resubmit via the solution editor."
       }`;
 
-  await prisma.notification.create({
-    data: {
-      userId: solution.expert.userId,
-      title: approved ? "Demo video approved!" : "Demo video needs revision",
-      message,
-      type: approved ? "success" : "alert",
-      actionUrl: `/expert/solutions/${id}/edit`,
-    },
-  });
+  await createNotification(
+    solution.expert.userId,
+    approved ? "Demo video approved!" : "Demo video needs revision",
+    message,
+    approved ? "success" : "alert",
+    `/expert/solutions/${id}/edit`,
+  );
 
   revalidatePath("/admin");
   return { success: true };
@@ -782,6 +902,11 @@ export async function adminDeleteJob(jobId: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
   try {
+    const job = await prisma.jobPost.findUnique({
+      where: { id: jobId },
+      select: { title: true, buyerId: true },
+    });
+
     await prisma.$transaction([
       // Nullify any conversation references first (FK constraint)
       prisma.conversation.updateMany({
@@ -791,6 +916,16 @@ export async function adminDeleteJob(jobId: string) {
       // Delete the job (bids cascade-delete via schema)
       prisma.jobPost.delete({ where: { id: jobId } }),
     ]);
+
+    if (job) {
+      await createNotification(
+        job.buyerId,
+        "Job post removed",
+        `Your job post "${job.title}" has been removed by an administrator. Contact support if you have questions.`,
+        "alert",
+        "/business/projects",
+      );
+    }
 
     revalidatePath("/admin");
     revalidatePath("/admin/post-on-behalf");
@@ -890,4 +1025,288 @@ export async function getAdminPostedJobs() {
   });
 
   return { jobs };
+}
+
+// ── Audit Quiz Analytics ─────────────────────────────────────────────────────
+
+export async function getAuditAnalytics() {
+  if (!(await checkAdmin())) return null;
+
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const events = await (prisma as any).auditEvent.findMany({
+    where: { createdAt: { gte: thirtyDaysAgo } },
+    select: {
+      sessionId: true,
+      event: true,
+      step: true,
+      score: true,
+      scoreLabel: true,
+      createdAt: true,
+    },
+  }) as { sessionId: string; event: string; step: number | null; score: number | null; scoreLabel: string | null; createdAt: Date }[];
+
+  // Group by session
+  const sessions = new Map<string, typeof events>();
+  for (const e of events) {
+    const arr = sessions.get(e.sessionId) ?? [];
+    arr.push(e);
+    sessions.set(e.sessionId, arr);
+  }
+
+  const totalStarts = [...sessions.values()].filter(evts =>
+    evts.some(e => e.event === "quiz_start")
+  ).length;
+
+  const totalCompletes = [...sessions.values()].filter(evts =>
+    evts.some(e => e.event === "quiz_complete")
+  ).length;
+
+  const totalEmails = events.filter(e => e.event === "email_sent").length;
+
+  const completionRate = totalStarts > 0
+    ? Math.round((totalCompletes / totalStarts) * 100)
+    : 0;
+
+  const emailCaptureRate = totalCompletes > 0
+    ? Math.round((totalEmails / totalCompletes) * 100)
+    : 0;
+
+  // Step drop-off
+  const stepCounts = [0, 1, 2, 3, 4].map(stepNum => ({
+    step: stepNum,
+    count: [...sessions.values()].filter(evts =>
+      evts.some(e => e.event === "step_complete" && e.step === stepNum)
+    ).length,
+  }));
+
+  // Score distribution
+  const completionEvents = events.filter(e => e.event === "quiz_complete" && e.score !== null);
+  const scoreBuckets = [
+    { label: "0-24", min: 0, max: 24, count: 0 },
+    { label: "25-44", min: 25, max: 44, count: 0 },
+    { label: "45-64", min: 45, max: 64, count: 0 },
+    { label: "65-100", min: 65, max: 100, count: 0 },
+  ];
+  for (const e of completionEvents) {
+    const bucket = scoreBuckets.find(b => e.score! >= b.min && e.score! <= b.max);
+    if (bucket) bucket.count++;
+  }
+
+  // Score label counts
+  const scoreLabelCounts: Record<string, number> = {};
+  for (const e of completionEvents) {
+    if (e.scoreLabel) {
+      scoreLabelCounts[e.scoreLabel] = (scoreLabelCounts[e.scoreLabel] ?? 0) + 1;
+    }
+  }
+
+  // Average score
+  const avgScore = completionEvents.length > 0
+    ? Math.round(completionEvents.reduce((sum, e) => sum + (e.score ?? 0), 0) / completionEvents.length)
+    : 0;
+
+  // All-time completions (for social proof)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allTimeCompletions = await (prisma as any).auditEvent.count({
+    where: { event: "quiz_complete" },
+  }) as number;
+
+  return {
+    totalStarts,
+    totalCompletes,
+    totalEmails,
+    completionRate,
+    emailCaptureRate,
+    stepCounts,
+    scoreBuckets,
+    scoreLabelCounts,
+    avgScore,
+    allTimeCompletions,
+    periodDays: 30,
+  };
+}
+
+// ── Job Analytics (Discovery Scan + Custom Project) ─────────────────────────
+
+export async function getJobAnalytics(category: "Discovery Scan" | "Custom Project") {
+  if (!(await checkAdmin())) return null;
+
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  // All-time counts
+  const allTimePosted = await prisma.jobPost.count({
+    where: { category, status: { not: "draft" } },
+  });
+
+  // Last 30 days jobs (with bids + order info)
+  const jobs = await prisma.jobPost.findMany({
+    where: { category, createdAt: { gte: thirtyDaysAgo }, status: { not: "draft" } },
+    select: {
+      id: true,
+      status: true,
+      paidAt: true,
+      rejectedAt: true,
+      rejectionFeedback: true,
+      viewCount: true,
+      createdAt: true,
+      bids: {
+        select: { id: true, status: true, feedback: true, createdAt: true },
+      },
+    },
+  });
+
+  // KPIs
+  const totalPendingPayment = jobs.filter(j => j.status === "pending_payment").length;
+  const totalPaid = jobs.filter(j => j.paidAt).length;
+  const totalOpen = jobs.filter(j => j.status === "open" || j.status === "full").length;
+  const totalAwarded = jobs.filter(j => j.status === "awarded").length;
+  const totalRejected = jobs.filter(j => j.rejectedAt).length;
+  const totalClosed = jobs.filter(j => j.status === "closed" || j.status === "cancelled").length;
+
+  // Payment conversion: pending_payment → paid
+  const totalCreated = jobs.length;
+  const paymentRate = totalCreated > 0 ? Math.round((totalPaid / totalCreated) * 100) : 0;
+
+  // Proposal stats
+  const allBids = jobs.flatMap(j => j.bids);
+  const totalProposals = allBids.length;
+  const jobsWithProposals = jobs.filter(j => j.bids.length > 0).length;
+  const proposalCoverage = totalPaid > 0 ? Math.round((jobsWithProposals / totalPaid) * 100) : 0;
+  const avgProposalsPerJob = totalPaid > 0
+    ? Math.round((totalProposals / totalPaid) * 10) / 10
+    : 0;
+
+  // Acceptance rate: awarded / (awarded + rejected)
+  const decisionsMade = totalAwarded + totalRejected;
+  const acceptanceRate = decisionsMade > 0 ? Math.round((totalAwarded / decisionsMade) * 100) : 0;
+
+  // Proposal feedback (thumbs up/down)
+  const thumbsUp = allBids.filter(b => b.feedback === "up").length;
+  const thumbsDown = allBids.filter(b => b.feedback === "down").length;
+
+  // Revenue (from paid jobs)
+  const priceCents = category === "Discovery Scan" ? DISCOVERY_SCAN_PRICE_CENTS : CUSTOM_PROJECT_PRICE_CENTS;
+  const revenue30d = totalPaid * priceCents;
+
+  // Time to first proposal (hours) for paid jobs that have proposals
+  const timesToFirstProposal: number[] = [];
+  for (const j of jobs) {
+    if (j.paidAt && j.bids.length > 0) {
+      const firstBid = j.bids.reduce((a, b) => (a.createdAt < b.createdAt ? a : b));
+      const hours = (firstBid.createdAt.getTime() - j.paidAt.getTime()) / (1000 * 60 * 60);
+      if (hours >= 0) timesToFirstProposal.push(Math.round(hours * 10) / 10);
+    }
+  }
+  const avgTimeToFirstProposal = timesToFirstProposal.length > 0
+    ? Math.round(timesToFirstProposal.reduce((a, b) => a + b, 0) / timesToFirstProposal.length * 10) / 10
+    : null;
+
+  // Status breakdown for funnel
+  const funnel = [
+    { label: "Created", count: totalCreated },
+    { label: "Paid", count: totalPaid },
+    { label: "Got proposals", count: jobsWithProposals },
+    { label: "Awarded", count: totalAwarded },
+  ];
+
+  return {
+    category,
+    totalCreated,
+    totalPaid,
+    totalOpen,
+    totalAwarded,
+    totalRejected,
+    totalClosed,
+    totalPendingPayment,
+    paymentRate,
+    totalProposals,
+    proposalCoverage,
+    avgProposalsPerJob,
+    acceptanceRate,
+    thumbsUp,
+    thumbsDown,
+    revenue30d,
+    priceCents,
+    avgTimeToFirstProposal,
+    funnel,
+    allTimePosted,
+    periodDays: 30,
+  };
+}
+
+// ── Traffic Analytics ──────────────────────────────────────────────────────────
+
+export async function getTrafficAnalytics() {
+  if (!(await checkAdmin())) return null;
+
+  const now = new Date();
+  const since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const views = await prisma.pageView.findMany({
+    where: { createdAt: { gte: since } },
+    select: { sessionId: true, pathname: true, referrer: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  // Group by session
+  const sessions = new Map<string, { pathname: string; referrer: string | null; createdAt: Date }[]>();
+  for (const v of views) {
+    const list = sessions.get(v.sessionId) || [];
+    list.push(v);
+    sessions.set(v.sessionId, list);
+  }
+
+  // Entry pages (first hit per session)
+  const entryCounts = new Map<string, number>();
+  // Exit pages (last hit per session)
+  const exitCounts = new Map<string, number>();
+  // All page hits
+  const pageCounts = new Map<string, number>();
+  // External referrers
+  const referrerCounts = new Map<string, number>();
+  // Daily views
+  const dailyViews = new Map<string, number>();
+
+  for (const [, hits] of sessions) {
+    const entry = hits[0].pathname;
+    const exit = hits[hits.length - 1].pathname;
+    entryCounts.set(entry, (entryCounts.get(entry) || 0) + 1);
+    exitCounts.set(exit, (exitCounts.get(exit) || 0) + 1);
+
+    // External referrer (only on first hit of session)
+    const ref = hits[0].referrer;
+    if (ref) {
+      try {
+        const host = new URL(ref).hostname;
+        referrerCounts.set(host, (referrerCounts.get(host) || 0) + 1);
+      } catch {
+        // invalid URL, skip
+      }
+    }
+
+    for (const h of hits) {
+      pageCounts.set(h.pathname, (pageCounts.get(h.pathname) || 0) + 1);
+      const day = h.createdAt.toISOString().slice(0, 10);
+      dailyViews.set(day, (dailyViews.get(day) || 0) + 1);
+    }
+  }
+
+  const toSorted = (m: Map<string, number>) =>
+    [...m.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count }));
+
+  return {
+    totalViews: views.length,
+    totalSessions: sessions.size,
+    avgPagesPerSession: sessions.size > 0 ? Math.round((views.length / sessions.size) * 10) / 10 : 0,
+    topPages: toSorted(pageCounts).slice(0, 15),
+    topEntryPages: toSorted(entryCounts).slice(0, 10),
+    topExitPages: toSorted(exitCounts).slice(0, 10),
+    topReferrers: toSorted(referrerCounts).slice(0, 10),
+    dailyViews: [...dailyViews.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, count]) => ({ date, count })),
+    periodDays: 30,
+  };
 }

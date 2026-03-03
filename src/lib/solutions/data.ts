@@ -5,18 +5,26 @@ import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
 type SolutionWithExpertAndEcosystems = Prisma.SolutionGetPayload<{
-  include: { expert: true; ecosystemItems: { select: { ecosystemId: true } } };
+  include: { expert: { include: { user: { select: { profileImageUrl: true } } } }; ecosystemItems: { select: { ecosystemId: true } } };
 }>;
 
-type PrismaExpert = Prisma.SpecialistProfileGetPayload<{}>;
+type PrismaExpert = Prisma.SpecialistProfileGetPayload<{
+  include: { user: { select: { profileImageUrl: true } } };
+}>;
+
+/** Also accept a bare SpecialistProfile (without user) for backward compat */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+type PrismaExpertInput = PrismaExpert | Prisma.SpecialistProfileGetPayload<{}>;
 
 /** Map a raw Prisma SpecialistProfile to the client-side Expert interface */
-export function mapPrismaExpert(e: PrismaExpert): Expert {
+export function mapPrismaExpert(e: PrismaExpertInput): Expert {
+  const user = "user" in e ? (e as PrismaExpert).user : null;
   return {
     id: e.id,
     user_id: e.userId,
     slug: e.slug ?? undefined,
     name: e.displayName || e.legalFullName,
+    profile_image_url: user?.profileImageUrl ?? undefined,
     bio: e.bio ?? undefined,
     response_time: e.responseTime ?? undefined,
     verified: e.verified,
@@ -39,10 +47,21 @@ export async function getPublishedSolutions() {
         OR: [
           { moderationStatus: "auto_approved" },
           { moderationStatus: "approved" }
-        ]
+        ],
+        // Exclude solutions that have a newer published version
+        // (i.e., a child solution that is also published & approved)
+        children: {
+          none: {
+            status: "published",
+            OR: [
+              { moderationStatus: "auto_approved" },
+              { moderationStatus: "approved" }
+            ]
+          }
+        }
       },
       include: {
-        expert: true,
+        expert: { include: { user: { select: { profileImageUrl: true } } } },
         ecosystemItems: { select: { ecosystemId: true } }
       },
       orderBy: {
@@ -62,6 +81,11 @@ export async function getPublishedSolutions() {
       short_summary: s.shortSummary,
       expert: mapPrismaExpert(s.expert),
       ecosystemIds: s.ecosystemItems.map((i: { ecosystemId: string }) => i.ecosystemId),
+      // Derive expertTier from expert profile for filter sidebar
+      expertTier: s.expert.isFoundingExpert ? "founding"
+        : s.expert.tier === "ELITE" ? "elite"
+        : s.expert.tier === "PROVEN" ? "proven"
+        : "standard",
     })) as unknown as Solution[];
 
   } catch (e) {

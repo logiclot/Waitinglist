@@ -1,13 +1,78 @@
 import Link from "next/link";
-import { Plus, Package, Edit, Eye } from "lucide-react";
+import { Plus, Package, Edit, Eye, Lock } from "lucide-react";
 import { getExpertEcosystems } from "@/actions/ecosystems";
 import { DeleteEcosystemButton } from "@/components/ecosystems/DeleteEcosystemButton";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export const metadata = {
   title: "Suites | LogicLot",
 };
 
 export default async function ExpertEcosystemsPage() {
+  const session = await getServerSession(authOptions);
+  let publishedCount = 0;
+
+  if (session?.user?.id) {
+    const expert = await prisma.specialistProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+    if (expert) {
+      publishedCount = await prisma.solution.count({
+        where: { expertId: expert.id, status: "published" },
+      });
+    }
+  }
+
+  const isLocked = publishedCount < 3;
+  const remaining = 3 - publishedCount;
+
+  if (isLocked) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Suites</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Group solutions that work best together. Buyers will see a recommended suite and can purchase step-by-step.
+            </p>
+          </div>
+        </div>
+
+        <div className="text-center py-16 bg-card border border-border rounded-xl">
+          <div className="bg-secondary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Lock className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <h3 className="font-bold text-lg mb-2 text-foreground">Suites unlock after 3 published solutions</h3>
+          <p className="text-muted-foreground text-sm max-w-md mx-auto mb-2">
+            Suites let you bundle your solutions so buyers can purchase a full workflow step-by-step.
+          </p>
+          <p className="text-sm font-medium text-foreground mb-6">
+            Publish {remaining} more solution{remaining !== 1 ? "s" : ""} to unlock this feature.
+          </p>
+          <div className="flex items-center justify-center gap-1.5 mb-8">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className={`h-2 w-12 rounded-full transition-all ${
+                  i < publishedCount ? "bg-primary" : "bg-border"
+                }`}
+              />
+            ))}
+          </div>
+          <Link
+            href="/expert/add-solution"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Create a Solution
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const ecosystems = await getExpertEcosystems();
 
   return (
@@ -62,7 +127,7 @@ export default async function ExpertEcosystemsPage() {
                   </div>
                 </div>
               </div>
-              
+
               <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">
                 {eco.shortPitch}
               </p>

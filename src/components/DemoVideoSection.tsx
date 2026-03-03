@@ -1,4 +1,5 @@
-import { PlayCircle, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { PlayCircle, CheckCircle2, MessageSquare } from "lucide-react";
 import { getYouTubeEmbedUrl, normalizeYouTubeUrl } from "@/lib/video";
 import { Solution } from "@/types";
 
@@ -13,6 +14,24 @@ export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
   const videoId = videoResult?.ok ? videoResult.videoId : null;
 
   if (videoStatus !== 'approved' || !videoId) {
+    // Show a placeholder CTA instead of nothing
+    if (solution.expert?.id) {
+      return (
+        <section className="bg-secondary/5 rounded-xl border border-border p-6 md:p-8 text-center">
+          <PlayCircle className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+          <h3 className="font-bold text-base text-foreground mb-1">Want to see this in action?</h3>
+          <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
+            A demo video is not available yet for this solution. Request a live walkthrough from the expert.
+          </p>
+          <Link
+            href={`/messages/new?expert=${solution.expert.id}&solution=${solution.id}&type=demo`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border bg-background hover:bg-secondary/50 transition-colors text-sm font-medium text-foreground"
+          >
+            <MessageSquare className="h-4 w-4" /> Request a live demo →
+          </Link>
+        </section>
+      );
+    }
     return null;
   }
 
