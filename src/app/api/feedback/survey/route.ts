@@ -84,7 +84,7 @@ export async function POST(req: Request) {
 
     await createNotification(
       session.user.id,
-      `Thank you — 5% off your next purchase`,
+      `🎁 Thank you — 5% off your next purchase`,
       `Thanks for completing our survey! Use coupon code ${SURVEY_COUPON_CODE} at checkout for 5% off your next purchase. Valid for first-time orders.`,
       "success",
       "/dashboard/feedback"

@@ -223,9 +223,44 @@ const AUDIT_TASK_MAP: Record<
 export function getAuditRecommendations(
   allSolutions: Solution[],
   selectedTasks: string[],
-  limit: number = 6
+  limit: number = 6,
+  strengths: string[] = []
 ): Solution[] {
-  if (selectedTasks.length === 0) return [];
+  return getAuditRecommendationsScored(allSolutions, selectedTasks, limit, strengths).map(
+    (r) => r.solution
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scored audit recommendations (with match quality labels)
+// ---------------------------------------------------------------------------
+
+export type MatchLabel = "Best Match" | "Strong Match" | "Partial Match";
+
+export interface ScoredRecommendation {
+  solution: Solution;
+  score: number;
+  matchLabel: MatchLabel;
+}
+
+function toMatchLabel(score: number): MatchLabel {
+  if (score >= 55) return "Best Match";
+  if (score >= 25) return "Strong Match";
+  return "Partial Match";
+}
+
+/**
+ * Like getAuditRecommendations but returns scored results with match quality
+ * labels. Always returns min(limit, available) results — no hard threshold
+ * cutoff — so the UI can always show 3 cards.
+ */
+export function getAuditRecommendationsScored(
+  allSolutions: Solution[],
+  selectedTasks: string[],
+  limit: number = 3,
+  strengths: string[] = []
+): ScoredRecommendation[] {
+  if (selectedTasks.length === 0 && strengths.length === 0) return [];
 
   // Aggregate all relevant categories, goals, and keywords from selected tasks
   const relevantCategories = new Set<string>();
@@ -240,17 +275,41 @@ export function getAuditRecommendations(
     relevantKeywords.push(...mapping.keywords);
   }
 
+  // Aggregate strength categories/goals/keywords (working-well = automation targets)
+  const strengthCategories = new Set<string>();
+  const strengthGoals = new Set<string>();
+  const strengthKeywords: string[] = [];
+
+  for (const task of strengths) {
+    const mapping = AUDIT_TASK_MAP[task];
+    if (!mapping) continue;
+    mapping.categories.forEach((c) => strengthCategories.add(c));
+    mapping.goals.forEach((g) => strengthGoals.add(g));
+    strengthKeywords.push(...mapping.keywords);
+  }
+
   const scored: ScoredSolution[] = [];
 
   for (const solution of allSolutions) {
     let score = 0;
 
-    // 1. Category match (weight: 40)
+    // Build searchable text once (used by both task and strength keyword checks)
+    const searchable = [
+      solution.title,
+      solution.description,
+      solution.short_summary || "",
+      solution.integrations.join(" "),
+      ...(solution.businessGoals || []),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    // 1. Category match from tasks (weight: 40)
     if (relevantCategories.has(solution.category)) {
       score += 40;
     }
 
-    // 2. Business goals overlap (weight: 30)
+    // 2. Business goals overlap from tasks (weight: 30)
     if (solution.businessGoals && relevantGoals.size > 0) {
       const matches = solution.businessGoals.filter((g) =>
         relevantGoals.has(g)
@@ -258,22 +317,31 @@ export function getAuditRecommendations(
       score += (matches / relevantGoals.size) * 30;
     }
 
-    // 3. Keyword relevance (weight: 30)
+    // 3. Keyword relevance from tasks (weight: 30)
     if (relevantKeywords.length > 0) {
-      const searchable = [
-        solution.title,
-        solution.description,
-        solution.short_summary || "",
-        solution.integrations.join(" "),
-        ...(solution.businessGoals || []),
-      ]
-        .join(" ")
-        .toLowerCase();
-
       const matchingKeywords = relevantKeywords.filter((kw) =>
         searchable.includes(kw)
       ).length;
       score += (matchingKeywords / relevantKeywords.length) * 30;
+    }
+
+    // 4. Strength boost — working-well processes are automation-ready (up to +15)
+    if (strengths.length > 0) {
+      if (strengthCategories.has(solution.category)) {
+        score += 8;
+      }
+      if (solution.businessGoals && strengthGoals.size > 0) {
+        const matches = solution.businessGoals.filter((g) =>
+          strengthGoals.has(g)
+        ).length;
+        score += (matches / strengthGoals.size) * 4;
+      }
+      if (strengthKeywords.length > 0) {
+        const matchingKw = strengthKeywords.filter((kw) =>
+          searchable.includes(kw)
+        ).length;
+        score += (matchingKw / strengthKeywords.length) * 3;
+      }
     }
 
     if (score > 0) {
@@ -281,9 +349,11 @@ export function getAuditRecommendations(
     }
   }
 
-  // Threshold: need at least 10% of max possible (100)
-  const threshold = 10;
-  const passing = scored.filter((s) => s.score >= threshold);
-  passing.sort((a, b) => b.score - a.score);
-  return passing.slice(0, limit).map((s) => s.solution);
+  scored.sort((a, b) => b.score - a.score);
+
+  return scored.slice(0, limit).map((s) => ({
+    solution: s.solution,
+    score: s.score,
+    matchLabel: toMatchLabel(s.score),
+  }));
 }

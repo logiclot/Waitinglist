@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import * as Sentry from "@sentry/nextjs";
+import { toast } from "sonner";
 
 interface PaymentButtonProps {
   solutionId: string;
@@ -28,11 +29,11 @@ export function PaymentButton({ solutionId, title = "Buy Now", isUpgrade, upgrad
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || "Checkout failed");
+        toast.error(data.error || "Checkout failed");
       }
     } catch (error) {
       Sentry.captureException(error, { tags: { context: "payment-button" } });
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }

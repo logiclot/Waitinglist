@@ -33,7 +33,7 @@ describe("Sidebar", () => {
       expect(screen.queryByText("Add Solution")).not.toBeInTheDocument();
       expect(screen.queryByText("My Solutions")).not.toBeInTheDocument();
       expect(screen.queryByText("Active Bids")).not.toBeInTheDocument();
-      expect(screen.queryByText("Earnings")).not.toBeInTheDocument();
+      // Earnings tab removed — experts see income via Projects
     });
 
     it("has correct href attributes for business links", () => {
@@ -66,7 +66,7 @@ describe("Sidebar", () => {
       expect(screen.getByText("Active Bids")).toBeInTheDocument();
       expect(screen.getByText("Active Projects")).toBeInTheDocument();
       expect(screen.getByText("Completed")).toBeInTheDocument();
-      expect(screen.getByText("Earnings")).toBeInTheDocument();
+      expect(screen.getByText("Suites")).toBeInTheDocument();
     });
 
     it("does not show business-specific links for expert", () => {
@@ -84,7 +84,7 @@ describe("Sidebar", () => {
       expect(screen.getByText("Add Solution").closest("a")).toHaveAttribute("href", "/expert/add-solution");
       expect(screen.getByText("My Solutions").closest("a")).toHaveAttribute("href", "/expert/my-solutions");
       expect(screen.getByText("Active Bids").closest("a")).toHaveAttribute("href", "/expert/active-bids");
-      expect(screen.getByText("Earnings").closest("a")).toHaveAttribute("href", "/expert/earnings");
+      expect(screen.getByText("Suites").closest("a")).toHaveAttribute("href", "/expert/ecosystems");
     });
 
     it("shows bottom section links for expert", () => {

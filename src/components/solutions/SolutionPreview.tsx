@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Wrench, Lock } from "lucide-react";
+import { Clock, Wrench, Lock, Sparkles } from "lucide-react";
 import { CategoryBadge } from "@/components/ui/CategoryBadge";
 
 // Types for the form data (subset of Solution)
@@ -17,6 +17,8 @@ export interface SolutionFormData {
   outline?: string[];
   monthly_cost_min?: number;
   monthly_cost_max?: number;
+  // Skills
+  skills?: { name: string; description: string }[];
   // V2 Fields
   measurableOutcome?: string;
   roiEstimation?: {
@@ -117,7 +119,15 @@ export function SolutionPreview({ data }: { data: SolutionFormData }) {
             )}
           </div>
 
-          {/* Proof Strip — only shown once there are buyers */}
+          {/* Skills badge */}
+          {data.skills && data.skills.filter(s => s.name.trim()).length > 0 && (
+            <div className="flex items-center gap-1.5 mb-4">
+              <Sparkles className="h-3 w-3 text-primary" />
+              <span className="text-xs font-medium text-primary">
+                {data.skills.filter(s => s.name.trim()).length} skill{data.skills.filter(s => s.name.trim()).length !== 1 ? "s" : ""} included
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Bottom Section: Pricing */}

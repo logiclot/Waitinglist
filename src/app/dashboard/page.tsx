@@ -29,8 +29,17 @@ export default async function DashboardPage() {
         calendarUrl: true,
         isFoundingExpert: true,
         completedSalesCount: true,
+        tier: true,
+        commissionOverridePercent: true,
         stripeAccountId: true,
         stripeDetailsSubmitted: true,
+        eliteApplicationStatus: true,
+        eliteAppliedAt: true,
+        eliteDeniedAt: true,
+        eliteDeniedReason: true,
+        eliteDemotedAt: true,
+        eliteDemotedReason: true,
+        newExpertBoostUntil: true,
         _count: { select: { solutions: { where: { status: "published" } } } },
       },
     });
@@ -50,12 +59,14 @@ export default async function DashboardPage() {
         },
         select: { priceCents: true },
       }),
-      // In-progress orders (active work)
+      // Active orders (all non-terminal states)
       prisma.order.findMany({
-        where: { sellerId: expert.id, status: "in_progress" },
+        where: { sellerId: expert.id, status: { in: ["paid_pending_implementation", "in_progress", "delivered", "revision_requested"] } },
         select: {
           id: true,
+          status: true,
           priceCents: true,
+          milestones: true,
           solution: { select: { title: true } },
           buyer: {
             select: {
@@ -95,10 +106,24 @@ export default async function DashboardPage() {
     ]);
 
     const earningsThisMonthCents = earningsOrders.reduce((sum, o) => sum + o.priceCents, 0);
-    const inEscrowCents = activeOrdersRaw.reduce((sum, o) => sum + o.priceCents, 0);
+
+    // In Escrow: only count milestones with status "in_escrow" (not released/pending)
+    const inEscrowCents = activeOrdersRaw.reduce((sum, o) => {
+      const milestones = (o.milestones as Record<string, unknown>[] | null) || [];
+      return sum + milestones.reduce((mSum, m) => {
+        if ((m as { status?: string }).status === "in_escrow") {
+          const rawCents = (m as { priceCents?: number }).priceCents;
+          const rawPrice = (m as { price?: number }).price;
+          const cents = typeof rawCents === "number" ? rawCents : Math.round((typeof rawPrice === "number" ? rawPrice : 0) * 100);
+          return mSum + cents;
+        }
+        return mSum;
+      }, 0);
+    }, 0);
 
     const activeOrders = activeOrdersRaw.map((o) => ({
       id: o.id,
+      status: o.status,
       solutionTitle: o.solution?.title ?? "Unknown",
       buyerName:
         o.buyer?.businessProfile?.companyName ||
@@ -113,6 +138,8 @@ export default async function DashboardPage() {
         hasCalendarUrl={!!expert.calendarUrl}
         hasStripeConnected={!!expert.stripeAccountId && expert.stripeDetailsSubmitted}
         isFoundingExpert={expert.isFoundingExpert ?? false}
+        tier={expert.tier}
+        commissionOverridePercent={expert.commissionOverridePercent ? Number(expert.commissionOverridePercent) : undefined}
         publishedSolutionCount={expert._count.solutions}
         earningsThisMonthCents={earningsThisMonthCents}
         inEscrowCents={inEscrowCents}
@@ -121,6 +148,15 @@ export default async function DashboardPage() {
         recentJobs={recentJobs}
         totalCompletedSales={expert.completedSalesCount}
         portfolioSlug={expert.slug ?? null}
+        eliteApplication={{
+          status: expert.eliteApplicationStatus ?? null,
+          appliedAt: expert.eliteAppliedAt?.toISOString() ?? null,
+          deniedAt: expert.eliteDeniedAt?.toISOString() ?? null,
+          deniedReason: expert.eliteDeniedReason ?? null,
+          demotedAt: expert.eliteDemotedAt?.toISOString() ?? null,
+          demotedReason: expert.eliteDemotedReason ?? null,
+        }}
+        newExpertBoostUntil={expert.newExpertBoostUntil?.toISOString() ?? null}
       />
     );
   }

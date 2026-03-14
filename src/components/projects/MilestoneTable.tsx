@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, Clock, Lock, Upload, Check } from "lucide-react";
+import { CheckCircle, Clock, Lock, Upload, Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
+import { submitDelivery } from "@/actions/orders";
+import { RequestRevisionModal } from "@/components/projects/RequestRevisionModal";
+import { ExpertRevisionActions } from "@/components/projects/ExpertRevisionActions";
 
 interface Milestone {
   title: string;
@@ -20,9 +23,11 @@ interface MilestoneTableProps {
   milestones: Milestone[];
   isBuyer: boolean;
   isSeller: boolean;
+  orderStatus?: string;
+  revisionCount?: number;
 }
 
-export function MilestoneTable({ orderId, milestones, isBuyer, isSeller }: MilestoneTableProps) {
+export function MilestoneTable({ orderId, milestones, isBuyer, isSeller, orderStatus, revisionCount = 0 }: MilestoneTableProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -73,6 +78,20 @@ export function MilestoneTable({ orderId, milestones, isBuyer, isSeller }: Miles
       if (res.ok) {
         toast.success("Funds Released. Thank you for using LogicLot!");
         router.refresh();
+      } else if (res.status === 502) {
+        // Stripe transfer failed — fall back to simulate in dev
+        const sim = await fetch("/api/projects/simulate-milestone-release", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, milestoneIndex: index }),
+        });
+        if (sim.ok) {
+          toast.success("Funds Released (simulated). Thank you for using LogicLot!");
+          router.refresh();
+        } else {
+          const simData = await sim.json();
+          toast.error(simData.error || "Failed to release funds", { duration: 4000 });
+        }
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to release funds", { duration: 4000 });
@@ -85,9 +104,24 @@ export function MilestoneTable({ orderId, milestones, isBuyer, isSeller }: Miles
     }
   };
 
-  const handleSubmitProof = () => {
-    // Placeholder for actual upload logic
-    toast.success("Proof Sent! Awaiting business approval.");
+  const [delivering, setDelivering] = useState(false);
+
+  const handleSubmitProof = async () => {
+    setDelivering(true);
+    try {
+      const res = await submitDelivery(orderId);
+      if ("error" in res) {
+        toast.error(res.error);
+      } else {
+        toast.success("Delivery submitted! Awaiting business approval.");
+        router.refresh();
+      }
+    } catch (error) {
+      Sentry.captureException(error, { tags: { context: "submit-delivery" } });
+      toast.error("Something went wrong.");
+    } finally {
+      setDelivering(false);
+    }
   };
 
   return (
@@ -134,29 +168,74 @@ export function MilestoneTable({ orderId, milestones, isBuyer, isSeller }: Miles
                 )}
               </td>
               <td className="px-6 py-4 text-right">
-                {m.status === "in_escrow" && isBuyer && (
-                  <button 
-                    onClick={() => handleRelease(idx)}
-                    disabled={loading}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
-                  >
-                    {loading ? "Processing..." : "Approve & Release"}
-                  </button>
+                {/* Buyer: delivered → Approve & Release + Request Modification */}
+                {m.status === "in_escrow" && isBuyer && orderStatus === "delivered" && (
+                  <div className="flex items-center gap-2 justify-end">
+                    <RequestRevisionModal orderId={orderId} revisionCount={revisionCount} />
+                    <button
+                      onClick={() => handleRelease(idx)}
+                      disabled={loading}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
+                    >
+                      {loading ? "Processing..." : "Approve & Release"}
+                    </button>
+                  </div>
                 )}
-                {m.status === "in_escrow" && isSeller && (
-                  <button 
+                {/* Buyer: revision_requested → waiting for expert */}
+                {m.status === "in_escrow" && isBuyer && orderStatus === "revision_requested" && (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-amber-600 font-bold">
+                    <Clock className="w-3 h-3" /> Revision pending expert review
+                  </span>
+                )}
+                {/* Buyer: disputed → Under review */}
+                {m.status === "in_escrow" && isBuyer && orderStatus === "disputed" && (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-amber-600 font-bold">
+                    <Clock className="w-3 h-3" /> Under dispute review
+                  </span>
+                )}
+                {/* Buyer: in_progress / paid_pending → Expert is working */}
+                {m.status === "in_escrow" && isBuyer && orderStatus !== "delivered" && orderStatus !== "revision_requested" && orderStatus !== "disputed" && (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-blue-600 font-bold">
+                    <Clock className="w-3 h-3" /> Expert is working
+                  </span>
+                )}
+                {/* Seller: delivered → Waiting for approval */}
+                {m.status === "in_escrow" && isSeller && orderStatus === "delivered" && (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-amber-600 font-bold">
+                    <Clock className="w-3 h-3" /> Waiting for approval
+                  </span>
+                )}
+                {/* Seller: revision_requested → Accept & Revise / Deny */}
+                {m.status === "in_escrow" && isSeller && orderStatus === "revision_requested" && (
+                  <ExpertRevisionActions orderId={orderId} />
+                )}
+                {/* Seller: disputed → Under review */}
+                {m.status === "in_escrow" && isSeller && orderStatus === "disputed" && (
+                  <span className="inline-flex items-center gap-1.5 text-xs text-amber-600 font-bold">
+                    <Clock className="w-3 h-3" /> Under dispute review
+                  </span>
+                )}
+                {/* Seller: in_progress → Submit Delivery */}
+                {m.status === "in_escrow" && isSeller && orderStatus !== "delivered" && orderStatus !== "revision_requested" && orderStatus !== "disputed" && (
+                  <button
                     onClick={handleSubmitProof}
-                    className="border border-border bg-background hover:bg-secondary text-foreground px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ml-auto"
+                    disabled={delivering}
+                    className="border border-border bg-background hover:bg-secondary text-foreground px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ml-auto disabled:opacity-50"
                   >
-                    <Upload className="w-3 h-3" /> Submit Proof
+                    {delivering ? (
+                      <><Loader2 className="w-3 h-3 animate-spin" /> Submitting...</>
+                    ) : (
+                      <><Upload className="w-3 h-3" /> Submit Delivery</>
+                    )}
                   </button>
                 )}
                 {m.status === "waiting_for_funds" && isBuyer && (
-                  <button 
+                  <button
                     onClick={() => handleFund(idx)}
-                    className="border border-border bg-background hover:bg-secondary text-foreground px-4 py-2 rounded-lg text-xs font-bold transition-colors"
+                    disabled={loading}
+                    className="border border-border bg-background hover:bg-secondary text-foreground px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
                   >
-                    Fund Milestone
+                    {loading ? "Processing..." : "Fund Milestone"}
                   </button>
                 )}
                 {m.status === "released" && (

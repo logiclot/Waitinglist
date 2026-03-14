@@ -75,9 +75,21 @@ export function BusinessOverview({
 
       {/* Active Coupons */}
       {activeCoupons.length > 0 && (
-        <section className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground font-medium">Your coupons:</span>
-          <ActiveCoupons coupons={activeCoupons} />
+        <section className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="h-9 w-9 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <Gift className="h-4.5 w-4.5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                {activeCoupons.length} Discount Coupon{activeCoupons.length !== 1 ? "s" : ""} Available
+              </p>
+              <p className="text-xs text-muted-foreground">Applied automatically at checkout</p>
+            </div>
+          </div>
+          <div className="flex-1 flex flex-wrap gap-2 sm:justify-end">
+            <ActiveCoupons coupons={activeCoupons} />
+          </div>
         </section>
       )}
 

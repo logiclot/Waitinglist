@@ -5,15 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { createNotification } from "@/lib/notifications";
 import { SALES_THRESHOLDS, TIER_THRESHOLDS, formatCentsToCurrency, getCommissionPercent } from "@/lib/commission";
-import type { Expert } from "@/lib/commission";
+import type { CommissionExpert } from "@/lib/commission";
 import { apiWriteLimiter } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
 import { ReleaseMilestoneSchema } from "@/lib/schemas/api";
 import { captureException } from "@/lib/sentry";
 import { Prisma } from "@prisma/client";
-import { resend } from "@/lib/resend";
-import { deliveryReadyEmail } from "@/lib/email-templates";
-import { APP_URL } from "@/lib/app-url";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -104,7 +101,7 @@ export async function POST(req: Request) {
       : Math.round((milestone.price ?? 0) * 100);
 
     // Build an Expert shape for the canonical commission calculator
-    const expertForCommission: Expert = {
+    const expertForCommission: CommissionExpert = {
       id: order.sellerId,
       name: order.seller.displayName || "",
       verified: true,
@@ -114,12 +111,15 @@ export async function POST(req: Request) {
       commission_override_percent: order.seller.commissionOverridePercent != null
         ? Number(order.seller.commissionOverridePercent)
         : undefined,
+      tier: order.seller.tier,
       tools: [],
     };
 
     let feePercent = getCommissionPercent(expertForCommission);
 
-    // Referral discount check
+    // Referral discount check — apply 5% fee reduction but never below 6% floor
+    // The 6% floor protects platform margin when buyer-side discounts also apply
+    const MIN_COMMISSION_PERCENT = 6;
     let expertDiscountApplied = false;
     let expertRewards: import("@/types").ReferralRewards = {};
     const sellerUser = await prisma.user.findUnique({
@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     expertRewards = (sellerUser?.referralRewards as unknown as Record<string, number>) || {};
     const expertDiscountCount = expertRewards.expertDiscountCount || 0;
     if (expertDiscountCount > 0) {
-      feePercent = Math.max(0, feePercent - 5);
+      feePercent = Math.max(MIN_COMMISSION_PERCENT, feePercent - 5);
       expertDiscountApplied = true;
     }
 
@@ -169,11 +169,13 @@ export async function POST(req: Request) {
         idempotencyKey: `release-${orderId}-${idx}-${fundedAt}`,
       });
     } catch (stripeErr) {
-      log.error("milestone.stripe_transfer_failed", { orderId, milestoneIdx: idx, error: String(stripeErr) });
+      const stripeMessage = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+      log.error("milestone.stripe_transfer_failed", { orderId, milestoneIdx: idx, error: stripeMessage });
       // Revert so the buyer can try again
       milestones[idx] = { ...milestone, status: "in_escrow" };
       await prisma.order.update({ where: { id: orderId }, data: { milestones: milestones as unknown as Prisma.InputJsonValue } });
-      return NextResponse.json({ error: "Payment transfer failed. Please try again." }, { status: 502 });
+      const detail = process.env.NODE_ENV !== "production" ? ` (${stripeMessage})` : "";
+      return NextResponse.json({ error: `Payment transfer failed.${detail}`, useSimulate: process.env.NODE_ENV !== "production" }, { status: 502 });
     }
 
     // ─── STEP 4: Finalise DB in a single transaction ───────────────────────────
@@ -198,12 +200,14 @@ export async function POST(req: Request) {
         });
       }
 
-      // Update milestones (and order status if last)
+      // Update milestones and order status
+      // Last milestone → "approved" (project fully complete)
+      // Non-last milestone → "in_progress" (more milestones to work on)
       await tx.order.update({
         where: { id: orderId },
         data: {
           milestones: milestones as unknown as Prisma.InputJsonValue,
-          ...(isLastMilestone ? { status: "delivered" } : {}),
+          status: isLastMilestone ? "approved" : "in_progress",
         },
       });
 
@@ -223,17 +227,16 @@ export async function POST(req: Request) {
         const oldTier = order.seller.tier;
         const isFoundingExpert = order.seller.isFoundingExpert;
 
-        let newTier: "STANDARD" | "PROVEN" | "ELITE" | null = null;
-        if (newCount >= SALES_THRESHOLDS.ELITE && oldTier !== "ELITE") {
-          newTier = "ELITE";
-        } else if (newCount >= SALES_THRESHOLDS.PROVEN && oldTier === "STANDARD") {
+        // Auto-tier caps at PROVEN — Elite requires application + admin approval
+        let newTier: "STANDARD" | "PROVEN" | null = null;
+        if (newCount >= SALES_THRESHOLDS.PROVEN && oldTier === "STANDARD") {
           newTier = "PROVEN";
         }
 
         if (newTier) {
           const newFeePercent = isFoundingExpert
             ? TIER_THRESHOLDS.FOUNDING
-            : newTier === "ELITE" ? TIER_THRESHOLDS.ELITE : TIER_THRESHOLDS.PROVEN;
+            : TIER_THRESHOLDS.PROVEN;
 
           await tx.specialistProfile.update({
             where: { id: order.sellerId },
@@ -243,82 +246,105 @@ export async function POST(req: Request) {
       }
     });
 
-    // ─── STEP 5: Notifications (non-critical, outside transaction) ────────────
+    // ── Create order_card message in conversation ──────────────────────────────
+    try {
+      const orderForCard = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: {
+          solution: { select: { title: true } },
+          conversations: { select: { id: true }, take: 1 },
+        },
+      });
+      const convId = orderForCard?.conversations[0]?.id;
+      if (convId) {
+        await prisma.message.create({
+          data: {
+            conversationId: convId,
+            senderId: session.user.id,
+            type: "order_card",
+            body: JSON.stringify({
+              type: "milestone_released",
+              milestoneTitle: milestone.title,
+              milestoneIndex: idx,
+              priceCents: amountCents,
+              projectTitle: orderForCard?.solution?.title || "Project",
+              orderId,
+              expertName: order.seller.displayName || "Expert",
+            }),
+          },
+        });
+      }
+    } catch (cardErr) {
+      log.error("milestone.order_card_failed", { orderId, error: String(cardErr) });
+    }
+
+    // ─── STEP 5: Notifications — notify BOTH parties (non-critical) ────────────
     const discountNote = expertDiscountApplied
       ? ` (referral discount applied: ${feePercent + 5}% → ${feePercent}% fee)` : "";
 
+    // Expert: milestone payment received
     await createNotification(
       order.seller.userId,
-      "Milestone Released",
+      "💸 Milestone Released",
       `Milestone "${milestone.title}" approved! ${formatCentsToCurrency(transferAmount)} transferred to your Stripe account.${discountNote}`,
       "success",
       `/expert/projects/${orderId}`
     );
 
+    // Buyer: confirmation of release
+    if (isLastMilestone) {
+      await createNotification(
+        order.buyerId,
+        "🏁 Project complete — leave a review",
+        `All milestones on "${milestone.title}" have been released. Share your experience working with this expert!`,
+        "success",
+        `/business/projects`
+      );
+    } else {
+      await createNotification(
+        order.buyerId,
+        "💸 Milestone released",
+        `Funds for "${milestone.title}" have been released to the expert. The next milestone is ready to fund.`,
+        "success",
+        `/business/projects`
+      );
+    }
+
     // Tier-up notification (after transaction, so we know the new tier)
     if (isLastMilestone) {
       const refreshed = await prisma.specialistProfile.findUnique({ where: { id: order.sellerId } });
       if (refreshed && refreshed.tier !== order.seller.tier) {
-        const tierLabel = refreshed.tier === "ELITE" ? "Elite" : "Proven";
-        const isElite = refreshed.tier === "ELITE";
         const feeMessage = refreshed.isFoundingExpert
-          ? `Your Founding Expert rate of ${TIER_THRESHOLDS.FOUNDING}% still applies — it's already the lowest on the platform.${isElite ? " You now have full access to Custom Projects." : ""}`
-          : `Your commission rate has permanently dropped to ${refreshed.platformFeePercentage}%.${isElite ? " You now have full access to Custom Projects in the Find Work feed." : " You now have access to Discovery Scans in the Find Work feed."}`;
+          ? `Your Founding Expert rate of ${TIER_THRESHOLDS.FOUNDING}% still applies. You now have access to Discovery Scans and Custom Projects in the Find Work feed.`
+          : `Your commission rate has dropped to ${refreshed.platformFeePercentage}%. You now have access to Discovery Scans and Custom Projects in the Find Work feed.`;
         await createNotification(
           order.seller.userId,
-          `🎉 You've reached ${tierLabel} tier!`,
+          "🎉 You've reached Proven tier!",
           feeMessage,
           "success",
-          isElite ? "/jobs" : "/expert/earnings"
+          "/jobs"
+        );
+      }
+
+      // Notify when expert hits Elite threshold — prompt them to apply
+      if (refreshed && refreshed.completedSalesCount >= SALES_THRESHOLDS.ELITE && refreshed.tier === "PROVEN") {
+        await createNotification(
+          order.seller.userId,
+          "🏆 You're eligible for Elite!",
+          `You've completed ${refreshed.completedSalesCount} sales. You can now apply for Elite tier to unlock the lowest commission rate (${TIER_THRESHOLDS.ELITE}%) and priority placement.`,
+          "info",
+          "/dashboard"
         );
       }
 
       // Prompt seller to leave a review (after tier notification)
       await createNotification(
         order.seller.userId,
-        "Project complete — leave a review",
+        "🏁 Project complete — leave a review",
         "All milestones delivered! Share your experience working with this client.",
         "info",
         `/expert/reviews/${orderId}`
       );
-
-      // ── Send delivery-ready email to the buyer (fire-and-forget) ──────────
-      const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
-      if (FROM_EMAIL) {
-        const buyer = await prisma.user.findUnique({
-          where: { id: order.buyerId },
-          select: {
-            email: true,
-            businessProfile: { select: { firstName: true } },
-          },
-        });
-        if (buyer?.email) {
-          const solutionTitle =
-            (await prisma.solution.findUnique({
-              where: { id: order.solutionId ?? "" },
-              select: { title: true },
-            }))?.title ?? "your project";
-
-          resend.emails
-            .send({
-              from: FROM_EMAIL,
-              to: buyer.email,
-              subject: `Your automation "${solutionTitle}" is ready for review`,
-              html: deliveryReadyEmail({
-                firstName: buyer.businessProfile?.firstName ?? "there",
-                projectTitle: solutionTitle,
-                expertName: order.seller.displayName || "Your expert",
-                reviewUrl: `${APP_URL}/business/projects/${orderId}`,
-              }),
-            })
-            .catch((e) =>
-              log.error("milestone.delivery_email_failed", {
-                orderId,
-                error: String(e),
-              })
-            );
-        }
-      }
     }
 
     return NextResponse.json({ success: true });

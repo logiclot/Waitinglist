@@ -441,7 +441,8 @@ export default async function JobDetailPage({ params }: { params: { id: string }
       buyer: { include: { businessProfile: true } },
       bids: {
         include: {
-          specialist: { include: { user: true } }
+          specialist: { include: { user: true } },
+          order: { select: { id: true, milestones: true } },
         },
         orderBy: { createdAt: "desc" }
       }

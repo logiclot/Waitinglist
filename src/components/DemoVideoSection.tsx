@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PlayCircle, CheckCircle2, MessageSquare } from "lucide-react";
+import { PlayCircle, CheckCircle2, MessageSquare, ExternalLink } from "lucide-react";
 import { getYouTubeEmbedUrl, normalizeYouTubeUrl } from "@/lib/video";
 import { Solution } from "@/types";
 
@@ -35,6 +35,8 @@ export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
     return null;
   }
 
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
   // Default bullets if we can't infer specifics (using the provided copy)
   const bullets = [
     "Input: Trigger event initiates workflow",
@@ -60,8 +62,17 @@ export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
               className="absolute top-0 left-0 w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              loading="lazy"
             />
           </div>
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mt-2 transition-colors"
+          >
+            <ExternalLink className="h-3 w-3" /> Watch on YouTube
+          </a>
         </div>
 
         {/* Right Column: Proof Card (2/5 width) */}

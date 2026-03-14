@@ -17,7 +17,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { Solution } from "@/types";
-import { getAuditRecommendations } from "@/lib/solutions/related-matcher";
+import { getAuditRecommendationsScored } from "@/lib/solutions/related-matcher";
 import { SmartEmptyState } from "@/components/solutions/SmartEmptyState";
 
 // ---------------------------------------------------------------------------
@@ -106,6 +106,22 @@ const QUESTIONS: Question[] = [
         label: "Fully connected systems",
         sub: "Data flows automatically between tools",
       },
+    ],
+  },
+  {
+    id: "strengths",
+    question: "What\u2019s already running smoothly?",
+    hint: "Select any that apply, even if they are also manual. If it works well, it counts.",
+    type: "multi",
+    options: [
+      { id: "invoicing", label: "Invoicing & billing" },
+      { id: "sales_followup", label: "Sales follow-up & outreach" },
+      { id: "scheduling", label: "Scheduling & appointments" },
+      { id: "reporting", label: "Reporting & data entry" },
+      { id: "hr_onboarding", label: "HR & employee onboarding" },
+      { id: "customer_support", label: "Customer support & queries" },
+      { id: "social_media", label: "Social media & content" },
+      { id: "inventory", label: "Inventory & order management" },
     ],
   },
   {
@@ -225,6 +241,88 @@ const TASK_COPY: Record<
 };
 
 // ---------------------------------------------------------------------------
+// Strength copy (lock-in angle — for processes already working well)
+// ---------------------------------------------------------------------------
+
+const STRENGTH_COPY: Record<
+  string,
+  { headline: string; detail: string; outcome: string; status: string; next: string }
+> = {
+  invoicing: {
+    headline: "Invoicing & Billing",
+    detail:
+      "Your billing process works. Clients get invoiced, payments come in, follow-ups happen. That means the requirements are clear, the waste is gone, and the process is optimised.",
+    outcome:
+      "Automation locks it in: invoices trigger themselves, reminders run on schedule, reconciliation happens without anyone watching. Your team never touches it again.",
+    status: "Process is dialled in and repeatable",
+    next: "Automate it so your team never has to think about it",
+  },
+  sales_followup: {
+    headline: "Sales Follow-up",
+    detail:
+      "Your follow-up cadence is working. Leads get contacted, sequences run, and deals move through the pipeline. That is a solved process, and a human should not be the one running it.",
+    outcome:
+      "Automation locks it in: every lead gets the same proven sequence instantly, whether your team is in a meeting, on holiday, or scaling from 50 leads to 500.",
+    status: "Follow-up cadence is proven and consistent",
+    next: "Let automation run it at scale without dropping a lead",
+  },
+  scheduling: {
+    headline: "Scheduling & Appointments",
+    detail:
+      "Bookings happen, calendars stay accurate, and clients show up. You have already eliminated the chaos. Now eliminate the effort.",
+    outcome:
+      "Automation locks it in: clients self-book, reminders fire automatically, rescheduling happens without a single email. Zero human time on a solved problem.",
+    status: "Scheduling process works and rarely breaks",
+    next: "Remove the human effort from a process that no longer needs it",
+  },
+  reporting: {
+    headline: "Reporting & Data Entry",
+    detail:
+      "Your reports land on time and decision-makers trust the numbers. The format is stable, the sources are known. That means it is ready to run itself.",
+    outcome:
+      "Automation locks it in: dashboards update in real time, weekly reports compile and send themselves. No one pulls data manually ever again.",
+    status: "Reports are accurate and delivered consistently",
+    next: "Automate the assembly so your team focuses on insight, not data entry",
+  },
+  hr_onboarding: {
+    headline: "HR & Onboarding",
+    detail:
+      "New hires get set up properly. Contracts go out, accounts get created, and day-one is smooth. That is a repeatable process running on human effort alone.",
+    outcome:
+      "Automation locks it in: the entire checklist executes itself the moment someone is hired. Contracts, accounts, training, and check-ins, all handled before they walk through the door.",
+    status: "Onboarding process is reliable and complete",
+    next: "Let automation run the checklist so HR handles exceptions only",
+  },
+  customer_support: {
+    headline: "Customer Support",
+    detail:
+      "Customers get answers, tickets get resolved, and satisfaction stays high. The playbook exists. Now stop making your team run it manually for every single query.",
+    outcome:
+      "Automation locks it in: common questions answered instantly, tickets routed correctly, and your team only handles the conversations that genuinely need a human.",
+    status: "Support quality is consistent and customers are satisfied",
+    next: "Automate the repeatable queries so your team handles only what matters",
+  },
+  social_media: {
+    headline: "Social Media & Content",
+    detail:
+      "Content goes out on schedule, across the right channels, and engagement is steady. The strategy is working, but the execution costs more time than it should.",
+    outcome:
+      "Automation locks it in: content approved once, published everywhere on schedule. No one logs into five platforms. The strategy keeps running even when the team is focused elsewhere.",
+    status: "Content cadence is consistent and effective",
+    next: "Automate distribution so creative energy stays on strategy, not posting",
+  },
+  inventory: {
+    headline: "Inventory & Orders",
+    detail:
+      "Stock levels are accurate, orders ship on time, and stockouts are rare. That means the rules are clear and the process is optimised. It just should not need a person watching it.",
+    outcome:
+      "Automation locks it in: stock monitored around the clock, reorders triggered automatically, overselling prevented across every channel. Human oversight becomes optional.",
+    status: "Inventory tracking is accurate and orders flow smoothly",
+    next: "Automate monitoring and reordering so no one checks stock manually",
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Scoring
 // ---------------------------------------------------------------------------
 
@@ -233,6 +331,7 @@ type Answers = {
   tasks: string[];
   hours: string;
   dataOrg: string;
+  strengths: string[];
   frustration: string;
 };
 
@@ -267,14 +366,20 @@ function computeResults(answers: Answers) {
   };
   const technicalReadiness = techScoreMap[answers.dataOrg] ?? 35;
 
-  // Three sub-scores (0–100)
+  // Process maturity — from strengths (things already working well)
+  const strengthsCount = (answers.strengths ?? []).length;
+  const processMaturity = Math.min(strengthsCount * 12, 95);
+
+  // Four sub-scores (0–100)
   const roiPotential = Math.round((teamScore + hoursScore) / 2);
   const processBottleneck = Math.round((taskScore + hoursScore) / 2);
 
-  // Overall weighted score
-  const overall = Math.round(
+  // Overall: base calculation unchanged, maturity is a purely additive bonus
+  const baseOverall = Math.round(
     roiPotential * 0.4 + processBottleneck * 0.35 + technicalReadiness * 0.25
   );
+  const maturityBonus = Math.round(processMaturity * 0.15);
+  const overall = Math.min(baseOverall + maturityBonus, 100);
 
   // Financial estimate (monthly)
   // Hours question asks about team total, so no team multiplier needed
@@ -342,6 +447,12 @@ function computeResults(answers: Answers) {
     .map((t) => TASK_COPY[t])
     .filter(Boolean);
 
+  // Top 3 strengths (processes already working well)
+  const strengths = (answers.strengths ?? [])
+    .slice(0, 3)
+    .map((t) => STRENGTH_COPY[t])
+    .filter(Boolean);
+
   // Readiness barrier
   let barrier: { label: string; message: string } | null = null;
   if (overall >= 25) {
@@ -373,11 +484,13 @@ function computeResults(answers: Answers) {
     roiPotential,
     processBottleneck,
     technicalReadiness,
+    processMaturity,
     financialEstimate,
     recoveryLow,
     recoveryHigh,
     benchmark,
     bottlenecks,
+    strengths,
     barrier,
     annualWaste,
     typicalFixCost,
@@ -396,6 +509,7 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<Answers>>({
     tasks: [],
+    strengths: [],
   });
   const [showResults, setShowResults] = useState(false);
   const [animatedScore, setAnimatedScore] = useState(0);
@@ -454,7 +568,7 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
       window.open(`/audit?a=${encoded}`, "_blank");
       setTimeout(() => {
         setStep(0);
-        setAnswers({ tasks: [] });
+        setAnswers({ tasks: [], strengths: [] });
       }, 300);
     } else {
       const r = computeResults(newAnswers as Answers);
@@ -480,16 +594,16 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
     if (step > 0) setStep(step - 1);
   }
 
-  function handleMultiToggle(optionId: string) {
+  function handleMultiToggle(questionId: string, optionId: string) {
     if (!hasTrackedStart.current) {
       trackAudit("quiz_start");
       hasTrackedStart.current = true;
     }
-    const current = (answers.tasks ?? []) as string[];
+    const current = ((answers as Record<string, unknown>)[questionId] ?? []) as string[];
     const updated = current.includes(optionId)
       ? current.filter((id) => id !== optionId)
       : [...current, optionId];
-    setAnswers({ ...answers, tasks: updated });
+    setAnswers({ ...answers, [questionId]: updated });
   }
 
   function handleNext() {
@@ -538,13 +652,31 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
   }, [showResults, answers]);
 
   const results = showResults ? computeResults(answers as Answers) : null;
-  const multiSelected = (answers.tasks ?? []) as string[];
+  const multiSelected = ((answers as Record<string, unknown>)[QUESTIONS[step]?.id] ?? []) as string[];
 
-  // Compute solution recommendations based on audit answers
-  const recommendedSolutions = useMemo(() => {
+  // Compute solution recommendations based on audit answers (scored, always 3)
+  const scoredRecommendations = useMemo(() => {
     if (!showResults || !answers.tasks || answers.tasks.length === 0) return [];
-    return getAuditRecommendations(solutions, answers.tasks as string[], 6);
-  }, [showResults, answers.tasks, solutions]);
+    return getAuditRecommendationsScored(
+      solutions,
+      answers.tasks as string[],
+      3,
+      (answers.strengths ?? []) as string[],
+    );
+  }, [showResults, answers.tasks, answers.strengths, solutions]);
+
+  const recommendedSolutions = useMemo(
+    () => scoredRecommendations.map((r) => r.solution),
+    [scoredRecommendations]
+  );
+
+  const matchLabels = useMemo(() => {
+    const map = new Map<string, "Best Match" | "Strong Match" | "Partial Match">();
+    for (const r of scoredRecommendations) {
+      map.set(r.solution.id, r.matchLabel);
+    }
+    return map;
+  }, [scoredRecommendations]);
 
   return (
     <div>
@@ -658,7 +790,7 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
                     return (
                       <button
                         key={opt.id}
-                        onClick={() => handleMultiToggle(opt.id)}
+                        onClick={() => handleMultiToggle(currentQuestion.id, opt.id)}
                         className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${
                           isSelected
                             ? "border-primary bg-primary/5"
@@ -786,6 +918,12 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
                   icon: Zap,
                   hint: "How prepared your setup is for automation",
                 },
+                {
+                  label: "Process Maturity",
+                  value: results.processMaturity,
+                  icon: CheckCircle2,
+                  hint: "How well your current processes are working",
+                },
               ].map(({ label, value, icon: Icon, hint }) => (
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1.5">
@@ -909,6 +1047,48 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
             </div>
           )}
 
+          {/* Automation-ready processes — strengths */}
+          {results.strengths.length > 0 && (
+            <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-2">
+                Automation-Ready Processes
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                These processes are already working well. The requirements are clear, the waste has been
+                cut, and the flow is optimised. When something is repetitive because it works,
+                not because it&apos;s broken, a human should not be the one running it.
+                Automation locks in the result and frees your team for work that genuinely needs them.
+              </p>
+              <div className="space-y-6">
+                {results.strengths.map((s, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="w-7 h-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-foreground mb-1">
+                        {s.headline}
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                        {s.detail}
+                      </p>
+
+                      {/* Status / Next */}
+                      <div className="text-xs text-muted-foreground mb-2 space-y-1">
+                        <p><span className="font-semibold text-green-700">Status:</span> {s.status}</p>
+                        <p><span className="font-semibold text-primary">Next:</span> {s.next}</p>
+                      </div>
+
+                      <p className="text-sm text-green-800 font-medium leading-relaxed bg-green-50 rounded-lg px-3 py-2">
+                        &rarr; {s.outcome}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Readiness barrier — only shown for scores >= 25 */}
           {results.barrier && (
             <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
@@ -1012,52 +1192,54 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
           </div>{/* end narrow wrapper */}
 
           {/* CTA — Personalized recommendations based on audit answers */}
-          {results.overall >= 45 ? (
-            <div className="space-y-6">
-              <div className="text-center">
-                <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
-                  What&apos;s Next
-                </p>
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  You know where the gaps are.
-                  <br />
-                  Now get expert opinions on how to close them.
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                  We matched these solutions to the specific bottlenecks you described.
-                  Each one is built for the kind of work you said you&apos;re still doing manually.
-                </p>
-              </div>
-              <SmartEmptyState relatedSolutions={recommendedSolutions} />
-            </div>
-          ) : (
-            <div className="text-center max-w-2xl mx-auto">
+          <div className="space-y-6">
+            <div className="text-center">
               <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
                 What&apos;s Next
               </p>
-              <h3 className="text-xl font-bold text-foreground mb-2">
-                Come back when the time is right.
-              </h3>
-              <p className="text-sm text-muted-foreground mb-7 max-w-md mx-auto leading-relaxed">
-                When your manual workload starts piling up and the same tasks
-                keep repeating, that is when automation earns its place. Bookmark
-                this and retake it in a few months.
-              </p>
-              <Link
-                href="/solutions"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-border bg-white hover:bg-secondary/30 transition-colors font-medium text-sm"
-              >
-                Browse What&apos;s Possible <ArrowRight className="h-4 w-4" />
-              </Link>
+              {results.overall >= 45 ? (
+                <>
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    You know where the gaps are.
+                    <br />
+                    Now get expert opinions on how to close them.
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                    We matched these solutions to the specific bottlenecks you described.
+                    Each one is built for the kind of work you said you&apos;re still doing manually.
+                  </p>
+                </>
+              ) : results.overall >= 25 ? (
+                <>
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    Start with one focused win.
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                    You don&apos;t need to automate everything at once. Pick the bottleneck
+                    that costs the most time and fix that first — the rest follows.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    Explore what&apos;s possible.
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                    Even at an early stage, knowing what automation looks like for your
+                    type of work helps you plan the right next steps.
+                  </p>
+                </>
+              )}
             </div>
-          )}
+            <SmartEmptyState relatedSolutions={recommendedSolutions} matchLabels={matchLabels} />
+          </div>
 
           {/* Retake */}
           <p className="text-center text-xs text-muted-foreground pb-4">
             <button
               onClick={() => {
                 setStep(0);
-                setAnswers({ tasks: [] });
+                setAnswers({ tasks: [], strengths: [] });
                 setShowResults(false);
                 setAnimatedScore(0);
                 setSubScoresVisible(false);

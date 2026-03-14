@@ -56,9 +56,13 @@ async function sendWelcomeEmail(userId: string, role: "business" | "expert") {
 
 export async function selectRole(role: Role) {
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user?.id) {
     return { error: "Not authenticated" };
+  }
+
+  if (role === "ADMIN") {
+    return { error: "Invalid role" };
   }
 
   try {
@@ -147,9 +151,15 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
       },
     });
 
-    sendWelcomeEmail(session.user.id, "business").catch(() => {});
+    sendWelcomeEmail(session.user.id, "business").catch((err) => {
+      log.warn("onboarding.welcome_email_failed", { error: String(err) });
+      Sentry.captureException(err);
+    });
     Analytics.onboardingCompleted(session.user.id, { role: "BUSINESS" });
-    fireBusinessOnboardingNotifications(session.user.id).catch(() => {});
+    fireBusinessOnboardingNotifications(session.user.id).catch((err) => {
+      log.warn("onboarding.business_notifications_failed", { error: String(err) });
+      Sentry.captureException(err);
+    });
 
     return { success: true };
   } catch (e) {
@@ -241,8 +251,7 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         authorityConsent,
         marketingConsent,
         
-        // Defaults
-        status: "APPROVED",
+        // On update: preserve existing status (do NOT reset a SUSPENDED expert to APPROVED)
         specialties: [], // Deprecated in new flow or empty
         portfolioLinks: [], // Using portfolioUrl now
       },
@@ -289,9 +298,15 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
     });
 
     // Fire-and-forget welcome email
-    sendWelcomeEmail(session.user.id, "expert").catch(() => {});
+    sendWelcomeEmail(session.user.id, "expert").catch((err) => {
+      log.warn("onboarding.welcome_email_failed", { error: String(err) });
+      Sentry.captureException(err);
+    });
     Analytics.onboardingCompleted(session.user.id, { role: "EXPERT" });
-    fireExpertOnboardingNotifications(session.user.id).catch(() => {});
+    fireExpertOnboardingNotifications(session.user.id).catch((err) => {
+      log.warn("onboarding.expert_notifications_failed", { error: String(err) });
+      Sentry.captureException(err);
+    });
 
     return { success: true };
   } catch (e) {

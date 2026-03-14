@@ -10,12 +10,14 @@ import { signOut, useSession } from "next-auth/react";
 export default function OnboardingPage() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, update: refreshSession } = useSession();
 
   const handleSelect = async (role: "BUSINESS" | "EXPERT") => {
     setPending(true);
     const result = await selectRole(role);
     if (result.success) {
+      // Force JWT refresh so middleware sees the updated role
+      await refreshSession();
       if (role === "BUSINESS") router.push("/onboarding/business");
       else router.push("/onboarding/expert");
     } else {

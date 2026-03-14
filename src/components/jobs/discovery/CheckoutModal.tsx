@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Lightbulb, Check, X, Loader2, Zap } from "lucide-react";
+import { DISCOVERY_SCAN_PRICE_CENTS, CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
+import { formatCentsToCurrency } from "@/lib/commission";
 
 interface CheckoutModalProps {
   jobId: string;
@@ -14,7 +16,7 @@ export function CheckoutModal({ jobId, type, onClose }: CheckoutModalProps) {
   const [error, setError] = useState<string | null>(null);
 
   const isDiscovery = type === "discovery";
-  const price = isDiscovery ? "€50.00" : "€100.00";
+  const price = formatCentsToCurrency(isDiscovery ? DISCOVERY_SCAN_PRICE_CENTS : CUSTOM_PROJECT_PRICE_CENTS);
 
   const handlePay = async () => {
     setLoading(true);
@@ -48,17 +50,6 @@ export function CheckoutModal({ jobId, type, onClose }: CheckoutModalProps) {
   };
 
   const [showSimulate, setShowSimulate] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/checkout/post-job", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId }),
-    })
-      .then(r => r.json())
-      .then(d => { if (d.useSimulate) setShowSimulate(true); })
-      .catch(() => {});
-  }, [jobId]);
 
   const handleSimulate = async () => {
     setLoading(true);

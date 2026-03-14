@@ -193,13 +193,13 @@ export default async function ForExpertsPage() {
             <div className="p-8 rounded-xl border border-border bg-card relative">
               <div className="w-3 h-3 rounded-full bg-secondary border border-border absolute top-8 right-8"></div>
               <h3 className="text-xl font-bold mb-2">Standard</h3>
-              <p className="text-sm text-muted-foreground mb-6 h-10">New or early-stage experts.</p>
+              <p className="text-sm text-muted-foreground mb-6 h-10">New experts. 7-day visibility boost on sign-up.</p>
               <ul className="space-y-3 text-sm">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5" /> Verified profile & tools
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5" /> Clear scope and prerequisites
+                  <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5" /> Sell solutions on the marketplace
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-muted-foreground mt-0.5" /> On-time delivery history
@@ -211,16 +211,16 @@ export default async function ForExpertsPage() {
             <div className="p-8 rounded-xl border border-blue-500/20 bg-blue-500/5 relative">
               <div className="w-3 h-3 rounded-full bg-blue-500 absolute top-8 right-8"></div>
               <h3 className="text-xl font-bold mb-2 text-blue-400">Proven</h3>
-              <p className="text-sm text-muted-foreground mb-6 h-10">Consistent successful deliveries.</p>
+              <p className="text-sm text-muted-foreground mb-6 h-10">Auto-unlocked after 5 successful deliveries.</p>
               <ul className="space-y-3 text-sm">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5" /> Strong buyer feedback
+                  <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5" /> Access to Discovery Scan projects
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5" /> Reliable delivery & support
+                  <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5" /> Access to Custom Projects
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5" /> Low dispute rate
+                  <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5" /> Lower commission rate
                 </li>
               </ul>
             </div>
@@ -229,19 +229,16 @@ export default async function ForExpertsPage() {
             <div className="p-8 rounded-xl border border-purple-500/20 bg-purple-500/5 relative">
               <div className="w-3 h-3 rounded-full bg-purple-500 absolute top-8 right-8"></div>
               <h3 className="text-xl font-bold mb-2 text-purple-400">Elite</h3>
-              <p className="text-sm text-muted-foreground mb-6 h-10">Top-performing experts.</p>
+              <p className="text-sm text-muted-foreground mb-6 h-10">Application-based after 10+ sales.</p>
               <ul className="space-y-3 text-sm">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5" /> Exceptional outcomes & clarity
+                  <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5" /> Everything in Proven
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5" /> Fast response and clean handover
+                  <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5" /> Lowest commission rate
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5" /> Consistently repeatable implementations
-                </li>
-                <li className="flex items-start gap-2">
-                  <Crown className="h-4 w-4 text-purple-400 mt-0.5" /> ✅ Access to Premium Project Bidding
+                  <Crown className="h-4 w-4 text-purple-400 mt-0.5" /> Verified Elite badge
                 </li>
               </ul>
             </div>

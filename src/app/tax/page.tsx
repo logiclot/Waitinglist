@@ -65,7 +65,7 @@ export default function TaxPage() {
           <li><Link href="/terms" className="text-primary hover:underline">Terms of Service</Link></li>
           <li><Link href="/pricing" className="text-primary hover:underline">Pricing & Fees</Link></li>
           <li><Link href="/docs/how-escrow-works" className="text-primary hover:underline">How Escrow Works</Link></li>
-          <li><Link href="mailto:legal@logiclot.io" className="text-primary hover:underline">legal@logiclot.io</Link></li>
+          <li><Link href="mailto:contact@logiclot.io" className="text-primary hover:underline">contact@logiclot.io</Link></li>
         </ul>
       </section>
     </div>

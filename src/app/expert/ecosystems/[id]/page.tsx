@@ -9,9 +9,11 @@ import { EcosystemSettingsForm } from "./EcosystemSettingsForm";
 import type { Solution, SolutionStatus } from "@/types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapSolution(s: any): Solution {
+function mapSolution(s: any): Solution & { expertId?: string; expert?: { id: string; displayName: string; slug: string } } {
   return {
     ...s,
+    expertId: s.expertId,
+    expert: s.expert ?? undefined,
     implementation_price_cents: s.implementationPriceCents,
     implementation_price: s.implementationPriceCents / 100,
     monthly_cost_min: s.monthlyCostMinCents ? s.monthlyCostMinCents / 100 : 0,
@@ -37,7 +39,11 @@ export default async function EditEcosystemPage({ params }: PageProps) {
     where: { id: params.id },
     include: {
       items: {
-        include: { solution: true },
+        include: {
+          solution: {
+            include: { expert: { select: { id: true, displayName: true, slug: true } } },
+          },
+        },
         orderBy: { position: 'asc' }
       }
     }
@@ -52,6 +58,15 @@ export default async function EditEcosystemPage({ params }: PageProps) {
   });
 
   if (!expert || ecosystem.expertId !== expert.id) return notFound();
+
+  // Fetch pending invites for this ecosystem
+  const pendingInvites = await prisma.ecosystemInvite.findMany({
+    where: { ecosystemId: ecosystem.id, status: "pending" },
+    include: {
+      solution: { select: { id: true, title: true, category: true } },
+      invitee: { select: { displayName: true } },
+    },
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -87,8 +102,10 @@ export default async function EditEcosystemPage({ params }: PageProps) {
             <h2 className="font-bold text-xl mb-6">Stack Builder</h2>
             <EcosystemBuilder
               ecosystemId={ecosystem.id}
+              ecosystemExpertId={expert.id}
               initialItems={ecosystem.items.map(item => ({ ...item, solution: mapSolution(item.solution) }))}
               availableSolutions={expert.solutions.map(mapSolution)}
+              pendingInvites={pendingInvites}
             />
           </div>
         </div>

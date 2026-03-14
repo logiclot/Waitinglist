@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AddSolutionClient } from "./AddSolutionClient";
+import { getCategorySaturation } from "@/actions/solutions";
 
 export default async function NewSolutionPage() {
   const session = await getServerSession(authOptions);
@@ -13,6 +14,8 @@ export default async function NewSolutionPage() {
     redirect("/dashboard");
   }
 
+  const saturationData = await getCategorySaturation();
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -22,7 +25,7 @@ export default async function NewSolutionPage() {
         </p>
       </div>
 
-      <AddSolutionClient />
+      <AddSolutionClient saturationData={saturationData} />
     </div>
   );
 }

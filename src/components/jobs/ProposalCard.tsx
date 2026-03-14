@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { awardBid, updateBid } from "@/actions/jobs";
+import Link from "next/link";
+import { awardBid, unawardBid, updateBid } from "@/actions/jobs";
 import { TierBadge } from "@/components/ui/TierBadge";
 import { toast } from "sonner";
 import {
@@ -9,7 +10,7 @@ import {
   Target, Zap, LayoutList, EuroIcon,
   UserCheck, Clock, CheckCircle2, XCircle,
   Pencil, Lock, AlertTriangle, Wrench,
-  Eye, Trophy, User
+  Eye, Trophy, User, MessageCircle, Undo2
 } from "lucide-react";
 
 const EDIT_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
@@ -49,6 +50,7 @@ interface ProposalBid {
   createdAt: Date | string;
   status: string;
   specialist: { displayName?: string | null; tier?: string | null; isFoundingExpert?: boolean | null; completedSalesCount?: number | null };
+  order?: { id: string; milestones: unknown } | null;
 }
 
 // ── Edit form (inline, collapsible) ──────────────────────────────────────────
@@ -128,10 +130,18 @@ export function ProposalCard({ bid, jobId, isOwner, isExpertView = false, isPost
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [awarding, setAwarding] = useState(false);
+  const [undoing, setUndoing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [msRemaining, setMsRemaining] = useState(0);
   const [warnFired, setWarnFired] = useState(false);
   const proposal = parseProposal(bid.proposedApproach);
+
+  // Check if any milestone has been funded — undo no longer possible after payment
+  const milestones = (bid.order?.milestones as Record<string, unknown>[] | undefined) ?? [];
+  const isFunded = milestones.some((m) => {
+    const s = (m as { status?: string }).status;
+    return s === "in_escrow" || s === "releasing" || s === "released";
+  });
 
   const editableUntil = useMemo(
     () => new Date(new Date(bid.createdAt).getTime() + EDIT_WINDOW_MS),
@@ -163,16 +173,46 @@ export function ProposalCard({ bid, jobId, isOwner, isExpertView = false, isPost
   };
 
   const handleAward = async () => {
-    if (!confirm("Award this project to this expert? This will open a conversation thread.")) return;
+    if (!confirm("Accept this proposal and proceed to fund milestone 1?")) return;
     setAwarding(true);
     const res = await awardBid(jobId, bid.id);
     if (!res.success) {
-      alert("Failed to award — please try again.");
+      alert(res.error ?? "Failed to award — please try again.");
       setAwarding(false);
+      return;
+    }
+    // Redirect to fund milestone 1
+    if (res.orderId) {
+      try {
+        const fundRes = await fetch("/api/checkout/fund-milestone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: res.orderId, milestoneIndex: 0 }),
+        });
+        const fundData = await fundRes.json();
+        if (fundData.url) {
+          window.location.href = fundData.url;
+          return;
+        }
+      } catch { /* fall through */ }
+      window.location.href = "/business/projects";
     }
   };
 
+  const handleUndo = async () => {
+    if (!confirm("Reverse this acceptance? The proposal and all others will go back to pending review.")) return;
+    setUndoing(true);
+    const res = await unawardBid(jobId, bid.id);
+    if (!res.success) {
+      alert(res.error ?? "Could not reverse — please try again.");
+      setUndoing(false);
+      return;
+    }
+    window.location.reload();
+  };
+
   const isAwarded = bid.status === "accepted";
+  const canUndo = isAwarded && !isFunded && isOwner;
   const displayName = isPostTenderView ? (anonymizedLabel ?? "Expert") : (bid.specialist?.displayName ?? "Specialist");
 
   return (
@@ -258,17 +298,39 @@ export function ProposalCard({ bid, jobId, isOwner, isExpertView = false, isPost
             {!isPostTenderView && (
               <>
                 {isAwarded ? (
-                  <span className="flex items-center gap-1.5 bg-green-500/10 text-green-600 border border-green-500/20 px-3 py-1.5 rounded-full text-sm font-bold">
-                    <CheckCircle className="h-4 w-4" /> Awarded
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className="flex items-center gap-1.5 bg-green-500/10 text-green-600 border border-green-500/20 px-3 py-1.5 rounded-full text-sm font-bold">
+                      <CheckCircle className="h-4 w-4" /> Awarded
+                    </span>
+                    {canUndo && (
+                      <button
+                        type="button"
+                        onClick={handleUndo}
+                        disabled={undoing}
+                        className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                        title="Reverse this acceptance — all proposals go back to pending"
+                      >
+                        {undoing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}
+                        Undo acceptance
+                      </button>
+                    )}
+                  </div>
                 ) : isOwner ? (
-                  <button
-                    onClick={handleAward}
-                    disabled={awarding}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {awarding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Accept & Chat"}
-                  </button>
+                  <div className="flex flex-col items-end gap-2">
+                    <button
+                      onClick={handleAward}
+                      disabled={awarding}
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {awarding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Accept & Fund Milestone 1"}
+                    </button>
+                    <Link
+                      href={`/messages/new?expert=${bid.specialistId}&job=${jobId}`}
+                      className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center gap-2"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" /> Ask a Question
+                    </Link>
+                  </div>
                 ) : null}
 
                 {/* Expert edit controls */}

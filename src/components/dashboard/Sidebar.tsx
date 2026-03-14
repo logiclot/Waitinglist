@@ -4,19 +4,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getUnreadNotificationCount } from "@/actions/notifications";
+import { getUnreadConversationCount } from "@/actions/messaging";
+import { getPendingInviteCount } from "@/actions/ecosystems";
+import { getUnseenInvoiceCount } from "@/actions/invoices";
+import { getUnseenJobCount } from "@/actions/jobs";
+import { getPublishedSolutionCount } from "@/actions/solutions";
+import { getActionNeededProjectCount } from "@/actions/orders";
 import { 
   LayoutDashboard,
   MessageSquare,
   PlusCircle,
   Search,
   FileText,
-  CheckCircle,
   BarChart2,
-  DollarSign,
   Bell,
   Settings,
-  HelpCircle,
-  CreditCard,
+
+
   Layers,
   Package,
   Briefcase as ProjectsIcon,
@@ -26,6 +30,7 @@ import {
   Activity,
   Globe,
   Lock,
+  ClipboardList,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -35,15 +40,43 @@ interface SidebarProps {
   publishedSolutionCount?: number;
 }
 
-export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSlug, publishedSolutionCount = 0 }: SidebarProps) {
+export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSlug, publishedSolutionCount: initialCount = 0 }: SidebarProps) {
   void _isFoundingExpert;
-  const suitesLocked = role === "EXPERT" && publishedSolutionCount < 3;
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingInvites, setPendingInvites] = useState(0);
+  const [unseenInvoices, setUnseenInvoices] = useState(0);
+  const [unseenJobs, setUnseenJobs] = useState(0);
+  const [projectActions, setProjectActions] = useState(0);
+  const [showFeedbackBubble, setShowFeedbackBubble] = useState(false);
+  const [pubSolCount, setPubSolCount] = useState(initialCount);
+  const suitesLocked = role === "EXPERT" && pubSolCount < 3;
 
   useEffect(() => {
     getUnreadNotificationCount().then(setUnreadCount);
-  }, [pathname]); // Refetch when navigating (e.g. after reading notifications)
+    getUnreadConversationCount().then(setUnreadMessages);
+    getUnseenInvoiceCount().then(setUnseenInvoices);
+    getActionNeededProjectCount().then(setProjectActions);
+    if (role === "EXPERT") {
+      getPendingInviteCount().then(setPendingInvites);
+      getUnseenJobCount().then(setUnseenJobs);
+      getPublishedSolutionCount().then(setPubSolCount);
+    }
+  }, [pathname, role]); // Refetch when navigating (e.g. after reading notifications/messages)
+
+  // Show "5%" bubble on Feedback link until the survey is actually completed
+  useEffect(() => {
+    fetch("/api/feedback/survey/status")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.completed) setShowFeedbackBubble(true);
+      })
+      .catch(() => {
+        // If fetch fails, show the bubble as a safe default
+        setShowFeedbackBubble(true);
+      });
+  }, []);
 
   const isActive = (path: string) => {
     if (pathname === path) return true;
@@ -59,15 +92,14 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
   const expertLinks = [
     { label: "Overview",        href: "/dashboard",           icon: LayoutDashboard },
     { label: "Messages",        href: "/dashboard/messages",  icon: MessageSquare },
-    { label: "Active Projects", href: "/expert/projects",     icon: ProjectsIcon },
+    { label: "Projects",        href: "/expert/projects",     icon: ProjectsIcon },
     { label: "Active Bids",     href: "/expert/active-bids",  icon: FileText },
     { label: "Find Work",       href: "/jobs",                icon: Search },
     { label: "Add Solution",    href: "/expert/add-solution", icon: PlusCircle },
     { label: "My Solutions",    href: "/expert/my-solutions", icon: Layers },
     ...(portfolioSlug ? [{ label: "My Portfolio", href: `/p/${portfolioSlug}`, icon: Globe }] : []),
     { label: "Suites",          href: "/expert/ecosystems",   icon: Package },
-    { label: "Completed",       href: "/expert/completed",    icon: CheckCircle },
-    { label: "Earnings",        href: "/expert/earnings",     icon: DollarSign },
+    { label: "Invoices",        href: "/dashboard/invoices",  icon: FileText },
   ];
 
   const expertBottom = [
@@ -81,11 +113,10 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
     { label: "Overview",         href: "/dashboard",             icon: LayoutDashboard },
     { label: "Browse Solutions", href: "/solutions",             icon: Search },
     { label: "Post a Request",   href: "/business/add-request",  icon: PlusCircle },
+    { label: "My Requests",      href: "/jobs",                  icon: ClipboardList },
     { label: "My Projects",      href: "/business/projects",     icon: ProjectsIcon },
     { label: "Messages",         href: "/dashboard/messages",    icon: MessageSquare },
-    { label: "Results",          href: "/business/results",      icon: BarChart2 },
-    { label: "Billing",          href: "/business/billing",      icon: CreditCard },
-    { label: "Help & Onboarding",href: "/business/help",         icon: HelpCircle },
+    { label: "Invoices",         href: "/dashboard/invoices",    icon: FileText },
   ];
 
   const businessBottom = [
@@ -114,6 +145,16 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
           const Icon = link.icon;
           const active = isActive(link.href);
           const isLockedSuites = link.label === "Suites" && suitesLocked;
+          const isMessages = link.label === "Messages";
+          const showMessageBadge = isMessages && unreadMessages > 0;
+          const isSuites = link.label === "Suites";
+          const showInviteBadge = isSuites && pendingInvites > 0;
+          const isFindWork = link.label === "Find Work";
+          const showJobsBadge = isFindWork && unseenJobs > 0;
+          const isInvoices = link.label === "Invoices";
+          const showInvoiceBadge = isInvoices && unseenInvoices > 0;
+          const isProjects = link.label === "Projects" || link.label === "My Projects";
+          const showProjectBadge = isProjects && projectActions > 0;
 
           return (
             <Link
@@ -127,7 +168,34 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <span className="relative">
+                <Icon className="h-4 w-4" />
+                {showMessageBadge && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 rounded-full border-2 border-background text-[9px] font-bold text-white leading-none px-0.5">
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                )}
+                {showInviteBadge && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-blue-500 rounded-full border-2 border-background text-[9px] font-bold text-white leading-none px-0.5">
+                    {pendingInvites > 99 ? "99+" : pendingInvites}
+                  </span>
+                )}
+                {showJobsBadge && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 rounded-full border-2 border-background text-[9px] font-bold text-white leading-none px-0.5">
+                    {unseenJobs > 99 ? "99+" : unseenJobs}
+                  </span>
+                )}
+                {showInvoiceBadge && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 rounded-full border-2 border-background text-[9px] font-bold text-white leading-none px-0.5">
+                    {unseenInvoices > 99 ? "99+" : unseenInvoices}
+                  </span>
+                )}
+                {showProjectBadge && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 rounded-full border-2 border-background text-[9px] font-bold text-white leading-none px-0.5">
+                    {projectActions > 99 ? "99+" : projectActions}
+                  </span>
+                )}
+              </span>
               <span className="flex-1">{link.label}</span>
               {isLockedSuites && (
                 <Lock className="h-3.5 w-3.5 text-muted-foreground/40" />
@@ -157,24 +225,36 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
           const Icon = link.icon;
           const active = isActive(link.href);
           const showUnreadDot = link.label === "Notifications" && unreadCount > 0;
-          
+          const isFeedback = link.label === "Feedback";
+
           return (
             <Link
               key={link.href}
               href={link.href}
               className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                active 
-                  ? "bg-primary/10 text-primary" 
+                active
+                  ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
               <span className="relative">
                 <Icon className="h-4 w-4" />
                 {showUnreadDot && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full border border-background animate-pulse" />
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] flex items-center justify-center bg-red-500 rounded-full border-2 border-background text-[9px] font-bold text-white leading-none px-0.5">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
                 )}
               </span>
-              {link.label}
+              <span className="flex-1">{link.label}</span>
+              {isFeedback && showFeedbackBubble && (
+                <span className="relative ml-1">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-500 text-white shadow-sm animate-bounce">
+                    5%
+                  </span>
+                  {/* Speech bubble tail */}
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-green-500" />
+                </span>
+              )}
             </Link>
           );
         })}

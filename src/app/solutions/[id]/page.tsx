@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CheckCircle, Zap, Euro, ShieldCheck, Award, Info, PlayCircle, Star, ChevronDown, MessageSquare, Layers, ArrowRight } from "lucide-react";
+import { CheckCircle, Zap, Euro, ShieldCheck, Award, Info, PlayCircle, Star, ChevronDown, MessageSquare, Layers, ArrowRight, Sparkles } from "lucide-react";
 import { DemoVideoSection } from "@/components/DemoVideoSection";
 import { SimilarSolutions } from "@/components/SimilarSolutions";
 import { BRAND_NAME } from "@/lib/branding";
@@ -81,6 +81,7 @@ async function getSolution(idOrSlug: string) {
       expert: mapPrismaExpert(s.expert),
       // Ensure businessGoals is mapped if it exists
       businessGoals: s.businessGoals || [],
+      skills: (s.skills as unknown as { name: string; description: string }[]) || [],
     } as unknown as Solution & { milestones: Milestone[] };
   } catch (e) {
     log.error("Error fetching solution", { error: e });
@@ -264,6 +265,33 @@ export default async function SolutionPage({ params }: PageProps) {
             <div className="prose prose-slate max-w-none text-foreground/80 leading-relaxed whitespace-pre-line text-base break-words">
               {solution.longDescription || solution.description}
             </div>
+
+            {/* 3.5. Skills */}
+            {solution.skills && solution.skills.length > 0 && (
+              <section>
+                <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" /> Skills
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  The AI behind this solution is trained with these specific skills so it performs better and more reliably for your use case.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {solution.skills.map((skill, i) => (
+                    <div key={i} className="flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/20 transition-colors">
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-foreground">{skill.name}</p>
+                        {skill.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{skill.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* 4. Key Outcomes */}
             {solution.outline && solution.outline.filter(l => l.trim()).length > 0 && (

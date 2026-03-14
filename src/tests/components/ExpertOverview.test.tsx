@@ -46,7 +46,7 @@ describe("ExpertOverview", () => {
     render(
       <ExpertOverview
         activeOrders={[
-          { id: "o1", solutionTitle: "HubSpot Data Clean", buyerName: "Acme Corp" },
+          { id: "o1", status: "in_progress", solutionTitle: "HubSpot Data Clean", buyerName: "Acme Corp" },
         ]}
       />
     );

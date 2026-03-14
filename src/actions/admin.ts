@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { stripe } from "@/lib/stripe";
-import { getCommissionPercent } from "@/lib/commission";
+import { getCommissionPercent, TIER_THRESHOLDS } from "@/lib/commission";
 import { createNotification } from "@/lib/notifications";
 import { DISCOVERY_SCAN_PRICE_CENTS, CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 import { APP_URL } from "@/lib/app-url";
@@ -110,7 +110,13 @@ export async function approveSpecialist(id: string, grantProven = true) {
     select: { tier: true },
   });
 
-  const updates: { status: "APPROVED"; tier?: "PROVEN" } = { status: "APPROVED" };
+  const boostUntil = new Date();
+  boostUntil.setDate(boostUntil.getDate() + 7);
+
+  const updates: { status: "APPROVED"; tier?: "PROVEN"; newExpertBoostUntil: Date } = {
+    status: "APPROVED",
+    newExpertBoostUntil: boostUntil,
+  };
   if (grantProven && existing?.tier === "STANDARD") {
     updates.tier = "PROVEN";
   }
@@ -127,7 +133,7 @@ export async function approveSpecialist(id: string, grantProven = true) {
     : "Your expert profile has been approved. You can now access Discovery Scans (Proven tier) and bid on opportunities — or level up to Elite to unlock Custom Projects.";
   await createNotification(
     specialist.userId,
-    "You're approved!",
+    "🎉 You're approved!",
     message,
     "success",
     "/jobs"
@@ -148,7 +154,7 @@ export async function suspendSpecialist(id: string) {
 
   await createNotification(
     specialist.userId,
-    "Account suspended",
+    "🚫 Account suspended",
     "Your expert account has been suspended. If you believe this is an error, please contact support.",
     "alert",
   );
@@ -168,7 +174,7 @@ export async function verifySpecialist(id: string, verified: boolean) {
 
   await createNotification(
     specialist.userId,
-    verified ? "Profile verified" : "Verification removed",
+    verified ? "✅ Profile verified" : "❌ Verification removed",
     verified
       ? "Your expert profile is now verified. A verified badge will appear on your listings."
       : "Your verified badge has been removed from your profile.",
@@ -191,7 +197,7 @@ export async function makeFoundingSpecialist(id: string, rank: number) {
 
   await createNotification(
     specialist.userId,
-    "Founding Expert status granted!",
+    "🏅 Founding Expert status granted!",
     `You are now Founding Expert #${rank}. You'll enjoy an 11% platform fee for life and a permanent Founding Expert badge on your profile.`,
     "success",
     "/dashboard",
@@ -212,7 +218,7 @@ export async function removeFoundingExpert(id: string) {
 
   await createNotification(
     specialist.userId,
-    "Founding Expert status removed",
+    "❌ Founding Expert status removed",
     "Your Founding Expert status has been removed. Your platform fee has been adjusted to match your current tier.",
     "alert",
     "/dashboard",
@@ -233,7 +239,7 @@ export async function setExpertFee(id: string, fee: number) {
 
   await createNotification(
     specialist.userId,
-    "Platform fee updated",
+    "💰 Platform fee updated",
     `Your platform fee has been adjusted to ${fee}%.`,
     "info",
     "/dashboard",
@@ -246,28 +252,35 @@ export async function setExpertFee(id: string, fee: number) {
 export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "ELITE") {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
+  // Map tier → its commission rate so the change actually takes effect
+  const feeForTier = TIER_THRESHOLDS[tier];
+
   const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { tier },
+    data: {
+      tier,
+      commissionOverridePercent: feeForTier,
+      platformFeePercentage: feeForTier,
+    },
     select: { userId: true },
   });
 
   const tierLabels: Record<string, string> = {
-    STANDARD: "Standard",
-    PROVEN: "Proven (5+ sales — 13% fee)",
-    ELITE: "Elite (10+ sales — 12% fee)",
+    STANDARD: `Standard (${TIER_THRESHOLDS.STANDARD}% fee)`,
+    PROVEN: `Proven (${TIER_THRESHOLDS.PROVEN}% fee)`,
+    ELITE: `Elite (${TIER_THRESHOLDS.ELITE}% fee)`,
   };
 
   await createNotification(
     specialist.userId,
-    "Expert tier updated",
+    "📊 Expert tier updated",
     `Your tier has been changed to ${tierLabels[tier] ?? tier}.`,
     "info",
     "/dashboard",
   );
 
   revalidatePath("/admin");
-  return { success: true };
+  return { success: true, fee: feeForTier };
 }
 
 export async function adminDeleteUser(userId: string) {
@@ -291,7 +304,7 @@ export async function adminDeleteSolution(solutionId: string) {
   if (solution) {
     await createNotification(
       solution.expert.userId,
-      "Solution removed",
+      "🗑️ Solution removed",
       `Your solution "${solution.title}" has been removed by an administrator. Contact support if you have questions.`,
       "alert",
       "/expert/my-solutions",
@@ -321,14 +334,14 @@ export async function adminDeleteOrder(orderId: string) {
     await Promise.all([
       createNotification(
         order.buyerId,
-        "Order removed",
+        "🗑️ Order removed",
         `Your order for "${title}" has been removed by an administrator. Contact support if you have questions.`,
         "alert",
         "/business/projects",
       ),
       createNotification(
         order.seller.userId,
-        "Order removed",
+        "🗑️ Order removed",
         `An order for "${title}" has been removed by an administrator. Contact support if you have questions.`,
         "alert",
         "/dashboard",
@@ -351,7 +364,7 @@ export async function liftBidBan(specialistId: string) {
 
   await createNotification(
     specialist.userId,
-    "Proposal ban lifted",
+    "✅ Proposal ban lifted",
     "Your proposal ban has been lifted. You can now submit proposals on new projects.",
     "success",
     "/jobs",
@@ -392,7 +405,7 @@ export async function updateSolutionVideoStatus(
 
   await createNotification(
     solution.expert.userId,
-    approved ? "Demo video approved!" : "Demo video needs revision",
+    approved ? "🎬 Demo video approved!" : "🎬 Demo video needs revision",
     message,
     approved ? "success" : "alert",
     `/expert/solutions/${id}/edit`,
@@ -570,7 +583,7 @@ export async function updateDisputeNotes(orderId: string, notes: string) {
 
 export async function resolveDispute(
   orderId: string,
-  resolution: "full_refund" | "release_to_seller" | "partial_refund" | "dismissed",
+  resolution: "full_refund" | "release_to_seller" | "partial_refund" | "dismissed" | "require_revision",
   resolutionNote: string,
   partialAmountCents?: number
 ) {
@@ -671,7 +684,7 @@ export async function resolveDispute(
           return { error: "Expert's Stripe account cannot receive payments. Ask the expert to resolve their Stripe account issues before releasing funds." };
         }
         // Use the canonical commission calculator
-        const expertForCommission: import("@/lib/commission").Expert = {
+        const expertForCommission: import("@/lib/commission").CommissionExpert = {
           id: order.sellerId,
           name: order.seller.displayName || "",
           verified: true,
@@ -746,6 +759,8 @@ export async function resolveDispute(
       newOrderStatus = "refunded";
     } else if (resolution === "dismissed") {
       newOrderStatus = "in_progress";
+    } else if (resolution === "require_revision") {
+      newOrderStatus = "in_progress";
     }
 
     // Update dispute + order
@@ -776,22 +791,23 @@ export async function resolveDispute(
       release_to_seller: "Funds released to expert",
       partial_refund: "Partial refund issued",
       dismissed: "Dispute dismissed — project continues",
+      require_revision: "Expert required to make modifications",
     };
 
     await Promise.all([
       createNotification(
         order.buyerId,
-        "Dispute resolved",
+        "⚖️ Dispute resolved",
         `${resolutionLabels[resolution]}. ${resolutionNote}`,
-        resolution === "full_refund" || resolution === "partial_refund" ? "success" : "info",
+        ["full_refund", "partial_refund"].includes(resolution) ? "success" : "info",
         "/business/projects"
       ),
       createNotification(
         order.seller.userId,
-        "Dispute resolved",
+        "⚖️ Dispute resolved",
         `${resolutionLabels[resolution]}. ${resolutionNote}`,
-        resolution === "release_to_seller" ? "success" : "info",
-        "/dashboard"
+        resolution === "release_to_seller" ? "success" : resolution === "require_revision" ? "alert" : "info",
+        "/dashboard/projects"
       ),
     ]);
 
@@ -920,7 +936,7 @@ export async function adminDeleteJob(jobId: string) {
     if (job) {
       await createNotification(
         job.buyerId,
-        "Job post removed",
+        "🗑️ Job post removed",
         `Your job post "${job.title}" has been removed by an administrator. Contact support if you have questions.`,
         "alert",
         "/business/projects",
@@ -1129,6 +1145,49 @@ export async function getAuditAnalytics() {
   };
 }
 
+export async function getAuditCompletions() {
+  if (!(await checkAdmin())) return null;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const completions = await (prisma as any).auditEvent.findMany({
+    where: { event: "quiz_complete" },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: {
+      id: true,
+      sessionId: true,
+      score: true,
+      scoreLabel: true,
+      answers: true,
+      createdAt: true,
+    },
+  }) as { id: string; sessionId: string; score: number | null; scoreLabel: string | null; answers: unknown; createdAt: Date }[];
+
+  // For each completion, find the email (if submitted) from the same session
+  const sessionIds = [...new Set(completions.map(c => c.sessionId))];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const emailEvents = sessionIds.length > 0 ? await (prisma as any).auditEvent.findMany({
+    where: { event: "email_sent", sessionId: { in: sessionIds } },
+    select: { sessionId: true, email: true },
+  }) as { sessionId: string; email: string | null }[] : [];
+
+  const emailMap = new Map<string, string>();
+  for (const e of emailEvents) {
+    if (e.email) emailMap.set(e.sessionId, e.email);
+  }
+
+  return completions.map(c => ({
+    id: c.id,
+    sessionId: c.sessionId,
+    score: c.score,
+    scoreLabel: c.scoreLabel,
+    answers: c.answers,
+    email: emailMap.get(c.sessionId) ?? null,
+    createdAt: c.createdAt.toISOString(),
+  }));
+}
+
 // ── Job Analytics (Discovery Scan + Custom Project) ─────────────────────────
 
 export async function getJobAnalytics(category: "Discovery Scan" | "Custom Project") {
@@ -1309,4 +1368,133 @@ export async function getTrafficAnalytics() {
     dailyViews: [...dailyViews.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, count]) => ({ date, count })),
     periodDays: 30,
   };
+}
+
+// ── Elite Application Management ──────────────────────────────────────────────
+
+export async function getEliteApplications() {
+  if (!(await checkAdmin())) return { error: "Unauthorized" };
+
+  const applications = await prisma.specialistProfile.findMany({
+    where: { eliteApplicationStatus: "pending" },
+    orderBy: { eliteAppliedAt: "asc" },
+    select: {
+      id: true,
+      displayName: true,
+      legalFullName: true,
+      tier: true,
+      completedSalesCount: true,
+      eliteAppliedAt: true,
+      eliteApplicationStatus: true,
+      isFoundingExpert: true,
+      tools: true,
+      user: { select: { id: true, email: true } },
+    },
+  });
+
+  return { applications };
+}
+
+export async function approveEliteApplication(expertId: string) {
+  if (!(await checkAdmin())) return { error: "Unauthorized" };
+
+  const profile = await prisma.specialistProfile.findUnique({
+    where: { id: expertId },
+    select: { userId: true, eliteApplicationStatus: true, isFoundingExpert: true },
+  });
+
+  if (!profile) return { error: "Expert not found" };
+  if (profile.eliteApplicationStatus !== "pending") return { error: "No pending application" };
+
+  const feePercent = profile.isFoundingExpert ? TIER_THRESHOLDS.FOUNDING : TIER_THRESHOLDS.ELITE;
+
+  await prisma.specialistProfile.update({
+    where: { id: expertId },
+    data: {
+      tier: "ELITE",
+      eliteApplicationStatus: "approved",
+      platformFeePercentage: feePercent,
+    },
+  });
+
+  await createNotification(
+    profile.userId,
+    "🏆 Welcome to Elite!",
+    `Your Elite application has been approved. Your commission rate is now ${feePercent}%. You have priority placement and the lowest fees on the platform.`,
+    "success",
+    "/dashboard",
+  );
+
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export async function denyEliteApplication(expertId: string, reason: string) {
+  if (!(await checkAdmin())) return { error: "Unauthorized" };
+  if (!reason || reason.trim().length < 10) return { error: "Please provide a reason (min 10 characters)" };
+
+  const profile = await prisma.specialistProfile.findUnique({
+    where: { id: expertId },
+    select: { userId: true, eliteApplicationStatus: true },
+  });
+
+  if (!profile) return { error: "Expert not found" };
+  if (profile.eliteApplicationStatus !== "pending") return { error: "No pending application" };
+
+  await prisma.specialistProfile.update({
+    where: { id: expertId },
+    data: {
+      eliteApplicationStatus: "denied",
+      eliteDeniedAt: new Date(),
+      eliteDeniedReason: reason.trim(),
+    },
+  });
+
+  await createNotification(
+    profile.userId,
+    "Elite application update",
+    `Your Elite application was not approved at this time. Reason: ${reason.trim()}. You can re-apply after 14 days.`,
+    "info",
+    "/dashboard",
+  );
+
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+export async function demoteFromElite(expertId: string, reason: string) {
+  if (!(await checkAdmin())) return { error: "Unauthorized" };
+  if (!reason || reason.trim().length < 10) return { error: "Please provide a reason (min 10 characters)" };
+
+  const profile = await prisma.specialistProfile.findUnique({
+    where: { id: expertId },
+    select: { userId: true, tier: true, isFoundingExpert: true },
+  });
+
+  if (!profile) return { error: "Expert not found" };
+  if (profile.tier !== "ELITE") return { error: "Expert is not Elite" };
+
+  const feePercent = profile.isFoundingExpert ? TIER_THRESHOLDS.FOUNDING : TIER_THRESHOLDS.PROVEN;
+
+  await prisma.specialistProfile.update({
+    where: { id: expertId },
+    data: {
+      tier: "PROVEN",
+      eliteApplicationStatus: null,
+      eliteDemotedAt: new Date(),
+      eliteDemotedReason: reason.trim(),
+      platformFeePercentage: feePercent,
+    },
+  });
+
+  await createNotification(
+    profile.userId,
+    "Tier update: Proven",
+    `Your tier has been changed from Elite to Proven. Reason: ${reason.trim()}. Your commission rate is now ${feePercent}%. You can re-apply for Elite after 14 days.`,
+    "alert",
+    "/dashboard",
+  );
+
+  revalidatePath("/admin");
+  return { success: true };
 }

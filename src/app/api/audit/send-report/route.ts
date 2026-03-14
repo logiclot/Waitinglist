@@ -70,11 +70,26 @@ const TASK_COPY: Record<
   },
 };
 
+const STRENGTH_COPY: Record<
+  string,
+  { headline: string; detail: string; outcome: string; status: string; next: string }
+> = {
+  invoicing: { headline: "Invoicing & Billing", detail: "Your billing process works. Clients get invoiced, payments come in, follow-ups happen. That means the requirements are clear, the waste is gone, and the process is optimised.", outcome: "Automation locks it in: invoices trigger themselves, reminders run on schedule, reconciliation happens without anyone watching.", status: "Process is dialled in and repeatable", next: "Automate it so your team never has to think about it" },
+  sales_followup: { headline: "Sales Follow-up", detail: "Your follow-up cadence is working. Leads get contacted, sequences run, and deals move through the pipeline. That is a solved process, and a human should not be the one running it.", outcome: "Automation locks it in: every lead gets the same proven sequence instantly, whether your team is in a meeting, on holiday, or scaling from 50 leads to 500.", status: "Follow-up cadence is proven and consistent", next: "Let automation run it at scale without dropping a lead" },
+  scheduling: { headline: "Scheduling & Appointments", detail: "Bookings happen, calendars stay accurate, and clients show up. You have already eliminated the chaos. Now eliminate the effort.", outcome: "Automation locks it in: clients self-book, reminders fire automatically, rescheduling happens without a single email.", status: "Scheduling process works and rarely breaks", next: "Remove the human effort from a process that no longer needs it" },
+  reporting: { headline: "Reporting & Data Entry", detail: "Your reports land on time and decision-makers trust the numbers. The format is stable, the sources are known. That means it is ready to run itself.", outcome: "Automation locks it in: dashboards update in real time, weekly reports compile and send themselves.", status: "Reports are accurate and delivered consistently", next: "Automate the assembly so your team focuses on insight, not data entry" },
+  hr_onboarding: { headline: "HR & Onboarding", detail: "New hires get set up properly. Contracts go out, accounts get created, and day-one is smooth. That is a repeatable process running on human effort alone.", outcome: "Automation locks it in: the entire checklist executes itself the moment someone is hired.", status: "Onboarding process is reliable and complete", next: "Let automation run the checklist so HR handles exceptions only" },
+  customer_support: { headline: "Customer Support", detail: "Customers get answers, tickets get resolved, and satisfaction stays high. The playbook exists. Now stop making your team run it manually for every single query.", outcome: "Automation locks it in: common questions answered instantly, tickets routed correctly, your team handles only what matters.", status: "Support quality is consistent and customers are satisfied", next: "Automate the repeatable queries so your team handles only what matters" },
+  social_media: { headline: "Social Media & Content", detail: "Content goes out on schedule, across the right channels, and engagement is steady. The strategy is working, but the execution costs more time than it should.", outcome: "Automation locks it in: content approved once, published everywhere on schedule.", status: "Content cadence is consistent and effective", next: "Automate distribution so creative energy stays on strategy, not posting" },
+  inventory: { headline: "Inventory & Orders", detail: "Stock levels are accurate, orders ship on time, and stockouts are rare. That means the rules are clear and the process is optimised. It just should not need a person watching it.", outcome: "Automation locks it in: stock monitored around the clock, reorders triggered automatically, overselling prevented across every channel.", status: "Inventory tracking is accurate and orders flow smoothly", next: "Automate monitoring and reordering so no one checks stock manually" },
+};
+
 interface Answers {
   teamSize: string;
   tasks: string[];
   hours: string;
   dataOrg: string;
+  strengths: string[];
   frustration: string;
 }
 
@@ -90,9 +105,14 @@ function computeResults(answers: Answers) {
   const techScoreMap: Record<string, number> = { spreadsheets: 20, separate: 45, some: 65, integrated: 85 };
   const technicalReadiness = techScoreMap[answers.dataOrg] ?? 35;
 
+  const strengthsCount = (answers.strengths ?? []).length;
+  const processMaturity = Math.min(strengthsCount * 12, 95);
+
   const roiPotential = Math.round((teamScore + hoursScore) / 2);
   const processBottleneck = Math.round((taskScore + hoursScore) / 2);
-  const overall = Math.round(roiPotential * 0.4 + processBottleneck * 0.35 + technicalReadiness * 0.25);
+  const baseOverall = Math.round(roiPotential * 0.4 + processBottleneck * 0.35 + technicalReadiness * 0.25);
+  const maturityBonus = Math.round(processMaturity * 0.15);
+  const overall = Math.min(baseOverall + maturityBonus, 100);
 
   const hoursMonthMap: Record<string, number> = { low: 13, medium: 43, high: 95, very_high: 172 };
   const hoursMonth = hoursMonthMap[answers.hours] ?? 43;
@@ -129,6 +149,11 @@ function computeResults(answers: Answers) {
     .map((t) => TASK_COPY[t])
     .filter(Boolean);
 
+  const strengths = (answers.strengths ?? [])
+    .slice(0, 3)
+    .map((t) => STRENGTH_COPY[t])
+    .filter(Boolean);
+
   let barrier: { label: string; message: string } | null = null;
   if (overall >= 25) {
     if (technicalReadiness < 40) {
@@ -141,9 +166,9 @@ function computeResults(answers: Answers) {
   }
 
   return {
-    overall, scoreLabel, scoreExplanation, financialEstimate, recoveryLow, recoveryHigh,
+    overall, scoreLabel, scoreExplanation, processMaturity, financialEstimate, recoveryLow, recoveryHigh,
     annualWaste, typicalFixCost, roiMultiplier, urgencyMonthly, socialProofPct,
-    bottlenecks, barrier,
+    bottlenecks, strengths, barrier,
   };
 }
 
@@ -178,7 +203,8 @@ export async function POST(request: Request) {
       answers.tasks.length === 0 ||
       !answers.tasks.every((t: string) => VALID_TASKS.includes(t)) ||
       !VALID_HOURS.includes(answers.hours ?? "") ||
-      !VALID_DATA_ORG.includes(answers.dataOrg ?? "")
+      !VALID_DATA_ORG.includes(answers.dataOrg ?? "") ||
+      (answers.strengths !== undefined && (!Array.isArray(answers.strengths) || !answers.strengths.every((t: string) => VALID_TASKS.includes(t))))
     ) {
       return NextResponse.json({ error: "Invalid audit answers" }, { status: 400 });
     }

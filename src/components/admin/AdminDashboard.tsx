@@ -13,9 +13,12 @@ import {
   setExpertFee, setExpertTier,
   adminDeleteUser, adminDeleteOrder, adminDeleteSolution,
   updateSolutionVideoStatus, liftBidBan,
+  approveEliteApplication, denyEliteApplication, demoteFromElite,
 } from "@/actions/admin";
 import { DisputeManagementTab, type AdminDispute } from "@/components/admin/DisputeManagementTab";
+import { AuditResultsTab, type AuditCompletion } from "@/components/admin/AuditResultsTab";
 import { BRAND_NAME } from "@/lib/branding";
+import { TIER_THRESHOLDS } from "@/lib/commission";
 
 // ── Admin-specific types (shaped by getAdminData in actions/admin.ts) ─────────
 
@@ -72,12 +75,27 @@ export interface AdminBusiness {
   country: string | null;
 }
 
+export interface EliteApplication {
+  id: string;
+  displayName: string | null;
+  legalFullName: string | null;
+  tier: string | null;
+  completedSalesCount: number;
+  eliteAppliedAt: Date | string | null;
+  eliteApplicationStatus: string | null;
+  isFoundingExpert: boolean;
+  tools: string[];
+  user: { id: string; email: string };
+}
+
 interface AdminDashboardProps {
   initialExperts: AdminExpert[];
   initialSolutions: Solution[];
   initialOrders: AdminOrder[];
   initialBusinesses: AdminBusiness[];
   initialDisputes: AdminDispute[];
+  initialAuditCompletions: AuditCompletion[];
+  initialEliteApplications?: EliteApplication[];
   stats: {
     totalUsers: number;
     totalExperts: number;
@@ -89,13 +107,14 @@ interface AdminDashboardProps {
   };
 }
 
-export function AdminDashboard({ initialExperts, initialSolutions, initialOrders, initialBusinesses, initialDisputes, stats }: AdminDashboardProps) {
+export function AdminDashboard({ initialExperts, initialSolutions, initialOrders, initialBusinesses, initialDisputes, initialAuditCompletions, initialEliteApplications = [], stats }: AdminDashboardProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"experts" | "solutions" | "orders" | "businesses" | "disputes">("experts");
+  const [activeTab, setActiveTab] = useState<"experts" | "solutions" | "orders" | "businesses" | "disputes" | "audits">("experts");
   const [expertList, setExpertList] = useState<AdminExpert[]>(initialExperts);
   const [expandedExpertId, setExpandedExpertId] = useState<string | null>(null);
   const [solutionList, setSolutionList] = useState<Solution[]>(initialSolutions);
   const [orderList, setOrderList] = useState<AdminOrder[]>(initialOrders);
+  const [eliteApplications, setEliteApplications] = useState<EliteApplication[]>(initialEliteApplications);
   const [fullEditingSolution, setFullEditingSolution] = useState<Solution | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -137,14 +156,16 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
 
   const handleSetFee = async (id: string, fee: number) => {
     await setExpertFee(id, fee);
-    setExpertList(expertList.map((e) => e.id === id ? { ...e, platformFeePercentage: fee } : e));
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, commissionOverridePercent: fee, platformFeePercentage: fee } : e));
     showMessage(`Fee updated to ${fee}%.`);
   };
 
   const handleSetTier = async (id: string, tier: "STANDARD" | "PROVEN" | "ELITE") => {
+    const tierFeeMap: Record<string, number> = { STANDARD: TIER_THRESHOLDS.STANDARD, PROVEN: TIER_THRESHOLDS.PROVEN, ELITE: TIER_THRESHOLDS.ELITE };
+    const fee = tierFeeMap[tier];
     await setExpertTier(id, tier);
-    setExpertList(expertList.map((e) => e.id === id ? { ...e, tier } : e));
-    showMessage(`Tier set to ${tier}.`);
+    setExpertList(expertList.map((e) => e.id === id ? { ...e, tier, commissionOverridePercent: fee, platformFeePercentage: fee } : e));
+    showMessage(`Tier set to ${tier} (${fee}% fee).`);
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -153,6 +174,29 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
     if (result.error) { showMessage(`Error: ${result.error}`, true); return; }
     setExpertList(expertList.filter((e) => e.user?.id !== userId));
     showMessage("User deleted.");
+  };
+
+  // ── Elite application actions ─────────────────────────────────────────────
+  const handleApproveElite = async (expertId: string) => {
+    const result = await approveEliteApplication(expertId);
+    if (result.error) { showMessage(`Error: ${result.error}`, true); return; }
+    setEliteApplications(eliteApplications.filter((a) => a.id !== expertId));
+    setExpertList(expertList.map((e) => e.id === expertId ? { ...e, tier: "ELITE" } : e));
+    showMessage("Elite application approved.");
+  };
+
+  const handleDenyElite = async (expertId: string, reason: string) => {
+    const result = await denyEliteApplication(expertId, reason);
+    if (result.error) { showMessage(`Error: ${result.error}`, true); return; }
+    setEliteApplications(eliteApplications.filter((a) => a.id !== expertId));
+    showMessage("Elite application denied.");
+  };
+
+  const handleDemoteElite = async (expertId: string, reason: string) => {
+    const result = await demoteFromElite(expertId, reason);
+    if (result.error) { showMessage(`Error: ${result.error}`, true); return; }
+    setExpertList(expertList.map((e) => e.id === expertId ? { ...e, tier: "PROVEN" } : e));
+    showMessage("Expert demoted from Elite to Proven.");
   };
 
   // ── Solution actions ────────────────────────────────────────────────────────
@@ -252,13 +296,14 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
 
       {/* Tabs */}
       <div className="flex gap-4 mb-6 border-b border-border overflow-x-auto">
-        {(["experts", "solutions", "orders", "businesses", "disputes"] as const).map((tab) => {
+        {(["experts", "solutions", "orders", "businesses", "disputes", "audits"] as const).map((tab) => {
           const counts: Record<string, number> = {
             experts: expertList.length,
             solutions: solutionList.length,
             orders: orderList.length,
             businesses: initialBusinesses.length,
             disputes: initialDisputes.length,
+            audits: initialAuditCompletions.length,
           };
           return (
             <button
@@ -297,6 +342,10 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
           onSetTier={handleSetTier}
           onDeleteUser={handleDeleteUser}
           onLiftBidBan={async (id) => { await liftBidBan(id); router.refresh(); }}
+          eliteApplications={eliteApplications}
+          onApproveElite={handleApproveElite}
+          onDenyElite={handleDenyElite}
+          onDemoteElite={handleDemoteElite}
         />
       )}
 
@@ -344,6 +393,10 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
 
       {activeTab === "disputes" && (
         <DisputeManagementTab disputes={initialDisputes} showMessage={showMessage} />
+      )}
+
+      {activeTab === "audits" && (
+        <AuditResultsTab completions={initialAuditCompletions} />
       )}
 
       {activeTab === "businesses" && (

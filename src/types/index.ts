@@ -1,3 +1,8 @@
+// ── Canonical action result type — use across all server actions ──────────────
+export type ActionResult<T = void> =
+  | { success: true; data?: T }
+  | { success: false; error: string };
+
 // ── Milestone (JSON stored in Order.milestones) ──────────────────────────────
 export interface Milestone {
   title: string;
@@ -110,6 +115,9 @@ export interface Solution {
   structureCustom?: string[];
   measurableOutcome?: string;
 
+  // Skills — discrete capabilities the automation delivers
+  skills?: { name: string; description: string }[];
+
   // Versioning & Maintenance
   version?: number;
   changelog?: string;
@@ -145,7 +153,7 @@ export interface Category {
   description: string;
 }
 
-export type OrderStatus = 'draft' | 'paid_pending_implementation' | 'in_progress' | 'delivered' | 'approved' | 'refunded' | 'disputed';
+export type OrderStatus = 'draft' | 'paid_pending_implementation' | 'in_progress' | 'delivered' | 'revision_requested' | 'approved' | 'refunded' | 'disputed';
 
 export interface Order {
   id: string;
@@ -171,6 +179,7 @@ export interface Conversation {
   seller_id: string;
   solution_id?: string;
   order_id?: string;
+  job_post_id?: string;
   created_at: string;
   updated_at?: string;
 
@@ -187,6 +196,80 @@ export interface Message {
   conversation_id: string;
   sender_id: string;
   body: string;
-  type: 'user' | 'system';
+  type: 'user' | 'system' | 'bid_card' | 'order_card';
   created_at: string;
+}
+
+export interface BidCardData {
+  projectTitle: string;
+  automationTitle?: string;
+  excerpt: string;
+  price: string;
+  timeline: string;
+  jobId: string;
+  bidId: string;
+  expertCalendarUrl?: string;
+  expertName: string;
+}
+
+export interface OrderCardData {
+  type: "milestone_funded" | "order_accepted" | "delivery_submitted" | "milestone_released" | "revision_requested" | "revision_accepted";
+  milestoneTitle: string;
+  milestoneIndex: number;
+  priceCents: number;
+  projectTitle: string;
+  orderId: string;
+  expertName?: string;
+  deliveryNote?: string;
+  revisionNote?: string;
+  revisionCount?: number;
+}
+
+// ── Suite / Ecosystem card data (from getPublishedEcosystemsFull) ────────────
+
+export interface SuiteExpert {
+  id: string;
+  displayName: string;
+  slug: string;
+  isFoundingExpert: boolean;
+  tier: string;
+  user?: { profileImageUrl: string | null } | null;
+}
+
+export interface SuiteCardSolution {
+  id: string;
+  slug: string;
+  title: string;
+  shortSummary: string | null;
+  outcome: string | null;
+  category: string;
+  implementationPriceCents: number;
+  monthlyCostMinCents: number | null;
+  monthlyCostMaxCents: number | null;
+  deliveryDays: number;
+  supportDays: number;
+  integrations: string[];
+  businessGoals: string[];
+  expertId: string;
+  expert: SuiteExpert;
+}
+
+export interface SuiteCardData {
+  id: string;
+  slug: string;
+  title: string;
+  shortPitch: string;
+  expertId: string;
+  expert: SuiteExpert;
+  // Bundle discount
+  bundlePriceCents: number | null;
+  // Extended support packages
+  extSupport6mCents: number | null;
+  extSupport12mCents: number | null;
+  extSupportDescription: string | null;
+  items: Array<{
+    id: string;
+    position: number;
+    solution: SuiteCardSolution;
+  }>;
 }

@@ -4,9 +4,11 @@ import { useState, useMemo, useEffect } from "react";
 import {
   Award, UserX, AlertTriangle, ChevronDown, ChevronUp,
   MapPin, Briefcase, ExternalLink, Trash2, ThumbsUp, ThumbsDown, ShieldOff, Search,
+  Crown, ArrowDown,
 } from "lucide-react";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationControls } from "@/components/ui/PaginationControls";
+import { getCommissionPercent, TIER_THRESHOLDS, type CommissionExpert } from "@/lib/commission";
 
 export interface AdminExpert {
   id: string;
@@ -22,6 +24,7 @@ export interface AdminExpert {
   foundingRank?: number | null;
   completedSalesCount?: number;
   platformFeePercentage?: number | null;
+  commissionOverridePercent?: number | null;
   tier?: string;
   stripeAccountId?: string | null;
   calendarUrl?: string | null;
@@ -30,6 +33,36 @@ export interface AdminExpert {
   bidQuality?: { up: number; down: number };
   bidBannedUntil?: Date | string | null;
   user: { id: string; email?: string };
+}
+
+/** Convert AdminExpert to the commission calculator's Expert type */
+function toCommissionExpert(expert: AdminExpert): CommissionExpert {
+  return {
+    id: expert.id,
+    name: expert.displayName || "",
+    verified: expert.verified,
+    founding: false,
+    isFoundingExpert: expert.isFoundingExpert ?? false,
+    completed_sales_count: expert.completedSalesCount ?? 0,
+    commission_override_percent: expert.commissionOverridePercent != null
+      ? Number(expert.commissionOverridePercent)
+      : undefined,
+    tier: (expert.tier as "STANDARD" | "PROVEN" | "ELITE") ?? "STANDARD",
+    tools: expert.tools ?? [],
+  };
+}
+
+export interface EliteApplication {
+  id: string;
+  displayName: string | null;
+  legalFullName: string | null;
+  tier: string | null;
+  completedSalesCount: number;
+  eliteAppliedAt: Date | string | null;
+  eliteApplicationStatus: string | null;
+  isFoundingExpert: boolean;
+  tools: string[];
+  user: { id: string; email: string };
 }
 
 interface ExpertManagementTabProps {
@@ -44,6 +77,10 @@ interface ExpertManagementTabProps {
   onSetTier: (id: string, tier: "STANDARD" | "PROVEN" | "ELITE") => void;
   onDeleteUser: (userId: string) => void;
   onLiftBidBan: (id: string) => void;
+  eliteApplications?: EliteApplication[];
+  onApproveElite?: (expertId: string) => void;
+  onDenyElite?: (expertId: string, reason: string) => void;
+  onDemoteElite?: (expertId: string, reason: string) => void;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -97,9 +134,17 @@ export function ExpertManagementTab({
   onSetTier,
   onDeleteUser,
   onLiftBidBan,
+  eliteApplications = [],
+  onApproveElite,
+  onDenyElite,
+  onDemoteElite,
 }: ExpertManagementTabProps) {
   const pendingExperts = expertList.filter((e) => e.status === "PENDING_REVIEW");
   const activeExperts = expertList.filter((e) => e.status !== "PENDING_REVIEW");
+
+  // --- Elite deny/demote reason ---
+  const [denyReasonMap, setDenyReasonMap] = useState<Record<string, string>>({});
+  const [demoteReasonMap, setDemoteReasonMap] = useState<Record<string, string>>({});
 
   // --- Search + Pagination ---
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,8 +184,15 @@ export function ExpertManagementTab({
           <tbody className={`divide-y ${isPending ? "divide-yellow-500/20" : "divide-border"}`}>
             {experts.map((expert) => {
               const isExpanded = expandedExpertId === expert.id;
-              const fee = expert.platformFeePercentage ?? 15;
+              const fee = getCommissionPercent(toCommissionExpert(expert));
               const tier = (expert.tier ?? "STANDARD") as "STANDARD" | "PROVEN" | "ELITE";
+              const hasOverride = expert.commissionOverridePercent != null;
+              const isFounding = expert.isFoundingExpert ?? false;
+              const expectedFee = isFounding
+                ? TIER_THRESHOLDS.FOUNDING
+                : tier === "ELITE" ? TIER_THRESHOLDS.ELITE
+                : tier === "PROVEN" ? TIER_THRESHOLDS.PROVEN
+                : TIER_THRESHOLDS.STANDARD;
 
               return [
                 <tr
@@ -212,12 +264,13 @@ export function ExpertManagementTab({
                           <option value="PROVEN">Proven</option>
                           <option value="ELITE">Elite</option>
                         </select>
-                        {/* Fee editor */}
+                        {/* Fee — computed from commission system */}
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           Fee: <FeeEditor current={fee} onSave={(v) => onSetFee(expert.id, v)} />
-                          {expert.isFoundingExpert && <span className="text-[10px] text-yellow-500 ml-1">🔒</span>}
+                          {hasOverride && <span className="text-[10px] text-amber-500 ml-1" title={`Admin override (tier default: ${expectedFee}%)`}>⚙️</span>}
+                          {isFounding && !hasOverride && <span className="text-[10px] text-yellow-500 ml-1" title="Founding Expert rate">🔒</span>}
                         </div>
-                        <div className="text-xs text-muted-foreground">{expert.completedSalesCount} sales</div>
+                        <div className="text-xs text-muted-foreground">{expert.completedSalesCount ?? 0} sales</div>
                       </div>
                     </td>
                   )}
@@ -264,6 +317,36 @@ export function ExpertManagementTab({
                         <button onClick={() => onRemoveFounding(expert.id)} className="text-xs text-muted-foreground hover:text-yellow-500 hover:underline">
                           Remove Founding
                         </button>
+                      )}
+
+                      {tier === "ELITE" && onDemoteElite && (
+                        <div className="flex flex-col items-end gap-1">
+                          <button
+                            onClick={() => {
+                              const reason = demoteReasonMap[expert.id];
+                              if (!reason || reason.trim().length < 10) {
+                                setDemoteReasonMap({ ...demoteReasonMap, [expert.id]: demoteReasonMap[expert.id] ?? "" });
+                                return;
+                              }
+                              if (!confirm(`Demote ${expert.displayName} from Elite to Proven?`)) return;
+                              onDemoteElite(expert.id, reason);
+                              setDemoteReasonMap((m) => { const n = { ...m }; delete n[expert.id]; return n; });
+                            }}
+                            className="text-xs text-purple-500 hover:underline flex items-center gap-1"
+                          >
+                            <ArrowDown className="h-3 w-3" /> Demote from Elite
+                          </button>
+                          {demoteReasonMap[expert.id] !== undefined && (
+                            <input
+                              type="text"
+                              placeholder="Reason (min 10 chars)..."
+                              value={demoteReasonMap[expert.id] ?? ""}
+                              onChange={(e) => setDemoteReasonMap({ ...demoteReasonMap, [expert.id]: e.target.value })}
+                              className="w-48 border border-border rounded px-2 py-1 text-xs bg-background"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
+                        </div>
                       )}
 
                       {expert.user?.id && (
@@ -323,6 +406,73 @@ export function ExpertManagementTab({
   return (
     <div className="space-y-8">
       {pendingExperts.length > 0 && renderExpertList(pendingExperts, true)}
+
+      {/* Elite Applications */}
+      {eliteApplications.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-purple-500/20 bg-purple-500/5">
+          <div className="px-6 py-3 border-b border-purple-500/20 bg-purple-500/10 flex items-center gap-2">
+            <Crown className="w-4 h-4 text-purple-500" />
+            <h3 className="font-bold text-purple-500">Elite Applications ({eliteApplications.length})</h3>
+          </div>
+          <div className="divide-y divide-purple-500/10">
+            {eliteApplications.map((app) => (
+              <div key={app.id} className="px-6 py-4 flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm">{app.displayName || app.legalFullName || "Unknown"}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {app.user.email} · {app.completedSalesCount} sales · Tier: {app.tier || "STANDARD"}
+                    {app.isFoundingExpert && " · Founding"}
+                  </p>
+                  {app.tools?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {app.tools.slice(0, 5).map((t) => (
+                        <span key={t} className="text-[10px] px-1.5 py-0.5 bg-secondary rounded border border-white/5">{t}</span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Applied: {app.eliteAppliedAt ? new Date(app.eliteAppliedAt).toLocaleDateString() : "—"}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onApproveElite?.(app.id)}
+                      className="px-3 py-1 bg-purple-500 text-white font-bold rounded text-xs hover:bg-purple-400"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => {
+                        const reason = denyReasonMap[app.id];
+                        if (!reason || reason.trim().length < 10) {
+                          setDenyReasonMap({ ...denyReasonMap, [app.id]: denyReasonMap[app.id] ?? "" });
+                          return;
+                        }
+                        onDenyElite?.(app.id, reason);
+                        setDenyReasonMap((m) => { const n = { ...m }; delete n[app.id]; return n; });
+                      }}
+                      className="px-3 py-1 border border-border rounded text-xs hover:bg-secondary"
+                    >
+                      Deny
+                    </button>
+                  </div>
+                  {denyReasonMap[app.id] !== undefined && (
+                    <input
+                      type="text"
+                      placeholder="Reason (min 10 chars)..."
+                      value={denyReasonMap[app.id] ?? ""}
+                      onChange={(e) => setDenyReasonMap({ ...denyReasonMap, [app.id]: e.target.value })}
+                      className="w-56 border border-border rounded px-2 py-1 text-xs bg-background"
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input

@@ -604,7 +604,7 @@ Understanding how escrow works builds confidence in using the platform. Here are
   {
     slug: "pricing",
     title: `${BRAND_NAME} Pricing: Transparent Fees for Businesses and Automation Experts`,
-    description: `Complete pricing breakdown for ${BRAND_NAME}. Discovery Scans (€50), Custom Projects (€100 posting fee), expert commission tiers (15% to 11%), escrow protection, refund policies, and zero hidden fees. Transparent pricing for both sides of the marketplace.`,
+    description: `Complete pricing breakdown for ${BRAND_NAME}. Discovery Scans (€50), Custom Projects (€100 posting fee), expert commission tiers (16% to 11%), escrow protection, refund policies, and zero hidden fees. Transparent pricing for both sides of the marketplace.`,
     keywords: ["pricing", "fees", "commission", "escrow", "refund", "automation marketplace pricing", "automation expert commission", "Discovery Scan cost", "Custom Project cost", "marketplace fees", "transparent pricing", "no hidden fees", "automation platform cost"],
     content: `
 Pricing confusion kills trust. When buyers do not know the total cost upfront, they hesitate. When experts do not know what percentage the platform takes, they under-price or avoid the platform entirely. ${BRAND_NAME} is built on radical pricing transparency: every fee is documented, no charges are hidden, and both sides of the marketplace know exactly what they pay and what they receive.
@@ -693,7 +693,7 @@ ${BRAND_NAME} charges a commission (percentage) on each completed sale. This is 
 - The platform commission is deducted
 - The remaining amount is transferred to your connected Stripe account
 
-**Example:** A buyer approves a €1,000 milestone. At a 15% commission rate, €150 goes to the platform and €850 goes to you. At a 12% commission rate, €120 goes to the platform and €880 goes to you.
+**Example:** A buyer approves a €1,000 milestone. At a 16% commission rate, €160 goes to the platform and €840 goes to you. At a 12% commission rate, €120 goes to the platform and €880 goes to you.
 
 ### Commission tiers: rewarding loyalty and performance
 
@@ -701,9 +701,9 @@ Commission rates decrease as you complete more sales on the platform. This rewar
 
 | Tier | Commission rate | Qualification | Description |
 |---|---|---|---|
-| Standard | 15% | New experts (0-4 completed sales) | Starting rate for all new experts |
-| Proven | 13% | After 5 completed sales | Demonstrated track record on the platform |
-| Elite | 12% | After 10 completed sales | Established expert with strong client history |
+| Standard | 16% | New experts (0-4 completed sales) | Starting rate for all new experts |
+| Proven | 14% | After 5 completed sales | Demonstrated track record on the platform |
+| Elite | 12% | Application-based (10+ sales, quality criteria) | Established expert with strong client history |
 | Founder | 11% | First 20 experts on the platform | Lifetime rate for early adopters (limited) |
 
 **How tier advancement works:**
@@ -719,7 +719,7 @@ Commission rates decrease as you complete more sales on the platform. This rewar
 
 | Platform / approach | Fee structure | Effective rate |
 |---|---|---|
-| ${BRAND_NAME} (Standard) | 15% commission, no other fees | 15% |
+| ${BRAND_NAME} (Standard) | 16% commission, no other fees | 16% |
 | ${BRAND_NAME} (Elite) | 12% commission, no other fees | 12% |
 | ${BRAND_NAME} (Founder) | 11% commission, no other fees | 11% |
 | Upwork | 10% service fee + payment processing | 10-13% effective |
@@ -789,7 +789,7 @@ Solution refund policies are set by the individual expert and disclosed on the s
 
 ### For experts
 
-**Fair take rate.** At 12 to 15%, ${BRAND_NAME}'s commission is lower than most marketplace alternatives and dramatically lower than agency models. You keep the majority of every euro you earn.
+**Fair take rate.** At 12 to 16%, ${BRAND_NAME}'s commission is lower than most marketplace alternatives and dramatically lower than agency models. You keep the majority of every euro you earn.
 
 **Earned reduction.** Commission rates decrease as you build your track record. This rewards loyalty and performance, and it incentivises experts to deliver excellent work (which leads to more sales and lower rates).
 
@@ -814,7 +814,7 @@ Solution refund policies are set by the individual expert and disclosed on the s
     relatedSlugs: ["how-escrow-works", "invoicing", "custom-project-explained", "discovery-scan-explained"],
     faqs: [
       { question: "How much does it cost to use LogicLot as a business?", answer: "Businesses pay zero platform fees on project payments. The only costs are: Discovery Scan posting fee (€50, one-time, 75% refundable if no suitable proposals, credited toward your first project) or Custom Project posting fee (€100, same refund and credit terms). You then pay the expert's quoted price for the project with no markup. All payments are escrow-protected at no additional cost." },
-      { question: "What are the expert commission rates on LogicLot?", answer: "Commission rates decrease with completed sales: Standard 15% (0-4 sales), Proven 13% (5+ sales), Elite 12% (10+ sales), Founder 11% (first 20 experts, lifetime rate). There are no listing fees, proposal fees, subscription fees, or monthly charges. The platform only earns when experts earn." },
+      { question: "What are the expert commission rates on LogicLot?", answer: "Commission rates decrease with completed sales: Standard 16% (0-4 sales), Proven 14% (5+ sales), Elite 12% (application-based, 10+ sales), Founder 11% (first 20 experts, lifetime rate). There are no listing fees, proposal fees, subscription fees, or monthly charges. The platform only earns when experts earn." },
       { question: "Are there any hidden fees on LogicLot?", answer: "No. The fees documented on the pricing page are the only fees that exist. There are no setup fees, annual fees, inactivity fees, buyer markup fees, withdrawal fees, or premium tier requirements. Businesses pay posting fees plus the expert's quoted price. Experts pay a commission on completed sales. That is the complete fee structure." },
       { question: "How does the 75% refund policy work?", answer: "If you post a Discovery Scan (€50) or Custom Project (€100) and no proposal meets your criteria (proposals were not received, not adequate, or not actionable), you receive a 75% refund. If you received actionable proposals but chose not to proceed, the posting fee is non-refundable because experts invested time in analysis and proposal writing." },
     ],

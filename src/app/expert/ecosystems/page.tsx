@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Plus, Package, Edit, Eye, Lock } from "lucide-react";
-import { getExpertEcosystems } from "@/actions/ecosystems";
+import { Plus, Package, Edit, Eye, Lock, Send } from "lucide-react";
+import { getExpertEcosystems, getMyPendingInvites } from "@/actions/ecosystems";
 import { DeleteEcosystemButton } from "@/components/ecosystems/DeleteEcosystemButton";
+import { SuiteInviteManager } from "@/components/ecosystems/SuiteInviteManager";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -73,7 +74,10 @@ export default async function ExpertEcosystemsPage() {
     );
   }
 
-  const ecosystems = await getExpertEcosystems();
+  const [ecosystems, pendingInvites] = await Promise.all([
+    getExpertEcosystems(),
+    getMyPendingInvites(),
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -91,6 +95,19 @@ export default async function ExpertEcosystemsPage() {
           <Plus className="w-4 h-4" /> Create Suite
         </Link>
       </div>
+
+      {/* Partnership invites section */}
+      {pendingInvites.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            Partnership Invites
+            <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              {pendingInvites.length}
+            </span>
+          </h2>
+          <SuiteInviteManager invites={pendingInvites} />
+        </div>
+      )}
 
       {ecosystems.length === 0 ? (
         <div className="text-center py-12 bg-card border border-border rounded-xl">
@@ -124,6 +141,11 @@ export default async function ExpertEcosystemsPage() {
                       {eco.isPublished ? "Published" : "Draft"}
                     </span>
                     <span className="text-xs text-muted-foreground">{eco.items.length} Solutions</span>
+                    {eco.invites.length > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 flex items-center gap-1">
+                        <Send className="w-2.5 h-2.5" /> {eco.invites.length} pending
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

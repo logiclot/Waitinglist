@@ -7,10 +7,10 @@ import {
   formatCentsToCurrency,
   TIER_THRESHOLDS,
   SALES_THRESHOLDS,
-  type Expert,
+  type CommissionExpert,
 } from "@/lib/commission";
 
-function makeExpert(overrides: Partial<Expert> = {}): Expert {
+function makeExpert(overrides: Partial<CommissionExpert> = {}): CommissionExpert {
   return {
     id: "test-id",
     name: "Test Expert",
@@ -48,16 +48,20 @@ describe("getExpertTierLabel", () => {
     expect(getExpertTierLabel(makeExpert({ completed_sales_count: SALES_THRESHOLDS.PROVEN }))).toBe("proven");
   });
 
-  it("returns 'proven' for 9 sales (below ELITE threshold)", () => {
+  it("returns 'proven' for 9 sales (below ELITE threshold, no DB tier)", () => {
     expect(getExpertTierLabel(makeExpert({ completed_sales_count: 9 }))).toBe("proven");
   });
 
-  it(`returns 'elite' at exactly ${SALES_THRESHOLDS.ELITE} sales`, () => {
-    expect(getExpertTierLabel(makeExpert({ completed_sales_count: SALES_THRESHOLDS.ELITE }))).toBe("elite");
+  it("returns 'elite' when DB tier is ELITE", () => {
+    expect(getExpertTierLabel(makeExpert({ tier: "ELITE", completed_sales_count: 10 }))).toBe("elite");
   });
 
-  it("returns 'elite' for 100 sales", () => {
-    expect(getExpertTierLabel(makeExpert({ completed_sales_count: 100 }))).toBe("elite");
+  it("returns 'proven' for 10+ sales WITHOUT Elite DB tier (application-based)", () => {
+    expect(getExpertTierLabel(makeExpert({ completed_sales_count: 10 }))).toBe("proven");
+  });
+
+  it("returns 'elite' for ELITE DB tier regardless of sales count", () => {
+    expect(getExpertTierLabel(makeExpert({ tier: "ELITE", completed_sales_count: 5 }))).toBe("elite");
   });
 });
 
@@ -72,8 +76,12 @@ describe("getCommissionPercent", () => {
     expect(getCommissionPercent(makeExpert({ completed_sales_count: SALES_THRESHOLDS.PROVEN }))).toBe(TIER_THRESHOLDS.PROVEN);
   });
 
-  it("returns ELITE fee for an expert with 10+ sales", () => {
-    expect(getCommissionPercent(makeExpert({ completed_sales_count: SALES_THRESHOLDS.ELITE }))).toBe(TIER_THRESHOLDS.ELITE);
+  it("returns PROVEN fee (not ELITE) for 10+ sales without Elite DB tier", () => {
+    expect(getCommissionPercent(makeExpert({ completed_sales_count: SALES_THRESHOLDS.ELITE }))).toBe(TIER_THRESHOLDS.PROVEN);
+  });
+
+  it("returns ELITE fee when DB tier is ELITE", () => {
+    expect(getCommissionPercent(makeExpert({ tier: "ELITE", completed_sales_count: 10 }))).toBe(TIER_THRESHOLDS.ELITE);
   });
 
   it("returns FOUNDING fee for a founding expert (isFoundingExpert)", () => {
@@ -103,18 +111,23 @@ describe("getCommissionPercent", () => {
     expect(TIER_THRESHOLDS.PROVEN).toBeGreaterThan(TIER_THRESHOLDS.ELITE);
     expect(TIER_THRESHOLDS.ELITE).toBeGreaterThan(TIER_THRESHOLDS.FOUNDING);
   });
+
+  it("uses DB tier PROVEN over sales-count fallback", () => {
+    const expert = makeExpert({ tier: "PROVEN", completed_sales_count: 2 });
+    expect(getCommissionPercent(expert)).toBe(TIER_THRESHOLDS.PROVEN);
+  });
 });
 
 // ── computePlatformFeeCents ───────────────────────────────────────────────────
 
 describe("computePlatformFeeCents", () => {
-  it("computes 15% correctly on a round number", () => {
-    expect(computePlatformFeeCents(10_000, 15)).toBe(1_500);
+  it("computes 16% correctly on a round number", () => {
+    expect(computePlatformFeeCents(10_000, 16)).toBe(1_600);
   });
 
   it("rounds correctly at half-cent boundaries", () => {
-    // 10_001 * 0.15 = 1500.15 → rounds to 1500
-    expect(computePlatformFeeCents(10_001, 15)).toBe(1500);
+    // 10_001 * 0.16 = 1600.16 → rounds to 1600
+    expect(computePlatformFeeCents(10_001, 16)).toBe(1600);
   });
 
   it("returns 0 fee for 0% commission (free period)", () => {
@@ -131,7 +144,7 @@ describe("computePlatformFeeCents", () => {
 describe("computeExpertPayoutCents", () => {
   it("payout + fee always equals the full price", () => {
     const price = 75_000;
-    const percent = 13;
+    const percent = 14;
     const fee = computePlatformFeeCents(price, percent);
     const payout = computeExpertPayoutCents(price, percent);
     expect(fee + payout).toBe(price);

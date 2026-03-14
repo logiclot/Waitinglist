@@ -89,6 +89,9 @@ export default async function EditSolutionPage({ params }: { params: { id: strin
 
     demoVideoUrl: solution.demoVideoUrl || "",
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    skills: ((solution as any).skills as { name: string; description: string }[]) || [],
+
     proofEnabled: !!solution.proofType,
     proofType: solution.proofType || undefined,
     proofContent: solution.proofContent || undefined,

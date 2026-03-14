@@ -48,14 +48,14 @@ export default function PrivacyPage() {
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3">5. Your rights (GDPR)</h2>
         <p className="text-muted-foreground leading-relaxed">
-          You have the right to access, correct, delete, or export your data. Contact us at <a href="mailto:privacy@logiclot.io" className="text-primary hover:underline">privacy@logiclot.io</a>. You may also lodge a complaint with your data protection authority.
+          You have the right to access, correct, delete, or export your data. Contact us at <a href="mailto:contact@logiclot.io" className="text-primary hover:underline">contact@logiclot.io</a>. You may also lodge a complaint with your data protection authority.
         </p>
       </section>
 
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3">6. Contact</h2>
         <p className="text-muted-foreground leading-relaxed">
-          Privacy inquiries: <a href="mailto:privacy@logiclot.io" className="text-primary hover:underline">privacy@logiclot.io</a>
+          Privacy inquiries: <a href="mailto:contact@logiclot.io" className="text-primary hover:underline">contact@logiclot.io</a>
         </p>
       </section>
     </div>

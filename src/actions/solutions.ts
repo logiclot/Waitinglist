@@ -182,7 +182,7 @@ export async function publishSolution(solutionId: string) {
     if (hasVideo) {
       await createNotification(
         session.user.id,
-        "Solution published — video under review",
+        "🚀 Solution published — video under review",
         `Your solution "${solution.title}" is now live! The demo video is pending admin approval and will appear on your listing once approved.`,
         "success",
         `/solutions/${solutionId}`,
@@ -205,7 +205,7 @@ export async function publishSolution(solutionId: string) {
       await Promise.all(previousOrders.map(order => 
         createNotification(
           order.buyerId,
-          "New Version Available",
+          "🆕 New Version Available",
           `A new version (v${solution.version}) of "${solution.title}" is available. Check out the upgrade.`,
           "info",
           `/solutions/${solution.id}`
@@ -237,7 +237,7 @@ export async function publishSolution(solutionId: string) {
 
         await createNotification(
           session.user.id,
-          "Founding Expert Status Confirmed!",
+          "🏅 Founding Expert Status Confirmed!",
           "You have unlocked 11% platform fees for life.",
           "success",
           "/dashboard"
@@ -342,5 +342,37 @@ export async function createSolutionVersion(solutionId: string, changelog: strin
     log.error("solutions.create_version_failed", { error: e instanceof Error ? e.message : String(e) });
     Sentry.captureException(e);
     return { error: "Failed to create new version" };
+  }
+}
+
+export async function getCategorySaturation(): Promise<{ category: string; count: number }[]> {
+  const results = await prisma.solution.groupBy({
+    by: ["category"],
+    where: { status: "published" },
+    _count: { id: true },
+  });
+  return results.map((r) => ({ category: r.category, count: r._count.id }));
+}
+
+/**
+ * Count published solutions for the current expert.
+ * Used by the Sidebar to determine Suites lock state.
+ */
+export async function getPublishedSolutionCount(): Promise<number> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || session.user.role !== "EXPERT") return 0;
+
+    const expert = await prisma.specialistProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+    if (!expert) return 0;
+
+    return prisma.solution.count({
+      where: { expertId: expert.id, status: "published" },
+    });
+  } catch {
+    return 0;
   }
 }

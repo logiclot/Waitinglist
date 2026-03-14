@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { createNotification, wasRecentlyNotified } from "@/lib/notifications";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
+import { stripe } from "@/lib/stripe";
+import type { Milestone } from "@/types";
+import type { Prisma } from "@prisma/client";
 
 // Vercel Cron: runs twice daily (9am and 4pm UTC) — see vercel.json
 // Secured via CRON_SECRET env var
@@ -10,11 +13,12 @@ export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const results: Record<string, number> = {
+    autoRefunded: 0,
     proposalsWaiting: 0,
     zeroBidJobs: 0,
     deliveredOrders: 0,
@@ -29,6 +33,120 @@ export async function GET(request: Request) {
     const h48 = new Date(now.getTime() - 48 * 60 * 60 * 1000);
     const h72 = new Date(now.getTime() - 72 * 60 * 60 * 1000);
     const d5 = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+
+    // ─────────────────────────────────────────────
+    // AUTO-REFUND: Orders not accepted within 48h
+    // ─────────────────────────────────────────────
+    const staleOrders = await prisma.order.findMany({
+      where: {
+        status: "paid_pending_implementation",
+        createdAt: { lt: h48 },
+        acceptedAt: null,
+      },
+      include: {
+        seller: { include: { user: { select: { id: true } } } },
+        conversations: { select: { id: true }, take: 1 },
+      },
+    });
+
+    for (const order of staleOrders) {
+      try {
+        const milestones = (order.milestones as unknown as Milestone[]) || [];
+        const conversationId = order.conversations[0]?.id;
+
+        // Revert funded milestones back to pending_payment
+        const updatedMilestones = milestones.map((m) => ({
+          ...m,
+          status: m.status === "in_escrow" ? "pending_payment" : m.status,
+          fundedAt: m.status === "in_escrow" ? null : m.fundedAt,
+        }));
+
+        // Issue Stripe refund for each funded milestone
+        for (const m of milestones) {
+          if (m.status === "in_escrow" && m.stripePaymentIntentId) {
+            try {
+              await stripe.refunds.create({ payment_intent: m.stripePaymentIntentId });
+            } catch (refundErr) {
+              log.error("cron.auto_refund_stripe_failed", {
+                orderId: order.id,
+                pi: m.stripePaymentIntentId,
+                err: String(refundErr),
+              });
+            }
+          }
+        }
+
+        // Fallback: refund order-level PaymentIntent if no per-milestone PI
+        const hasPerMilestonePi = milestones.some((m) => m.stripePaymentIntentId);
+        if (!hasPerMilestonePi && order.stripePaymentIntentId) {
+          try {
+            await stripe.refunds.create({ payment_intent: order.stripePaymentIntentId });
+          } catch (refundErr) {
+            log.error("cron.auto_refund_stripe_fallback_failed", {
+              orderId: order.id,
+              pi: order.stripePaymentIntentId,
+              err: String(refundErr),
+            });
+          }
+        }
+
+        const txOps: Prisma.PrismaPromise<unknown>[] = [
+          prisma.order.update({
+            where: { id: order.id },
+            data: {
+              status: "refunded",
+              refundedAt: new Date(),
+              milestones: updatedMilestones as unknown as Prisma.InputJsonValue,
+            },
+          }),
+        ];
+
+        // System message in conversation
+        if (conversationId) {
+          txOps.push(
+            prisma.message.create({
+              data: {
+                conversationId,
+                senderId: order.buyerId,
+                type: "system",
+                body: "We're sorry, but we couldn't reach the expert within 48 hours. Your payment has been fully refunded. We sincerely apologize for the inconvenience and have penalized the expert. Thank you for your understanding.",
+              },
+            })
+          );
+        }
+
+        await prisma.$transaction(txOps);
+
+        // Notify buyer
+        await createNotification(
+          order.buyerId,
+          "💸 Order auto-refunded",
+          "The expert did not accept your order within 48 hours. Your payment has been fully refunded.",
+          "alert",
+          "/business/projects"
+        );
+
+        // Notify expert
+        if (order.seller?.user?.id) {
+          await createNotification(
+            order.seller.user.id,
+            "⏰ Missed order — auto-refunded",
+            "A customer order was auto-refunded because you did not accept it within 48 hours. Please check your projects regularly to avoid missing orders.",
+            "alert",
+            "/dashboard/projects"
+          );
+        }
+
+        results.autoRefunded++;
+        log.info("cron.auto_refund_completed", { orderId: order.id });
+      } catch (orderErr) {
+        log.error("cron.auto_refund_order_failed", {
+          orderId: order.id,
+          err: String(orderErr),
+        });
+        Sentry.captureException(orderErr);
+      }
+    }
 
     // ─────────────────────────────────────────────
     // BUSINESS NOTIFICATIONS
@@ -55,7 +173,7 @@ export async function GET(request: Request) {
 
     for (const job of jobsWithPendingBids) {
       const bidCount = job.bids.length;
-      const title = "Proposals waiting for your review";
+      const title = "📩 Proposals waiting for your review";
       const alreadyNotified = await wasRecentlyNotified(job.buyerId, title);
       if (alreadyNotified) continue;
 
@@ -79,7 +197,7 @@ export async function GET(request: Request) {
     });
 
     for (const job of zeroBidJobs) {
-      const title = "Your project is live — tip to attract more proposals";
+      const title = "💡 Your project is live — tip to attract more proposals";
       const alreadyNotified = await wasRecentlyNotified(job.buyerId, title);
       if (alreadyNotified) continue;
 
@@ -107,7 +225,7 @@ export async function GET(request: Request) {
     });
 
     for (const order of deliveredOrders) {
-      const title = "Your project is ready for final sign-off";
+      const title = "📋 Your project is ready for final sign-off";
       const alreadyNotified = await wasRecentlyNotified(order.buyerId, title);
       if (alreadyNotified) continue;
 
@@ -139,7 +257,7 @@ export async function GET(request: Request) {
 
     for (const bid of staleBids) {
       const userId = bid.specialist.userId;
-      const title = "Your proposal is still under review";
+      const title = "⏳ Your proposal is still under review";
       const alreadyNotified = await wasRecentlyNotified(userId, title);
       if (alreadyNotified) continue;
 
@@ -162,7 +280,7 @@ export async function GET(request: Request) {
         user: {
           notifications: {
             none: {
-              title: "Add a solution to get discovered",
+              title: "🚀 Add a solution to get discovered",
               createdAt: { gte: d5 },
             },
           },
@@ -174,7 +292,7 @@ export async function GET(request: Request) {
     for (const expert of expertsWithNoSolutions) {
       await createNotification(
         expert.userId,
-        "Add a solution to get discovered",
+        "🚀 Add a solution to get discovered",
         "Experts with at least one published solution receive 3x more profile views. It takes less than 10 minutes and puts you in front of buyers browsing the Solution Library right now.",
         "info",
         `/expert/solutions/new`
@@ -213,7 +331,7 @@ export async function GET(request: Request) {
 
         if (unbidJobs.length === 0) continue;
 
-        const title = `${unbidJobs.length} new project${unbidJobs.length > 1 ? "s" : ""} in the marketplace`;
+        const title = `🔔 ${unbidJobs.length} new project${unbidJobs.length > 1 ? "s" : ""} in the marketplace`;
         const alreadyNotified = await wasRecentlyNotified(expert.userId, title);
         if (alreadyNotified) continue;
 

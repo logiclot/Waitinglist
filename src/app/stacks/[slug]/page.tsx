@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { getEcosystemBySlug } from "@/actions/ecosystems";
 import { StackCTA } from "@/components/ecosystems/StackCTA";
-import { Clock, HelpCircle, Layers } from "lucide-react";
+import { SuiteDetailSolutionCard } from "@/components/ecosystems/SuiteDetailSolutionCard";
+import { HelpCircle, Layers, Shield, Tag, Wrench } from "lucide-react";
+import { formatCentsToCurrency } from "@/lib/commission";
 import Link from "next/link";
 
 interface PageProps {
@@ -26,9 +28,39 @@ export default async function StackDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  // Compute partner experts for attribution
+  const uniquePartners = new Map<string, { id: string; displayName: string; slug: string }>();
+  for (const item of ecosystem.items) {
+    const expert = item.solution.expert;
+    if (expert && expert.id !== ecosystem.expertId) {
+      uniquePartners.set(expert.id, expert);
+    }
+  }
+  const partnerExperts = Array.from(uniquePartners.values());
+  const hasPartners = partnerExperts.length > 0;
+
+  // Bundle discount & extended support computations
+  const totalPriceCents = ecosystem.items.reduce(
+    (sum: number, item: { solution: { implementationPriceCents: number } }) =>
+      sum + item.solution.implementationPriceCents,
+    0
+  );
+  const hasBundleDiscount =
+    ecosystem.bundlePriceCents != null &&
+    ecosystem.bundlePriceCents < totalPriceCents;
+  const savingsCents = hasBundleDiscount
+    ? totalPriceCents - ecosystem.bundlePriceCents!
+    : 0;
+  const savingsPercent = hasBundleDiscount
+    ? Math.round((savingsCents / totalPriceCents) * 100)
+    : 0;
+  const hasExtendedSupport =
+    ecosystem.extSupport6mCents != null ||
+    ecosystem.extSupport12mCents != null;
+
   return (
     <div className="min-h-screen pb-20">
-      <div className="bg-secondary/30 border-b border-border py-12">
+      <div className="bg-gradient-to-b from-secondary/40 to-secondary/10 border-b border-border py-14">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl">
             <div className="flex items-center gap-3 mb-4">
@@ -38,59 +70,74 @@ export default async function StackDetailPage({ params }: PageProps) {
               <span className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                 <Layers className="w-4 h-4" /> {ecosystem.items.length} Solutions
               </span>
+              {hasPartners && (
+                <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  {partnerExperts.length + 1} Experts
+                </span>
+              )}
+              {!hasPartners && ecosystem.items.length > 1 && (
+                <span className="relative group/badge" title="Single Provider">
+                  <Shield className="w-5 h-5 text-amber-500 fill-amber-100" />
+                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-[10px] font-semibold text-white bg-neutral-800 rounded whitespace-nowrap opacity-0 group-hover/badge:opacity-100 transition-opacity pointer-events-none">
+                    Single Provider
+                  </span>
+                </span>
+              )}
             </div>
             <h1 className="text-3xl md:text-5xl font-bold mb-4">{ecosystem.title}</h1>
             <p className="text-xl text-muted-foreground max-w-2xl">
               {ecosystem.shortPitch}
             </p>
+
+            {/* Info pills */}
+            <div className="mt-6 flex flex-wrap gap-3 max-w-2xl">
+              {!hasPartners && ecosystem.items.length > 1 && (
+                <div className="inline-flex items-center gap-2 bg-neutral-900 text-white/90 rounded-lg px-4 py-2.5">
+                  <Shield className="w-4 h-4 text-white/70 shrink-0" />
+                  <span className="text-sm font-medium">
+                    Single provider &mdash; delivered by {ecosystem.expert.displayName}
+                  </span>
+                </div>
+              )}
+              {hasBundleDiscount && (
+                <div className="inline-flex items-center gap-2 bg-neutral-900 text-white/90 rounded-lg px-4 py-2.5">
+                  <Tag className="w-4 h-4 text-white/70 shrink-0" />
+                  <span className="text-sm font-medium">
+                    Save {formatCentsToCurrency(savingsCents)} ({savingsPercent}% off) as a bundle
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          
+
           {/* Main Content */}
           <div className="lg:col-span-8 space-y-12">
-            
+
             {/* Included Solutions */}
             <section>
-              <h2 className="text-2xl font-bold mb-6">Included Solutions</h2>
+              <h2 className="text-2xl font-bold mb-2">Included Solutions</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Click any solution to expand details, demo video, and scope.
+              </p>
               <div className="space-y-8">
                 {ecosystem.items.map((item, index) => (
-                  <div key={item.id} className="relative pl-8 border-l-2 border-border pb-8 last:pb-0 last:border-l-0">
-                    <div className="absolute -left-[11px] top-0 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
-                      {index + 1}
-                    </div>
-                    
-                    <div className="bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors">
-                      <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                        <div>
-                          <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
-                            <Link href={`/solutions/${item.solution.slug}`} className="hover:underline hover:text-primary">
-                              {item.solution.title}
-                            </Link>
-                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                              v{item.solution.version || 1}.0
-                            </span>
-                          </h3>
-                          <p className="text-sm text-muted-foreground">{item.solution.shortSummary}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-bold text-lg">€{(item.solution.implementationPriceCents / 100).toLocaleString("de-DE")}</div>
-                          <div className="text-xs text-muted-foreground flex items-center justify-end gap-1">
-                            <Clock className="w-3 h-3" /> {item.solution.deliveryDays} days
-                          </div>
-                        </div>
-                      </div>
-                      
-                    </div>
-                  </div>
+                  <SuiteDetailSolutionCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    ecosystemExpertId={ecosystem.expertId}
+                    isLast={index === ecosystem.items.length - 1}
+                  />
                 ))}
               </div>
             </section>
 
-            {/* 3. FAQ */}
+            {/* FAQ */}
             <section>
               <h2 className="text-2xl font-bold mb-6">FAQ before you buy</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -110,30 +157,131 @@ export default async function StackDetailPage({ params }: PageProps) {
                   <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
                     <HelpCircle className="w-4 h-4 text-primary" /> Is there a discount?
                   </h4>
-                  <p className="text-sm text-muted-foreground">Experts often provide better support and integration when you use their recommended suite.</p>
+                  <p className="text-sm text-muted-foreground">
+                    {hasBundleDiscount
+                      ? `Yes! This suite includes a ${savingsPercent}% bundle discount — you save ${formatCentsToCurrency(savingsCents)} compared to buying each solution individually.`
+                      : "Experts often provide better support and integration when you use their recommended suite."}
+                  </p>
                 </div>
+                {hasPartners && (
+                  <div className="bg-card border border-border p-4 rounded-lg">
+                    <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                      <HelpCircle className="w-4 h-4 text-primary" /> Multiple experts?
+                    </h4>
+                    <p className="text-sm text-muted-foreground">This suite includes solutions from multiple experts. Each solution is purchased from and delivered by its listed expert.</p>
+                  </div>
+                )}
               </div>
             </section>
+
+            {/* Extended Support Section */}
+            {hasExtendedSupport && (
+              <section>
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <Wrench className="w-6 h-6 text-primary" /> Extended Support
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Keep your automation running smoothly with ongoing expert support beyond the standard delivery period.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {ecosystem.extSupport6mCents != null && (
+                    <div className="bg-card border border-border rounded-xl p-6 hover:border-primary/30 transition-colors">
+                      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                        6-Month Support
+                      </div>
+                      <div className="text-2xl font-bold text-foreground mb-1">
+                        {formatCentsToCurrency(ecosystem.extSupport6mCents)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatCentsToCurrency(Math.round(ecosystem.extSupport6mCents / 6))}/month
+                      </div>
+                    </div>
+                  )}
+                  {ecosystem.extSupport12mCents != null && (
+                    <div className="bg-card border-2 border-primary/30 rounded-xl p-6 relative">
+                      <span className="absolute -top-2.5 right-4 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Best Value
+                      </span>
+                      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                        12-Month Support
+                      </div>
+                      <div className="text-2xl font-bold text-foreground mb-1">
+                        {formatCentsToCurrency(ecosystem.extSupport12mCents)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatCentsToCurrency(Math.round(ecosystem.extSupport12mCents / 12))}/month
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {ecosystem.extSupportDescription && (
+                  <div className="mt-4 bg-secondary/30 border border-border rounded-lg p-4">
+                    <h4 className="font-bold text-sm mb-2">What&apos;s Included</h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">
+                      {ecosystem.extSupportDescription}
+                    </p>
+                  </div>
+                )}
+              </section>
+            )}
 
           </div>
 
           {/* Right Sidebar */}
           <div className="lg:col-span-4">
             <div className="sticky top-24 space-y-8">
-              <StackCTA ecosystem={ecosystem} />
-              
+              <StackCTA
+                ecosystem={ecosystem}
+                bundlePriceCents={ecosystem.bundlePriceCents}
+                extSupport6mCents={ecosystem.extSupport6mCents}
+                extSupport12mCents={ecosystem.extSupport12mCents}
+              />
+
               <div>
-                <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wider mb-4">Created by</h4>
-                <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold">
-                    {ecosystem.expert.displayName[0]}
+                <h4 className="font-bold text-sm text-muted-foreground uppercase tracking-wider mb-4">
+                  {hasPartners ? "Contributing Experts" : !hasPartners && ecosystem.items.length > 1 ? "Your Delivery Team" : "Created by"}
+                </h4>
+                <div className="space-y-3">
+                  {/* Single provider narrative card */}
+                  {!hasPartners && ecosystem.items.length > 1 && (
+                    <div className="bg-neutral-900 text-white rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Shield className="w-4 h-4 text-white/70" />
+                        <span className="text-xs font-bold text-white/80 uppercase tracking-wider">Single Provider</span>
+                      </div>
+                      <p className="text-xs text-white/60">
+                        All {ecosystem.items.length} solutions delivered by one team. Single point of contact throughout the project.
+                      </p>
+                    </div>
+                  )}
+                  {/* Suite owner */}
+                  <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold">
+                      {ecosystem.expert.displayName[0]}
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm">{ecosystem.expert.displayName}</div>
+                      <Link href={`/experts/${ecosystem.expert.slug}`} className="text-xs text-primary hover:underline">
+                        {hasPartners ? "Suite Owner" : "View Profile"}
+                      </Link>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-bold text-sm">{ecosystem.expert.displayName}</div>
-                    <Link href={`/experts/${ecosystem.expert.slug}`} className="text-xs text-primary hover:underline">
-                      View Profile
-                    </Link>
-                  </div>
+                  {/* Partner experts */}
+                  {partnerExperts.map((pe) => (
+                    <div key={pe.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center font-bold text-blue-600">
+                        {pe.displayName[0]}
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm">{pe.displayName}</div>
+                        <Link href={`/experts/${pe.slug}`} className="text-xs text-primary hover:underline">
+                          Contributing Expert
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

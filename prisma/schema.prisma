@@ -29,6 +29,7 @@ enum OrderStatus {
   paid_pending_implementation
   in_progress
   delivered
+  revision_requested
   approved
   refunded
   disputed
@@ -37,6 +38,8 @@ enum OrderStatus {
 enum MessageType {
   user
   system
+  bid_card
+  order_card
 }
 
 enum DemoVideoStatus {
@@ -117,6 +120,36 @@ model User {
   lastLoginAt           DateTime?
   loginDaysCount        Int       @default(0)
   referralCompletedAt   DateTime? // When the referral reward was granted to the referrer
+
+  // Invoice tracking
+  lastInvoiceViewedAt   DateTime? // When user last visited the Invoices tab (for unread badge)
+  // Jobs tracking (expert — unseen open jobs badge)
+  lastJobsViewedAt      DateTime? // When expert last visited Find Work (for new-jobs badge)
+
+  // OAuth account linking
+  accounts              Account[]
+}
+
+// NextAuth-standard Account model — tracks linked OAuth providers per user.
+// Allows a single user to sign in via Google, LinkedIn, or credentials without
+// creating duplicate DB rows. Prevents orphaned sessions when tokens expire.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String  // "oauth" | "credentials"
+  provider          String  // "google" | "linkedin" | "credentials"
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Notification {
@@ -131,6 +164,9 @@ model Notification {
   actionUrl String?
   
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
 }
 
 model BusinessProfile {
@@ -152,6 +188,11 @@ model BusinessProfile {
   billingEmail   String?  // New field for billing contact
   website        String?  // New field
   country        String?
+
+  // Invoice fields
+  invoiceAddress            String?  // Full billing address for invoices
+  invoiceVatNumber          String?  // VAT/Tax ID if applicable
+  invoiceRegistrationNumber String?  // Company registration number (e.g. CRO, KvK)
   
   // Onboarding Refinement fields
   businessPrimaryProblems String[]
@@ -212,7 +253,18 @@ model SpecialistProfile {
   foundingRank              Int?      @unique
   completedSalesCount       Int       @default(0)
   commissionOverridePercent Decimal?  @db.Decimal(5, 2)
-  
+
+  // Elite Application
+  eliteApplicationStatus    String?   // pending, approved, denied
+  eliteAppliedAt            DateTime?
+  eliteDeniedAt             DateTime?
+  eliteDeniedReason         String?
+  eliteDemotedAt            DateTime?
+  eliteDemotedReason        String?
+
+  // New Expert Boost
+  newExpertBoostUntil       DateTime? // 7 days after approval
+
   // Legal & Compliance
   legalStatus               String    @default("pending_acceptance") // pending_acceptance, accepted
   termsAcceptedAt           DateTime?
@@ -227,7 +279,7 @@ model SpecialistProfile {
   
   // Founding Expert Campaign
   isFoundingExpert          Boolean   @default(false)
-  platformFeePercentage     Int       @default(15)
+  platformFeePercentage     Int       @default(16)  // Denormalized cache of commission rate for display
 
   // Calendar
   calendarUrl               String?   // e.g. Calendly link
@@ -259,6 +311,8 @@ model SpecialistProfile {
   conversations             Conversation[] @relation("SellerConversations")
   bids                      Bid[]     @relation("SpecialistBids")
   ecosystems                Ecosystem[]
+  sentEcoInvites            EcosystemInvite[] @relation("SentEcoInvites")
+  receivedEcoInvites        EcosystemInvite[] @relation("ReceivedEcoInvites")
 }
 
 model EmailVerificationToken {
@@ -283,8 +337,8 @@ model PasswordResetToken {
 model Solution {
   id                            String    @id @default(uuid())
   expertId                      String
-  expert                        SpecialistProfile @relation(fields: [expertId], references: [id])
-  
+  expert                        SpecialistProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+
   slug                          String    @unique
   title                         String
   shortSummary                  String?
@@ -339,6 +393,9 @@ model Solution {
   // Milestones (V3)
   milestones                    Json?     // Array of { title, description, priceCents, deliveryTime }
 
+  // Skills — discrete capabilities the automation delivers
+  skills                        Json?     // Array of { name, description }
+
   // Versioning & Maintenance
   version                       Int       @default(1)
   changelog                     String?
@@ -364,6 +421,11 @@ model Solution {
   bids                          Bid[]
   savedByUsers                  SavedSolution[]
   ecosystemItems                EcosystemItem[]
+  ecosystemInvites              EcosystemInvite[]
+
+  @@index([expertId])
+  @@index([status])
+  @@index([expertId, status])
 }
 
 model Order {
@@ -375,7 +437,7 @@ model Order {
   seller          SpecialistProfile @relation("SellerOrders", fields: [sellerId], references: [id])
   
   solutionId      String?
-  solution        Solution?   @relation(fields: [solutionId], references: [id])
+  solution        Solution?   @relation(fields: [solutionId], references: [id], onDelete: SetNull)
 
   // For job-based orders (from accepted bid proposals)
   bidId           String?     @unique
@@ -385,13 +447,16 @@ model Order {
   status          OrderStatus @default(draft)
   
   deliveryNote    String?
-  
+  revisionNote    String?
+  revisionCount   Int       @default(0)
+
   // Milestones — Array of { title, description, priceCents, status, fundedAt, releasedAt }
   milestones      Json?
 
   // Stripe PaymentIntent ID — needed for refunds
   stripePaymentIntentId  String?
 
+  acceptedAt      DateTime?       // When expert accepted the order
   approvedAt      DateTime?
   refundedAt      DateTime?
   
@@ -401,6 +466,13 @@ model Order {
   conversations   Conversation[]
   review          Review?
   dispute         Dispute?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([buyerId, status])
+  @@index([sellerId, status])
+  @@index([solutionId])
 }
 
 // Double-blind review system
@@ -440,6 +512,9 @@ model Dispute {
   reason          String    @db.Text
   status          String    @default("open") // open, investigating, resolved
 
+  buyerStatement  String?   @db.Text  // Buyer's clarification / point of view
+  sellerStatement String?   @db.Text  // Expert's clarification / point of view
+
   adminNotes      String?   @db.Text
   resolution      String?   // full_refund, release_to_seller, partial_refund, dismissed
   resolutionNote  String?   @db.Text
@@ -459,8 +534,8 @@ model Conversation {
   seller          SpecialistProfile @relation("SellerConversations", fields: [sellerId], references: [id])
   
   solutionId      String?
-  solution        Solution?   @relation(fields: [solutionId], references: [id])
-  
+  solution        Solution?   @relation(fields: [solutionId], references: [id], onDelete: SetNull)
+
   orderId         String?
   order           Order?      @relation(fields: [orderId], references: [id])
 
@@ -470,9 +545,15 @@ model Conversation {
   status          String      @default("active") // active, pending, closed
   
   messages        Message[]
-  
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([orderId])
+  @@index([jobPostId])
+  @@index([solutionId])
 }
 
 model Message {
@@ -485,8 +566,11 @@ model Message {
   
   body            String
   type            MessageType   @default(user)
-  
+
   createdAt       DateTime      @default(now())
+
+  @@index([conversationId])
+  @@index([conversationId, createdAt])
 }
 
 // Jobs Feature
@@ -520,6 +604,10 @@ model JobPost {
 
   bids            Bid[]
   conversations   Conversation[]
+
+  @@index([buyerId])
+  @@index([status])
+  @@index([buyerId, status])
 }
 
 model Bid {
@@ -531,8 +619,8 @@ model Bid {
   specialist      SpecialistProfile @relation("SpecialistBids", fields: [specialistId], references: [id])
   
   solutionId      String?
-  solution        Solution?   @relation(fields: [solutionId], references: [id])
-  
+  solution        Solution?   @relation(fields: [solutionId], references: [id], onDelete: SetNull)
+
   message         String      @db.Text
   proposedApproach String?    @db.Text
   estimatedTime   String
@@ -550,6 +638,7 @@ model Bid {
   order           Order?
 
   @@unique([jobPostId, specialistId])
+  @@index([solutionId])
 }
 
 model SavedSolution {
@@ -578,8 +667,8 @@ model WaitlistSignup {
 model Ecosystem {
   id            String   @id @default(cuid())
   expertId      String
-  expert        SpecialistProfile @relation(fields: [expertId], references: [id])
-  
+  expert        SpecialistProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+
   title         String
   slug          String   @unique
   shortPitch    String   // 1-2 lines (max 140)
@@ -589,7 +678,15 @@ model Ecosystem {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Bundle discount — expert sets a custom total price lower than sum of parts
+  bundlePriceCents        Int?
+  // Extended support packages — flat price per tier (6 or 12 months)
+  extSupport6mCents       Int?
+  extSupport12mCents      Int?
+  extSupportDescription   String?  // What extended support includes
+
   items         EcosystemItem[]
+  invites       EcosystemInvite[]
 }
 
 // Feedback (free text, 3 per day per user)
@@ -623,10 +720,31 @@ model EcosystemItem {
   createdAt   DateTime @default(now())
 
   ecosystem   Ecosystem @relation(fields: [ecosystemId], references: [id], onDelete: Cascade)
-  solution    Solution  @relation(fields: [solutionId], references: [id])
+  solution    Solution  @relation(fields: [solutionId], references: [id], onDelete: Cascade)
 
   @@unique([ecosystemId, solutionId])
   @@index([solutionId])
+}
+
+// Suite Partnership Invites
+model EcosystemInvite {
+  id           String   @id @default(cuid())
+  ecosystemId  String
+  ecosystem    Ecosystem @relation(fields: [ecosystemId], references: [id], onDelete: Cascade)
+  solutionId   String
+  solution     Solution @relation(fields: [solutionId], references: [id], onDelete: Cascade)
+  inviterId    String
+  inviter      SpecialistProfile @relation("SentEcoInvites", fields: [inviterId], references: [id])
+  inviteeId    String
+  invitee      SpecialistProfile @relation("ReceivedEcoInvites", fields: [inviteeId], references: [id])
+  status       String   @default("pending") // pending | accepted | declined | withdrawn
+  message      String?  // Optional note from suite owner
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([ecosystemId, solutionId])
+  @@index([inviteeId, status])
+  @@index([ecosystemId, status])
 }
 
 // ── Traffic Analytics ────────────────────────────────────────────────────────

@@ -420,3 +420,73 @@ export async function getExpertEarnings() {
     monthlyBreakdown,
   };
 }
+
+// ── Elite Application ─────────────────────────────────────────────────────────
+
+export async function applyForElite() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  try {
+    const profile = await prisma.specialistProfile.findUnique({
+      where: { userId: session.user.id },
+      select: {
+        id: true,
+        tier: true,
+        completedSalesCount: true,
+        eliteApplicationStatus: true,
+        eliteDeniedAt: true,
+      },
+    });
+
+    if (!profile) return { error: "Expert profile not found" };
+    if (profile.tier === "ELITE") return { error: "You are already Elite" };
+    if (profile.completedSalesCount < 10) return { error: "You need at least 10 completed sales to apply" };
+    if (profile.eliteApplicationStatus === "pending") return { error: "Your application is already under review" };
+
+    // 14-day re-apply cooldown
+    if (profile.eliteDeniedAt) {
+      const daysSinceDenial = (Date.now() - new Date(profile.eliteDeniedAt).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceDenial < 14) {
+        const daysLeft = Math.ceil(14 - daysSinceDenial);
+        return { error: `You can re-apply in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}` };
+      }
+    }
+
+    await prisma.specialistProfile.update({
+      where: { id: profile.id },
+      data: {
+        eliteApplicationStatus: "pending",
+        eliteAppliedAt: new Date(),
+      },
+    });
+
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (e) {
+    log.error("expert.apply_elite_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
+    return { error: "Something went wrong" };
+  }
+}
+
+export async function getEliteApplicationStatus() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return null;
+
+  const profile = await prisma.specialistProfile.findUnique({
+    where: { userId: session.user.id },
+    select: {
+      tier: true,
+      completedSalesCount: true,
+      eliteApplicationStatus: true,
+      eliteAppliedAt: true,
+      eliteDeniedAt: true,
+      eliteDeniedReason: true,
+      eliteDemotedAt: true,
+      eliteDemotedReason: true,
+    },
+  });
+
+  return profile;
+}

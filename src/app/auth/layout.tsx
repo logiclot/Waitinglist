@@ -8,10 +8,10 @@ const AuthBrandingPanel = dynamic(
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {/* Hide footer on auth pages and prevent scrolling */}
-      <style>{`footer { display: none !important; } body { overflow: hidden; }`}</style>
+      {/* Hide navbar + footer on auth pages and prevent scrolling */}
+      <style>{`nav { display: none !important; } footer { display: none !important; } body { overflow: hidden; }`}</style>
 
-      <div className="h-[calc(100dvh-64px)] flex flex-row">
+      <div className="h-dvh flex flex-row">
         {/* Left — form content */}
         <div className="w-full lg:w-1/2 flex items-center justify-center bg-background overflow-y-auto px-4 py-8">
           {children}

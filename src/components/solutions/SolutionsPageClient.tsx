@@ -14,8 +14,11 @@ import { Solution, Category } from "@/types";
 import { SolutionCard } from "@/components/SolutionCard";
 import { FilterSidebar } from "@/components/solutions/FilterSidebar";
 import { ActiveFilterChips } from "@/components/solutions/ActiveFilterChips";
-import { ArrowUpDown, Search, SlidersHorizontal, PlusCircle, Heart, X } from "lucide-react";
+import { ArrowUpDown, Search, SlidersHorizontal, PlusCircle, Heart } from "lucide-react";
 import { useSavedSolutionsContext } from "@/hooks/SavedSolutionsContext";
+import { useSavedSuitesContext } from "@/hooks/SavedSuitesContext";
+import { BrowseToggle } from "@/components/solutions/BrowseToggle";
+import Link from "next/link";
 
 const PAGE_SIZE = 12;
 
@@ -33,10 +36,11 @@ export function SolutionsPageClient({ initialSolutions, categories, ecosystems }
   // Initialize state from URL on mount (and update when URL changes)
   const [filters, setFilters] = useState<SolutionFilters>(INITIAL_FILTERS);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { savedIds } = useSavedSolutionsContext();
+  const { savedIds: savedSuiteIds } = useSavedSuitesContext();
+  const totalFavoritesCount = savedIds.size + savedSuiteIds.size;
 
   useEffect(() => {
     const parsed = parseFiltersFromSearchParams(searchParams);
@@ -76,25 +80,19 @@ export function SolutionsPageClient({ initialSolutions, categories, ecosystems }
     return sortSolutions(filtered, filters.sort);
   }, [initialSolutions, filters]);
 
-  // Apply favorites filter on top of regular filters
-  const displayedSolutions = useMemo(() => {
-    if (!showFavoritesOnly) return filteredSolutions;
-    return filteredSolutions.filter(s => savedIds.has(s.id));
-  }, [filteredSolutions, showFavoritesOnly, savedIds]);
-
-  // Reset visible count when filters or favorites toggle change
+  // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [filters, showFavoritesOnly]);
+  }, [filters]);
 
   // Slice for infinite scroll
-  const visibleSolutions = displayedSolutions.slice(0, visibleCount);
-  const hasMore = visibleCount < displayedSolutions.length;
+  const visibleSolutions = filteredSolutions.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredSolutions.length;
 
   // Intersection observer for infinite scroll
   const loadMore = useCallback(() => {
-    setVisibleCount(prev => Math.min(prev + PAGE_SIZE, displayedSolutions.length));
-  }, [displayedSolutions.length]);
+    setVisibleCount(prev => Math.min(prev + PAGE_SIZE, filteredSolutions.length));
+  }, [filteredSolutions.length]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -146,27 +144,25 @@ export function SolutionsPageClient({ initialSolutions, categories, ecosystems }
       <div className="flex-1 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
+            <div className="mb-3">
+              <BrowseToggle />
+            </div>
             <h1 className="text-3xl font-bold mb-1">Browse Solutions</h1>
             <p className="text-muted-foreground text-sm">
-              {displayedSolutions.length} automation{displayedSolutions.length !== 1 ? 's' : ''} found
-              {showFavoritesOnly && <span className="text-red-500 ml-1">· Favorites only</span>}
+              {filteredSolutions.length} automation{filteredSolutions.length !== 1 ? 's' : ''} found
             </p>
           </div>
           
           <div className="flex items-center gap-3">
-            {/* Favorites Toggle */}
-            <button
-              onClick={() => setShowFavoritesOnly(prev => !prev)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                showFavoritesOnly
-                  ? "bg-red-50 border-red-200 text-red-600"
-                  : "bg-transparent border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-              }`}
+            {/* Favorites Link */}
+            <Link
+              href="/favorites"
+              className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
             >
-              <Heart className={`h-4 w-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
+              <Heart className="h-4 w-4" />
               <span className="hidden sm:inline">Favorites</span>
-              {savedIds.size > 0 && <span className="text-xs">({savedIds.size})</span>}
-            </button>
+              {totalFavoritesCount > 0 && <span className="text-xs">({totalFavoritesCount})</span>}
+            </Link>
 
             {/* Mobile Filter Toggle */}
             <button
@@ -203,25 +199,7 @@ export function SolutionsPageClient({ initialSolutions, categories, ecosystems }
           onClear={clearFilters}
         />
 
-        {/* Favorites active banner with clear exit */}
-        {showFavoritesOnly && (
-          <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6">
-            <div className="flex items-center gap-2 text-sm text-red-700">
-              <Heart className="h-4 w-4 fill-current" />
-              <span className="font-medium">Showing your favorites</span>
-              <span className="text-red-500">({displayedSolutions.length})</span>
-            </div>
-            <button
-              onClick={() => setShowFavoritesOnly(false)}
-              className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
-            >
-              <X className="h-3.5 w-3.5" />
-              Show all solutions
-            </button>
-          </div>
-        )}
-
-        {displayedSolutions.length > 0 ? (
+        {filteredSolutions.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
               {visibleSolutions.map((solution) => (
@@ -235,23 +213,6 @@ export function SolutionsPageClient({ initialSolutions, categories, ecosystems }
               </div>
             )}
           </>
-        ) : showFavoritesOnly ? (
-          /* Favorites-specific empty state */
-          <div className="text-center py-20 border border-dashed border-border rounded-xl bg-card/50">
-            <div className="mx-auto h-12 w-12 rounded-full bg-red-50 flex items-center justify-center mb-4">
-              <Heart className="h-6 w-6 text-red-400" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">No favorites yet</h3>
-            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-              Click the heart icon on solutions you like to save them here.
-            </p>
-            <button
-              onClick={() => setShowFavoritesOnly(false)}
-              className="px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-            >
-              Browse all solutions
-            </button>
-          </div>
         ) : (
           /* Regular filter empty state */
           <div className="text-center py-20 border border-dashed border-border rounded-xl bg-card/50">

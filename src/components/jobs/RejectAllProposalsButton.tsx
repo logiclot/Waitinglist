@@ -4,6 +4,11 @@ import { useState } from "react";
 import { rejectAllBidsAndRefund } from "@/actions/jobs";
 import { toast } from "sonner";
 import { Loader2, AlertTriangle, CheckCircle2, X } from "lucide-react";
+import { CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
+
+const REFUND_PERCENT = 75;
+const refundCents = Math.round(CUSTOM_PROJECT_PRICE_CENTS * REFUND_PERCENT / 100);
+const refundDisplay = `€${(refundCents / 100).toFixed(2).replace(".", ",")}`;
 
 interface RejectAllProposalsButtonProps {
   jobId: string;
@@ -21,7 +26,7 @@ export function RejectAllProposalsButton({ jobId }: RejectAllProposalsButtonProp
       return;
     }
 
-    if (!confirm("Are you sure? This will reject all proposals and issue a 75% refund (€75.00). This action cannot be undone.")) {
+    if (!confirm(`Are you sure? This will reject all proposals and issue a ${REFUND_PERCENT}% refund (${refundDisplay}). This action cannot be undone.`)) {
       return;
     }
 
@@ -44,7 +49,7 @@ export function RejectAllProposalsButton({ jobId }: RejectAllProposalsButtonProp
         <div>
           <p className="text-sm font-semibold text-foreground">Project closed — refund initiated</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            A refund of €75.00 will appear on your statement in 5–10 business days.
+            A refund of {refundDisplay} will appear on your statement in 5–10 business days.
           </p>
         </div>
       </div>
@@ -85,7 +90,7 @@ export function RejectAllProposalsButton({ jobId }: RejectAllProposalsButtonProp
       {/* Body */}
       <div className="p-5 space-y-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          If none of the proposals meet your needs, you can close this project and receive a <strong className="text-foreground">75% refund (€75.00)</strong>.
+          If none of the proposals meet your needs, you can close this project and receive a <strong className="text-foreground">75% refund ({refundDisplay})</strong>.
           All experts will be notified. Please tell us what you expected — this helps us improve expert quality.
         </p>
 
@@ -124,7 +129,7 @@ export function RejectAllProposalsButton({ jobId }: RejectAllProposalsButtonProp
             {submitting ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
             ) : (
-              "Reject all & refund €75"
+              `Reject all & refund ${refundDisplay}`
             )}
           </button>
         </div>

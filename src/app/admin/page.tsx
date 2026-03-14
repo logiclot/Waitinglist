@@ -1,14 +1,17 @@
-import { getAdminData, getDisputedOrders } from "@/actions/admin";
+import { getAdminData, getDisputedOrders, getAuditCompletions, getEliteApplications } from "@/actions/admin";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { redirect } from "next/navigation";
 import type { Solution, SolutionStatus } from "@/types";
 import type { AdminExpert } from "@/components/admin/AdminDashboard";
 import type { AdminDispute } from "@/components/admin/DisputeManagementTab";
+import type { AuditCompletion } from "@/components/admin/AuditResultsTab";
 
 export default async function AdminPage() {
-  const [data, disputeData] = await Promise.all([
+  const [data, disputeData, auditCompletions, eliteAppsData] = await Promise.all([
     getAdminData(),
     getDisputedOrders(),
+    getAuditCompletions(),
+    getEliteApplications(),
   ]);
 
   if ("error" in data) {
@@ -28,6 +31,7 @@ export default async function AdminPage() {
   })) as unknown as Solution[];
 
   const disputes = "error" in disputeData ? [] : (disputeData.disputes as unknown as AdminDispute[]);
+  const eliteApplications = eliteAppsData && !("error" in eliteAppsData) ? eliteAppsData.applications : [];
 
   return (
     <AdminDashboard
@@ -36,6 +40,8 @@ export default async function AdminPage() {
       initialOrders={data.orders}
       initialBusinesses={data.businesses}
       initialDisputes={disputes}
+      initialAuditCompletions={(auditCompletions ?? []) as AuditCompletion[]}
+      initialEliteApplications={eliteApplications}
       stats={data.stats}
     />
   );

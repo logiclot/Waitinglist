@@ -5,7 +5,7 @@ import { signUp } from "@/actions/auth";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
-import { Linkedin } from "lucide-react";
+import { Linkedin, Eye, EyeOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 type FormState = { error?: string | null; success?: boolean; email?: string | null };
@@ -19,6 +19,8 @@ interface SignUpFormProps {
 export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
   const [state, formAction] = useFormState<FormState, FormData>(signUp as (s: FormState, f: FormData) => Promise<FormState>, initialState);
   const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const searchParams = useSearchParams();
   const referralCode = searchParams.get("ref");
   const hasSocial = hasGoogle || hasLinkedIn;
@@ -120,25 +122,47 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-foreground">Password</label>
-            <input
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="w-full bg-white border border-border rounded-md px-3 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none min-h-[44px] touch-manipulation"
-            />
+            <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="w-full bg-white border border-border rounded-md px-3 py-2.5 pr-10 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none min-h-[44px] touch-manipulation"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-foreground">Confirm Password</label>
-            <input
-              name="confirmPassword"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="w-full bg-white border border-border rounded-md px-3 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none min-h-[44px] touch-manipulation"
-            />
+            <div className="relative">
+              <input
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="w-full bg-white border border-border rounded-md px-3 py-2.5 pr-10 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none min-h-[44px] touch-manipulation"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-start gap-3">

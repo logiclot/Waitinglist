@@ -9,6 +9,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { markJobAsPaid } from "@/actions/jobs";
+import { createNotification } from "@/lib/notifications";
+import { prisma } from "@/lib/prisma";
 import { APP_URL } from "@/lib/app-url";
 
 export async function POST(
@@ -31,6 +33,25 @@ export async function POST(
   const result = await markJobAsPaid(jobId);
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: 400 });
+  }
+
+  // Create invoice notification (mirrors webhook behaviour)
+  try {
+    const job = await prisma.jobPost.findUnique({
+      where: { id: jobId },
+      select: { title: true },
+    });
+    if (job) {
+      await createNotification(
+        session.user.id,
+        "🧾 Invoice available",
+        `Your invoice for the "${job.title}" posting fee is ready. View and download it anytime.`,
+        "info",
+        `/invoice/job/${jobId}`
+      );
+    }
+  } catch {
+    // Non-critical — don't fail the simulate response
   }
 
   return NextResponse.json({ redirectUrl: `${APP_URL}/jobs/${jobId}?paid=true` });

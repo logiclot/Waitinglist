@@ -312,8 +312,8 @@ async function sendReEngagementEmails(now: Date): Promise<number> {
 export async function GET(req: Request) {
   // Verify the cron secret (Vercel sends it automatically when CRON_SECRET is set)
   const authHeader = req.headers.get("authorization");
-  const expected = process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : null;
-  if (expected && authHeader !== expected) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

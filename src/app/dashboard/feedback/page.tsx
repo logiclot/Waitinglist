@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { MessageSquare, ClipboardCheck, Gift, Send } from "lucide-react";
-import { SURVEY_QUESTIONS } from "@/lib/survey-questions";
+import { getSurveyQuestions } from "@/lib/survey-questions";
 
 export default function FeedbackPage() {
   const [feedbackText, setFeedbackText] = useState("");
@@ -14,6 +15,10 @@ export default function FeedbackPage() {
   const [surveyError, setSurveyError] = useState("");
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [couponRevealed, setCouponRevealed] = useState(false);
+  const { data: sessionData } = useSession();
+  const role = sessionData?.user?.role as string | undefined;
+  const isExpert = role === "EXPERT";
+  const questions = getSurveyQuestions(role);
 
   useEffect(() => {
     fetch("/api/feedback/survey/status")
@@ -51,10 +56,10 @@ export default function FeedbackPage() {
 
   const handleSurveySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const required = SURVEY_QUESTIONS.filter((q) => q.type === "scale" || q.type === "nps");
+    const required = questions.filter((q) => q.type === "scale" || q.type === "nps");
     for (const q of required) {
       const val = surveyAnswers[q.id];
-      if (val === undefined || val === "" || (q.type === "scale" && (Number(val) < q.min || Number(val) > q.max)) || (q.type === "nps" && (Number(val) < 0 || Number(val) > 10))) {
+      if (val === undefined || val === "" || (q.type === "scale" && (Number(val) < (q as { min: number }).min || Number(val) > (q as { max: number }).max)) || (q.type === "nps" && (Number(val) < 0 || Number(val) > 10))) {
         setSurveyError(`Please answer all required questions (${q.label})`);
         return;
       }
@@ -92,7 +97,7 @@ export default function FeedbackPage() {
           Feedback
         </h1>
         <p className="text-muted-foreground">
-          Share your thoughts and help us improve. Complete the survey for a 5% discount on your next purchase.
+          Share your thoughts and help us improve. Complete the survey for a 5% {isExpert ? "commission discount" : "discount on your next purchase"}.
         </p>
       </div>
 
@@ -130,10 +135,10 @@ export default function FeedbackPage() {
       <section className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
           <ClipboardCheck className="h-5 w-5 text-primary" />
-          Quick survey — 5% off your next purchase
+          Quick survey — 5% {isExpert ? "commission discount" : "off your next purchase"}
         </h2>
         <p className="text-sm text-muted-foreground mb-6">
-          Answer our short survey about your experience. Complete it for the first time to receive a 5% coupon for your next purchase.
+          Answer our short survey about your experience. Complete it for the first time to receive a 5% {isExpert ? "commission discount on your next payout" : "coupon for your next purchase"}.
         </p>
 
         {surveyCompleted && couponRevealed ? (
@@ -141,17 +146,19 @@ export default function FeedbackPage() {
             <Gift className="h-12 w-12 text-green-600 mx-auto mb-3" />
             <h3 className="font-semibold text-lg mb-2">Thank you!</h3>
             <p className="text-muted-foreground mb-4">
-              Check your notifications for your 5% coupon. Use code <strong className="text-foreground">FEEDBACKS</strong> at checkout on your next purchase.
+              Check your notifications for your 5% {isExpert ? "commission discount" : "coupon"}. {isExpert
+                ? "Your next payout will have a reduced platform fee."
+                : <>Use code <strong className="text-foreground">FEEDBACKS</strong> at checkout on your next purchase.</>}
             </p>
             <p className="text-sm text-muted-foreground">
-              Valid for first-time orders. We appreciate your feedback!
+              {isExpert ? "Applied automatically on your next milestone release." : "Valid for first-time orders."} We appreciate your feedback!
             </p>
           </div>
         ) : surveyCompleted ? (
           <p className="text-muted-foreground">You&apos;ve already completed the survey. Thank you for your feedback!</p>
         ) : (
           <form onSubmit={handleSurveySubmit} className="space-y-6">
-            {SURVEY_QUESTIONS.map((q) => (
+            {questions.map((q) => (
               <div key={q.id} className="space-y-2">
                 <label className="block font-medium text-sm">
                   {q.label}
@@ -159,7 +166,7 @@ export default function FeedbackPage() {
                 </label>
                 {q.type === "scale" && (
                   <div className="flex gap-2 flex-wrap">
-                    {Array.from({ length: q.max! - q.min! + 1 }, (_, i) => q.min! + i).map((n) => (
+                    {Array.from({ length: (q as { max: number }).max - (q as { min: number }).min + 1 }, (_, i) => (q as { min: number }).min + i).map((n) => (
                       <label key={n} className="flex items-center gap-1 cursor-pointer">
                         <input
                           type="radio"

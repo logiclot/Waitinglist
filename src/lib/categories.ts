@@ -10,7 +10,7 @@ import {
   Layers,
 } from "lucide-react";
 
-/** Master category list — must match SolutionWizard CATEGORIES */
+/** Master category list — single source of truth, imported by SolutionWizard */
 export const CATEGORIES = [
   "Marketing Automation",
   "Sales & CRM",

@@ -1,8 +1,9 @@
 "use client";
 
-import { awardBid } from "@/actions/jobs";
+import Link from "next/link";
+import { awardBid, unawardBid } from "@/actions/jobs";
 import { useState } from "react";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, MessageCircle, Undo2 } from "lucide-react";
 import { TierBadge } from "@/components/ui/TierBadge";
 
 interface BidSpecialist {
@@ -14,24 +15,55 @@ interface BidSpecialist {
 
 interface BidItem {
   id: string;
+  specialistId?: string;
   message: string;
   estimatedTime: string;
   priceEstimate?: string | null;
   status: string;
   specialist?: BidSpecialist | null;
+  order?: { id: string; milestones: unknown } | null;
 }
 
 export function BidList({ bids, jobId, isOwner }: { bids: BidItem[], jobId: string, isOwner: boolean }) {
   const [awardingId, setAwardingId] = useState<string | null>(null);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
+
+  const handleUndo = async (bidId: string) => {
+    if (!confirm("Reverse this acceptance? The proposal and all others will go back to pending review.")) return;
+    setUndoingId(bidId);
+    const res = await unawardBid(jobId, bidId);
+    if (!res.success) {
+      alert(res.error ?? "Could not reverse — please try again.");
+      setUndoingId(null);
+      return;
+    }
+    window.location.reload();
+  };
 
   const handleAward = async (bidId: string) => {
-    if (!confirm("Are you sure you want to award the job to this specialist? This will open a conversation.")) return;
-    
+    if (!confirm("Accept this proposal and proceed to fund milestone 1?")) return;
+
     setAwardingId(bidId);
     const res = await awardBid(jobId, bidId);
     if (!res.success) {
-      alert("Failed to award bid");
+      alert(res.error ?? "Failed to award bid");
       setAwardingId(null);
+      return;
+    }
+    if (res.orderId) {
+      try {
+        const fundRes = await fetch("/api/checkout/fund-milestone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: res.orderId, milestoneIndex: 0 }),
+        });
+        const fundData = await fundRes.json();
+        if (fundData.url) {
+          window.location.href = fundData.url;
+          return;
+        }
+      } catch { /* fall through */ }
+      window.location.href = "/business/projects";
     }
   };
 
@@ -62,18 +94,50 @@ export function BidList({ bids, jobId, isOwner }: { bids: BidItem[], jobId: stri
                 <span>{bid.specialist?.completedSalesCount ?? 0} completed implementations</span>
               </div>
             </div>
-            {bid.status === 'accepted' ? (
-               <span className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-sm font-bold border border-green-500/20 flex items-center gap-1">
-                 <CheckCircle className="h-4 w-4" /> Awarded
-               </span>
-            ) : isOwner ? (
-              <button
-                onClick={() => handleAward(bid.id)}
-                disabled={!!awardingId}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {awardingId === bid.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Accept & Chat"}
-              </button>
+            {bid.status === 'accepted' ? (() => {
+               const ms = (bid.order?.milestones as Record<string, unknown>[] | undefined) ?? [];
+               const funded = ms.some((m) => {
+                 const s = (m as { status?: string }).status;
+                 return s === "in_escrow" || s === "releasing" || s === "released";
+               });
+               return (
+                 <div className="flex flex-col items-end gap-1.5">
+                   <span className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-sm font-bold border border-green-500/20 flex items-center gap-1">
+                     <CheckCircle className="h-4 w-4" /> Awarded
+                   </span>
+                   {isOwner && !funded && (
+                     <button
+                       type="button"
+                       onClick={() => handleUndo(bid.id)}
+                       disabled={undoingId !== null}
+                       className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                       title="Reverse this acceptance — all proposals go back to pending"
+                     >
+                       {undoingId === bid.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}
+                       Undo acceptance
+                     </button>
+                   )}
+                 </div>
+               );
+             })()
+            : isOwner ? (
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  onClick={() => handleAward(bid.id)}
+                  disabled={!!awardingId}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {awardingId === bid.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Accept & Fund Milestone 1"}
+                </button>
+                {bid.specialistId && (
+                  <Link
+                    href={`/messages/new?expert=${bid.specialistId}&job=${jobId}`}
+                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center gap-2"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> Ask a Question
+                  </Link>
+                )}
+              </div>
             ) : null}
           </div>
           

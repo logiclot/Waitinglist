@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { JsonImportButton } from "@/components/solutions/JsonImportButton";
 import { SolutionWizard } from "@/components/solutions/SolutionWizard";
+import { CategorySaturationPanel } from "@/components/solutions/CategorySaturationPanel";
 import type { WizardState } from "@/components/solutions/SolutionWizard";
 
 type ImportableData = Partial<
@@ -12,7 +13,11 @@ type ImportableData = Partial<
 
 const ALL_FIELDS = ["Title", "Tools used", "Category", "Required access", "Short summary"];
 
-export function AddSolutionClient() {
+interface AddSolutionClientProps {
+  saturationData: { category: string; count: number }[];
+}
+
+export function AddSolutionClient({ saturationData }: AddSolutionClientProps) {
   const [importedData, setImportedData] = useState<ImportableData>({});
   const [importKey, setImportKey]       = useState(0);
   const [importResult, setImportResult] = useState<{
@@ -28,7 +33,10 @@ export function AddSolutionClient() {
   }
 
   return (
-    <div>
+    <>
+      {/* Category demand — compact horizontal strip */}
+      <CategorySaturationPanel saturationData={saturationData} />
+
       {/* Import banner */}
       <div className="mb-6 p-4 rounded-xl border border-border bg-secondary/30">
         <p className="text-sm font-bold text-foreground mb-2">Have an existing workflow?</p>
@@ -64,6 +72,6 @@ export function AddSolutionClient() {
 
       {/* Solution wizard — key forces full re-mount when JSON is imported */}
       <SolutionWizard key={importKey} initialData={importedData} />
-    </div>
+    </>
   );
 }

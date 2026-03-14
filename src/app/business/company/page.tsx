@@ -34,13 +34,11 @@ export default async function CompanyProfilePage() {
     const companySize = formData.get("companySize") as string;
     const billingEmail = formData.get("billingEmail") as string;
     const timezone = formData.get("timezone") as string;
-    const whatToAutomate = formData.get("whatToAutomate") as string; // Primary Goal
-    
-    // Tools (multi-select handling in server action is tricky with plain FormData if not using checkboxes with same name)
-    // For this simple form, we'll assume the client sends comma-separated or similar if handled via JS, 
-    // but here we are using standard form submission.
-    // Let's rely on standard form behavior or assume we pick up all "tools" entries.
-    const tools = formData.getAll("tools") as string[]; 
+    const whatToAutomate = formData.get("whatToAutomate") as string;
+    const invoiceAddress = formData.get("invoiceAddress") as string;
+    const invoiceVatNumber = formData.get("invoiceVatNumber") as string;
+    const invoiceRegistrationNumber = formData.get("invoiceRegistrationNumber") as string;
+    const tools = formData.getAll("tools") as string[];
 
     await prisma.businessProfile.update({
       where: { userId: session.user.id },
@@ -52,7 +50,10 @@ export default async function CompanyProfilePage() {
         billingEmail,
         timezone,
         whatToAutomate,
-        tools // Now supported in schema
+        tools,
+        invoiceAddress: invoiceAddress || null,
+        invoiceVatNumber: invoiceVatNumber || null,
+        invoiceRegistrationNumber: invoiceRegistrationNumber || null,
       }
     });
     
@@ -181,19 +182,19 @@ export default async function CompanyProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-1">Billing Email (Optional)</label>
-              <input 
-                type="email" 
-                name="billingEmail" 
-                defaultValue={profile.billingEmail || ""} 
+              <input
+                type="email"
+                name="billingEmail"
+                defaultValue={profile.billingEmail || ""}
                 placeholder="billing@company.com"
                 className="w-full bg-background border border-border rounded-md px-3 py-2"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Timezone (Optional)</label>
-              <select 
-                name="timezone" 
-                defaultValue={profile.timezone || ""} 
+              <select
+                name="timezone"
+                defaultValue={profile.timezone || ""}
                 className="w-full bg-background border border-border rounded-md px-3 py-2"
               >
                 <option value="">Select Timezone</option>
@@ -201,8 +202,44 @@ export default async function CompanyProfilePage() {
                 <option value="EST">EST (UTC-5)</option>
                 <option value="PST">PST (UTC-8)</option>
                 <option value="CET">CET (UTC+1)</option>
-                {/* Add more as needed */}
               </select>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. Invoice Details */}
+        <section className="bg-card border border-border rounded-xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold mb-2 pb-2 border-b border-border">4. Invoice Details</h2>
+          <p className="text-xs text-muted-foreground mb-6">These details appear on invoices for your orders.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-1">Billing Address (Optional)</label>
+              <textarea
+                name="invoiceAddress"
+                defaultValue={profile.invoiceAddress || ""}
+                placeholder={"123 Main Street\nDublin 2\nIreland"}
+                rows={3}
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">VAT Number (Optional)</label>
+              <input
+                name="invoiceVatNumber"
+                defaultValue={profile.invoiceVatNumber || ""}
+                placeholder="IE1234567T"
+                className="w-full bg-background border border-border rounded-md px-3 py-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Required for EU reverse charge treatment on cross-border invoices.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Company Registration No. (Optional)</label>
+              <input
+                name="invoiceRegistrationNumber"
+                defaultValue={(profile as Record<string, unknown>).invoiceRegistrationNumber as string || ""}
+                placeholder="e.g. 123456"
+                className="w-full bg-background border border-border rounded-md px-3 py-2"
+              />
             </div>
           </div>
         </section>

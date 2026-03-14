@@ -85,10 +85,27 @@ export async function POST(req: Request) {
       });
     }
 
+    // Check for existing open checkout session for this milestone (deduplication)
+    const existingSessions = await stripe.checkout.sessions.list({
+      customer: stripeCustomerId!,
+      limit: 5,
+    });
+    const existingOpen = existingSessions.data.find(
+      (s) =>
+        s.status === "open" &&
+        s.metadata?.type === "milestone_funding" &&
+        s.metadata?.orderId === orderId &&
+        s.metadata?.milestoneIndex === String(milestoneIndex)
+    );
+    if (existingOpen?.url) {
+      return NextResponse.json({ url: existingOpen.url });
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: stripeCustomerId!,
       payment_method_types: ["card"],
-      allow_promotion_codes: true,
+      // No promo codes on subsequent milestone funding — discount only on initial checkout
+      allow_promotion_codes: false,
       line_items: [{
         price_data: {
           currency: "eur",
@@ -101,7 +118,7 @@ export async function POST(req: Request) {
         quantity: 1,
       }],
       mode: "payment",
-      success_url: `${APP_URL}/business/projects?success=true&orderId=${orderId}`,
+      success_url: `${APP_URL}/business/projects?success=true&orderId=${orderId}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${APP_URL}/business/projects?orderId=${orderId}`,
       metadata: {
         type: "milestone_funding",

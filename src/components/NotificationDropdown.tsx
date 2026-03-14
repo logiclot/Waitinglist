@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
-import { getNotifications, markAsRead } from "@/actions/notifications";
+import { getNotifications, getUnreadNotificationCount, markAsRead } from "@/actions/notifications";
 import { useRouter } from "next/navigation";
 
 type Notification = {
@@ -23,15 +23,26 @@ export function NotificationDropdown() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Poll every minute
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+
+    // Also refresh when the user comes back to the tab
+    const onFocus = () => fetchNotifications();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
   const fetchNotifications = async () => {
-    const data = await getNotifications();
+    const [data, count] = await Promise.all([
+      getNotifications(),
+      getUnreadNotificationCount(),
+    ]);
     const safe = Array.isArray(data) ? data : [];
     setNotifications(safe);
-    setUnreadCount(safe.filter((n) => !n.isRead).length);
+    setUnreadCount(count);
   };
 
   const handleRead = async (id: string, url: string | null) => {
@@ -62,39 +73,43 @@ export function NotificationDropdown() {
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full border border-background animate-pulse" />
+          <span className="absolute -top-0.5 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 rounded-full border-2 border-background text-[10px] font-bold text-white leading-none px-1">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-lg shadow-lg py-2 z-[100] animate-in fade-in zoom-in-95">
-            <div className="px-4 py-2 border-b border-border flex justify-between items-center">
+        <div className="absolute right-0 top-full mt-2 w-96 bg-card border border-border rounded-xl shadow-xl py-2 z-[100] animate-in fade-in zoom-in-95">
+            <div className="px-5 py-3 border-b border-border flex justify-between items-center">
               <h4 className="font-semibold text-sm text-foreground">Notifications</h4>
-              <span className="text-xs text-muted-foreground">{unreadCount} unread</span>
+              {unreadCount > 0 && (
+                <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{unreadCount} unread</span>
+              )}
             </div>
-            <div className="max-h-[300px] overflow-y-auto">
+            <div className="max-h-[420px] overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No notifications
+                <div className="p-6 text-center text-sm text-muted-foreground">
+                  No notifications yet
                 </div>
               ) : (
                 notifications.map((n) => (
                   <div
                     key={n.id}
                     onClick={() => handleRead(n.id, n.actionUrl)}
-                    className={`px-4 py-3 border-b border-border last:border-0 hover:bg-secondary/50 cursor-pointer transition-colors ${
-                      !n.isRead ? "bg-secondary/10" : ""
+                    className={`px-5 py-3.5 border-b border-border last:border-0 hover:bg-secondary/50 cursor-pointer transition-colors ${
+                      !n.isRead ? "bg-primary/5" : ""
                     }`}
                   >
-                    <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <p className={`text-sm ${!n.isRead ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="min-w-0">
+                        <p className={`text-sm leading-snug ${!n.isRead ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                           {n.title}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
                           {n.message}
                         </p>
-                        <p className="text-[10px] text-muted-foreground mt-1">
+                        <p className="text-[11px] text-muted-foreground/70 mt-1.5">
                           {new Date(n.createdAt).toLocaleDateString()}
                         </p>
                       </div>

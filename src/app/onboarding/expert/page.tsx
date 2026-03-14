@@ -4,8 +4,9 @@ import { useFormState } from "react-dom";
 import { createSpecialistProfile } from "@/actions/onboarding";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { 
-  ChevronRight, 
+import { useSession } from "next-auth/react";
+import {
+  ChevronRight,
   User,
   Check,
   Building2,
@@ -72,6 +73,7 @@ const CAPACITIES = ["<5h", "5–10h", "10–20h", "20h+"];
 
 export default function ExpertOnboardingPage() {
   const router = useRouter();
+  const { update: refreshSession } = useSession();
   // @ts-expect-error: types mismatch
   const [state, formAction] = useFormState(createSpecialistProfile, initialState);
   const [pending, setPending] = useState(false);
@@ -115,9 +117,12 @@ export default function ExpertOnboardingPage() {
 
   useEffect(() => {
     if (state?.success) {
-      router.push("/dashboard");
+      // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
+      refreshSession().then(() => {
+        router.push("/dashboard");
+      });
     }
-  }, [state, router]);
+  }, [state, router, refreshSession]);
 
 
   useEffect(() => {

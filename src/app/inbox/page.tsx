@@ -55,6 +55,7 @@ export default async function InboxPage() {
       seller_id: c.sellerId,
       solution_id: c.solutionId || undefined,
       order_id: c.orderId || undefined,
+      job_post_id: c.jobPostId || undefined,
       created_at: c.createdAt.toISOString(),
       updated_at: c.updatedAt.toISOString(),
       buyer_name: buyerName,
@@ -64,7 +65,7 @@ export default async function InboxPage() {
         conversation_id: m.conversationId,
         sender_id: m.senderId,
         body: m.body,
-        type: m.type as "user" | "system",
+        type: m.type as "user" | "system" | "bid_card",
         created_at: m.createdAt.toISOString(),
       })),
 

@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com";
 
 // ── Session ID for local DB tracking ──────────────────────────────────────────
@@ -91,7 +92,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     if (!KEY) return;
 
     posthog.init(KEY, {
-      api_host: HOST,
+      api_host: "/ingest",
+      ui_host: "https://eu.posthog.com",
       person_profiles: "identified_only",
       capture_pageview: false,
       capture_pageleave: true,

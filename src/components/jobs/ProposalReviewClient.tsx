@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { awardBid, rateProposal } from "@/actions/jobs";
+import { awardBid, unawardBid, rateProposal } from "@/actions/jobs";
 import { TierBadge } from "@/components/ui/TierBadge";
 import {
   CheckCircle2, XCircle, ChevronDown, ChevronUp,
   Euro, Clock, Wrench, Target, LayoutList,
   UserCheck, Loader2, CheckCircle, Briefcase,
   Compass, Building2, AlertCircle, ShoppingCart, Info,
-  ThumbsUp, ThumbsDown
+  ThumbsUp, ThumbsDown, MessageCircle, Undo2
 } from "lucide-react";
+import Link from "next/link";
 import { RejectAllProposalsButton } from "@/components/jobs/RejectAllProposalsButton";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -197,8 +198,17 @@ function ProposalReviewCard({
   // All proposals start expanded so non-technical readers don't miss anything
   const [expanded, setExpanded] = useState(true);
   const [awarding, setAwarding] = useState(false);
+  const [undoing, setUndoing] = useState(false);
   const proposal = parseProposal(bid.proposedApproach);
   const isAwarded = bid.status === "accepted";
+
+  // Check if any milestone has been funded — if so, undo is no longer possible
+  const milestones = (bid.order?.milestones as Record<string, unknown>[] | undefined) ?? [];
+  const isFunded = milestones.some((m) => {
+    const s = (m as { status?: string }).status;
+    return s === "in_escrow" || s === "releasing" || s === "released";
+  });
+  const canUndo = isAwarded && !isFunded;
 
   const handleAward = async () => {
     setAwarding(true);
@@ -206,9 +216,41 @@ function ProposalReviewCard({
     if (!res.success) {
       alert(res.error ?? "Something went wrong — please try again.");
       setAwarding(false);
-    } else {
-      onAwarded();
+      return;
     }
+
+    onAwarded();
+
+    // Redirect buyer to fund milestone 1 directly
+    if (res.orderId) {
+      try {
+        const fundRes = await fetch("/api/checkout/fund-milestone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: res.orderId, milestoneIndex: 0 }),
+        });
+        const fundData = await fundRes.json();
+        if (fundData.url) {
+          window.location.href = fundData.url;
+          return;
+        }
+      } catch {
+        // If funding redirect fails, fall back to projects page
+      }
+      window.location.href = "/business/projects";
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!confirm("Reverse this acceptance? The proposal and all others will go back to pending review.")) return;
+    setUndoing(true);
+    const res = await unawardBid(jobId, bid.id);
+    if (!res.success) {
+      alert(res.error ?? "Could not reverse — please try again.");
+      setUndoing(false);
+      return;
+    }
+    window.location.reload();
   };
 
   return (
@@ -235,6 +277,18 @@ function ProposalReviewCard({
             <span className="flex items-center gap-1 text-primary ml-1">
               <CheckCircle className="h-3.5 w-3.5" /> Accepted
             </span>
+          )}
+          {canUndo && (
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={undoing}
+              className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors ml-1 disabled:opacity-50"
+              title="Reverse this acceptance — all proposals go back to pending"
+            >
+              {undoing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}
+              Undo
+            </button>
           )}
         </div>
 
@@ -414,7 +468,7 @@ function ProposalReviewCard({
             </div>
           )}
 
-          {/* Accept & Start CTA — shown on every proposal, single-step action */}
+          {/* Accept & Fund / Ask a Question CTAs */}
           {!isAwarded && (
             <div className="px-6 py-4 bg-secondary/30 border-t border-border flex items-center justify-between gap-4">
               <div>
@@ -425,14 +479,22 @@ function ProposalReviewCard({
                   </p>
                 )}
               </div>
-              <button
-                onClick={handleAward}
-                disabled={awarding}
-                className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
-              >
-                {awarding ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {awarding ? "Processing…" : "Accept & Start"}
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/messages/new?expert=${bid.specialistId}&job=${jobId}`}
+                  className="px-4 py-2.5 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center gap-2 whitespace-nowrap"
+                >
+                  <MessageCircle className="h-4 w-4" /> Ask a Question
+                </Link>
+                <button
+                  onClick={handleAward}
+                  disabled={awarding}
+                  className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
+                >
+                  {awarding ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  {awarding ? "Processing…" : "Accept & Fund Milestone 1"}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -611,10 +673,10 @@ export function ProposalReviewClient({ job }: { job: Job }) {
           <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold text-foreground text-sm">
-              {isDiscovery ? "Automations confirmed" : "Proposal accepted"} — conversation started
+              {isDiscovery ? "Automations confirmed" : "Proposal accepted"} — redirecting to payment
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Head to your Messages to kick things off with the expert{isDiscovery && job.bids.filter((b: Bid) => b.status === "accepted").length > 1 ? "s" : ""}.
+              Fund the first milestone to get the project started. You can message the expert from your project page.
             </p>
           </div>
         </div>

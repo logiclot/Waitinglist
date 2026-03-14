@@ -57,7 +57,8 @@ export async function POST(req: Request) {
         log.info("stripe.onboard.account_created", { accountId });
       } catch (stripeError) {
         log.error("stripe.onboard.account_creation_failed", { error: String(stripeError), expertId: expert.id });
-        return NextResponse.json({ error: "Failed to create Stripe account: " + (stripeError as Error).message }, { status: 500 });
+        const detail = process.env.NODE_ENV !== "production" ? `: ${(stripeError as Error).message}` : "";
+        return NextResponse.json({ error: `Failed to create Stripe account${detail}` }, { status: 500 });
       }
     }
 
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: accountLink.url });
   } catch (error) {
     log.error("stripe.onboard.error", { error: String(error) });
-    return NextResponse.json({ error: "Internal Server Error: " + (error as Error).message }, { status: 500 });
+    const detail = process.env.NODE_ENV !== "production" ? `: ${(error as Error).message}` : "";
+    return NextResponse.json({ error: `Internal Server Error${detail}` }, { status: 500 });
   }
 }

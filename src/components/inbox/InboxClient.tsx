@@ -5,6 +5,8 @@ import { Conversation, Message } from "@/types";
 import { Send, User, ShieldCheck, Search, Video } from "lucide-react";
 import Link from "next/link";
 import { sendMessage } from "@/actions/messaging";
+import { BidCardMessage } from "@/components/messages/BidCardMessage";
+import { OrderCardMessage } from "@/components/messages/OrderCardMessage";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
@@ -201,10 +203,10 @@ export function InboxClient({ initialConversations, currentUserId }: InboxClient
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground truncate font-medium mb-1">
-                      {conv.solution?.title || "General Inquiry"}
+                      {conv.solution?.title || (conv.job_post_id ? "Project Proposal" : "General Inquiry")}
                     </div>
                     <div className="text-xs text-muted-foreground truncate opacity-70">
-                      {lastMsg?.sender_id === currentUserId ? "You: " : ""}{lastMsg?.body || "No messages"}
+                      {lastMsg?.sender_id === currentUserId ? "You: " : ""}{lastMsg?.type === 'bid_card' ? "Sent a proposal" : lastMsg?.type === 'order_card' ? "Order update" : (lastMsg?.body || "No messages")}
                     </div>
                   </button>
                 );
@@ -270,24 +272,40 @@ export function InboxClient({ initialConversations, currentUserId }: InboxClient
                          {msg.body}
                        </span>
                      </div>
+                   ) : msg.type === 'bid_card' ? (
+                     <div key={msg.id} className="flex flex-col items-start my-4">
+                       <BidCardMessage body={msg.body} />
+                       <span className="text-[10px] text-muted-foreground mt-1 px-1">
+                         {new Date(msg.created_at).toLocaleString('en-US', {
+                           weekday: 'short',
+                           hour: 'numeric',
+                           minute: 'numeric',
+                           hour12: true,
+                         })}
+                       </span>
+                     </div>
+                   ) : msg.type === 'order_card' ? (
+                     <div key={msg.id} className="flex justify-center my-4">
+                       <OrderCardMessage body={msg.body} />
+                     </div>
                    ) : (
-                    <div 
-                      key={msg.id} 
+                    <div
+                      key={msg.id}
                       className={`flex flex-col ${msg.sender_id === currentUserId ? 'items-end' : 'items-start'}`}
                     >
                       <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
-                        msg.sender_id === currentUserId 
-                          ? 'bg-primary text-primary-foreground rounded-br-none' 
+                        msg.sender_id === currentUserId
+                          ? 'bg-primary text-primary-foreground rounded-br-none'
                           : 'bg-white dark:bg-secondary border border-border rounded-bl-none'
                       }`}>
                         {msg.body}
                       </div>
                       <span className="text-[10px] text-muted-foreground mt-1 px-1">
-                        {new Date(msg.created_at).toLocaleString('en-US', { 
-                          weekday: 'short', 
-                          hour: 'numeric', 
+                        {new Date(msg.created_at).toLocaleString('en-US', {
+                          weekday: 'short',
+                          hour: 'numeric',
                           minute: 'numeric',
-                          hour12: true 
+                          hour12: true,
                         })}
                       </span>
                     </div>

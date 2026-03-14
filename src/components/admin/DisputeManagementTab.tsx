@@ -6,6 +6,7 @@ import { StarRating } from "@/components/reviews/StarRating";
 import {
   AlertTriangle, ChevronDown, ChevronUp, Clock, DollarSign, User, Briefcase,
   MessageSquare, CheckCircle2, XCircle, ArrowRight, Shield, FileText, Loader2,
+  Mail, ExternalLink, RotateCcw,
 } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,6 +15,8 @@ export interface AdminDispute {
   orderId: string;
   reason: string;
   status: string;
+  buyerStatement: string | null;
+  sellerStatement: string | null;
   adminNotes: string | null;
   resolution: string | null;
   resolutionNote: string | null;
@@ -40,6 +43,8 @@ export interface AdminDispute {
       userId: string;
       user: { email: string; createdAt: string };
     };
+    revisionNote: string | null;
+    revisionCount: number;
     solution: { title: string } | null;
     bid: { jobPost: { title: string } } | null;
     review: {
@@ -108,7 +113,7 @@ export function DisputeManagementTab({ disputes, showMessage }: DisputeManagemen
     const partial = type === "partial_refund" ? parseInt(partialAmount[orderId] || "0") * 100 : undefined;
     const res = await resolveDispute(
       orderId,
-      type as "full_refund" | "release_to_seller" | "partial_refund" | "dismissed",
+      type as "full_refund" | "release_to_seller" | "partial_refund" | "dismissed" | "require_revision",
       note,
       partial
     );
@@ -172,7 +177,9 @@ export function DisputeManagementTab({ disputes, showMessage }: DisputeManagemen
                 </div>
                 <div className="bg-card border border-border rounded-lg p-3 space-y-1">
                   <p className="text-sm font-semibold text-foreground">{buyerName}</p>
-                  <p className="text-xs text-muted-foreground">{o.buyer.email}</p>
+                  <a href={`mailto:${o.buyer.email}?subject=LogicLot%20Dispute%20-%20${encodeURIComponent(projectTitle)}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                    <Mail className="w-3 h-3" /> {o.buyer.email}
+                  </a>
                   <p className="text-xs text-muted-foreground">Joined: {new Date(o.buyer.createdAt).toLocaleDateString("en-GB")}</p>
                 </div>
               </div>
@@ -184,7 +191,9 @@ export function DisputeManagementTab({ disputes, showMessage }: DisputeManagemen
                 </div>
                 <div className="bg-card border border-border rounded-lg p-3 space-y-1">
                   <p className="text-sm font-semibold text-foreground">{sellerName}</p>
-                  <p className="text-xs text-muted-foreground">{o.seller.user.email}</p>
+                  <a href={`mailto:${o.seller.user.email}?subject=LogicLot%20Dispute%20-%20${encodeURIComponent(projectTitle)}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                    <Mail className="w-3 h-3" /> {o.seller.user.email}
+                  </a>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold text-[10px]">{o.seller.tier}</span>
                     <span>{o.seller.completedSalesCount} completed sales</span>
@@ -203,6 +212,33 @@ export function DisputeManagementTab({ disputes, showMessage }: DisputeManagemen
                 <p className="text-sm text-red-800 leading-relaxed">{d.reason}</p>
               </div>
             </div>
+
+            {/* Party Statements */}
+            {(d.buyerStatement || d.sellerStatement) && (
+              <div className="p-5 border-t border-border">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                  <MessageSquare className="w-3 h-3" /> Party Statements
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {d.buyerStatement && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-1">
+                      <p className="text-xs font-bold text-blue-800 flex items-center gap-1">
+                        <User className="w-3 h-3" /> Buyer&apos;s Statement
+                      </p>
+                      <p className="text-sm text-blue-700 leading-relaxed">{d.buyerStatement}</p>
+                    </div>
+                  )}
+                  {d.sellerStatement && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 space-y-1">
+                      <p className="text-xs font-bold text-purple-800 flex items-center gap-1">
+                        <Briefcase className="w-3 h-3" /> Expert&apos;s Statement
+                      </p>
+                      <p className="text-sm text-purple-700 leading-relaxed">{d.sellerStatement}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Financial summary */}
             <div className="p-5 border-t border-border">
@@ -316,13 +352,29 @@ export function DisputeManagementTab({ disputes, showMessage }: DisputeManagemen
               </div>
             )}
 
-            {/* Conversation link */}
-            {totalMsgCount > 0 && (
-              <div className="px-5 py-3 border-t border-border">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MessageSquare className="w-4 h-4" />
-                  <span>{totalMsgCount} messages exchanged</span>
-                </div>
+            {/* Conversation link + revision context */}
+            {(totalMsgCount > 0 || o.revisionNote) && (
+              <div className="px-5 py-3 border-t border-border space-y-3">
+                {totalMsgCount > 0 && o.conversations?.[0] && (
+                  <a
+                    href={`/messages/${o.conversations[0].id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    View Conversation ({totalMsgCount} messages)
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                {o.revisionNote && (
+                  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-1.5 mb-1">
+                      <RotateCcw className="w-3 h-3" /> Revision Context {o.revisionCount > 0 && `(#${o.revisionCount})`}
+                    </p>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 italic leading-relaxed">&ldquo;{o.revisionNote}&rdquo;</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -368,6 +420,7 @@ export function DisputeManagementTab({ disputes, showMessage }: DisputeManagemen
                       <option value="release_to_seller">Release to expert ({formatCents(escrowedCents)} in escrow)</option>
                       <option value="partial_refund">Partial refund</option>
                       <option value="dismissed">Dismiss dispute (project continues)</option>
+                      <option value="require_revision">Require expert to revise (back to in progress)</option>
                     </select>
                   </div>
 

@@ -5,10 +5,10 @@ CREATE TYPE "Role" AS ENUM ('USER', 'BUSINESS', 'EXPERT', 'ADMIN');
 CREATE TYPE "SpecialistStatus" AS ENUM ('PENDING_REVIEW', 'APPROVED', 'SUSPENDED');
 
 -- CreateEnum
-CREATE TYPE "OrderStatus" AS ENUM ('draft', 'paid_pending_implementation', 'in_progress', 'delivered', 'approved', 'refunded', 'disputed');
+CREATE TYPE "OrderStatus" AS ENUM ('draft', 'paid_pending_implementation', 'in_progress', 'delivered', 'revision_requested', 'approved', 'refunded', 'disputed');
 
 -- CreateEnum
-CREATE TYPE "MessageType" AS ENUM ('user', 'system');
+CREATE TYPE "MessageType" AS ENUM ('user', 'system', 'bid_card', 'order_card');
 
 -- CreateEnum
 CREATE TYPE "DemoVideoStatus" AS ENUM ('none', 'pending', 'approved', 'rejected');
@@ -134,6 +134,14 @@ CREATE TABLE "SpecialistProfile" (
     "invoiceCompanyName" TEXT,
     "invoiceAddress" TEXT,
     "invoiceVatNumber" TEXT,
+    "portfolioBackground" TEXT,
+    "portfolioBorderColor" TEXT,
+    "portfolioFont" TEXT,
+    "portfolioCoverImage" TEXT,
+    "portfolioBackgroundColor" TEXT,
+    "portfolioPatternColor" TEXT,
+    "featuredSolutionIds" TEXT[],
+    "portfolioViewCount" INTEGER NOT NULL DEFAULT 0,
     "bidBannedUntil" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -201,6 +209,7 @@ CREATE TABLE "Solution" (
     "structureCustom" TEXT[],
     "measurableOutcome" TEXT,
     "milestones" JSONB,
+    "skills" JSONB,
     "version" INTEGER NOT NULL DEFAULT 1,
     "changelog" TEXT,
     "upgradePriceCents" INTEGER,
@@ -225,8 +234,11 @@ CREATE TABLE "Order" (
     "priceCents" INTEGER NOT NULL,
     "status" "OrderStatus" NOT NULL DEFAULT 'draft',
     "deliveryNote" TEXT,
+    "revisionNote" TEXT,
+    "revisionCount" INTEGER NOT NULL DEFAULT 0,
     "milestones" JSONB,
     "stripePaymentIntentId" TEXT,
+    "acceptedAt" TIMESTAMP(3),
     "approvedAt" TIMESTAMP(3),
     "refundedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -414,6 +426,33 @@ CREATE TABLE "EcosystemItem" (
     CONSTRAINT "EcosystemItem_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "PageView" (
+    "id" TEXT NOT NULL,
+    "sessionId" TEXT NOT NULL,
+    "pathname" TEXT NOT NULL,
+    "referrer" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PageView_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AuditEvent" (
+    "id" TEXT NOT NULL,
+    "sessionId" TEXT NOT NULL,
+    "event" TEXT NOT NULL,
+    "step" INTEGER,
+    "score" INTEGER,
+    "scoreLabel" TEXT,
+    "answers" JSONB,
+    "email" TEXT,
+    "ip" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AuditEvent_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -473,6 +512,24 @@ CREATE INDEX "EcosystemItem_solutionId_idx" ON "EcosystemItem"("solutionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "EcosystemItem_ecosystemId_solutionId_key" ON "EcosystemItem"("ecosystemId", "solutionId");
+
+-- CreateIndex
+CREATE INDEX "PageView_sessionId_idx" ON "PageView"("sessionId");
+
+-- CreateIndex
+CREATE INDEX "PageView_pathname_idx" ON "PageView"("pathname");
+
+-- CreateIndex
+CREATE INDEX "PageView_createdAt_idx" ON "PageView"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "AuditEvent_event_idx" ON "AuditEvent"("event");
+
+-- CreateIndex
+CREATE INDEX "AuditEvent_sessionId_idx" ON "AuditEvent"("sessionId");
+
+-- CreateIndex
+CREATE INDEX "AuditEvent_createdAt_idx" ON "AuditEvent"("createdAt");
 
 -- AddForeignKey
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -567,13 +624,3 @@ ALTER TABLE "EcosystemItem" ADD CONSTRAINT "EcosystemItem_ecosystemId_fkey" FORE
 -- AddForeignKey
 ALTER TABLE "EcosystemItem" ADD CONSTRAINT "EcosystemItem_solutionId_fkey" FOREIGN KEY ("solutionId") REFERENCES "Solution"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
-┌─────────────────────────────────────────────────────────┐
-│  Update available 5.22.0 -> 7.4.2                       │
-│                                                         │
-│  This is a major update - please follow the guide at    │
-│  https://pris.ly/d/major-version-upgrade                │
-│                                                         │
-│  Run the following to update                            │
-│    npm i --save-dev prisma@latest                       │
-│    npm i @prisma/client@latest                          │
-└─────────────────────────────────────────────────────────┘

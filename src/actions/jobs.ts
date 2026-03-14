@@ -9,6 +9,7 @@ import { maxProposalsForCategory } from "@/lib/job-config";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 import { stripe } from "@/lib/stripe";
+import { CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 
 export async function createJobPost(prevState: unknown, formData: FormData) {
   const session = await getServerSession(authOptions);
@@ -124,7 +125,7 @@ export async function activateJobPost(jobId: string, provider: "stripe" | "simul
     Promise.all(experts.map(expert =>
       createNotification(
         expert.userId,
-        isDiscovery ? "New Discovery Scan posted" : "New Custom Project posted",
+        isDiscovery ? "🔔 New Discovery Scan posted" : "🔔 New Custom Project posted",
         `${job.title} — ${isDiscovery ? "Up to 5 proposals accepted" : "Up to 3 proposals accepted"}`,
         "info",
         `/jobs/${job.id}`
@@ -300,7 +301,7 @@ export async function submitBid(prevState: unknown, formData: FormData) {
         });
         if (already) throw new Error("DUPLICATE");
 
-        await tx.bid.create({
+        const bid = await tx.bid.create({
           data: {
             jobPostId: jobId,
             specialistId: specialist.id,
@@ -319,6 +320,45 @@ export async function submitBid(prevState: unknown, formData: FormData) {
             data: { status: "full" },
           });
         }
+
+        // ── Auto-create conversation with bid card message ─────────────────
+        const conversation = await tx.conversation.create({
+          data: {
+            buyerId: job.buyerId,
+            sellerId: specialist.id,
+            jobPostId: jobId,
+          },
+        });
+
+        // Parse proposedApproach for automation title
+        let automationTitle: string | undefined;
+        try {
+          if (proposedApproach) {
+            const parsed = JSON.parse(proposedApproach);
+            automationTitle = parsed.automationTitle || undefined;
+          }
+        } catch { /* ignore parse errors */ }
+
+        const bidCardData = {
+          projectTitle: job.title,
+          automationTitle,
+          excerpt: message.slice(0, 150) + (message.length > 150 ? "…" : ""),
+          price: priceEstimate,
+          timeline: estimatedTime,
+          jobId,
+          bidId: bid.id,
+          expertCalendarUrl: specialist.calendarUrl || undefined,
+          expertName: specialist.displayName || specialist.legalFullName,
+        };
+
+        await tx.message.create({
+          data: {
+            conversationId: conversation.id,
+            senderId: specialist.userId,
+            body: JSON.stringify(bidCardData),
+            type: "bid_card",
+          },
+        });
       });
     } catch (txErr) {
       const msg = txErr instanceof Error ? txErr.message : "";
@@ -339,7 +379,7 @@ export async function submitBid(prevState: unknown, formData: FormData) {
 
     await createNotification(
       job.buyerId,
-      isFull ? "All proposals received — time to choose!" : "New Proposal Received",
+      isFull ? "🎯 All proposals received — time to choose!" : "📩 New Proposal Received",
       isFull
         ? `"${job.title}" now has all ${maxBids} proposals. Head over to review and accept one.`
         : `An expert submitted a proposal for "${job.title}". ${maxBids - newTotal} slot${maxBids - newTotal === 1 ? "" : "s"} remaining.`,
@@ -436,7 +476,8 @@ export async function awardBid(jobId: string, bidId: string) {
     await prisma.$transaction(async (tx) => {
       // Re-read job status inside the transaction to catch races
       const freshJob = await tx.jobPost.findUnique({ where: { id: jobId }, select: { status: true } });
-      if (freshJob?.status === "awarded") throw new Error("ALREADY_AWARDED");
+      if (!freshJob || freshJob.status === "awarded") throw new Error("ALREADY_AWARDED");
+      if (freshJob.status === "cancelled") throw new Error("JOB_CANCELLED");
 
       await tx.jobPost.update({
         where: { id: jobId },
@@ -460,15 +501,30 @@ export async function awardBid(jobId: string, bidId: string) {
         },
       });
 
-      // Create conversation linked to both the job and the order
-      const conversation = await tx.conversation.create({
-        data: {
+      // Find existing conversation (created at bid submission) or create fallback
+      let conversation = await tx.conversation.findFirst({
+        where: {
           buyerId: session.user.id!,
           sellerId: bid.specialistId,
           jobPostId: jobId,
-          orderId: order.id,
         },
       });
+
+      if (conversation) {
+        conversation = await tx.conversation.update({
+          where: { id: conversation.id },
+          data: { orderId: order.id },
+        });
+      } else {
+        conversation = await tx.conversation.create({
+          data: {
+            buyerId: session.user.id!,
+            sellerId: bid.specialistId,
+            jobPostId: jobId,
+            orderId: order.id,
+          },
+        });
+      }
 
       // System message showing the agreed milestone plan
       const milestoneLines = milestonesJson
@@ -478,8 +534,8 @@ export async function awardBid(jobId: string, bidId: string) {
         : "";
 
       const body = milestoneLines
-        ? `Proposal accepted ✓\n\nAgreed milestone plan:\n${milestoneLines}\n\nTotal: €${(totalCents / 100).toLocaleString("de-DE")}\n\nLet's align on the kick-off. When are you available?`
-        : "Proposal accepted ✓ — let's get started! When are you available for a kick-off call?";
+        ? `Proposal accepted ✓\n\nAgreed milestone plan:\n${milestoneLines}\n\nTotal: €${(totalCents / 100).toLocaleString("de-DE")}`
+        : "Proposal accepted ✓";
 
       await tx.message.create({
         data: {
@@ -497,7 +553,7 @@ export async function awardBid(jobId: string, bidId: string) {
     // Notify winning expert
     await createNotification(
       bid.specialist.userId,
-      "Your proposal has been accepted!",
+      "🎉 Your proposal has been accepted!",
       `The client accepted your bid on "${job.title}". A conversation has been opened — introduce yourself and agree on the first steps.`,
       "success",
       `/inbox`
@@ -514,27 +570,145 @@ export async function awardBid(jobId: string, bidId: string) {
     });
 
     await Promise.all(
-      otherBids.map((otherBid) => {
-        prisma.bid.update({ where: { id: otherBid.id }, data: { status: "rejected" } });
-        return createNotification(
+      otherBids.flatMap((otherBid) => [
+        prisma.bid.update({ where: { id: otherBid.id }, data: { status: "rejected" } }),
+        createNotification(
           otherBid.specialist.userId,
-          "Project awarded to another expert",
+          "📋 Project awarded to another expert",
           `"${job.title}" has been awarded to another candidate. Keep your proposals sharp — new projects are posted daily.`,
           "info",
           `/jobs`
-        );
-      })
+        ),
+      ])
     );
 
-    return { success: true };
+    // Fetch the order that was just created so we can return its ID
+    const createdOrder = await prisma.order.findFirst({
+      where: { bidId: bidId },
+      select: { id: true },
+    });
+
+    return { success: true, orderId: createdOrder?.id ?? null };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
     if (msg === "ALREADY_AWARDED") {
       return { error: "This project has already been awarded. Refresh the page to see the current state." };
     }
+    if (msg === "JOB_CANCELLED") {
+      return { error: "This project has been cancelled and can no longer be awarded." };
+    }
     log.error("jobs.award_bid_failed", { error: e instanceof Error ? e.message : String(e) });
     Sentry.captureException(e);
     return { error: "Failed to award proposal. Please try again." };
+  }
+}
+
+// ── Undo an awarded bid (before payment) ────────────────────────────────────
+// Safety net — if the buyer accidentally accepts the wrong proposal they can
+// reverse it as long as no milestone has been funded yet.
+
+export async function unawardBid(jobId: string, bidId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+  try {
+    const job = await prisma.jobPost.findUnique({
+      where: { id: jobId },
+      include: { bids: { select: { id: true, status: true } } },
+    });
+    if (!job || job.buyerId !== session.user.id) {
+      return { success: false, error: "Unauthorized" };
+    }
+    if (job.status !== "awarded") {
+      return { success: false, error: "This project is not currently awarded." };
+    }
+
+    const bid = await prisma.bid.findUnique({
+      where: { id: bidId },
+      include: { specialist: { select: { userId: true } }, order: { select: { id: true, milestones: true } } },
+    });
+    if (!bid || bid.status !== "accepted") {
+      return { success: false, error: "This proposal is not currently accepted." };
+    }
+
+    // Block undo if any milestone has been funded
+    if (bid.order) {
+      const milestones = (bid.order.milestones as Record<string, unknown>[]) ?? [];
+      const funded = milestones.some((m) => {
+        const s = (m as { status?: string }).status;
+        return s === "in_escrow" || s === "releasing" || s === "released";
+      });
+      if (funded) {
+        return { success: false, error: "A milestone has already been funded. Contact support to resolve this." };
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Delete the unfunded order
+      if (bid.order) {
+        // Unlink conversation from order first
+        await tx.conversation.updateMany({
+          where: { orderId: bid.order.id },
+          data: { orderId: null },
+        });
+        await tx.order.delete({ where: { id: bid.order.id } });
+      }
+
+      // Revert the winning bid back to submitted
+      await tx.bid.update({
+        where: { id: bidId },
+        data: { status: "submitted" },
+      });
+
+      // Revert all rejected bids on this job back to submitted
+      await tx.bid.updateMany({
+        where: { jobPostId: jobId, status: "rejected" },
+        data: { status: "submitted" },
+      });
+
+      // Determine correct job status: "open" if under limit, "full" if at/over
+      const bidCount = job.bids.length;
+      const maxBids = maxProposalsForCategory(job.category);
+      const newStatus = bidCount >= maxBids ? "full" : "open";
+
+      await tx.jobPost.update({
+        where: { id: jobId },
+        data: { status: newStatus },
+      });
+
+      // Post a system message so both parties see what happened
+      const conversation = await tx.conversation.findFirst({
+        where: { buyerId: session.user.id!, sellerId: bid.specialistId, jobPostId: jobId },
+      });
+      if (conversation) {
+        await tx.message.create({
+          data: {
+            conversationId: conversation.id,
+            senderId: session.user.id!,
+            body: "Proposal acceptance reversed — the buyer is still reviewing proposals.",
+            type: "system",
+          },
+        });
+      }
+    });
+
+    revalidatePath(`/jobs/${jobId}`);
+    revalidatePath(`/business/proposals/${jobId}`);
+
+    // Notify the expert that the award was reversed
+    await createNotification(
+      bid.specialist.userId,
+      "↩️ Proposal acceptance reversed",
+      `The buyer reversed their acceptance on "${job.title}". Your proposal is still visible — they may still choose it.`,
+      "info",
+      `/expert/active-bids`
+    );
+
+    return { success: true };
+  } catch (e) {
+    log.error("jobs.unaward_bid_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
+    return { success: false, error: "Failed to reverse acceptance. Please try again." };
   }
 }
 
@@ -603,7 +777,7 @@ export async function rateProposal(
         // Notify the expert
         await createNotification(
           bid.specialist.userId,
-          "Proposal submissions temporarily paused",
+          "⏸️ Proposal submissions temporarily paused",
           `You've received ${THUMBS_DOWN_BAN_THRESHOLD} low-quality flags from clients in the past ${THUMBS_DOWN_WINDOW_DAYS} days. Proposal submissions are paused for ${BAN_DURATION_DAYS} days while you review your approach. Focus on quality over quantity.`,
           "alert",
           "/dashboard"
@@ -642,7 +816,8 @@ export async function rateProposal(
 
 // ── Reject all proposals and refund 75% (Custom Projects only) ──────────────
 
-const CUSTOM_PROJECT_REFUND_CENTS = 7500; // 75% of €100 posting fee
+const REFUND_PERCENT = 75;
+const CUSTOM_PROJECT_REFUND_CENTS = Math.round(CUSTOM_PROJECT_PRICE_CENTS * REFUND_PERCENT / 100);
 
 export async function rejectAllBidsAndRefund(
   jobId: string,
@@ -736,7 +911,7 @@ export async function rejectAllBidsAndRefund(
       job.bids.map((bid) =>
         createNotification(
           bid.specialist.userId,
-          "Project closed — no proposals selected",
+          "📋 Project closed — no proposals selected",
           `The client for "${job.title}" chose not to proceed with any proposal. This isn't a reflection on your work — keep submitting!`,
           "info",
           "/jobs"
@@ -753,5 +928,58 @@ export async function rejectAllBidsAndRefund(
     log.error("jobs.reject_all_failed", { error: e instanceof Error ? e.message : String(e) });
     Sentry.captureException(e);
     return { success: false, error: "Something went wrong. Please try again." };
+  }
+}
+
+// ── Unseen Jobs Badge ─────────────────────────────────────────────────────────
+
+/**
+ * Returns the count of open job posts created after the expert's
+ * lastJobsViewedAt timestamp. Used for the "Find Work" sidebar badge.
+ */
+export async function getUnseenJobCount(): Promise<number> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || session.user.role !== "EXPERT") return 0;
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { lastJobsViewedAt: true },
+    });
+    if (!user) return 0;
+
+    const since = user.lastJobsViewedAt ?? new Date(0);
+
+    return prisma.jobPost.count({
+      where: {
+        status: "open",
+        createdAt: { gt: since },
+      },
+    });
+  } catch (e) {
+    log.error("jobs.get_unseen_count_failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
+    return 0;
+  }
+}
+
+/**
+ * Updates the expert's lastJobsViewedAt to now.
+ * Called when the expert visits the /jobs page.
+ */
+export async function markJobsViewed() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return;
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { lastJobsViewedAt: new Date() },
+    });
+  } catch (e) {
+    log.error("jobs.mark_viewed_failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { orders } from "@/data/mock";
-import { Clock, CheckCircle, Package, AlertCircle, LucideIcon } from "lucide-react";
+import { Clock, CheckCircle, Package, AlertCircle, RotateCcw, LucideIcon } from "lucide-react";
 import { OrderStatus } from "@/types";
 
 export const metadata = {
@@ -13,6 +13,7 @@ const statusMap: Record<OrderStatus, { label: string; color: string; icon: Lucid
   paid_pending_implementation: { label: "Paid & Pending", color: "text-blue-400", icon: Clock },
   in_progress: { label: "In Progress", color: "text-yellow-500", icon: Package },
   delivered: { label: "Delivered", color: "text-purple-400", icon: CheckCircle },
+  revision_requested: { label: "Revision Requested", color: "text-amber-500", icon: RotateCcw },
   approved: { label: "Completed", color: "text-green-500", icon: CheckCircle },
   refunded: { label: "Refunded", color: "text-red-400", icon: AlertCircle },
   disputed: { label: "Disputed", color: "text-red-500", icon: AlertCircle },
@@ -60,7 +61,7 @@ export default function OrdersPage() {
                    </div>
                    
                    <div className="text-right">
-                     <div className="text-xl font-bold">${(order.price_cents / 100).toLocaleString()}</div>
+                     <div className="text-xl font-bold">&euro;{(order.price_cents / 100).toLocaleString("de-DE")}</div>
                      <div className="text-xs text-muted-foreground mt-1">
                        Ordered {new Date(order.created_at).toLocaleDateString()}
                      </div>

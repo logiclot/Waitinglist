@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createSolutionDraft, updateSolutionDraft, publishSolution } from "@/actions/solutions";
 import { getExpertSettings } from "@/actions/expert";
 import { getExpertEcosystems, addSolutionToEcosystem } from "@/actions/ecosystems";
+import { checkListForGibberish, checkFieldsForGibberish } from "@/lib/validation";
 import { SolutionPreview, SolutionFormData } from "./SolutionPreview";
 import { toast } from "sonner";
 import {
@@ -18,20 +19,12 @@ import {
   ShieldCheck,
   Lock,
   Copy,
-  Wrench
+  Wrench,
+  Sparkles
 } from "lucide-react";
+import { CATEGORIES } from "@/lib/categories";
 
 // --- Constants ---
-const CATEGORIES = [
-  "Marketing Automation",
-  "Sales & CRM",
-  "Customer Support",
-  "Data & Analytics",
-  "Finance & Operations",
-  "Content Creation",
-  "HR & Recruiting",
-  "Other"
-];
 
 const COMMON_TOOLS = [
   "Make", "n8n", "Zapier", "OpenAI", "HubSpot", "Salesforce",
@@ -67,6 +60,11 @@ interface Milestone {
   deliveryTime?: string;
 }
 
+interface Skill {
+  name: string;
+  description: string;
+}
+
 export interface WizardState extends SolutionFormData {
   // Extended fields for wizard
   id?: string; // If draft created
@@ -74,6 +72,7 @@ export interface WizardState extends SolutionFormData {
   complexity: string;
 
   milestones: Milestone[]; // V3: Dynamic Milestones
+  skills: Skill[]; // Discrete capabilities the automation delivers
 
   included: string[];
   excluded: string; // stored as text, split by newline if needed
@@ -137,6 +136,8 @@ const INITIAL_STATE: WizardState = {
     { title: "QA & Handover", description: "Testing and final walkthrough session.", price: 0 }
   ],
 
+  skills: [], // Optional skills list
+
   outline: ["", "", ""], // 3 slots
 
   // V2: Initialize arrays to prevent runtime errors
@@ -172,8 +173,8 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
   const [quickTotal, setQuickTotal] = useState<string>("");
   const [stripeConnected, setStripeConnected] = useState<boolean | null>(null);
   const [calendarConnected, setCalendarConnected] = useState<boolean | null>(null);
-  const [expertFeePercent, setExpertFeePercent] = useState<number>(15);
-  const [expertFeeLabel, setExpertFeeLabel] = useState<string>("Est. 15%");
+  const [expertFeePercent, setExpertFeePercent] = useState<number>(16);
+  const [expertFeeLabel, setExpertFeeLabel] = useState<string>("Est. 16%");
   const [expertSuites, setExpertSuites] = useState<{ id: string; title: string }[]>([]);
   const [selectedSuiteId, setSelectedSuiteId] = useState<string>("");
 
@@ -188,7 +189,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       if (res.success && res.settings) {
         const s = res.settings as { calendarUrl?: string; platformFeePercentage?: number; isFoundingExpert?: boolean; tier?: string };
         setCalendarConnected(!!(s.calendarUrl && s.calendarUrl.trim()));
-        const fee = s.platformFeePercentage ?? 15;
+        const fee = s.platformFeePercentage ?? 16;
         setExpertFeePercent(fee);
         let label: string;
         if (s.isFoundingExpert && s.tier === "ELITE")       label = `${fee}% (Founding Expert · Elite)`;
@@ -233,6 +234,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
     structureCustom: initialData?.structureCustom || [],
     businessGoals: initialData?.businessGoals || [],
     industries: initialData?.industries || [],
+    skills: initialData?.skills || [],
     // Ensure outline has 3 slots
     outline: initialData?.outline && initialData.outline.length > 0
       ? [...initialData.outline, "", "", ""].slice(0, 3)
@@ -345,6 +347,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
           industries: formData.industries?.filter(x => x.trim()) || [],
 
           outline: formData.outline.filter(l => l.trim()),
+          skills: formData.skills.filter(s => s.name.trim()),
           lastStep: currentStepToSave,
 
           ...(() => {
@@ -363,6 +366,8 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
         if (formData.requiredInputsText) {
           updateData.requiredInputs = formData.requiredInputsText.split("\n").filter((x: string) => x.trim());
+        } else {
+          updateData.requiredInputs = [];
         }
 
         const res = await updateSolutionDraft(currentId, updateData);
@@ -387,11 +392,11 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                formData.businessGoals.length > 0 &&
                formData.longDescription;
       case 2:
-        return formData.included.length >= 3 && !!formData.requiredInputsText;
+        return formData.included.filter(i => i.trim()).length >= 3 && !!formData.requiredInputsText;
       case 3:
         return formData.delivery_days > 0 && formData.support_days > 0 && formData.paybackPeriod;
       case 4:
-        return formData.implementation_price > 0 && (formData.demoPrice === undefined || formData.demoPrice >= 2);
+        return formData.implementation_price > 0 && (formData.demoPrice === undefined || (formData.demoPrice >= 2 && formData.demoPrice <= 32));
       case 5:
         return !formData.proofEnabled || !!(formData.proofScreenshotUrl?.trim() || formData.proofCaseStudyText?.trim());
       default:
@@ -400,6 +405,36 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
   };
 
   const handleNext = async () => {
+    // ── Gibberish guard per step ──
+    let gibberishIssue: string | null = null;
+    if (step === 1) {
+      gibberishIssue =
+        checkFieldsForGibberish([
+          { value: formData.title, label: "Title" },
+          { value: formData.longDescription, label: "Description" },
+        ]) ??
+        checkListForGibberish(formData.outline.filter(o => o.trim()), "Outcome");
+    } else if (step === 2) {
+      gibberishIssue =
+        checkListForGibberish(formData.included.filter(i => i.trim()), "Deliverable") ??
+        checkListForGibberish((formData.structureConsistent || []).filter(s => s.trim()), "Always-included item") ??
+        checkListForGibberish((formData.structureCustom || []).filter(s => s.trim()), "Customised item") ??
+        checkFieldsForGibberish([{ value: formData.requiredInputsText, label: "Client requirements" }]) ??
+        checkListForGibberish(formData.skills.map(s => s.name).filter(n => n.trim()), "Skill name") ??
+        checkListForGibberish(formData.skills.map(s => s.description).filter(d => d.trim()), "Skill description");
+    } else if (step === 4) {
+      gibberishIssue =
+        checkListForGibberish(formData.milestones.map(m => m.title).filter(t => t.trim()), "Milestone title") ??
+        checkListForGibberish(formData.milestones.map(m => m.description).filter(d => d.trim()), "Milestone description");
+    } else if (step === 5) {
+      gibberishIssue =
+        checkFieldsForGibberish([{ value: formData.proofCaseStudyText, label: "Case study" }]);
+    }
+    if (gibberishIssue) {
+      setError(gibberishIssue);
+      return;
+    }
+
     if (validateStep(step)) {
       const nextStep = step + 1;
       // Auto-save on next
@@ -409,7 +444,14 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         window.scrollTo(0, 0);
       }
     } else {
-      setError("Please fill all required fields marked with *");
+      // Give a more helpful error based on what's actually missing
+      if (step === 2 && formData.included.filter(i => i.trim()).length < 3) {
+        setError(`Add at least 3 deliverables under "What's included" (currently ${formData.included.filter(i => i.trim()).length}).`);
+      } else if (step === 4 && formData.demoPrice !== undefined && (formData.demoPrice < 2 || formData.demoPrice > 32)) {
+        setError("Discovery call price must be between €2 and €32.");
+      } else {
+        setError("Please fill all required fields marked with *");
+      }
     }
   };
 
@@ -430,6 +472,9 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         await addSolutionToEcosystem(selectedSuiteId, formData.id);
       }
       toast.success("Done! Your automation is now live.");
+      if (formData.demoVideoUrl?.trim()) {
+        toast.info("Your demo video is pending review. It will appear on your listing automatically once approved.", { duration: 8000 });
+      }
       router.push("/expert/my-solutions?tab=published");
     } else {
       toast.error(res.error || "Failed to publish", { duration: 4000 });
@@ -683,6 +728,68 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
       <hr className="border-border" />
 
+      {/* Skills */}
+      <div>
+        <h3 className="text-sm font-medium mb-1 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-muted-foreground" /> Skills
+        </h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          If you trained the AI agent with specific skills, list them here. Buyers see these as built-in capabilities they get out of the box.
+        </p>
+
+        {formData.skills.length > 0 && (
+          <div className="space-y-2 mb-3">
+            {formData.skills.map((skill, idx) => (
+              <div key={idx} className="border border-border rounded-lg p-3 bg-card group relative">
+                <div className="flex gap-3 items-center mb-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-primary/60 shrink-0" />
+                  <input
+                    value={skill.name}
+                    onChange={(e) => {
+                      const newSkills = [...formData.skills];
+                      newSkills[idx] = { ...newSkills[idx], name: e.target.value };
+                      handleChange("skills", newSkills);
+                    }}
+                    disabled={isLocked}
+                    placeholder="Skill name — e.g. Email Classification"
+                    className="flex-1 text-sm font-semibold bg-transparent border-none p-0 focus:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-50"
+                  />
+                  <button
+                    onClick={() => handleChange("skills", formData.skills.filter((_, i) => i !== idx))}
+                    disabled={isLocked}
+                    className="p-1 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <input
+                  value={skill.description}
+                  onChange={(e) => {
+                    const newSkills = [...formData.skills];
+                    newSkills[idx] = { ...newSkills[idx], description: e.target.value };
+                    handleChange("skills", newSkills);
+                  }}
+                  disabled={isLocked}
+                  placeholder="Short description — e.g. Routes inbound emails by intent automatically"
+                  className="w-full text-xs text-muted-foreground bg-secondary/20 border-none rounded px-2 py-1.5 focus:ring-1 focus:ring-primary/20 ml-6 disabled:opacity-50"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isLocked && (
+          <button
+            onClick={() => handleChange("skills", [...formData.skills, { name: "", description: "" }])}
+            className="w-full py-2 border border-dashed border-border rounded-lg text-xs text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add skill
+          </button>
+        )}
+      </div>
+
+      <hr className="border-border" />
+
       {/* Included Deliverables */}
       <div>
         <label className="block text-sm font-medium mb-1">What&apos;s included <span className="text-red-500">*</span></label>
@@ -717,6 +824,14 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         >
           <Plus className="w-4 h-4" /> Add deliverable
         </button>
+        {formData.included.filter(i => i.trim()).length < 3 && (
+          <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+            <AlertCircle className="w-3 h-3 shrink-0" />
+            {formData.included.filter(i => i.trim()).length === 0
+              ? "Add at least 3 deliverables to continue."
+              : `${formData.included.filter(i => i.trim()).length}/3 deliverables added — add ${3 - formData.included.filter(i => i.trim()).length} more to continue.`}
+          </p>
+        )}
       </div>
 
       {/* Required Inputs */}
@@ -931,9 +1046,14 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-1 text-right">
-            {expertFeePercent < 15 ? `Your current rate: ${expertFeePercent}% — ` : "Fee drops to 11–13% as you grow. "}
+            {expertFeePercent < 16 ? `Your current rate: ${expertFeePercent}% — ` : "Fee drops to 12–14% as you grow. "}
             <a href="/pricing" target="_blank" className="underline hover:text-primary">See tiers</a>.
           </p>
+          {totalPrice > 0 && totalPrice < 500 && (
+            <p className="text-xs text-muted-foreground/70 mt-2 text-right">
+              Solutions priced at €500+ tend to attract more serious buyers and convert better on the platform.
+            </p>
+          )}
         </div>
 
         <hr className="border-border" />
@@ -976,22 +1096,29 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         <div className="rounded-lg border border-border bg-[#1c1c1e] p-4">
           <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-3">3 — Discovery call price</p>
 
-          <div className="flex gap-3 items-end mb-3">
+          <div className="flex gap-3 items-end mb-2">
             <div className="flex-1">
               <label className="block text-xs font-medium mb-1 text-white/60">Price per call (€) <span className="font-normal text-white/40">&mdash; you keep this minus €2 platform fee</span></label>
               <input
                 type="number"
                 value={formData.demoPrice}
                 onChange={e => handleChange("demoPrice", parseFloat(e.target.value))}
+                onBlur={() => {
+                  const v = formData.demoPrice;
+                  if (v === undefined || isNaN(v) || v < 2) handleChange("demoPrice", 2);
+                  else if (v > 32) handleChange("demoPrice", 32);
+                }}
                 disabled={isLocked}
                 min={2}
+                max={32}
                 className="w-full bg-white/10 border border-white/15 text-white rounded-md px-3 py-2 text-sm placeholder:text-white/30 focus:outline-none disabled:opacity-50"
                 placeholder="2"
               />
+              <p className="text-[10px] text-white/30 mt-1">Min €2 (platform fee) · Max €32</p>
             </div>
             <div className="text-right pb-0.5 shrink-0">
               <p className="text-xs text-white/40">You earn</p>
-              <p className="text-xl font-bold text-white">€{Math.max(0, (formData.demoPrice || 0) - 2).toLocaleString("de-DE")}</p>
+              <p className="text-xl font-bold text-white">€{Math.max(0, Math.min(32, formData.demoPrice || 0) - 2).toLocaleString("de-DE")}</p>
             </div>
           </div>
 
@@ -1008,80 +1135,71 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
           </div>
         </div>
 
-        <hr className="border-border" />
-
-        {/* Account connections */}
-        <div>
-          <p className="text-xs font-semibold text-foreground uppercase tracking-widest mb-3">Before you publish</p>
-          <div className="space-y-2">
-
-            {/* Stripe */}
-            {stripeConnected === true ? (
-              <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary/30 border border-border">
-                <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-                <span className="text-sm text-muted-foreground flex-1">Stripe connected</span>
-                <a href="/expert/settings" target="_blank" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">Manage</a>
-              </div>
-            ) : stripeConnected === false ? (
-              <div className="flex items-center justify-between gap-3 px-3 py-3 rounded-lg border border-border bg-card">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Connect Stripe to get paid</p>
-                    <p className="text-xs text-muted-foreground">Required to receive milestone payments.</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const res = await fetch("/api/stripe/onboard", { method: "POST" });
-                    const d = await res.json();
-                    if (d.url) window.location.href = d.url;
-                  }}
-                  className="shrink-0 text-xs font-semibold px-3 py-1.5 bg-foreground text-background rounded-md hover:opacity-90 transition-opacity whitespace-nowrap"
-                >
-                  Connect Stripe &#x2192;
-                </button>
-              </div>
-            ) : null}
-
-            {/* Calendar */}
-            {calendarConnected === true ? (
-              <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary/30 border border-border">
-                <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-                <span className="text-sm text-muted-foreground flex-1">Calendar connected</span>
-                <a href="/expert/settings#calendar" target="_blank" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">Manage</a>
-              </div>
-            ) : calendarConnected === false ? (
-              <div className="flex items-center justify-between gap-3 px-3 py-3 rounded-lg border border-border bg-card">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Connect your calendar</p>
-                    <p className="text-xs text-muted-foreground">Needed for discovery call bookings. Optional.</p>
-                  </div>
-                </div>
-                <a
-                  href="/expert/settings#calendar"
-                  target="_blank"
-                  className="shrink-0 text-xs font-medium px-3 py-1.5 border border-border rounded-md hover:bg-secondary transition-colors whitespace-nowrap"
-                >
-                  Connect &#x2192;
-                </a>
-              </div>
-            ) : null}
-
-          </div>
-        </div>
 
       </div>
     );
   };
 
 
-  // 5. Proof
+  // 5. Proof & Publish Requirements
+  const canPublish = stripeConnected === true && calendarConnected === true;
+
   const renderStep5 = () => (
     <div className="space-y-6">
+
+      {/* ── Required connections ─────────────────────────────────── */}
+      <div>
+        <label className="text-sm font-medium">Required to publish</label>
+        <p className="text-xs text-muted-foreground mt-0.5 mb-3">Connect both before you can go live.</p>
+
+        <div className="space-y-2">
+          {/* Stripe */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-2 h-2 rounded-full shrink-0 ${stripeConnected ? "bg-green-500" : "bg-amber-400"}`} />
+              <span className="text-sm text-foreground">{stripeConnected ? "Stripe connected" : "Connect Stripe to get paid"}</span>
+            </div>
+            {stripeConnected ? (
+              <a href="/expert/settings" target="_blank" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">Manage</a>
+            ) : (
+              <button
+                type="button"
+                onClick={async () => {
+                  const res = await fetch("/api/stripe/onboard", { method: "POST" });
+                  const d = await res.json();
+                  if (d.url) window.location.href = d.url;
+                }}
+                className="text-xs font-semibold px-3 py-1.5 bg-foreground text-background rounded-md hover:opacity-90 transition-opacity whitespace-nowrap"
+              >
+                Connect Stripe &#x2192;
+              </button>
+            )}
+          </div>
+
+          {/* Calendar */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-2 h-2 rounded-full shrink-0 ${calendarConnected ? "bg-green-500" : "bg-amber-400"}`} />
+              <span className="text-sm text-foreground">{calendarConnected ? "Calendar connected" : "Connect your calendar"}</span>
+            </div>
+            {calendarConnected ? (
+              <a href="/expert/settings#calendar" target="_blank" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">Manage</a>
+            ) : (
+              <a
+                href="/expert/settings#calendar"
+                target="_blank"
+                className="text-xs font-medium px-3 py-1.5 border border-border rounded-md hover:bg-secondary transition-colors whitespace-nowrap"
+              >
+                Connect &#x2192;
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <hr className="border-border" />
+
+      {/* ── Proof (optional) ─────────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between mb-1">
           <div>
@@ -1100,11 +1218,9 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
       {formData.proofEnabled && (
         <div className="animate-in fade-in slide-in-from-top-2 space-y-4">
-
-          {/* Screenshot URL */}
-          <div className="border border-border rounded-lg p-4 space-y-2">
-            <label className="block text-sm font-semibold">Anonymized Screenshot</label>
-            <p className="text-xs text-muted-foreground">A link to a screenshot showing the automation in action. Make sure no sensitive client data is visible.</p>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Anonymized Screenshot</label>
+            <p className="text-xs text-muted-foreground mb-2">A link to a screenshot showing the automation in action. Make sure no sensitive client data is visible.</p>
             <input
               value={formData.proofScreenshotUrl || ""}
               onChange={e => handleChange("proofScreenshotUrl", e.target.value)}
@@ -1115,10 +1231,9 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
             />
           </div>
 
-          {/* Case Study */}
-          <div className="border border-border rounded-lg p-4 space-y-2">
-            <label className="block text-sm font-semibold">Short Case Study</label>
-            <p className="text-xs text-muted-foreground">Describe the problem, what you built, and what changed. Keep it short — 3 to 5 sentences is enough.</p>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Short Case Study</label>
+            <p className="text-xs text-muted-foreground mb-2">Describe the problem, what you built, and what changed. Keep it short — 3 to 5 sentences is enough.</p>
             <textarea
               value={formData.proofCaseStudyText || ""}
               onChange={e => handleChange("proofCaseStudyText", e.target.value)}
@@ -1128,11 +1243,10 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
               placeholder="e.g. A 3-person e-commerce team was manually updating stock levels twice a day. We connected their supplier feed to Shopify using a scheduled automation. Stock updates now happen every 30 minutes without anyone touching it."
             />
           </div>
-
         </div>
       )}
 
-      {/* Add to Suite */}
+      {/* ── Suite assignment (optional) ──────────────────────────── */}
       <hr className="border-border" />
       <div className="space-y-2">
         <label className="text-sm font-medium">Add to a Suite (Optional)</label>
@@ -1160,6 +1274,14 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
           </select>
         )}
       </div>
+
+      {/* ── Publish gate warning ─────────────────────────────────── */}
+      {!canPublish && (
+        <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 p-3 rounded-lg text-sm flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          Connect {!stripeConnected && "Stripe"}{!stripeConnected && !calendarConnected && " and "}{!calendarConnected && "Calendar"} above to publish your solution.
+        </div>
+      )}
     </div>
   );
 
@@ -1251,8 +1373,9 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
               !isLocked && (
                 <button
                   onClick={handlePublish}
-                  disabled={loading}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors flex items-center gap-2"
+                  disabled={loading || !canPublish}
+                  title={!canPublish ? "Connect Stripe and Calendar to publish" : undefined}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Publishing..." : "Publish Solution"} <Upload className="w-4 h-4" />
                 </button>

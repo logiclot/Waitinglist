@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { MessageCircle, Zap, ArrowRight, Star, Pin, Lock } from "lucide-react";
+import Link from "next/link";
+import { MessageCircle, Zap, ArrowRight, Star, Pin, Lock, ChevronLeft } from "lucide-react";
 import { getExpertPortfolio } from "@/actions/portfolio";
 import { getExpertPublicReviews } from "@/actions/reviews";
 import { TierBadge } from "@/components/ui/TierBadge";
@@ -92,6 +93,17 @@ export default async function ExpertPortfolioPage({ params }: Props) {
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <PortfolioViewTracker slug={expert.slug} isOwner={isOwner} />
+
+        {/* Owner-only back link */}
+        {isOwner && (
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+        )}
 
         {/* ── Hero / Profile card ─────────────────────────────────────────────── */}
         <GlowBorder

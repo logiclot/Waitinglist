@@ -75,7 +75,7 @@ export async function createThread(sellerId: string, solutionId?: string, orderI
     if (seller.userId) {
       await createNotification(
         seller.userId,
-        "New Conversation",
+        "💬 New Conversation",
         "A potential client has started a conversation with you.",
         "info",
         "/inbox"
@@ -152,7 +152,7 @@ export async function sendMessage(threadId: string, body: string) {
     } else {
       await createNotification(
         recipientId,
-        "New Message",
+        "💬 New Message",
         `You have a new message from ${senderName}`,
         "info",
         "/inbox"
@@ -206,5 +206,48 @@ export async function scheduleMeeting(threadId: string, date: string) {
     log.error("messaging.schedule_meeting_failed", { error: e instanceof Error ? e.message : String(e) });
     Sentry.captureException(e);
     return { error: "Failed to schedule" };
+  }
+}
+
+/**
+ * Count conversations with unread messages for the current user.
+ * A conversation is "unread" if the most recent message was NOT sent by the current user.
+ */
+export async function getUnreadConversationCount(): Promise<number> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return 0;
+
+    const userId = session.user.id;
+
+    // Get specialist profile id (if expert)
+    const expertProfile = await prisma.specialistProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    // Find all conversations where user is a participant
+    const conversations = await prisma.conversation.findMany({
+      where: {
+        OR: [
+          { buyerId: userId },
+          ...(expertProfile ? [{ sellerId: expertProfile.id }] : []),
+        ],
+      },
+      select: {
+        messages: {
+          orderBy: { createdAt: "desc" as const },
+          take: 1,
+          select: { senderId: true },
+        },
+      },
+    });
+
+    // Count conversations where the last message is NOT from the current user
+    return conversations.filter(
+      (c) => c.messages.length > 0 && c.messages[0].senderId !== userId
+    ).length;
+  } catch {
+    return 0;
   }
 }

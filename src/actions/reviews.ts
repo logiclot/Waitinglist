@@ -38,25 +38,51 @@ export async function submitSellerReview(
       return { error: "Order must be delivered before reviewing" };
     }
     if (!order.review) return { error: "Review record not found" };
-    if (order.review.sellerRating !== null) return { error: "You have already submitted a review" };
 
-    await prisma.review.update({
-      where: { id: order.review.id },
+    const buyerAlsoReviewed = order.review.buyerRating !== null;
+    const shouldUnblind = buyerAlsoReviewed;
+
+    // Atomic update: WHERE sellerRating IS NULL prevents double-submission race
+    const updated = await prisma.review.updateMany({
+      where: { id: order.review.id, sellerRating: null },
       data: {
         sellerRating: rating,
         sellerComment: comment.trim() || null,
         sellerSubmittedAt: new Date(),
+        ...(shouldUnblind ? { unblindedAt: new Date() } : {}),
       },
     });
 
-    // Notify buyer: expert left you a review
-    await createNotification(
-      order.buyerId,
-      `${order.seller.displayName ?? "Your expert"} left you a review!`,
-      "Leave your review to see what they wrote.",
-      "info",
-      `/business/projects?review=${orderId}`
-    );
+    if (updated.count === 0) return { error: "You have already submitted a review" };
+
+    if (shouldUnblind) {
+      // Both reviewed — notify both that reviews are visible
+      await Promise.all([
+        createNotification(
+          order.buyerId,
+          "⭐ Reviews are now visible!",
+          "Both reviews have been submitted. You can now see your expert's feedback.",
+          "success",
+          `/business/projects?review=${orderId}`
+        ),
+        createNotification(
+          order.seller.userId,
+          "⭐ Reviews are now visible!",
+          "Both reviews have been submitted. You can now see your client's feedback.",
+          "success",
+          `/expert/reviews/${orderId}`
+        ),
+      ]);
+    } else {
+      // Only expert reviewed so far — nudge buyer
+      await createNotification(
+        order.buyerId,
+        `⭐ ${order.seller.displayName ?? "Your expert"} left you a review!`,
+        "Leave your review to see what they wrote.",
+        "info",
+        `/business/projects?review=${orderId}`
+      );
+    }
 
     revalidatePath("/business/projects");
     revalidatePath(`/expert/reviews/${orderId}`);
@@ -125,14 +151,14 @@ export async function submitBuyerReview(
       await Promise.all([
         createNotification(
           order.buyerId,
-          "Reviews are now visible!",
+          "⭐ Reviews are now visible!",
           "Both reviews have been submitted. You can now see your expert's feedback.",
           "success",
           `/business/projects?review=${orderId}`
         ),
         createNotification(
           order.seller.userId,
-          "Reviews are now visible!",
+          "⭐ Reviews are now visible!",
           "Both reviews have been submitted. You can now see your client's feedback.",
           "success",
           `/expert/reviews/${orderId}`

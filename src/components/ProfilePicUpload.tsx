@@ -37,6 +37,7 @@ export function ProfilePicUpload({ value, onChange, name, disabled, persistOnCha
 
   // Step 2: User confirms crop → upload the cropped blob
   const handleCropConfirm = async (croppedBlob: Blob) => {
+    if (cropImageUrl) URL.revokeObjectURL(cropImageUrl);
     setCropImageUrl(null);
     setUploading(true);
 

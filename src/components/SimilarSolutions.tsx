@@ -34,7 +34,7 @@ export function SimilarSolutions({ solutions }: SimilarSolutionsProps) {
               <div className="mb-3 flex items-start justify-between">
                 <CategoryBadge category={solution.category} size="sm" />
                 <span className="text-sm font-semibold">
-                  ${solution.implementation_price.toLocaleString()}
+                  &euro;{solution.implementation_price.toLocaleString("de-DE")}
                 </span>
               </div>
 

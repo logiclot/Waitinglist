@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, PlayCircle, ShieldCheck, Heart, TrendingUp, Users, Wrench, Lock, Edit, Trash2, ArrowUpCircle } from "lucide-react";
+import { Clock, PlayCircle, ShieldCheck, Heart, TrendingUp, Users, Wrench, Lock, Edit, Trash2, ArrowUpCircle, Sparkles } from "lucide-react";
 import { Solution } from "@/types";
 import { TierBadge } from "@/components/ui/TierBadge";
 import { CategoryBadge } from "@/components/ui/CategoryBadge";
 import { useSavedSolutionsContext } from "@/hooks/SavedSolutionsContext";
 import { useRouter } from "next/navigation";
 import { useState, MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { archiveSolution, createSolutionVersion } from "@/actions/solutions";
 import { toast } from "sonner";
 
@@ -36,7 +37,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
     const success = await toggleSaved(solution.id);
     setIsSaving(false);
     if (!success) {
-      router.push("/auth/sign-in");
+      toast.error("Sign in to save solutions");
     }
   };
 
@@ -176,6 +177,16 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
             </span>
           )}
         </div>
+
+        {/* Skills indicator */}
+        {solution.skills && solution.skills.length > 0 && (
+          <div className="flex items-center gap-1.5 mb-3">
+            <Sparkles className="h-3 w-3 text-primary" />
+            <span className="text-xs font-medium text-primary">
+              {solution.skills.length} skill{solution.skills.length !== 1 ? "s" : ""} included
+            </span>
+          </div>
+        )}
 
         {/* Proof Strip */}
         {proofStrip && (
@@ -341,22 +352,22 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
         </div>
       </div>
 
-      {/* Confirmation Modal Overlay */}
-      {showRemoveConfirm && (
-        <div className="absolute inset-0 bg-background/90 flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-card border border-border rounded-xl p-6 shadow-xl max-w-xs text-center">
+      {/* Confirmation Modal — rendered via portal to escape card transforms */}
+      {showRemoveConfirm && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in" onClick={() => setShowRemoveConfirm(false)}>
+          <div className="bg-card border border-border rounded-xl p-6 shadow-xl max-w-xs text-center" onClick={e => e.stopPropagation()}>
             <h4 className="font-bold text-lg mb-2">Remove Solution?</h4>
             <p className="text-sm text-muted-foreground mb-4">
               This will hide the solution from Browse Solutions. You can re-publish later.
             </p>
             <div className="flex gap-2 justify-center">
-              <button 
+              <button
                 onClick={() => setShowRemoveConfirm(false)}
                 className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-lg"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleRemove}
                 className="px-4 py-2 text-sm font-bold bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
@@ -364,11 +375,12 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Upgrade Modal Overlay — fixed full-screen so it's never clipped by the card */}
-      {showUpgradeModal && (
+      {/* Upgrade Modal — rendered via portal to escape card transforms */}
+      {showUpgradeModal && createPortal(
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in"
           onClick={() => setShowUpgradeModal(false)}
@@ -433,7 +445,8 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

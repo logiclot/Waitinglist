@@ -148,6 +148,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
 
   const removePhase = (idx: number) => {
     const newPhases = phases.filter((_, i) => i !== idx);
+    if (newPhases.length === 0) { setPhases([]); return; }
     const total = parseFloat(price);
     if (!isNaN(total) && total > 0) {
       const per = (total / newPhases.length).toFixed(2);

@@ -8,7 +8,7 @@ export default function HelpPage() {
         title="Need assistance?"
         description="Access guides, documentation, and support resources."
         primaryCtaLabel="Contact Support"
-        primaryCtaHref="mailto:support@logiclot.com"
+        primaryCtaHref="mailto:contact@logiclot.io"
       />
     </div>
   );

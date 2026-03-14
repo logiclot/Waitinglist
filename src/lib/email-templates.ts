@@ -189,7 +189,7 @@ function recommendationRows(recommendations: NurtureRecommendation[]): string {
       (r) =>
         `<tr><td style="padding:8px 0;border-bottom:1px solid #e5e7eb;">
           <a href="${BASE_URL}/solutions/${r.slug}" style="color:#2563EB;font-weight:600;text-decoration:none;">${r.title}</a>
-          <br/><span style="font-size:13px;color:#6b7280;">${r.category} &middot; &euro;${(r.priceCents / 100).toFixed(0)}</span>
+          <br/><span style="font-size:13px;color:#6b7280;">${r.category} &middot; &euro;${(r.priceCents / 100).toFixed(2)}</span>
         </td></tr>`
     )
     .join("");
@@ -258,10 +258,19 @@ interface AuditBottleneck {
   after: string;
 }
 
+interface AuditStrength {
+  headline: string;
+  detail: string;
+  outcome: string;
+  status: string;
+  next: string;
+}
+
 interface AuditReportData {
   overall: number;
   scoreLabel: string;
   scoreExplanation: string;
+  processMaturity: number;
   financialEstimate: number;
   recoveryLow: number;
   recoveryHigh: number;
@@ -271,6 +280,7 @@ interface AuditReportData {
   urgencyMonthly: number;
   socialProofPct: number;
   bottlenecks: AuditBottleneck[];
+  strengths: AuditStrength[];
   barrier: { label: string; message: string } | null;
 }
 
@@ -344,6 +354,23 @@ export function auditReportEmail({ data }: { data: AuditReportData }): string {
         ${data.bottlenecks.length > 0 ? `
         <p style="margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:600;">Your Top Bottlenecks</p>
         <table width="100%" cellpadding="0" cellspacing="0">${bottleneckRows}</table>
+        ` : ""}
+
+        ${data.strengths && data.strengths.length > 0 ? `
+        <p style="margin:16px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:600;">Automation-Ready Processes</p>
+        <p style="margin:0 0 12px;font-size:13px;color:#64748b;line-height:1.7;">These processes are already working well. Automation locks in the result so your team never runs them manually again.</p>
+        <table width="100%" cellpadding="0" cellspacing="0">${data.strengths
+          .map(
+            (s, i) =>
+              `<tr><td style="padding:12px 0;border-bottom:1px solid #e5e7eb;">
+                <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">${i + 1}. ${s.headline}</p>
+                <p style="margin:0 0 6px;font-size:13px;color:#64748b;line-height:1.6;">${s.detail}</p>
+                <p style="margin:0 0 2px;font-size:12px;color:#64748b;"><strong style="color:#16a34a;">Status:</strong> ${s.status}</p>
+                <p style="margin:0 0 6px;font-size:12px;color:#64748b;"><strong style="color:#2563EB;">Next:</strong> ${s.next}</p>
+                <p style="margin:0;font-size:13px;color:#0f172a;background:#f0fdf4;padding:8px 12px;border-radius:6px;">&rarr; ${s.outcome}</p>
+              </td></tr>`
+          )
+          .join("")}</table>
         ` : ""}
 
         ${barrierSection}

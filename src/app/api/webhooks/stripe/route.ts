@@ -72,7 +72,12 @@ async function sendDemoBookedEmail({
 
 export async function POST(req: Request) {
   const body = await req.text();
-  const signature = headers().get("Stripe-Signature") as string;
+  const signature = headers().get("Stripe-Signature");
+
+  if (!signature) {
+    log.error("webhook.missing_signature");
+    return NextResponse.json({ error: "Missing Stripe-Signature header" }, { status: 400 });
+  }
 
   let event: Stripe.Event;
 
@@ -113,14 +118,21 @@ export async function POST(req: Request) {
 
         await markJobAsPaid(jobId);
 
-        // Confirm to buyer
+        // Confirm to buyer + invoice notification
         if (buyerId) {
           await createNotification(
             buyerId,
-            "Your post is live!",
+            "🚀 Your post is live!",
             `"${job.title}" is now visible to experts. Expect proposals within 24 hours.`,
             "success",
             `/jobs/${jobId}`
+          );
+          await createNotification(
+            buyerId,
+            "🧾 Invoice available",
+            `Your invoice for the "${job.title}" posting fee is ready. View and download it anytime.`,
+            "info",
+            `/invoice/job/${jobId}`
           );
         }
       } catch (err) {
@@ -179,7 +191,7 @@ export async function POST(req: Request) {
 
           await createNotification(
             buyerId,
-            "Demo Confirmed",
+            "📅 Demo Confirmed",
             expert.calendarUrl
               ? "Payment successful. Check your messages for the booking link."
               : "Payment successful. Your expert will reach out to schedule the call.",
@@ -190,7 +202,7 @@ export async function POST(req: Request) {
           // Invoice notification
           await createNotification(
             buyerId,
-            "Invoice available",
+            "🧾 Invoice available",
             "Your invoice for this demo booking is ready. You can view and download it anytime.",
             "info",
             `/invoice/${orderId}`
@@ -218,7 +230,11 @@ export async function POST(req: Request) {
       try {
         const order = await prisma.order.findUnique({
           where: { id: orderId },
-          include: { seller: true },
+          include: {
+            seller: true,
+            solution: { select: { title: true } },
+            conversations: { select: { id: true }, take: 1 },
+          },
         });
 
         if (!order) {
@@ -233,9 +249,10 @@ export async function POST(req: Request) {
           return NextResponse.json({ received: true });
         }
 
-        // Idempotency: only process if milestone is still in the initial "pending_payment" state.
-        // If status is already "in_escrow" (or further), this event was already handled.
-        if (milestones[idx].status !== "pending_payment") {
+        // Idempotency: skip if milestone is already funded or further along.
+        // We allow both "pending_payment" (first milestone) and "waiting_for_funds"
+        // (subsequent milestones after a previous one is released).
+        if (["in_escrow", "releasing", "released"].includes(milestones[idx].status)) {
           return NextResponse.json({ received: true });
         }
 
@@ -251,57 +268,91 @@ export async function POST(req: Request) {
           milestones[idx].stripePaymentIntentId = paymentIntentId;
         }
 
-        await prisma.order.update({
-          where: { id: orderId },
-          data: {
-            milestones: milestones as unknown as Prisma.InputJsonValue,
-            status: "in_progress",
-            // Also keep order-level PaymentIntent as fallback for legacy/single-milestone orders
-            ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
-          },
+        // First milestone funding (order in "draft") → require expert acceptance.
+        // Subsequent milestones → set to "in_progress" so expert can continue working.
+        const newStatus = order.status === "draft"
+          ? "paid_pending_implementation"
+          : "in_progress";
+
+        // Transaction: update order + consume referral discount atomically
+        await prisma.$transaction(async (tx) => {
+          await tx.order.update({
+            where: { id: orderId },
+            data: {
+              milestones: milestones as unknown as Prisma.InputJsonValue,
+              status: newStatus,
+              // Also keep order-level PaymentIntent as fallback for legacy/single-milestone orders
+              ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
+            },
+          });
+
+          // Consume buyer referral discount inside same transaction
+          if (session.metadata?.discountApplied === "true") {
+            const buyer = await tx.user.findUnique({
+              where: { id: order.buyerId },
+              select: { referralRewards: true },
+            });
+            const rewards = (buyer?.referralRewards as import("@/types").ReferralRewards | null) || {};
+            const count = rewards.businessDiscountCount || 0;
+            if (count > 0) {
+              await tx.user.update({
+                where: { id: order.buyerId },
+                data: {
+                  referralRewards: { ...rewards, businessDiscountCount: count - 1 },
+                },
+              });
+            }
+          }
         });
 
-        // Check referral condition and consume buyer discount in parallel
-        await Promise.all([
-          checkBusinessReferralCondition(order.buyerId),
-          session.metadata?.discountApplied === "true"
-            ? prisma.user.findUnique({
-                where: { id: order.buyerId },
-                select: { referralRewards: true },
-              }).then((buyer) => {
-                const rewards = (buyer?.referralRewards as import("@/types").ReferralRewards | null) || {};
-                const count = rewards.businessDiscountCount || 0;
-                if (count > 0) {
-                  return prisma.user.update({
-                    where: { id: order.buyerId },
-                    data: {
-                      referralRewards: { ...rewards, businessDiscountCount: count - 1 },
-                    },
-                  });
-                }
-              })
-            : Promise.resolve(),
-        ]);
+        // Create order_card message in conversation
+        const conversationId = order.conversations[0]?.id;
+        if (conversationId) {
+          await prisma.message.create({
+            data: {
+              conversationId,
+              senderId: order.buyerId,
+              type: "order_card",
+              body: JSON.stringify({
+                type: "milestone_funded",
+                milestoneTitle: milestones[idx].title,
+                milestoneIndex: idx,
+                priceCents: milestones[idx].priceCents ?? 0,
+                projectTitle: order.solution?.title || "Project",
+                orderId: order.id,
+              }),
+            },
+          });
+        }
+
+        // Check referral eligibility (read-only, safe outside transaction)
+        await checkBusinessReferralCondition(order.buyerId);
 
         // Notify both parties
         await Promise.all([
           createNotification(
             order.buyerId,
-            type === "version_upgrade" ? "Upgrade Funded" : "Milestone Funded",
+            type === "version_upgrade" ? "💰 Upgrade Funded" : "💰 Milestone Funded",
             type === "version_upgrade"
               ? "Upgrade funds are secured. Expert will deliver the new version."
-              : `Funds for "${milestones[idx].title}" are safely in Escrow.`,
+              : `Payment for "${milestones[idx].title}" is secured in escrow. The expert will accept your order within 24–48 hours.`,
             "success",
             "/business/projects"
           ),
           order.seller?.userId
             ? createNotification(
                 order.seller.userId,
-                type === "version_upgrade" ? "Upgrade Purchased" : "Milestone Funded",
+                type === "version_upgrade"
+                  ? "💰 Upgrade Purchased"
+                  : newStatus === "paid_pending_implementation"
+                    ? "🔔 New order — accept to begin"
+                    : "💰 Milestone Funded",
                 type === "version_upgrade"
                   ? "A client has purchased an upgrade. Check your projects."
-                  : `Milestone "${milestones[idx].title}" has been funded. You can start work.`,
-                "info",
+                  : newStatus === "paid_pending_implementation"
+                    ? `A client has funded "${milestones[idx].title}". Please accept the order within 48 hours to start working.`
+                    : `Milestone "${milestones[idx].title}" has been funded by the client. You can continue work.`,
+                newStatus === "paid_pending_implementation" ? "alert" : "info",
                 "/expert/projects"
               )
             : Promise.resolve(),
@@ -310,7 +361,7 @@ export async function POST(req: Request) {
         // Invoice notification
         await createNotification(
           order.buyerId,
-          "Invoice available",
+          "🧾 Invoice available",
           `Your invoice for "${milestones[idx].title}" is ready. You can view and download it anytime from your project page.`,
           "info",
           `/invoice/${orderId}`
@@ -476,7 +527,7 @@ export async function POST(req: Request) {
         if (!expert.stripeDetailsSubmitted && detailsSubmitted) {
           await createNotification(
             expert.userId,
-            "Stripe connected!",
+            "✅ Stripe connected!",
             "Your Stripe account is set up. You can now receive payouts when milestones are released.",
             "success",
             "/expert/settings"

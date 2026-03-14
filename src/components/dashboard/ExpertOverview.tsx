@@ -17,16 +17,29 @@ import {
   CreditCard,
   Award,
   Paintbrush,
+  Star,
+  Clock,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatCentsToCurrency } from "@/lib/commission";
-import { ActiveCoupons } from "./ActiveCoupons";
+import { formatCentsToCurrency, TIER_THRESHOLDS } from "@/lib/commission";
 
 interface ActiveOrder {
   id: string;
+  status: string;
   solutionTitle: string;
   buyerName: string;
 }
+
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  paid_pending_implementation: { label: "Action Required", className: "bg-amber-500/10 text-amber-600" },
+  in_progress: { label: "In Progress", className: "bg-blue-500/10 text-blue-500" },
+  delivered: { label: "Awaiting Approval", className: "bg-amber-500/10 text-amber-600" },
+  revision_requested: { label: "Revision Requested", className: "bg-amber-500/10 text-amber-600" },
+  approved: { label: "Approved", className: "bg-emerald-500/10 text-emerald-600" },
+  disputed: { label: "Under Review", className: "bg-amber-500/10 text-amber-600" },
+  refunded: { label: "Refunded", className: "bg-slate-500/10 text-slate-500" },
+};
 
 interface TopSolution {
   id: string;
@@ -55,12 +68,23 @@ interface ReferralStats {
   error?: string;
 }
 
+interface EliteApplicationInfo {
+  status: string | null; // "pending" | "approved" | "denied" | null
+  appliedAt?: string | null;
+  deniedAt?: string | null;
+  deniedReason?: string | null;
+  demotedAt?: string | null;
+  demotedReason?: string | null;
+}
+
 interface ExpertOverviewProps {
   referralStats?: ReferralStats;
   activeCoupons?: { code: string; title: string }[];
   hasCalendarUrl?: boolean;
   hasStripeConnected?: boolean;
   isFoundingExpert?: boolean;
+  tier?: "STANDARD" | "PROVEN" | "ELITE";
+  commissionOverridePercent?: number;
   publishedSolutionCount?: number;
   earningsThisMonthCents?: number;
   inEscrowCents?: number;
@@ -69,6 +93,8 @@ interface ExpertOverviewProps {
   recentJobs?: RecentJob[];
   totalCompletedSales?: number;
   portfolioSlug?: string | null;
+  eliteApplication?: EliteApplicationInfo | null;
+  newExpertBoostUntil?: string | null;
 }
 
 export function ExpertOverview({
@@ -77,6 +103,8 @@ export function ExpertOverview({
   hasCalendarUrl,
   hasStripeConnected,
   isFoundingExpert,
+  tier = "STANDARD",
+  commissionOverridePercent,
   publishedSolutionCount = 0,
   earningsThisMonthCents = 0,
   inEscrowCents = 0,
@@ -85,6 +113,8 @@ export function ExpertOverview({
   recentJobs = [],
   totalCompletedSales = 0,
   portfolioSlug,
+  eliteApplication,
+  newExpertBoostUntil,
 }: ExpertOverviewProps) {
   const [referralLink, setReferralLink] = useState("");
   useEffect(() => {
@@ -99,13 +129,7 @@ export function ExpertOverview({
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
 
-      {/* Active Coupons */}
-      {activeCoupons.length > 0 && (
-        <section className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground font-medium">Your coupons:</span>
-          <ActiveCoupons coupons={activeCoupons} />
-        </section>
-      )}
+      {/* Coupon banner removed for experts — coupons are applied automatically to their platform fee */}
 
       {/* Header + Earnings */}
       <section className="flex flex-col md:flex-row justify-between gap-6">
@@ -115,14 +139,37 @@ export function ExpertOverview({
         </div>
 
         <div className="flex gap-3">
-          {isFoundingExpert && (
-            <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 border border-neutral-700 rounded-xl p-4 min-w-[130px] flex flex-col justify-center">
-              <p className="text-xs text-neutral-300 uppercase tracking-wider font-bold mb-1 flex items-center gap-1">
-                <Crown className="w-3 h-3 text-amber-400" /> Founder
-              </p>
-              <p className="text-sm font-medium text-white">11% Fee Locked</p>
-            </div>
-          )}
+          {(() => {
+            // Use admin override → founding rate → DB tier (authoritative)
+            const fee = commissionOverridePercent != null
+              ? commissionOverridePercent
+              : isFoundingExpert
+              ? TIER_THRESHOLDS.FOUNDING
+              : TIER_THRESHOLDS[tier];
+            const tierLabel = isFoundingExpert
+              ? "Founder"
+              : tier === "ELITE"
+              ? "Elite"
+              : tier === "PROVEN"
+              ? "Proven"
+              : "Standard";
+            const TierIcon = isFoundingExpert ? Crown : tier === "ELITE" ? Award : TrendingUp;
+            const isFounder = isFoundingExpert;
+            return (
+              <div className={`rounded-xl p-4 min-w-[130px] flex flex-col justify-center ${
+                isFounder
+                  ? "bg-gradient-to-br from-neutral-900 to-neutral-800 border border-neutral-700"
+                  : "bg-card border border-border"
+              }`}>
+                <p className={`text-xs uppercase tracking-wider font-bold mb-1 flex items-center gap-1 ${
+                  isFounder ? "text-neutral-300" : "text-muted-foreground"
+                }`}>
+                  <TierIcon className={`w-3 h-3 ${isFounder ? "text-amber-400" : "text-foreground"}`} /> {tierLabel}
+                </p>
+                <p className={`text-sm font-medium ${isFounder ? "text-white" : "text-foreground"}`}>{fee}% Fee</p>
+              </div>
+            );
+          })()}
           <div className="bg-card border border-border rounded-xl p-4 min-w-[130px]">
             <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">This Month</p>
             <p className="text-2xl font-bold">
@@ -188,6 +235,56 @@ export function ExpertOverview({
           </div>
         </div>
       </section>
+      )}
+
+      {/* New Expert Boost Banner */}
+      {newExpertBoostUntil && new Date(newExpertBoostUntil) > new Date() && (
+        <section className="bg-card border border-primary/20 rounded-xl p-5 flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-sm">New Expert Boost Active</h3>
+            <p className="text-xs text-muted-foreground">
+              Your solutions get extra visibility for {Math.ceil((new Date(newExpertBoostUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} more day{Math.ceil((new Date(newExpertBoostUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) !== 1 ? "s" : ""}. Make the most of it by publishing your best work.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Progress toward next tier */}
+      {tier === "STANDARD" && !isFoundingExpert && totalCompletedSales < 5 && (
+        <section className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-sm flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary" /> Progress to Proven
+            </h3>
+            <span className="text-xs text-muted-foreground">{totalCompletedSales}/5 sales</span>
+          </div>
+          <div className="w-full bg-secondary rounded-full h-2 mb-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all"
+              style={{ width: `${Math.min((totalCompletedSales / 5) * 100, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {5 - totalCompletedSales} more sale{5 - totalCompletedSales !== 1 ? "s" : ""} to unlock Proven tier ({TIER_THRESHOLDS.PROVEN}% fee) and access to Discovery Scans and Custom Projects.
+          </p>
+        </section>
+      )}
+
+      {/* Elite Application Section */}
+      {tier === "PROVEN" && !isFoundingExpert && totalCompletedSales >= 10 && eliteApplication?.status !== "approved" && (
+        <EliteApplicationCard
+          application={eliteApplication}
+          onApply={async () => {
+            const { applyForElite } = await import("@/actions/expert");
+            const res = await applyForElite();
+            if (res.error) { toast.error(res.error); return; }
+            toast.success("Elite application submitted! We'll review it shortly.");
+            window.location.reload();
+          }}
+        />
       )}
 
       {/* Priority Actions */}
@@ -333,7 +430,14 @@ export function ExpertOverview({
                         <td className="px-4 py-3 font-medium truncate max-w-[180px]">{order.solutionTitle}</td>
                         <td className="px-4 py-3 text-muted-foreground">{order.buyerName}</td>
                         <td className="px-4 py-3">
-                          <span className="text-xs bg-blue-500/10 text-blue-500 px-2 py-1 rounded-full font-bold">In Progress</span>
+                          {(() => {
+                            const badge = STATUS_BADGE[order.status] ?? { label: order.status.replace(/_/g, " "), className: "bg-muted text-muted-foreground" };
+                            return (
+                              <span className={`text-xs px-2 py-1 rounded-full font-bold ${badge.className}`}>
+                                {badge.label}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <Link href={`/expert/projects/${order.id}`} className="text-xs font-bold text-primary hover:underline">
@@ -344,6 +448,12 @@ export function ExpertOverview({
                     ))}
                   </tbody>
                 </table>
+                {activeCoupons.length > 0 && (
+                  <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border-t border-emerald-100 text-xs text-emerald-700">
+                    <Gift className="h-3.5 w-3.5 shrink-0" />
+                    <span>5% referral discount applied automatically on your platform fee for the next {activeCoupons.length === 1 ? "sale" : `${activeCoupons.length} sales`}.</span>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -416,5 +526,139 @@ export function ExpertOverview({
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Elite Application Card ────────────────────────────────────────────────────
+
+function EliteApplicationCard({
+  application,
+  onApply,
+}: {
+  application?: EliteApplicationInfo | null;
+  onApply: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleApply = async () => {
+    setLoading(true);
+    try { await onApply(); } finally { setLoading(false); }
+  };
+
+  // Denied — show reason + re-apply countdown
+  if (application?.status === "denied") {
+    const deniedAt = application.deniedAt ? new Date(application.deniedAt) : null;
+    const canReapply = deniedAt ? (Date.now() - deniedAt.getTime()) / (1000 * 60 * 60 * 24) >= 14 : true;
+    const daysLeft = deniedAt ? Math.max(0, Math.ceil(14 - (Date.now() - deniedAt.getTime()) / (1000 * 60 * 60 * 24))) : 0;
+
+    return (
+      <section className="bg-card border border-border rounded-xl p-5">
+        <div className="flex items-start gap-4">
+          <div className="h-10 w-10 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+            <Star className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-sm mb-1">Elite Application</h3>
+            {application.deniedReason && (
+              <p className="text-xs text-muted-foreground mb-2">
+                Previous application feedback: {application.deniedReason}
+              </p>
+            )}
+            {canReapply ? (
+              <button
+                onClick={handleApply}
+                disabled={loading}
+                className="px-4 py-2 bg-foreground text-background rounded-lg text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {loading ? "Submitting..." : "Re-apply for Elite"}
+              </button>
+            ) : (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" /> You can re-apply in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Pending
+  if (application?.status === "pending") {
+    return (
+      <section className="bg-card border border-primary/20 rounded-xl p-5">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Star className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-sm mb-0.5">Elite Application Under Review</h3>
+            <p className="text-xs text-muted-foreground">
+              Your application is being reviewed. We will notify you once a decision is made.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Demoted — show reason + option to re-apply
+  if (application?.demotedReason) {
+    const demotedAt = application.demotedAt ? new Date(application.demotedAt) : null;
+    const canReapply = demotedAt ? (Date.now() - demotedAt.getTime()) / (1000 * 60 * 60 * 24) >= 14 : true;
+    const daysLeft = demotedAt ? Math.max(0, Math.ceil(14 - (Date.now() - demotedAt.getTime()) / (1000 * 60 * 60 * 24))) : 0;
+
+    return (
+      <section className="bg-card border border-border rounded-xl p-5">
+        <div className="flex items-start gap-4">
+          <div className="h-10 w-10 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+            <Star className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-sm mb-1">Re-apply for Elite</h3>
+            <p className="text-xs text-muted-foreground mb-2">
+              Previous feedback: {application.demotedReason}
+            </p>
+            {canReapply ? (
+              <button
+                onClick={handleApply}
+                disabled={loading}
+                className="px-4 py-2 bg-foreground text-background rounded-lg text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {loading ? "Submitting..." : "Re-apply for Elite"}
+              </button>
+            ) : (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" /> You can re-apply in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Default: eligible, not yet applied
+  return (
+    <section className="bg-card border border-border rounded-xl p-5">
+      <div className="flex items-center gap-4">
+        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+          <Star className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-bold text-sm mb-0.5">You are eligible for Elite</h3>
+          <p className="text-xs text-muted-foreground">
+            Apply to unlock 12% commission, priority placement, and the Elite badge.
+          </p>
+        </div>
+        <button
+          onClick={handleApply}
+          disabled={loading}
+          className="shrink-0 px-4 py-2 bg-foreground text-background rounded-lg text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {loading ? "Submitting..." : "Apply for Elite"}
+        </button>
+      </div>
+    </section>
   );
 }

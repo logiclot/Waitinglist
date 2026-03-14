@@ -388,7 +388,7 @@ export async function deleteMyAccount(password: string) {
     return { success: true };
   } catch (e) {
     log.error("auth.account_delete_failed", { userId, error: String(e) });
-    return { error: "Something went wrong. Please try again or contact support@logiclot.io." };
+    return { error: "Something went wrong. Please try again or contact contact@logiclot.io." };
   }
 }
 

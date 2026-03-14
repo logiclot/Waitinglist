@@ -7,6 +7,7 @@ import {
   Lock, Sparkles, Crown, Compass, Briefcase,
   ArrowRight, Clock, Euro
 } from "lucide-react";
+import { markJobsViewed } from "@/actions/jobs";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +96,9 @@ export default async function JobsIndexPage() {
       });
       myBids.forEach((b) => alreadyBidJobIds.add(b.jobPostId));
     }
+
+    // Mark jobs as viewed to clear the "Find Work" sidebar badge
+    await markJobsViewed();
   }
 
   return (
@@ -130,12 +134,9 @@ export default async function JobsIndexPage() {
           <div className="h-16 w-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
             <Lock className="h-8 w-8" />
           </div>
-          <h2 className="text-2xl font-bold mb-3">Proven & Elite Access</h2>
-          <p className="text-muted-foreground mb-2 max-w-md mx-auto text-sm leading-relaxed">
-            Complete <strong>5 successful projects</strong> to unlock Discovery Scans.
-          </p>
+          <h2 className="text-2xl font-bold mb-3">Proven Tier Required</h2>
           <p className="text-muted-foreground mb-8 max-w-md mx-auto text-sm leading-relaxed">
-            Complete <strong>10 projects</strong> to unlock Custom Projects.
+            Complete <strong>5 successful projects</strong> to reach Proven tier and unlock Discovery Scans and Custom Projects.
           </p>
           <Link
             href="/dashboard"
@@ -177,12 +178,7 @@ export default async function JobsIndexPage() {
                 job={job}
                 isBuyer={isBuyer}
                 alreadyBid={alreadyBidJobIds.has(job.id)}
-                isCustomProjectLocked={
-                  isSpecialist &&
-                  !isFoundingExpert &&
-                  expertTier !== "ELITE" &&
-                  !isDiscovery(job.category)
-                }
+                isCustomProjectLocked={false}
               />
             ))
           )}
@@ -270,9 +266,9 @@ function JobCard({ job, isBuyer, alreadyBid = false, isCustomProjectLocked = fal
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 backdrop-blur-[2px] rounded-xl">
           <div className="bg-card border border-border rounded-xl px-5 py-4 text-center shadow-lg max-w-xs mx-4">
             <Lock className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-            <p className="font-semibold text-sm mb-1">Elite Access Required</p>
+            <p className="font-semibold text-sm mb-1">Proven Tier Required</p>
             <p className="text-xs text-muted-foreground">
-              Complete 10 projects to unlock Custom Projects.
+              Complete 5 projects to unlock all job types.
             </p>
             <Link href="/dashboard" className="text-xs text-primary hover:underline mt-2 block">
               View my progress →

@@ -199,7 +199,8 @@ export async function POST(req: Request) {
     const sessionConfig: any = {
       customer: stripeCustomerId,
       payment_method_types: ["card"],
-      allow_promotion_codes: true,
+      // Only allow Stripe promo codes if no referral discount was applied (1 coupon per order)
+      allow_promotion_codes: !discountApplied,
       line_items: [
         {
           price_data: {
@@ -257,6 +258,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: sessionStripe.url });
   } catch (error) {
     log.error("checkout.session_creation_failed", { error: String(error) });
-    return NextResponse.json({ error: `Internal Server Error: ${(error as Error).message}` }, { status: 500 });
+    const detail = process.env.NODE_ENV !== "production" ? `: ${(error as Error).message}` : "";
+    return NextResponse.json({ error: `Internal Server Error${detail}` }, { status: 500 });
   }
 }

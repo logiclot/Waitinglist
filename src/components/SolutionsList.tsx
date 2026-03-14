@@ -48,17 +48,18 @@ export function SolutionsList({ solutions, categories }: SolutionsListProps) {
       return matchesCategory && matchesSearch;
     });
 
-    // Sorting
+    // Sorting (copy before sorting to avoid mutating the filtered array)
+    const sorted = [...result];
     if (sortOption === "price_asc") {
-      result.sort((a, b) => a.implementation_price - b.implementation_price);
+      sorted.sort((a, b) => a.implementation_price - b.implementation_price);
     } else if (sortOption === "price_desc") {
-      result.sort((a, b) => b.implementation_price - a.implementation_price);
+      sorted.sort((a, b) => b.implementation_price - a.implementation_price);
     } else if (sortOption === "delivery_fast") {
-      result.sort((a, b) => a.delivery_days - b.delivery_days);
+      sorted.sort((a, b) => a.delivery_days - b.delivery_days);
     }
     // "recommended" uses default order
 
-    return result;
+    return sorted;
   }, [solutions, selectedCategory, searchQuery, sortOption, categories]);
 
   const clearFilters = () => {

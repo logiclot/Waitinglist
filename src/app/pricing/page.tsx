@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck, RefreshCw, MessageSquare, Euro, HelpCircle, Award, TrendingUp, Star, ArrowRight } from "lucide-react";
+import { ShieldCheck, RefreshCw, MessageSquare, Euro, HelpCircle, Award, TrendingUp, Star, ArrowRight, CheckCircle } from "lucide-react";
 import { TIER_THRESHOLDS, SALES_THRESHOLDS } from "@/lib/commission";
 import { BRAND_NAME } from "@/lib/branding";
 
@@ -114,7 +114,17 @@ export default function PricingPage() {
               <h3 className="font-bold text-base text-foreground">Standard</h3>
             </div>
             <div className="text-5xl font-bold mb-1 text-foreground">{TIER_THRESHOLDS.STANDARD}%</div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-auto">Commission</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mb-4">Commission</p>
+            <ul className="space-y-2 text-sm text-muted-foreground mb-auto">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                7-day visibility boost on sign-up
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                Sell solutions on the marketplace
+              </li>
+            </ul>
             <div className="mt-6 pt-5 border-t border-border text-sm text-muted-foreground">
               Starting rate for all experts.
             </div>
@@ -129,7 +139,17 @@ export default function PricingPage() {
               <h3 className="font-bold text-base text-foreground">Proven</h3>
             </div>
             <div className="text-5xl font-bold mb-1 text-foreground">{TIER_THRESHOLDS.PROVEN}%</div>
-            <p className="text-[10px] text-primary uppercase tracking-wider font-bold mb-auto">Commission</p>
+            <p className="text-[10px] text-primary uppercase tracking-wider font-bold mb-4">Commission</p>
+            <ul className="space-y-2 text-sm text-muted-foreground mb-auto">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                Access to Discovery Scan projects
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                Access to Custom Projects
+              </li>
+            </ul>
             <div className="mt-6 pt-5 border-t border-border text-sm text-muted-foreground">
               Unlocked after <strong className="text-foreground">{SALES_THRESHOLDS.PROVEN} sales</strong>.
             </div>
@@ -144,9 +164,19 @@ export default function PricingPage() {
               <h3 className="font-bold text-base text-foreground">Elite</h3>
             </div>
             <div className="text-5xl font-bold mb-1 text-foreground">{TIER_THRESHOLDS.ELITE}%</div>
-            <p className="text-[10px] text-primary uppercase tracking-wider font-bold mb-auto">Commission</p>
+            <p className="text-[10px] text-primary uppercase tracking-wider font-bold mb-4">Commission</p>
+            <ul className="space-y-2 text-sm text-muted-foreground mb-auto">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                Everything in Proven
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                Lowest commission rate
+              </li>
+            </ul>
             <div className="mt-6 pt-5 border-t border-border text-sm text-muted-foreground">
-              Unlocked after <strong className="text-foreground">{SALES_THRESHOLDS.ELITE} sales</strong>.
+              Application-based after <strong className="text-foreground">{SALES_THRESHOLDS.ELITE}+ sales</strong>.
             </div>
           </div>
 

@@ -4,8 +4,9 @@ import { useFormState } from "react-dom";
 import { createBusinessProfile } from "@/actions/onboarding";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { 
-  ChevronRight, 
+import { useSession } from "next-auth/react";
+import {
+  ChevronRight,
   Check
 } from "lucide-react";
 import { ProfilePicUpload } from "@/components/ProfilePicUpload";
@@ -109,13 +110,14 @@ const COUNTRIES = [
 
 export default function BusinessOnboardingPage() {
   const router = useRouter();
+  const { update: refreshSession } = useSession();
   // @ts-expect-error: types mismatch
   const [state, formAction] = useFormState(createBusinessProfile, initialState);
   const [pending, setPending] = useState(false);
   const [step, setStep] = useState(1);
 
   // --- Form State ---
-  
+
   // Step 1: Workspace
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("");
@@ -143,9 +145,12 @@ export default function BusinessOnboardingPage() {
 
   useEffect(() => {
     if (state?.success) {
-      router.push("/business"); // Direct to dashboard
+      // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
+      refreshSession().then(() => {
+        router.push("/business");
+      });
     }
-  }, [state, router]);
+  }, [state, router, refreshSession]);
 
 
   // Scroll to top on step change

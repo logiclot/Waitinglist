@@ -473,7 +473,6 @@ export function PortfolioCustomizer({
                 <div className="flex flex-wrap gap-3">
                   {PORTFOLIO_PATTERN_COLORS.map((c) => {
                     const isActive = patternColor === c.hex;
-                    const isDark = c.hex && parseInt(c.hex.slice(1, 3), 16) < 80;
                     return (
                       <button
                         key={c.hex ?? "default"}

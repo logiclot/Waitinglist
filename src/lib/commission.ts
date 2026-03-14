@@ -1,4 +1,5 @@
-export interface Expert {
+// CommissionExpert: the shape needed for commission calculations (distinct from types/index.ts Expert)
+export interface CommissionExpert {
   id: string;
   name: string;
   verified: boolean;
@@ -7,14 +8,15 @@ export interface Expert {
   founding_rank?: number | null;
   completed_sales_count: number;
   commission_override_percent?: number | null;
+  tier?: 'STANDARD' | 'PROVEN' | 'ELITE'; // DB tier — authoritative for Elite (application-based)
   tools: string[];
   created_at?: string;
 }
 
 export const TIER_THRESHOLDS = {
-  STANDARD: 15,  // 15% — new experts
-  PROVEN: 13,    // 13% — after 5 completed sales
-  ELITE: 12,     // 12% — after 10 completed sales
+  STANDARD: 16,  // 16% — new experts
+  PROVEN: 14,    // 14% — after 5 completed sales
+  ELITE: 12,     // 12% — application-based (10+ sales + admin approval)
   FOUNDING: 11,  // 11% — lifetime rate for Founding Experts
 };
 
@@ -25,15 +27,19 @@ export const SALES_THRESHOLDS = {
 
 export type ExpertTier = 'standard' | 'proven' | 'elite' | 'founding';
 
-export function getExpertTierLabel(expert: Expert): ExpertTier {
+export function getExpertTierLabel(expert: CommissionExpert): ExpertTier {
   if (expert.isFoundingExpert || expert.founding) return 'founding';
 
-  if (expert.completed_sales_count >= SALES_THRESHOLDS.ELITE) return 'elite';
+  // Use DB tier when available (authoritative for Elite which is application-based)
+  if (expert.tier === 'ELITE') return 'elite';
+  if (expert.tier === 'PROVEN') return 'proven';
+
+  // Fallback: compute from sales count (Standard → Proven only)
   if (expert.completed_sales_count >= SALES_THRESHOLDS.PROVEN) return 'proven';
   return 'standard';
 }
 
-export function getCommissionPercent(expert: Expert): number {
+export function getCommissionPercent(expert: CommissionExpert): number {
   // 1. Admin override
   if (expert.commission_override_percent !== undefined && expert.commission_override_percent !== null) {
     return Number(expert.commission_override_percent);
@@ -44,13 +50,17 @@ export function getCommissionPercent(expert: Expert): number {
     return TIER_THRESHOLDS.FOUNDING;
   }
 
-  // 3. Sales volume tiers
-  const sales = expert.completed_sales_count || 0;
-  
-  if (sales >= SALES_THRESHOLDS.ELITE) {
+  // 3. Use DB tier when available (authoritative — Elite is application-based)
+  if (expert.tier === 'ELITE') {
     return TIER_THRESHOLDS.ELITE;
   }
-  
+  if (expert.tier === 'PROVEN') {
+    return TIER_THRESHOLDS.PROVEN;
+  }
+
+  // 4. Fallback: compute from sales count (Standard → Proven auto-upgrade only)
+  const sales = expert.completed_sales_count || 0;
+
   if (sales >= SALES_THRESHOLDS.PROVEN) {
     return TIER_THRESHOLDS.PROVEN;
   }
@@ -59,8 +69,6 @@ export function getCommissionPercent(expert: Expert): number {
 }
 
 export function computePlatformFeeCents(implementationPriceCents: number, commissionPercent: number): number {
-  // Always round normally or floor/ceil? Usually round for display, but Stripe likes integers.
-  // We'll use Math.round to get nearest cent.
   return Math.round(implementationPriceCents * (commissionPercent / 100));
 }
 

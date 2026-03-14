@@ -7,8 +7,8 @@ export const metadata = {
 };
 
 const EFFECTIVE_DATE = "1 March 2025";
-const EMAIL = "legal@logiclot.com";
-const JURISDICTION = "England and Wales";
+const EMAIL = "contact@logiclot.io";
+const JURISDICTION = "Spain";
 
 export default function NdaPage() {
   return (

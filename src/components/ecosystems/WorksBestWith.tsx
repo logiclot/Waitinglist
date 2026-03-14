@@ -52,7 +52,7 @@ export function WorksBestWith({ ecosystems }: { ecosystems: WorksBestEcosystem[]
                 className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors group"
               >
                 <span className="text-sm font-medium group-hover:text-primary transition-colors">{item.solution.title}</span>
-                <span className="text-xs text-muted-foreground">${(item.solution.implementationPriceCents / 100).toLocaleString()}</span>
+                <span className="text-xs text-muted-foreground">&euro;{(item.solution.implementationPriceCents / 100).toLocaleString("de-DE")}</span>
               </Link>
             ))}
             {eco.items.length > 3 && (

@@ -5,10 +5,14 @@ import LinkedInProvider from "next-auth/providers/linkedin";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { log } from "@/lib/logger";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 // How long (ms) before the JWT re-fetches fresh role/onboarding from DB.
 // Keeps session data live without hitting DB on every single request.
-const TOKEN_REFRESH_AGE_MS = 60 * 1000; // 1 minute
+const TOKEN_REFRESH_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
+// Brute-force protection: 5 login attempts per email per 15 minutes
+const loginLimiter = createRateLimiter({ limit: 5, windowMs: 15 * 60 * 1000 });
 
 /** Converts "JOHN DOE" or "john doe" → "John Doe" */
 function toTitleCase(s: string): string {
@@ -67,6 +71,13 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const email = credentials.email.trim().toLowerCase();
+
+          // Brute-force protection
+          const rateCheck = loginLimiter.check(`login:${email}`);
+          if (!rateCheck.success) {
+            log.warn("auth.credentials.rate_limited", { emailPrefix: email.slice(0, 5) + "***" });
+            throw new Error("Too many login attempts. Please try again in 15 minutes.");
+          }
 
           type UserRow = {
             id: string;
@@ -133,10 +144,6 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (existingUser) {
-          // If user exists but no passwordHash (OAuth user), or even if they have one,
-          // we allow sign in. We might want to link the account here if we had an Account model,
-          // but for now we just ensure the user record exists.
-          
           // Update verified status + backfill profile image from OAuth if missing
           const needsUpdate = !existingUser.emailVerifiedAt || (!existingUser.profileImageUrl && user.image);
           if (needsUpdate) {
@@ -156,6 +163,38 @@ export const authOptions: NextAuthOptions = {
           user.onboardingCompletedAt = existingUser.onboardingCompletedAt;
           user.image = existingUser.profileImageUrl || user.image;
 
+          // Link OAuth account to this user (idempotent upsert)
+          await prisma.account.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+            update: {
+              access_token: account.access_token,
+              refresh_token: account.refresh_token,
+              expires_at: account.expires_at,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+              session_state: account.session_state as string | undefined,
+            },
+            create: {
+              userId: existingUser.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token,
+              refresh_token: account.refresh_token,
+              expires_at: account.expires_at,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+              session_state: account.session_state as string | undefined,
+            },
+          });
+
           return true;
         } else {
           // Create new user — persist OAuth profile image
@@ -166,6 +205,21 @@ export const authOptions: NextAuthOptions = {
               emailVerifiedAt: new Date(), // Trusted provider
               role: "USER", // Default role
               profileImageUrl: user.image || null,
+              // Create linked Account record in the same transaction
+              accounts: {
+                create: {
+                  type: account.type,
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  access_token: account.access_token,
+                  refresh_token: account.refresh_token,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token,
+                  session_state: account.session_state as string | undefined,
+                },
+              },
             },
           });
 

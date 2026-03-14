@@ -1,16 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, Target, Zap, Circle } from "lucide-react";
 import { Solution } from "@/types";
 import { SolutionCard } from "@/components/SolutionCard";
+import type { MatchLabel } from "@/lib/solutions/related-matcher";
 
 interface SmartEmptyStateProps {
   relatedSolutions: Solution[];
+  /** Optional match labels keyed by solution ID — renders a badge on each card */
+  matchLabels?: Map<string, MatchLabel>;
 }
+
+const MATCH_BADGE_CONFIG: Record<
+  MatchLabel,
+  { icon: typeof Target; className: string }
+> = {
+  "Best Match": {
+    icon: Target,
+    className:
+      "bg-foreground text-background border-foreground",
+  },
+  "Strong Match": {
+    icon: Zap,
+    className:
+      "bg-foreground/90 text-background border-foreground/90",
+  },
+  "Partial Match": {
+    icon: Circle,
+    className:
+      "bg-foreground/70 text-background border-foreground/70",
+  },
+};
 
 export function SmartEmptyState({
   relatedSolutions,
+  matchLabels,
 }: SmartEmptyStateProps) {
   // Scenario 2: Related solutions found — show as recommendations
   if (relatedSolutions.length > 0) {
@@ -20,15 +45,33 @@ export function SmartEmptyState({
         <div>
           <h3 className="text-xl font-bold mb-1">Worth exploring</h3>
           <p className="text-muted-foreground text-sm">
-            These solutions could help with what you&apos;re looking for
+            {matchLabels
+              ? "Matched to the bottlenecks you described — ranked by relevance"
+              : "These solutions could help with what you\u2019re looking for"}
           </p>
         </div>
 
         {/* Solution cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {relatedSolutions.map((solution) => (
-            <SolutionCard key={solution.id} solution={solution} />
-          ))}
+          {relatedSolutions.map((solution) => {
+            const label = matchLabels?.get(solution.id);
+            const config = label ? MATCH_BADGE_CONFIG[label] : null;
+
+            return (
+              <div key={solution.id} className="relative">
+                {/* Match quality badge */}
+                {config && label && (
+                  <div
+                    className={`absolute -top-2.5 left-4 z-10 inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border shadow-sm ${config.className}`}
+                  >
+                    <config.icon className="h-3 w-3" />
+                    {label}
+                  </div>
+                )}
+                <SolutionCard solution={solution} />
+              </div>
+            );
+          })}
         </div>
 
         {/* Discovery Scan upsell banner */}
