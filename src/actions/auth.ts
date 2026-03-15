@@ -24,6 +24,7 @@ export async function signUp(prevState: unknown, formData: FormData) {
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
   const referralCode = formData.get("referralCode") as string | null;
+  const inviteToken = formData.get("inviteToken") as string | null;
   const termsAccepted = formData.get("termsAccepted") === "on";
 
   if (!email || !password || !confirmPassword) {
@@ -43,6 +44,22 @@ export async function signUp(prevState: unknown, formData: FormData) {
   }
 
   try {
+    // If invite token provided, validate it
+    let invite: { id: string; email: string; role: string } | null = null;
+    if (inviteToken) {
+      const found = await prisma.waitlistSignup.findUnique({
+        where: { inviteToken },
+        select: { id: true, email: true, role: true, usedAt: true },
+      });
+      if (!found || found.usedAt) {
+        return { error: "This invite link is invalid or has already been used." };
+      }
+      if (found.email.toLowerCase() !== email.toLowerCase()) {
+        return { error: "This invite link is for a different email address." };
+      }
+      invite = found;
+    }
+
     const existingUser = await prisma.user.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
     });
@@ -65,10 +82,28 @@ export async function signUp(prevState: unknown, formData: FormData) {
         email,
         passwordHash: hashedPassword,
         referredBy: validReferralCode,
+        // Invite: set role directly and auto-verify email
+        ...(invite ? {
+          role: invite.role === "expert" ? "EXPERT" : "BUSINESS",
+          emailVerifiedAt: new Date(),
+        } : {}),
       },
     });
 
-    // Create and immediately send the verification email
+    if (invite) {
+      // Mark invite as used
+      await prisma.waitlistSignup.update({
+        where: { id: invite.id },
+        data: { usedAt: new Date() },
+      });
+
+      Analytics.signedUp(user.id, { hasReferral: !!validReferralCode });
+
+      // No verification email needed — email already confirmed via invite
+      return { success: true, email, invited: true };
+    }
+
+    // Normal flow: send verification email
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 

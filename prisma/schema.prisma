@@ -654,13 +654,16 @@ model SavedSolution {
 
 // Waitlist
 model WaitlistSignup {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  fullName  String
-  email     String   @unique
-  role      String   // 'business' | 'expert'
-  source    String?  // 'landing_waitlist'
-  consent   Boolean  @default(true)
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now())
+  fullName     String
+  email        String    @unique
+  role         String    // 'business' | 'expert'
+  source       String?   // 'landing_waitlist'
+  consent      Boolean   @default(true)
+  inviteToken  String?   @unique
+  inviteSentAt DateTime?
+  usedAt       DateTime?
 }
 
 // Ecosystems (Bundles)

@@ -1498,3 +1498,68 @@ export async function demoteFromElite(expertId: string, reason: string) {
   revalidatePath("/admin");
   return { success: true };
 }
+
+// ── Send Expert Invites (manual trigger only) ────────────────────────────────
+
+export async function sendExpertInvites() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "ADMIN") return { error: "Not authorized" };
+
+  const pending = await prisma.waitlistSignup.findMany({
+    where: { role: "expert", inviteSentAt: null },
+  });
+
+  if (pending.length === 0) return { sent: 0 };
+
+  const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+  if (!FROM_EMAIL) return { error: "RESEND_FROM_EMAIL not configured" };
+
+  // Lazy import to avoid circular dependency issues
+  const { resend } = await import("@/lib/resend");
+  const { expertInviteEmail } = await import("@/lib/email-templates");
+
+  let sent = 0;
+  const errors: string[] = [];
+
+  for (const entry of pending) {
+    try {
+      const token = randomBytes(32).toString("hex");
+
+      await prisma.waitlistSignup.update({
+        where: { id: entry.id },
+        data: { inviteToken: token, inviteSentAt: new Date() },
+      });
+
+      const inviteUrl = `${APP_URL}/auth/sign-up?invite=${token}`;
+
+      await resend.emails.send({
+        from: FROM_EMAIL,
+        to: entry.email,
+        subject: "You're invited to LogicLot",
+        html: expertInviteEmail({ name: entry.fullName, inviteUrl }),
+      });
+
+      sent++;
+    } catch (err) {
+      log.error("admin.invite_send_failed", { email: entry.email, error: String(err) });
+      captureException(err instanceof Error ? err : new Error(String(err)));
+      errors.push(entry.email);
+    }
+  }
+
+  revalidatePath("/admin");
+  return { sent, errors: errors.length > 0 ? errors : undefined };
+}
+
+export async function getWaitlistInviteStats() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "ADMIN") return null;
+
+  const [pendingCount, sentCount, usedCount] = await Promise.all([
+    prisma.waitlistSignup.count({ where: { role: "expert", inviteSentAt: null } }),
+    prisma.waitlistSignup.count({ where: { role: "expert", inviteSentAt: { not: null }, usedAt: null } }),
+    prisma.waitlistSignup.count({ where: { role: "expert", usedAt: { not: null } } }),
+  ]);
+
+  return { pendingCount, sentCount, usedCount };
+}

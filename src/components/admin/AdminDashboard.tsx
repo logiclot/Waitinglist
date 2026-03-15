@@ -14,6 +14,7 @@ import {
   adminDeleteUser, adminDeleteOrder, adminDeleteSolution,
   updateSolutionVideoStatus, liftBidBan,
   approveEliteApplication, denyEliteApplication, demoteFromElite,
+  sendExpertInvites, getWaitlistInviteStats,
 } from "@/actions/admin";
 import { DisputeManagementTab, type AdminDispute } from "@/components/admin/DisputeManagementTab";
 import { AuditResultsTab, type AuditCompletion } from "@/components/admin/AuditResultsTab";
@@ -107,9 +108,70 @@ interface AdminDashboardProps {
   };
 }
 
+// ── Invite Panel ──────────────────────────────────────────────────────────────
+
+function InvitePanel({ showMessage }: { showMessage: (msg: string, error?: boolean) => void }) {
+  const [sending, setSending] = useState(false);
+  const [stats, setStats] = useState<{ pendingCount: number; sentCount: number; usedCount: number } | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  // Load stats on mount
+  if (!loaded) {
+    setLoaded(true);
+    getWaitlistInviteStats().then(s => { if (s) setStats(s); });
+  }
+
+  const handleSend = async () => {
+    if (!confirm("This will send invite emails to all expert waitlist signups who haven't been invited yet. Continue?")) return;
+    setSending(true);
+    const result = await sendExpertInvites();
+    setSending(false);
+    if ("error" in result && result.error) {
+      showMessage(result.error, true);
+    } else if ("sent" in result) {
+      showMessage(`Sent ${result.sent} invite${result.sent === 1 ? "" : "s"} successfully.`);
+      getWaitlistInviteStats().then(s => { if (s) setStats(s); });
+    }
+  };
+
+  return (
+    <div className="border border-border rounded-xl p-6 space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Expert Invites</h2>
+        <p className="text-sm text-muted-foreground">Send invite emails to experts who signed up on the waitlist. Each invite contains a unique link that pre-fills their email and skips verification.</p>
+      </div>
+
+      {stats && (
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-secondary/30 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold">{stats.pendingCount}</div>
+            <div className="text-xs text-muted-foreground mt-1">Not yet invited</div>
+          </div>
+          <div className="bg-secondary/30 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold">{stats.sentCount}</div>
+            <div className="text-xs text-muted-foreground mt-1">Invited (pending signup)</div>
+          </div>
+          <div className="bg-secondary/30 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold">{stats.usedCount}</div>
+            <div className="text-xs text-muted-foreground mt-1">Signed up</div>
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={handleSend}
+        disabled={sending || (stats?.pendingCount === 0)}
+        className="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+      >
+        {sending ? "Sending..." : `Send Invites${stats ? ` (${stats.pendingCount})` : ""}`}
+      </button>
+    </div>
+  );
+}
+
 export function AdminDashboard({ initialExperts, initialSolutions, initialOrders, initialBusinesses, initialDisputes, initialAuditCompletions, initialEliteApplications = [], stats }: AdminDashboardProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"experts" | "solutions" | "orders" | "businesses" | "disputes" | "audits">("experts");
+  const [activeTab, setActiveTab] = useState<"experts" | "solutions" | "orders" | "businesses" | "disputes" | "audits" | "invites">("experts");
   const [expertList, setExpertList] = useState<AdminExpert[]>(initialExperts);
   const [expandedExpertId, setExpandedExpertId] = useState<string | null>(null);
   const [solutionList, setSolutionList] = useState<Solution[]>(initialSolutions);
@@ -296,7 +358,7 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
 
       {/* Tabs */}
       <div className="flex gap-4 mb-6 border-b border-border overflow-x-auto">
-        {(["experts", "solutions", "orders", "businesses", "disputes", "audits"] as const).map((tab) => {
+        {(["experts", "solutions", "orders", "businesses", "disputes", "audits", "invites"] as const).map((tab) => {
           const counts: Record<string, number> = {
             experts: expertList.length,
             solutions: solutionList.length,
@@ -304,6 +366,7 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
             businesses: initialBusinesses.length,
             disputes: initialDisputes.length,
             audits: initialAuditCompletions.length,
+            invites: 0,
           };
           return (
             <button
@@ -397,6 +460,10 @@ export function AdminDashboard({ initialExperts, initialSolutions, initialOrders
 
       {activeTab === "audits" && (
         <AuditResultsTab completions={initialAuditCompletions} />
+      )}
+
+      {activeTab === "invites" && (
+        <InvitePanel showMessage={showMessage} />
       )}
 
       {activeTab === "businesses" && (

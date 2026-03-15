@@ -12,6 +12,17 @@ export default function OnboardingPage() {
   const [pending, setPending] = useState(false);
   const { data: session, update: refreshSession } = useSession();
 
+  // If role is already set (e.g. invited user), skip role selection
+  const role = session?.user?.role;
+  if (role === "EXPERT") {
+    router.replace("/onboarding/expert");
+    return null;
+  }
+  if (role === "BUSINESS") {
+    router.replace("/onboarding/business");
+    return null;
+  }
+
   const handleSelect = async (role: "BUSINESS" | "EXPERT") => {
     setPending(true);
     const result = await selectRole(role);

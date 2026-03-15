@@ -8,7 +8,7 @@ import { signIn } from "next-auth/react";
 import { Linkedin, Eye, EyeOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-type FormState = { error?: string | null; success?: boolean; email?: string | null };
+type FormState = { error?: string | null; success?: boolean; email?: string | null; invited?: boolean };
 const initialState: FormState = {};
 
 interface SignUpFormProps {
@@ -23,9 +23,39 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const searchParams = useSearchParams();
   const referralCode = searchParams.get("ref");
+  const inviteToken = searchParams.get("invite");
+  const [inviteEmail, setInviteEmail] = useState<string | null>(null);
+  const [inviteName, setInviteName] = useState<string | null>(null);
+  const [inviteValid, setInviteValid] = useState<boolean | null>(null); // null = loading
   const hasSocial = hasGoogle || hasLinkedIn;
 
+  // Validate invite token on mount
   useEffect(() => {
+    if (!inviteToken) return;
+    fetch(`/api/auth/validate-invite?token=${encodeURIComponent(inviteToken)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.valid) {
+          setInviteEmail(data.email);
+          setInviteName(data.name);
+          setInviteValid(true);
+        } else {
+          setInviteValid(false);
+        }
+      })
+      .catch(() => setInviteValid(false));
+  }, [inviteToken]);
+
+  useEffect(() => {
+    if (state?.success && state?.invited) {
+      // Invited user: auto sign-in (email already verified, role already set)
+      signIn("credentials", {
+        email: state.email,
+        redirect: true,
+        callbackUrl: "/onboarding",
+      });
+      return;
+    }
     setPending(false);
   }, [state]);
 
@@ -33,7 +63,34 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
     signIn(provider, { callbackUrl: "/onboarding" });
   };
 
-  if (state?.success) {
+  // Invite token invalid or already used
+  if (inviteToken && inviteValid === false) {
+    return (
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="bg-red-50 text-red-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto text-2xl border border-red-100">
+          !
+        </div>
+        <h1 className="text-3xl font-bold text-foreground">Invalid invite link</h1>
+        <p className="text-muted-foreground">
+          This invite link is invalid or has already been used.
+        </p>
+        <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
+          Sign up with a different email
+        </Link>
+      </div>
+    );
+  }
+
+  // Still loading invite validation
+  if (inviteToken && inviteValid === null) {
+    return (
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="animate-pulse text-muted-foreground">Validating invite...</div>
+      </div>
+    );
+  }
+
+  if (state?.success && !state?.invited) {
     return (
       <div className="max-w-md w-full text-center space-y-6">
         <div className="bg-emerald-50 text-emerald-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto text-2xl border border-emerald-100">
@@ -58,14 +115,29 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
     );
   }
 
+  // Invited user: show "setting up your account" while auto sign-in happens
+  if (state?.success && state?.invited) {
+    return (
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="animate-pulse text-muted-foreground">Setting up your account...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-sm w-full space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-foreground">Create an account</h1>
-        <p className="text-muted-foreground mt-2">Start your automation journey</p>
+        <h1 className="text-3xl font-bold text-foreground">
+          {inviteEmail ? "Set up your password" : "Create an account"}
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          {inviteEmail
+            ? `Welcome${inviteName ? `, ${inviteName.split(" ")[0]}` : ""}! Create a password to get started.`
+            : "Start your automation journey"}
+        </p>
       </div>
 
-        {hasSocial && (
+        {hasSocial && !inviteEmail && (
           <>
             <div className="space-y-3">
               {hasGoogle && (
@@ -110,6 +182,9 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
           {referralCode && (
             <input type="hidden" name="referralCode" value={referralCode} />
           )}
+          {inviteToken && (
+            <input type="hidden" name="inviteToken" value={inviteToken} />
+          )}
           <div>
             <label className="block text-sm font-medium mb-2 text-foreground">Email</label>
             <input
@@ -117,7 +192,11 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
               type="email"
               required
               autoComplete="email"
-              className="w-full bg-white border border-border rounded-md px-3 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none min-h-[44px] touch-manipulation"
+              value={inviteEmail ?? undefined}
+              readOnly={!!inviteEmail}
+              className={`w-full border border-border rounded-md px-3 py-2.5 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none min-h-[44px] touch-manipulation ${
+                inviteEmail ? "bg-secondary/50 cursor-not-allowed text-muted-foreground" : "bg-white"
+              }`}
             />
           </div>
           <div>
@@ -198,12 +277,14 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
           </button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/auth/sign-in" className="text-primary hover:underline font-medium">
-            Sign in
-          </Link>
-        </p>
+        {!inviteEmail && (
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/auth/sign-in" className="text-primary hover:underline font-medium">
+              Sign in
+            </Link>
+          </p>
+        )}
     </div>
   );
 }

@@ -278,6 +278,7 @@ export default function ExpertOnboardingPage() {
                     className={`w-full bg-background border rounded-lg px-4 py-3 focus:ring-2 transition-all outline-none ${fieldErr(!legalFullName)}`}
                     placeholder="Jane Doe"
                   />
+                  <p className="text-xs text-muted-foreground mt-1.5">Used for contracts and payments only — not shown on your public profile.</p>
                   <FieldError show={!legalFullName} />
                 </div>
 
@@ -378,7 +379,8 @@ export default function ExpertOnboardingPage() {
                 
                 {/* Years Experience */}
                 <div>
-                  <label className="block text-sm font-medium mb-3">Years of hands-on automation experience <span className="text-primary">*</span></label>
+                  <label className="block text-sm font-medium mb-1">Years of hands-on automation experience <span className="text-primary">*</span></label>
+                  <p className="text-xs text-muted-foreground mb-3">Used internally for matching — not displayed publicly.</p>
                   <div className={`flex flex-wrap gap-3 p-2 rounded-lg transition-all ${attempted && !yearsExperience ? 'bg-red-50 ring-1 ring-red-300' : ''}`}>
                     {YEARS_EXPERIENCE.map(y => (
                       <label key={y} className={`flex items-center justify-center px-4 py-2 rounded-full border cursor-pointer transition-all min-w-[80px] ${yearsExperience === y ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-secondary border-border'}`}>
@@ -392,7 +394,8 @@ export default function ExpertOnboardingPage() {
 
                 {/* Implementations */}
                 <div>
-                  <label className="block text-sm font-medium mb-3">Approx. number of real implementations delivered <span className="text-primary">*</span></label>
+                  <label className="block text-sm font-medium mb-1">Approx. number of real implementations delivered <span className="text-primary">*</span></label>
+                  <p className="text-xs text-muted-foreground mb-3">Helps us route the right opportunities — won&apos;t appear on your profile.</p>
                   <div className={`flex flex-wrap gap-3 p-2 rounded-lg transition-all ${attempted && !approxImplementations ? 'bg-red-50 ring-1 ring-red-300' : ''}`}>
                     {IMPLEMENTATION_COUNTS.map(c => (
                       <label key={c} className={`flex items-center justify-center px-4 py-2 rounded-full border cursor-pointer transition-all min-w-[80px] ${approxImplementations === c ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-secondary border-border'}`}>
