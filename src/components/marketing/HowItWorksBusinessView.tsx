@@ -393,7 +393,7 @@ export function HowItWorksBusinessView() {
             >
               Post My Custom Project <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="text-xs text-white/30 text-center mt-3">75% refund if no proposal meets your criteria</p>
+            <p className="text-xs text-white/30 text-center mt-3">50% refund if no proposal meets your criteria</p>
           </div>
         </div>
       </div>

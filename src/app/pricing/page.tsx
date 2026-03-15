@@ -238,7 +238,7 @@ export default function PricingPage() {
             </div>
             <h3 className="font-bold mb-2">Refund Protection</h3>
             <p className="text-sm text-muted-foreground">
-              Posting fees: 75% refund if no proposal meets your criteria. For funded projects, disputes are mediated and may include full or partial refunds.
+              Posting fees: 50% refund if no proposal meets your criteria. For funded projects, disputes are mediated and may include full or partial refunds.
             </p>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function PricingPage() {
               What is the refund policy?
             </h3>
             <p className="text-muted-foreground pl-8">
-              Posting fees (€50 for Discovery Scans, €100 for Custom Projects): 75% refund if no expert proposal meets your criteria. For funded projects, you can raise a dispute; our team will mediate and may award full or partial refunds based on deliverables.
+              Discovery Scan posting fees (€50) are non-refundable but credited toward your first project. Custom Project posting fees (€100): 50% refund if no expert proposal meets your criteria. For funded projects, you can raise a dispute; our team will mediate and may award full or partial refunds based on deliverables.
             </p>
           </div>
           <div className="border border-border rounded-lg p-6 bg-card">

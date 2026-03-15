@@ -51,13 +51,21 @@ describe("Integration: Cancel with funded milestones creates dispute", () => {
     // Transaction should have been called for dispute creation
     expect(prismaMock.$transaction).toHaveBeenCalled();
 
+    // Buyer notified about cancellation under review
+    expect(createNotification).toHaveBeenCalledWith(
+      BUYER_USER_ID,
+      expect.stringContaining("Cancellation under review"),
+      expect.any(String),
+      "info",
+      "/business/projects",
+    );
     // Seller notified about dispute
     expect(createNotification).toHaveBeenCalledWith(
       SELLER_USER_ID,
-      "A dispute has been raised",
+      expect.stringContaining("Dispute opened"),
       expect.any(String),
       "alert",
-      "/expert/projects/order-1",
+      "/dashboard/projects",
     );
   });
 
@@ -188,10 +196,18 @@ describe("Integration: Dispute flow", () => {
     // Seller notified
     expect(createNotification).toHaveBeenCalledWith(
       SELLER_USER_ID,
-      "A dispute has been raised",
+      expect.stringContaining("Dispute opened"),
       expect.any(String),
       "alert",
-      "/expert/projects/order-6",
+      "/expert/projects",
+    );
+    // Buyer notified
+    expect(createNotification).toHaveBeenCalledWith(
+      BUYER_USER_ID,
+      expect.stringContaining("Dispute submitted"),
+      expect.any(String),
+      "info",
+      "/business/projects",
     );
   });
 

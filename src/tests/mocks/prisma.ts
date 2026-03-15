@@ -25,7 +25,6 @@ export const prismaMock = {
   conversation: createMockModel(),
   message: createMockModel(),
   notification: createMockModel(),
-  review: createMockModel(),
   dispute: createMockModel(),
   savedSolution: createMockModel(),
   emailVerificationToken: createMockModel(),
@@ -35,6 +34,8 @@ export const prismaMock = {
   surveyCompletion: createMockModel(),
   ecosystem: createMockModel(),
   ecosystemItem: { ...createMockModel(), updateMany: vi.fn() },
+  ecosystemInvite: { ...createMockModel(), updateMany: vi.fn() },
+  review: { ...createMockModel(), updateMany: vi.fn() },
   $transaction: vi.fn((fns: unknown[]) => Promise.all(fns)),
 };
 

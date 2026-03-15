@@ -50,7 +50,7 @@ export const CUSTOM_PROJECT_COPY = {
   description:
     "You know what needs to change. Post your requirement \u2014 Elite experts compete for the job with tailored proposals, not generic advice.",
   cta: "Post My Custom Project",
-  footer: "75% refund if no proposal meets your criteria",
+  footer: "50% refund if no proposal meets your criteria",
   trustNote:
     "Not sure what to automate yet? Start with a Discovery Scan instead.",
 } as const;

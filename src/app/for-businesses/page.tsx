@@ -144,7 +144,7 @@ export default function ForBusinessesPage() {
               >
                 Post My Custom Project <ArrowRight className="h-4 w-4" />
               </Link>
-              <p className="text-xs text-slate-500 text-center mt-3">75% refund if no proposal meets your criteria</p>
+              <p className="text-xs text-slate-500 text-center mt-3">50% refund if no proposal meets your criteria</p>
             </div>
           </div>
 
@@ -160,7 +160,7 @@ export default function ForBusinessesPage() {
           <div className="space-y-2 text-center md:text-left">
             <h2 className="text-2xl font-bold text-foreground">Your money is protected at every step</h2>
             <p className="text-base text-muted-foreground max-w-2xl">
-              Every expert is vetted and bound by a Mutual NDA. Funds are held in escrow and released only after you approve. If no proposal fits, 75% of your posting fee comes back.
+              Every expert is vetted and bound by a Mutual NDA. Funds are held in escrow and released only after you approve. If no proposal fits, 50% of your posting fee comes back.
             </p>
           </div>
         </div>

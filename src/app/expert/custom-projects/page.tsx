@@ -129,8 +129,8 @@ export default async function ExpertCustomProjectsPage() {
               <li>€100 posting fee paid by the buyer</li>
             </ul>
             <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
-              <li>75% posting fee refunded if no proposal is accepted</li>
-              <li>25% retained as the listing fee</li>
+              <li>50% posting fee refunded if no proposal is accepted</li>
+              <li>50% retained as the listing fee</li>
             </ul>
           </div>
           <p className="mt-4 text-sm font-medium text-emerald-600 dark:text-emerald-400">

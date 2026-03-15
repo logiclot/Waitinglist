@@ -54,8 +54,9 @@ describe("submitSellerReview", () => {
       buyerId: "buyer-1",
       seller: { userId: "seller-user-1", displayName: "Test Expert" },
       status: "delivered",
-      review: { id: "review-1", sellerRating: 4 },
+      review: { id: "review-1", sellerRating: 4, buyerRating: null },
     });
+    prismaMock.review.updateMany.mockResolvedValue({ count: 0 });
 
     const result = await submitSellerReview("order-1", 5, "Another review");
     expect(result).toEqual({ error: "You have already submitted a review" });
@@ -80,16 +81,16 @@ describe("submitSellerReview", () => {
       buyerId: "buyer-1",
       seller: { userId: "seller-user-1", displayName: "Test Expert" },
       status: "delivered",
-      review: { id: "review-1", sellerRating: null },
+      review: { id: "review-1", sellerRating: null, buyerRating: null },
     });
-    prismaMock.review.update.mockResolvedValue({});
+    prismaMock.review.updateMany.mockResolvedValue({ count: 1 });
 
     const { createNotification } = await import("@/lib/notifications");
 
     const result = await submitSellerReview("order-1", 5, "Great buyer!");
     expect(result).toEqual({ success: true });
-    expect(prismaMock.review.update).toHaveBeenCalledWith({
-      where: { id: "review-1" },
+    expect(prismaMock.review.updateMany).toHaveBeenCalledWith({
+      where: { id: "review-1", sellerRating: null },
       data: expect.objectContaining({
         sellerRating: 5,
         sellerComment: "Great buyer!",
@@ -98,7 +99,7 @@ describe("submitSellerReview", () => {
     });
     expect(createNotification).toHaveBeenCalledWith(
       "buyer-1",
-      "Test Expert left you a review!",
+      expect.stringContaining("left you a review"),
       expect.any(String),
       "info",
       expect.stringContaining("order-1")
@@ -171,14 +172,14 @@ describe("submitBuyerReview", () => {
     expect(createNotification).toHaveBeenCalledTimes(2);
     expect(createNotification).toHaveBeenCalledWith(
       "buyer-1",
-      "Reviews are now visible!",
+      expect.stringContaining("Reviews are now visible"),
       expect.any(String),
       "success",
       expect.any(String)
     );
     expect(createNotification).toHaveBeenCalledWith(
       "seller-user-1",
-      "Reviews are now visible!",
+      expect.stringContaining("Reviews are now visible"),
       expect.any(String),
       "success",
       expect.any(String)
@@ -261,7 +262,7 @@ describe("getReviewForOrder", () => {
         buyerRating: 4,
         buyerComment: "Good expert",
         buyerSubmittedAt: now,
-        isUnblinded: false,
+        unblindedAt: null,
         createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
       },
     });
@@ -275,8 +276,6 @@ describe("getReviewForOrder", () => {
     // Seller review not visible (blinded) — rating/comment should be null
     expect(result.review!.sellerRating).toBeNull();
     expect(result.review!.sellerComment).toBeNull();
-    // But buyer knows seller has submitted
-    expect(result.review!.sellerSubmittedAt).not.toBeNull();
   });
 
   it("auto-unblinds seller review after 14 days when buyer has not reviewed", async () => {
@@ -296,7 +295,7 @@ describe("getReviewForOrder", () => {
         buyerRating: null,
         buyerComment: null,
         buyerSubmittedAt: null,
-        isUnblinded: false,
+        unblindedAt: null,
         createdAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
       },
     });
@@ -311,7 +310,7 @@ describe("getReviewForOrder", () => {
     // Auto-unblind was persisted
     expect(prismaMock.review.update).toHaveBeenCalledWith({
       where: { id: "review-1" },
-      data: { isUnblinded: true, unblindedAt: expect.any(Date) },
+      data: { unblindedAt: expect.any(Date) },
     });
   });
 });

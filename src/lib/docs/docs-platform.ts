@@ -86,7 +86,7 @@ Review the proposals and choose the one that best fits your needs, budget, and t
 
 **Posting fee: €50 (one-time).** This covers the cost of matching you with qualified experts, facilitating the proposal process, and running the platform infrastructure.
 
-**Refund policy:** If no proposal meets your criteria---meaning the experts did not adequately address your needs or the proposals are not actionable---you receive a [75% refund](/pricing) (€37.50). This is rare; most Discovery Scans generate at least one strong proposal.
+**Refund policy:** Discovery Scan posting fees are non-refundable. However, when you accept a proposal and proceed with a project, the €50 fee is credited toward your first milestone payment.
 
 **Credit toward your first project:** When you accept a proposal and proceed with an expert, your €50 posting fee is credited toward the first milestone payment. If your first milestone costs €500, you pay €450 out of pocket.
 
@@ -169,7 +169,7 @@ There is no pressure, no follow-up sales calls, and no obligation.
     relatedSlugs: ["custom-project-explained", "automation-for-beginners", "when-to-hire-automation-expert", "how-escrow-works", "automation-roi", "pricing"],
     faqs: [
       { question: "What is a Discovery Scan on LogicLot?", answer: "A Discovery Scan is a low-commitment process where you describe your business workflows and automation experts analyse them to identify the highest-impact automation opportunities. You receive up to 5 concrete proposals with scoped solutions, ROI estimates, timelines, and fixed pricing. It costs a one-time €50 posting fee with no obligation to proceed." },
-      { question: "How much does a Discovery Scan cost?", answer: "A Discovery Scan costs a one-time €50 posting fee. If no proposal meets your criteria, you receive a 75% refund (€37.50). If you accept a proposal and proceed with a project, the €50 fee is credited toward your first milestone payment, effectively making the scan free." },
+      { question: "How much does a Discovery Scan cost?", answer: "A Discovery Scan costs a one-time €50 posting fee. The posting fee is non-refundable, but if you accept a proposal and proceed with a project, the €50 fee is credited toward your first milestone payment, effectively making the scan free." },
       { question: "What information do I need to provide for a Discovery Scan?", answer: "Describe your business model, team size, key processes and workflows, the tools and software you use, known pain points, and any constraints (budget, timeline, compliance requirements). You do not need to share logins, passwords, customer data, or proprietary information. The form takes 15-30 minutes to complete." },
       { question: "How long does it take to receive Discovery Scan proposals?", answer: "Most businesses receive their first proposals within a few days of posting. You can receive up to 5 proposals from qualified automation experts. Each proposal includes a problem statement, recommended approach, ROI estimate, milestone breakdown, timeline, and fixed pricing." },
     ],
@@ -310,7 +310,7 @@ When the final milestone is approved, the project is marked as complete. The exp
 
 **Posting fee: €100 (one-time).** This is higher than the Discovery Scan fee (€50) because Custom Projects involve more platform infrastructure: expert matching, proposal facilitation, milestone management, escrow handling, and dispute resolution support.
 
-**Refund policy:** If no proposal meets your criteria, you receive a [75% refund](/pricing) (€75). This is assessed on a good-faith basis.
+**Refund policy:** If no proposal meets your criteria, you receive a [50% refund](/pricing) (€50). This is assessed on a good-faith basis.
 
 **Credit:** The €100 posting fee is credited toward your first milestone payment when you proceed with an expert.
 
@@ -364,7 +364,7 @@ Many businesses start with a Discovery Scan to identify opportunities, then post
     relatedSlugs: ["discovery-scan-explained", "how-escrow-works", "what-is-a-workflow", "pricing", "when-to-hire-automation-expert"],
     faqs: [
       { question: "What is a Custom Project on LogicLot?", answer: "A Custom Project is a structured way to hire a vetted automation expert for a specific build. You post a brief describing your requirements, receive up to 3 fixed-price proposals from qualified experts, choose one, and work proceeds through milestone-based delivery with full escrow payment protection. You own all deliverables and approve each milestone before funds are released." },
-      { question: "How much does it cost to post a Custom Project?", answer: "There is a one-time €100 posting fee. If no proposal meets your criteria, you receive a 75% refund (€75). If you accept a proposal, the €100 fee is credited toward your first milestone payment. Project pricing is set by the expert in their proposal as a fixed price, not hourly. There are no additional platform fees for buyers." },
+      { question: "How much does it cost to post a Custom Project?", answer: "There is a one-time €100 posting fee. If no proposal meets your criteria, you receive a 50% refund (€50). If you accept a proposal, the €100 fee is credited toward your first milestone payment. Project pricing is set by the expert in their proposal as a fixed price, not hourly. There are no additional platform fees for buyers." },
       { question: "How does milestone-based delivery work?", answer: "Projects are divided into 2-5 milestones, each with a defined deliverable. You fund each milestone before work begins. Funds are held in escrow until you review and approve the delivery. This means you are never paying for work you have not seen, and you can stop a project after any milestone while retaining the deliverables you have already approved." },
       { question: "What happens if I am not satisfied with the work?", answer: "If a milestone delivery does not meet the agreed requirements, do not approve it. Communicate what needs to change, and the expert will revise within the agreed scope. If you and the expert cannot reach agreement, you can raise a dispute. LogicLot's support team reviews the project requirements, delivered work, and communication history to mediate and make a binding decision." },
     ],
@@ -632,7 +632,7 @@ This fee covers:
 - Proposal facilitation (experts invest significant time analysing your business and writing scoped proposals)
 - Platform infrastructure (secure messaging, proposal management, project dashboard)
 
-**Refund policy:** If no proposal meets your criteria, you receive a 75% refund (€37.50). "No proposal meets your criteria" means the experts did not adequately address your needs or the proposals are not actionable. This is assessed on a good-faith basis.
+**Refund policy:** Discovery Scan posting fees are non-refundable. When you accept a proposal and proceed with an expert, the €50 fee is credited toward your first milestone payment.
 
 **Credit toward your first project:** When you accept a proposal and proceed with an expert, your €50 posting fee is credited toward the first milestone payment. If your first milestone costs €500, you pay €450 out of pocket. This means the Discovery Scan is effectively free when you move forward.
 
@@ -655,7 +655,7 @@ This fee covers:
 - Proposal facilitation (experts invest substantial time designing architecture, planning milestones, and calculating pricing for custom work)
 - Full project infrastructure (milestone management, escrow handling, messaging, file sharing, dispute resolution support)
 
-**Refund policy:** If no proposal meets your criteria, you receive a 75% refund (€75).
+**Refund policy:** If no proposal meets your criteria, you receive a 50% refund (€50).
 
 **Credit toward your first project:** The €100 posting fee is credited toward your first milestone payment when you accept a proposal and proceed.
 
@@ -673,8 +673,8 @@ All project payments (Discovery Scans that convert to projects, Custom Projects,
 
 | Item | Cost | Refund policy |
 |---|---|---|
-| Discovery Scan posting fee | €50 (one-time) | 75% refund if no suitable proposal |
-| Custom Project posting fee | €100 (one-time) | 75% refund if no suitable proposal |
+| Discovery Scan posting fee | €50 (one-time) | Non-refundable (credited toward first project) |
+| Custom Project posting fee | €100 (one-time) | 50% refund if no suitable proposal |
 | Project milestone payments | Expert's quoted price (0% platform markup) | Escrow-protected until approval |
 | Solution purchases | Listed price (no extras) | Per solution terms |
 | Escrow protection | Free (included) | N/A |
@@ -758,18 +758,11 @@ ${BRAND_NAME} does not withhold taxes from expert payouts. You are responsible f
 
 ### Discovery Scan refunds
 
-**When you qualify:** You receive a 75% refund (€37.50 of your €50 posting fee) if no proposal meets your criteria. This means:
-- Fewer than the expected number of proposals were received
-- The proposals received did not adequately address the needs described in your submission
-- The proposals were not actionable or specific enough to make a decision
-
-**When you do not qualify:** If you received actionable proposals but simply chose not to proceed, the posting fee is non-refundable. The experts invested time in analysis and proposal writing; the fee compensates for that investment.
-
-**How to request:** Contact support through your dashboard. Refund requests are reviewed within 48 hours.
+Discovery Scan posting fees (€50) are **non-refundable**. The fee covers expert matching, proposal facilitation, and platform infrastructure. When you accept a proposal and proceed, the €50 is credited toward your first milestone payment.
 
 ### Custom Project refunds
 
-**When you qualify:** You receive a 75% refund (€75 of your €100 posting fee) under the same criteria as Discovery Scans---proposals were not received, not adequate, or not actionable.
+**When you qualify:** You receive a 50% refund (€50 of your €100 posting fee) if no proposal meets your criteria---proposals were not received, not adequate, or not actionable.
 
 **Milestone refunds:** If a dispute on a funded milestone is resolved in your favour, the escrowed funds are refunded to your original payment method. Refund processing takes 5 to 10 business days depending on your bank or card issuer.
 
@@ -813,10 +806,10 @@ Solution refund policies are set by the individual expert and disclosed on the s
     `,
     relatedSlugs: ["how-escrow-works", "invoicing", "custom-project-explained", "discovery-scan-explained"],
     faqs: [
-      { question: "How much does it cost to use LogicLot as a business?", answer: "Businesses pay zero platform fees on project payments. The only costs are: Discovery Scan posting fee (€50, one-time, 75% refundable if no suitable proposals, credited toward your first project) or Custom Project posting fee (€100, same refund and credit terms). You then pay the expert's quoted price for the project with no markup. All payments are escrow-protected at no additional cost." },
+      { question: "How much does it cost to use LogicLot as a business?", answer: "Businesses pay zero platform fees on project payments. The only costs are: Discovery Scan posting fee (€50, one-time, non-refundable but credited toward your first project) or Custom Project posting fee (€100, 50% refundable if no suitable proposals, also credited toward your first project). You then pay the expert's quoted price for the project with no markup. All payments are escrow-protected at no additional cost." },
       { question: "What are the expert commission rates on LogicLot?", answer: "Commission rates decrease with completed sales: Standard 16% (0-4 sales), Proven 14% (5+ sales), Elite 12% (application-based, 10+ sales), Founder 11% (first 20 experts, lifetime rate). There are no listing fees, proposal fees, subscription fees, or monthly charges. The platform only earns when experts earn." },
       { question: "Are there any hidden fees on LogicLot?", answer: "No. The fees documented on the pricing page are the only fees that exist. There are no setup fees, annual fees, inactivity fees, buyer markup fees, withdrawal fees, or premium tier requirements. Businesses pay posting fees plus the expert's quoted price. Experts pay a commission on completed sales. That is the complete fee structure." },
-      { question: "How does the 75% refund policy work?", answer: "If you post a Discovery Scan (€50) or Custom Project (€100) and no proposal meets your criteria (proposals were not received, not adequate, or not actionable), you receive a 75% refund. If you received actionable proposals but chose not to proceed, the posting fee is non-refundable because experts invested time in analysis and proposal writing." },
+      { question: "How does the refund policy work?", answer: "Discovery Scan posting fees (€50) are non-refundable but credited toward your first project. For Custom Projects (€100), if no proposal meets your criteria (proposals were not received, not adequate, or not actionable), you receive a 50% refund (€50). If you received actionable proposals but chose not to proceed, the posting fee is non-refundable because experts invested time in analysis and proposal writing." },
     ],
   },
   {

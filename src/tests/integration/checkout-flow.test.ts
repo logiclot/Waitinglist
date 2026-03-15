@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import "../mocks/prisma";
 import "../mocks/next-auth";
 import "../mocks/common";
+import "../mocks/stripe";
 import { prismaMock } from "../mocks/prisma";
 import { setMockSession } from "../mocks/next-auth";
 import { cancelOrder } from "@/actions/orders";
@@ -165,17 +166,21 @@ describe("Integration: Job payment status transitions", () => {
     prismaMock.jobPost.update.mockResolvedValueOnce({
       id: "job-1",
       status: "open",
+      category: "Finance",
     });
+    prismaMock.specialistProfile.findMany.mockResolvedValueOnce([]);
 
     const payResult = await markJobAsPaid("job-1");
     expect(payResult).toEqual({ success: true });
-    expect(prismaMock.jobPost.update).toHaveBeenCalledWith({
-      where: { id: "job-1" },
-      data: expect.objectContaining({
-        status: "open",
-        paidAt: expect.any(Date),
-      }),
-    });
+    expect(prismaMock.jobPost.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "job-1" },
+        data: expect.objectContaining({
+          status: "open",
+          paidAt: expect.any(Date),
+        }),
+      })
+    );
   });
 
   it("cannot pay for another user's job", async () => {

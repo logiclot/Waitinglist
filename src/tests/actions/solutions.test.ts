@@ -47,14 +47,14 @@ describe("createSolutionDraft", () => {
   });
 
   it("returns error when title is missing", async () => {
-    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1" });
+    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1", status: "APPROVED" });
 
     const result = await createSolutionDraft(makeFormData({ title: "" }));
     expect(result).toEqual({ error: "Title is required" });
   });
 
   it("creates draft successfully", async () => {
-    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1" });
+    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1", status: "APPROVED" });
     prismaMock.solution.create.mockResolvedValue({ id: "solution-1" });
 
     const result = await createSolutionDraft(
@@ -79,17 +79,16 @@ describe("createSolutionDraft", () => {
         supportDays: 30,
         status: "draft",
         lastStep: 2,
-        commissionRate: 15.0,
       }),
     });
   });
 
   it("returns error when prisma create fails", async () => {
-    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1" });
+    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1", status: "APPROVED" });
     prismaMock.solution.create.mockRejectedValue(new Error("DB error"));
 
     const result = await createSolutionDraft(makeFormData({ title: "Test" }));
-    expect(result).toEqual({ error: "Failed to create draft" });
+    expect(result).toEqual({ error: "DB error" });
   });
 });
 
@@ -166,7 +165,7 @@ describe("publishSolution", () => {
   });
 
   it("returns error when not the owner", async () => {
-    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1" });
+    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1", status: "APPROVED" });
     prismaMock.solution.findUnique.mockResolvedValue({ id: "sol-1", expertId: "other-expert" });
 
     const result = await publishSolution("sol-1");
@@ -174,7 +173,7 @@ describe("publishSolution", () => {
   });
 
   it("returns error when required fields are missing", async () => {
-    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1" });
+    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1", status: "APPROVED" });
     prismaMock.solution.findUnique.mockResolvedValue({
       id: "sol-1",
       expertId: "expert-1",
@@ -192,14 +191,14 @@ describe("publishSolution", () => {
     const result = await publishSolution("sol-1");
     expect(result).toHaveProperty("error");
     expect(result.error).toContain("Missing required fields");
-    expect(result.error).toContain("Long Description");
+    expect(result.error).toContain("Description");
     expect(result.error).toContain("Tools");
-    expect(result.error).toContain("Included Deliverables");
+    expect(result.error).toContain("Included deliverables");
     expect(result.error).toContain("Price");
   });
 
   it("publishes solution successfully when all fields are present", async () => {
-    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1" });
+    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1", userId: "user-1", status: "APPROVED" });
     prismaMock.solution.findUnique.mockResolvedValue({
       id: "sol-1",
       expertId: "expert-1",
@@ -207,11 +206,15 @@ describe("publishSolution", () => {
       category: "CRM",
       longDescription: "Detailed description here",
       integrations: ["Salesforce", "HubSpot"],
+      structureConsistent: ["Feature A"],
+      structureCustom: ["Feature B"],
+      measurableOutcome: "Save 10 hours/week",
       included: ["Setup", "Training", "Documentation"],
       implementationPriceCents: 10000,
       deliveryDays: 7,
       accessRequired: "Admin",
       paybackPeriod: "lt_1m",
+      milestones: [{ title: "Full delivery", price: 100, priceCents: 10000 }],
     });
     prismaMock.solution.update.mockResolvedValue({});
 

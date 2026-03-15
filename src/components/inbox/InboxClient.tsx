@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Conversation, Message } from "@/types";
 import { Send, User, ShieldCheck, Search, Video } from "lucide-react";
 import Link from "next/link";
+import { Avatar } from "@/components/ui/Avatar";
 import { sendMessage } from "@/actions/messaging";
 import { BidCardMessage } from "@/components/messages/BidCardMessage";
 import { OrderCardMessage } from "@/components/messages/OrderCardMessage";
@@ -132,11 +133,34 @@ export function InboxClient({ initialConversations, currentUserId }: InboxClient
   // Helper to get other party name
   const getOtherPartyName = (conv: Conversation) => {
     if (conv.seller?.user_id === currentUserId) {
-      // We are the seller — use the resolved buyer name from the server
       return conv.buyer_name || "Client";
     }
-    // We are the buyer — show seller/expert name
     return conv.seller?.name || "Expert";
+  };
+
+  // Helper to get other party image
+  const getOtherPartyImage = (conv: Conversation) => {
+    if (conv.seller?.user_id === currentUserId) {
+      return conv.buyer_image || null;
+    }
+    return conv.seller?.profile_image_url || null;
+  };
+
+  // Helper to get sender avatar info for a message
+  const getSenderInfo = (conv: Conversation, senderId: string) => {
+    const isMe = senderId === currentUserId;
+    if (isMe) {
+      const isSeller = conv.seller?.user_id === currentUserId;
+      return {
+        name: isSeller ? (conv.seller?.name || "You") : "You",
+        image: isSeller ? (conv.seller?.profile_image_url || null) : (conv.buyer_image || null),
+      };
+    }
+    // Other party
+    return {
+      name: getOtherPartyName(conv),
+      image: getOtherPartyImage(conv),
+    };
   };
 
   // Filtered conversations based on search query
@@ -194,6 +218,9 @@ export function InboxClient({ initialConversations, currentUserId }: InboxClient
                       isSelected ? "bg-secondary/30 border-l-4 border-l-primary pl-[12px]" : "border-l-4 border-l-transparent"
                     }`}
                   >
+                    <div className="flex gap-3">
+                      <Avatar src={getOtherPartyImage(conv)} name={otherPartyName} size="sm" className="mt-0.5" />
+                      <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-1">
                       <span className={`font-semibold text-sm truncate pr-2 ${isSelected ? "text-primary" : "text-foreground"}`}>
                          {otherPartyName}
@@ -208,6 +235,8 @@ export function InboxClient({ initialConversations, currentUserId }: InboxClient
                     <div className="text-xs text-muted-foreground truncate opacity-70">
                       {lastMsg?.sender_id === currentUserId ? "You: " : ""}{lastMsg?.type === 'bid_card' ? "Sent a proposal" : lastMsg?.type === 'order_card' ? "Order update" : (lastMsg?.body || "No messages")}
                     </div>
+                      </div>
+                    </div>
                   </button>
                 );
               })
@@ -221,7 +250,9 @@ export function InboxClient({ initialConversations, currentUserId }: InboxClient
             <>
               {/* Header */}
               <div className="p-4 border-b border-border bg-secondary/10 flex items-center justify-between shrink-0">
-                <div>
+                <div className="flex items-center gap-3">
+                   <Avatar src={getOtherPartyImage(activeConversation)} name={getOtherPartyName(activeConversation)} size="md" />
+                   <div>
                    <h2 className="font-bold flex items-center gap-2">
                      {getOtherPartyName(activeConversation)}
                      {activeConversation.seller?.verified && <ShieldCheck className="h-4 w-4 text-blue-400" />}
@@ -231,6 +262,7 @@ export function InboxClient({ initialConversations, currentUserId }: InboxClient
                        Regarding: <span className="font-medium text-foreground">{activeConversation.solution.title}</span>
                      </div>
                    )}
+                   </div>
                 </div>
                 <div className="flex gap-2">
                   {/* Demo/Call Button */}
@@ -291,23 +323,26 @@ export function InboxClient({ initialConversations, currentUserId }: InboxClient
                    ) : (
                     <div
                       key={msg.id}
-                      className={`flex flex-col ${msg.sender_id === currentUserId ? 'items-end' : 'items-start'}`}
+                      className={`flex gap-2.5 ${msg.sender_id === currentUserId ? 'flex-row-reverse' : 'flex-row'}`}
                     >
-                      <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
-                        msg.sender_id === currentUserId
-                          ? 'bg-primary text-primary-foreground rounded-br-none'
-                          : 'bg-white dark:bg-secondary border border-border rounded-bl-none'
-                      }`}>
-                        {msg.body}
+                      <Avatar src={getSenderInfo(activeConversation, msg.sender_id).image} name={getSenderInfo(activeConversation, msg.sender_id).name} size="sm" className="mt-1 shrink-0" />
+                      <div className={`flex flex-col ${msg.sender_id === currentUserId ? 'items-end' : 'items-start'}`}>
+                        <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
+                          msg.sender_id === currentUserId
+                            ? 'bg-primary text-primary-foreground rounded-br-none'
+                            : 'bg-white dark:bg-secondary border border-border rounded-bl-none'
+                        }`}>
+                          {msg.body}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-1 px-1">
+                          {new Date(msg.created_at).toLocaleString('en-US', {
+                            weekday: 'short',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: true,
+                          })}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground mt-1 px-1">
-                        {new Date(msg.created_at).toLocaleString('en-US', {
-                          weekday: 'short',
-                          hour: 'numeric',
-                          minute: 'numeric',
-                          hour12: true,
-                        })}
-                      </span>
                     </div>
                    )
                 ))}

@@ -814,9 +814,9 @@ export async function rateProposal(
   }
 }
 
-// ── Reject all proposals and refund 75% (Custom Projects only) ──────────────
+// ── Reject all proposals and refund 50% (Custom Projects only) ──────────────
 
-const REFUND_PERCENT = 75;
+const REFUND_PERCENT = 50;
 const CUSTOM_PROJECT_REFUND_CENTS = Math.round(CUSTOM_PROJECT_PRICE_CENTS * REFUND_PERCENT / 100);
 
 export async function rejectAllBidsAndRefund(
@@ -888,7 +888,7 @@ export async function rejectAllBidsAndRefund(
       });
     });
 
-    // Issue 75% refund via Stripe
+    // Issue 50% refund via Stripe
     if (job.paymentIntentId) {
       try {
         await stripe.refunds.create({

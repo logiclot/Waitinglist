@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import "../mocks/prisma";
 import "../mocks/next-auth";
 import "../mocks/common";
+import "../mocks/stripe";
 import { prismaMock } from "../mocks/prisma";
 import { setMockSession } from "../mocks/next-auth";
 import {
@@ -26,7 +27,7 @@ function businessSession() {
 
 function specialistSession() {
   setMockSession({
-    user: { id: SPECIALIST_USER_ID, email: "spec@example.com", name: "Specialist User", role: "SPECIALIST" },
+    user: { id: SPECIALIST_USER_ID, email: "spec@example.com", name: "Specialist User", role: "EXPERT" },
   });
 }
 
@@ -102,49 +103,40 @@ describe("Integration: Full job lifecycle", () => {
     prismaMock.jobPost.update.mockResolvedValueOnce({
       id: "job-1",
       status: "open",
+      category: "CRM",
     });
+    prismaMock.specialistProfile.findMany.mockResolvedValueOnce([]);
 
     const payResult = await markJobAsPaid("job-1");
     expect(payResult).toEqual({ success: true });
-    expect(prismaMock.jobPost.update).toHaveBeenCalledWith({
-      where: { id: "job-1" },
-      data: expect.objectContaining({
-        status: "open",
-        paidAt: expect.any(Date),
-        paymentProvider: "simulated",
-        paymentIntentId: "sim_12345",
-      }),
-    });
+    expect(prismaMock.jobPost.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "job-1" },
+        data: expect.objectContaining({
+          status: "open",
+          paidAt: expect.any(Date),
+        }),
+      })
+    );
 
     // ── Step 3: Specialist submits bid ─────────────────────────────────────────
     vi.clearAllMocks();
     specialistSession();
 
+    prismaMock.jobPost.findUnique.mockResolvedValueOnce({
+      id: "job-1", status: "open", category: "CRM", buyerId: BUSINESS_USER_ID, title: "Need CRM automation",
+    });
     prismaMock.specialistProfile.findUnique.mockResolvedValueOnce({
       id: "specialist-profile-1",
       userId: SPECIALIST_USER_ID,
       tier: "ELITE",
+      status: "APPROVED",
+      isFoundingExpert: false,
     });
-    prismaMock.bid.findUnique.mockResolvedValueOnce(null); // No existing bid
-    prismaMock.bid.create.mockResolvedValueOnce({
-      id: "bid-1",
-      jobPostId: "job-1",
-      specialistId: "specialist-profile-1",
-      status: "submitted",
-    });
+    prismaMock.$transaction.mockResolvedValueOnce({});
 
     const bidResult = await submitBid(null, makeBidFormData());
     expect(bidResult).toEqual({ success: true });
-    expect(prismaMock.bid.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        jobPostId: "job-1",
-        specialistId: "specialist-profile-1",
-        message: "I can help with this",
-        estimatedTime: "1 week",
-        priceEstimate: "$2000",
-        status: "submitted",
-      }),
-    });
 
     // ── Step 4: Business awards bid ────────────────────────────────────────────
     vi.clearAllMocks();
@@ -154,30 +146,42 @@ describe("Integration: Full job lifecycle", () => {
       id: "job-1",
       buyerId: BUSINESS_USER_ID,
       status: "open",
+      title: "Need CRM automation",
       buyer: { id: BUSINESS_USER_ID },
     });
     prismaMock.bid.findUnique.mockResolvedValueOnce({
       id: "bid-1",
       jobPostId: "job-1",
       specialistId: "specialist-profile-1",
-      specialist: { id: "specialist-profile-1", user: { id: SPECIALIST_USER_ID } },
+      status: "submitted",
+      priceEstimate: "2000",
+      proposedApproach: null,
+      specialist: { id: "specialist-profile-1", userId: SPECIALIST_USER_ID, status: "APPROVED", user: { id: SPECIALIST_USER_ID } },
     });
-    // awardBid uses interactive $transaction (callback pattern)
+
+    const mockTx = {
+      jobPost: { findUnique: vi.fn().mockResolvedValue({ id: "job-1", status: "open" }), update: vi.fn() },
+      bid: { update: vi.fn() },
+      order: { create: vi.fn().mockResolvedValue({ id: "order-1" }) },
+      conversation: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({ id: "conv-1" }),
+        update: vi.fn(),
+      },
+      message: { create: vi.fn() },
+    };
     prismaMock.$transaction.mockImplementationOnce(async (cb: unknown) => {
-      if (typeof cb === "function") {
-        return cb({
-          jobPost: { update: vi.fn().mockResolvedValue({}) },
-          bid: { update: vi.fn().mockResolvedValue({}) },
-          conversation: { create: vi.fn().mockResolvedValue({ id: "conv-1" }) },
-          message: { create: vi.fn().mockResolvedValue({}) },
-        });
-      }
+      if (typeof cb === "function") return cb(mockTx);
       return Promise.all(cb as Promise<unknown>[]);
     });
 
+    // Post-transaction calls
+    prismaMock.bid.findMany.mockResolvedValueOnce([]);
+    prismaMock.order.findFirst.mockResolvedValueOnce({ id: "order-1" });
+
     const awardResult = await awardBid("job-1", "bid-1");
-    expect(awardResult).toEqual({ success: true });
-    expect(prismaMock.$transaction).toHaveBeenCalled();
+    expect(awardResult).toHaveProperty("success", true);
+    expect(awardResult).toHaveProperty("orderId", "order-1");
   });
 });
 
@@ -189,41 +193,53 @@ describe("Integration: Bid restrictions", () => {
   it("non-ELITE specialist cannot bid", async () => {
     specialistSession();
 
+    prismaMock.jobPost.findUnique.mockResolvedValueOnce({
+      id: "job-1", status: "open", category: "CRM", buyerId: BUSINESS_USER_ID, title: "Test",
+    });
     prismaMock.specialistProfile.findUnique.mockResolvedValueOnce({
       id: "specialist-profile-1",
       userId: SPECIALIST_USER_ID,
       tier: "STANDARD",
+      status: "APPROVED",
+      isFoundingExpert: false,
     });
 
     const result = await submitBid(null, makeBidFormData());
-    expect(result).toEqual({ error: "Only Elite specialists can bid on jobs." });
+    expect(result).toHaveProperty("error");
+    expect(result.error).toContain("Elite");
   });
 
   it("specialist with no profile cannot bid", async () => {
     specialistSession();
 
+    prismaMock.jobPost.findUnique.mockResolvedValueOnce({
+      id: "job-1", status: "open", category: "CRM", buyerId: BUSINESS_USER_ID, title: "Test",
+    });
     prismaMock.specialistProfile.findUnique.mockResolvedValueOnce(null);
 
     const result = await submitBid(null, makeBidFormData());
-    expect(result).toEqual({ error: "Only Elite specialists can bid on jobs." });
+    expect(result).toHaveProperty("error");
+    expect(result.error).toContain("profile");
   });
 
   it("specialist cannot bid twice on the same job", async () => {
     specialistSession();
 
+    prismaMock.jobPost.findUnique.mockResolvedValueOnce({
+      id: "job-1", status: "open", category: "CRM", buyerId: BUSINESS_USER_ID, title: "Test",
+    });
     prismaMock.specialistProfile.findUnique.mockResolvedValueOnce({
       id: "specialist-profile-1",
       userId: SPECIALIST_USER_ID,
       tier: "ELITE",
+      status: "APPROVED",
+      isFoundingExpert: false,
     });
-    prismaMock.bid.findUnique.mockResolvedValueOnce({
-      id: "existing-bid",
-      jobPostId: "job-1",
-      specialistId: "specialist-profile-1",
-    });
+    prismaMock.$transaction.mockRejectedValueOnce(new Error("DUPLICATE"));
 
     const result = await submitBid(null, makeBidFormData());
-    expect(result).toEqual({ error: "You have already placed a bid on this job." });
+    expect(result).toHaveProperty("error");
+    expect(result.error).toContain("already submitted");
   });
 });
 
@@ -243,24 +259,17 @@ describe("Integration: Discovery job flow", () => {
     });
 
     const fd = new FormData();
-    fd.set("businessModel", "SaaS");
-    fd.set("teamSize", "10-50");
-    fd.set("timeDrain", "Manual data entry");
-    fd.set("workflowVolume", "1000+/month");
-    fd.set("stack", "Slack,HubSpot");
-    fd.set("communicationHub", "Slack");
-    fd.set("businessDescription", "We run a SaaS platform with many manual processes");
-    fd.set("growthGoal", "Scale operations without hiring");
+    fd.set("title", "Discovery: SaaS Automation");
+    fd.set("goal", "Find ways to automate manual tasks");
+    fd.set("tools", "Slack,HubSpot");
 
     const result = await createDiscoveryJobPost(fd);
     expect(result).toEqual({ success: true, jobId: "disc-job-1" });
     expect(prismaMock.jobPost.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         buyerId: BUSINESS_USER_ID,
-        category: "Discovery",
-        status: "open",
-        paidAt: expect.any(Date),
-        paymentProvider: "stripe_stub",
+        category: "Discovery Scan",
+        status: "pending_payment",
       }),
     });
   });

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Loader2, AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 
-const REFUND_PERCENT = 75;
+const REFUND_PERCENT = 50;
 const refundCents = Math.round(CUSTOM_PROJECT_PRICE_CENTS * REFUND_PERCENT / 100);
 const refundDisplay = `€${(refundCents / 100).toFixed(2).replace(".", ",")}`;
 
@@ -64,7 +64,7 @@ export function RejectAllProposalsButton({ jobId }: RejectAllProposalsButtonProp
           onClick={() => setExpanded(true)}
           className="text-xs text-muted-foreground hover:text-destructive transition-colors underline underline-offset-2"
         >
-          Not satisfied? Reject all &amp; get 75% refund
+          Not satisfied? Reject all &amp; get 50% refund
         </button>
       </div>
     );
@@ -90,7 +90,7 @@ export function RejectAllProposalsButton({ jobId }: RejectAllProposalsButtonProp
       {/* Body */}
       <div className="p-5 space-y-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          If none of the proposals meet your needs, you can close this project and receive a <strong className="text-foreground">75% refund ({refundDisplay})</strong>.
+          If none of the proposals meet your needs, you can close this project and receive a <strong className="text-foreground">50% refund ({refundDisplay})</strong>.
           All experts will be notified. Please tell us what you expected — this helps us improve expert quality.
         </p>
 

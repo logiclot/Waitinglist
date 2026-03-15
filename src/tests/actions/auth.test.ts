@@ -5,8 +5,7 @@ import "../mocks/common";
 import "../mocks/resend";
 import "../mocks/next-auth";
 import { prismaMock } from "../mocks/prisma";
-import { resendMock } from "../mocks/resend";
-import { mockGetServerSession, setMockSession } from "../mocks/next-auth";
+import { setMockSession } from "../mocks/next-auth";
 
 // Mock Analytics
 vi.mock("@/lib/analytics", () => ({

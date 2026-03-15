@@ -89,10 +89,13 @@ describe("createBusinessProfile", () => {
     expect(result).toEqual({ error: "Not authenticated" });
   });
 
-  it("returns error when companyName is missing", async () => {
+  it("succeeds even without companyName (defaults to empty)", async () => {
+    prismaMock.businessProfile.upsert.mockResolvedValue({});
+    prismaMock.user.update.mockResolvedValue({});
+
     const fd = makeFormData({ fullName: "John Doe" });
     const result = await createBusinessProfile(null, fd);
-    expect(result).toEqual({ error: "Company Name is required" });
+    expect(result).toEqual({ success: true });
   });
 
   it("creates business profile successfully", async () => {
@@ -104,7 +107,6 @@ describe("createBusinessProfile", () => {
       fullName: "John Doe",
       website: "https://acme.com",
       country: "US",
-      timezone: "America/New_York",
       industry: "Technology",
       companySize: "10-50",
       tools: ["Slack", "HubSpot"],
@@ -121,7 +123,6 @@ describe("createBusinessProfile", () => {
           userId: "user-1",
           companyName: "Acme Corp",
           country: "US",
-          timezone: "America/New_York",
         }),
         update: expect.objectContaining({
           companyName: "Acme Corp",
@@ -130,7 +131,7 @@ describe("createBusinessProfile", () => {
     );
     expect(prismaMock.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
-      data: { onboardingCompletedAt: expect.any(Date) },
+      data: expect.objectContaining({ onboardingCompletedAt: expect.any(Date) }),
     });
   });
 
@@ -230,7 +231,6 @@ describe("createSpecialistProfile", () => {
           legalFullName: "Jane Doe",
           displayName: "Jane Doe",
           country: "US",
-          timezone: "America/New_York",
           isAgency: false,
           agencyName: null,
           businessIdentificationNumber: null,
@@ -242,7 +242,7 @@ describe("createSpecialistProfile", () => {
     );
     expect(prismaMock.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
-      data: { onboardingCompletedAt: expect.any(Date) },
+      data: expect.objectContaining({ onboardingCompletedAt: expect.any(Date) }),
     });
   });
 

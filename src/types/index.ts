@@ -189,6 +189,7 @@ export interface Conversation {
   order?: Order;
   seller?: Expert;
   buyer_name?: string; // resolved name of the buyer for seller-side display
+  buyer_image?: string | null;
 }
 
 export interface Message {

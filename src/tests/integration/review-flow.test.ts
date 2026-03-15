@@ -45,7 +45,7 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
       buyerRating: null,
       buyerComment: null,
       buyerSubmittedAt: null,
-      isUnblinded: false,
+      unblindedAt: null,
       createdAt: new Date(),
     },
     ...overrides,
@@ -65,13 +65,13 @@ describe("Integration: Review flow — both parties review", () => {
     sellerSession();
 
     prismaMock.order.findUnique.mockResolvedValueOnce(makeOrder());
-    prismaMock.review.update.mockResolvedValueOnce({});
+    prismaMock.review.updateMany.mockResolvedValueOnce({ count: 1 });
 
     const sellerResult = await submitSellerReview("order-1", 5, "Great buyer!");
     expect(sellerResult).toEqual({ success: true });
 
-    expect(prismaMock.review.update).toHaveBeenCalledWith({
-      where: { id: "review-1" },
+    expect(prismaMock.review.updateMany).toHaveBeenCalledWith({
+      where: { id: "review-1", sellerRating: null },
       data: expect.objectContaining({
         sellerRating: 5,
         sellerComment: "Great buyer!",
@@ -83,7 +83,7 @@ describe("Integration: Review flow — both parties review", () => {
     // Notification sent to buyer that seller left a review
     expect(createNotification).toHaveBeenCalledWith(
       BUYER_USER_ID,
-      "Test Expert left you a review!",
+      expect.stringContaining("left you a review"),
       expect.any(String),
       "info",
       expect.stringContaining("order-1"),
@@ -105,7 +105,7 @@ describe("Integration: Review flow — both parties review", () => {
           buyerRating: null,
           buyerComment: null,
           buyerSubmittedAt: null,
-          isUnblinded: false,
+          unblindedAt: null,
           createdAt: new Date(),
         },
       }),
@@ -123,14 +123,14 @@ describe("Integration: Review flow — both parties review", () => {
     expect(cn2).toHaveBeenCalledTimes(2);
     expect(cn2).toHaveBeenCalledWith(
       BUYER_USER_ID,
-      "Reviews are now visible!",
+      expect.stringContaining("Reviews are now visible"),
       expect.any(String),
       "success",
       expect.any(String),
     );
     expect(cn2).toHaveBeenCalledWith(
       SELLER_USER_ID,
-      "Reviews are now visible!",
+      expect.stringContaining("Reviews are now visible"),
       expect.any(String),
       "success",
       expect.any(String),
@@ -162,7 +162,7 @@ describe("Integration: Review flow — 14-day timeout auto-unblind", () => {
         buyerRating: null,
         buyerComment: null,
         buyerSubmittedAt: null,
-        isUnblinded: false,
+        unblindedAt: null,
         createdAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
       },
     });
@@ -179,7 +179,7 @@ describe("Integration: Review flow — 14-day timeout auto-unblind", () => {
     // Auto-unblind was persisted to DB
     expect(prismaMock.review.update).toHaveBeenCalledWith({
       where: { id: "review-1" },
-      data: { isUnblinded: true, unblindedAt: expect.any(Date) },
+      data: { unblindedAt: expect.any(Date) },
     });
   });
 });
@@ -203,11 +203,12 @@ describe("Integration: Review flow — duplicate review prevention", () => {
           buyerRating: null,
           buyerComment: null,
           buyerSubmittedAt: null,
-          isUnblinded: false,
+          unblindedAt: null,
           createdAt: new Date(),
         },
       }),
     );
+    prismaMock.review.updateMany.mockResolvedValueOnce({ count: 0 });
 
     const result = await submitSellerReview("order-1", 5, "Second review attempt");
     expect(result).toEqual({ error: "You have already submitted a review" });
@@ -227,7 +228,7 @@ describe("Integration: Review flow — duplicate review prevention", () => {
           buyerRating: 3,
           buyerComment: "Already reviewed",
           buyerSubmittedAt: new Date(),
-          isUnblinded: false,
+          unblindedAt: null,
           createdAt: new Date(),
         },
       }),

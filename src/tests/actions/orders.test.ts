@@ -155,7 +155,7 @@ describe("submitDispute", () => {
     expect(result).toEqual({ error: "This order cannot be disputed in its current state." });
   });
 
-  it("submits dispute successfully and notifies seller", async () => {
+  it("submits dispute successfully and notifies both parties", async () => {
     prismaMock.order.findUnique.mockResolvedValue({
       id: "order-1",
       buyerId: "user-1",
@@ -172,10 +172,17 @@ describe("submitDispute", () => {
     expect(prismaMock.$transaction).toHaveBeenCalled();
     expect(createNotification).toHaveBeenCalledWith(
       "seller-user-1",
-      "A dispute has been raised",
+      expect.stringContaining("Dispute opened"),
       expect.any(String),
       "alert",
-      "/expert/projects/order-1"
+      "/expert/projects"
+    );
+    expect(createNotification).toHaveBeenCalledWith(
+      "user-1",
+      expect.stringContaining("Dispute submitted"),
+      expect.any(String),
+      "info",
+      "/business/projects"
     );
   });
 

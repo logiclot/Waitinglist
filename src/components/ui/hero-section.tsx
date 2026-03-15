@@ -105,17 +105,41 @@ export function Hero() {
     };
   }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const mousePos = useRef({ x: 0, y: 0 });
+  const currentPos = useRef({ x: 0, y: 0 });
+  const animating = useRef(false);
+
+  const lerp = (start: number, end: number, factor: number) => start + (end - start) * factor;
+
+  const animate = () => {
     const gradient = gradientRef.current;
-    if (gradient) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      gradient.style.left = `${e.clientX - rect.left - 192}px`;
-      gradient.style.top = `${e.clientY - rect.top - 192}px`;
-      gradient.style.opacity = "1";
+    if (!gradient) return;
+
+    currentPos.current.x = lerp(currentPos.current.x, mousePos.current.x, 0.12);
+    currentPos.current.y = lerp(currentPos.current.y, mousePos.current.y, 0.12);
+
+    gradient.style.left = `${currentPos.current.x - 192}px`;
+    gradient.style.top = `${currentPos.current.y - 192}px`;
+
+    if (animating.current) requestAnimationFrame(animate);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mousePos.current.x = e.clientX - rect.left;
+    mousePos.current.y = e.clientY - rect.top;
+
+    const gradient = gradientRef.current;
+    if (gradient) gradient.style.opacity = "1";
+
+    if (!animating.current) {
+      animating.current = true;
+      requestAnimationFrame(animate);
     }
   };
 
   const handleMouseLeave = () => {
+    animating.current = false;
     const gradient = gradientRef.current;
     if (gradient) gradient.style.opacity = "0";
   };
@@ -276,7 +300,7 @@ export function Hero() {
       {/* Mouse gradient */}
       <div
         ref={gradientRef}
-        className="absolute pointer-events-none w-96 h-96 rounded-full blur-3xl transition-all duration-300 ease-out opacity-0 z-[5]"
+        className="absolute pointer-events-none w-96 h-96 rounded-full blur-3xl transition-opacity duration-300 ease-out opacity-0 z-[5]"
         style={{ background: "radial-gradient(circle, rgba(21,128,61,0.27) 0%, transparent 65%)" }}
       />
     </div>

@@ -48,13 +48,14 @@ describe("createEcosystem", () => {
     const result = await createEcosystem({ title: "My Stack", description: "A pitch" });
     expect(result).toEqual({ success: true, ecosystemId: "eco-1" });
     expect(prismaMock.ecosystem.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
+      data: {
         expertId: "expert-1",
         title: "My Stack",
         slug: "my-stack",
-        description: "A pitch",
+        shortPitch: "A pitch",
+        businessGoal: "",
         isPublished: false,
-      }),
+      },
     });
   });
 
@@ -81,7 +82,7 @@ describe("createEcosystem", () => {
     prismaMock.ecosystem.create.mockRejectedValue(new Error("DB error"));
 
     const result = await createEcosystem({ title: "Fail Stack", description: "P" });
-    expect(result).toEqual({ error: "Failed to create ecosystem" });
+    expect(result).toEqual({ error: "Failed to create suite" });
   });
 });
 
@@ -315,6 +316,7 @@ describe("removeSolutionFromEcosystem", () => {
     prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "expert-1" });
     prismaMock.ecosystem.findUnique.mockResolvedValue({ id: "eco-1", expertId: "expert-1" });
     prismaMock.ecosystemItem.deleteMany.mockResolvedValue({ count: 1 });
+    prismaMock.ecosystemInvite.updateMany.mockResolvedValue({ count: 0 });
     prismaMock.solution.findUnique.mockResolvedValue({ slug: "my-solution" });
 
     const result = await removeSolutionFromEcosystem("eco-1", "sol-1");
@@ -419,7 +421,9 @@ describe("deleteEcosystem", () => {
       expertId: "expert-1",
       isPublished: false,
       slug: "my-stack",
+      title: "My Stack",
     });
+    prismaMock.ecosystemInvite.findMany.mockResolvedValue([]);
     prismaMock.ecosystem.delete.mockResolvedValue({});
 
     const result = await deleteEcosystem("eco-1");
@@ -434,7 +438,9 @@ describe("deleteEcosystem", () => {
       expertId: "expert-1",
       isPublished: true,
       slug: "published-stack",
+      title: "Published Stack",
     });
+    prismaMock.ecosystemInvite.findMany.mockResolvedValue([]);
     prismaMock.ecosystem.delete.mockResolvedValue({});
 
     const result = await deleteEcosystem("eco-1");

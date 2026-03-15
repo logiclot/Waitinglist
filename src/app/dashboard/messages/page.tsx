@@ -35,54 +35,79 @@ export default async function DashboardMessagesPage() {
       solution: {
         include: { expert: true }
       },
-      seller: true,
+      seller: {
+        include: { user: { select: { id: true, profileImageUrl: true } } }
+      },
       order: true,
     },
     orderBy: { updatedAt: "desc" }
   });
 
-  const mappedConversations: Conversation[] = conversations.map(c => ({
-    id: c.id,
-    buyer_id: c.buyerId,
-    seller_id: c.sellerId,
-    solution_id: c.solutionId || undefined,
-    order_id: c.orderId || undefined,
-    job_post_id: c.jobPostId || undefined,
-    created_at: c.createdAt.toISOString(),
-    updated_at: c.updatedAt.toISOString(),
+  // Fetch buyer profile images
+  const buyerIds = [...new Set(conversations.map((c) => c.buyerId))];
+  const buyerUsers = await prisma.user.findMany({
+    where: { id: { in: buyerIds } },
+    select: { id: true, profileImageUrl: true },
+  });
+  const buyerImageMap = Object.fromEntries(buyerUsers.map((u) => [u.id, u.profileImageUrl]));
 
-    messages: c.messages.map(m => ({
-      id: m.id,
-      conversation_id: m.conversationId,
-      sender_id: m.senderId,
-      body: m.body,
-      type: m.type as "user" | "system" | "bid_card",
-      created_at: m.createdAt.toISOString()
-    })),
-    
-    solution: c.solution ? {
-      ...c.solution,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      implementation_price: c.solution.implementationPriceCents / 100,
-      monthly_cost_min: c.solution.monthlyCostMinCents ? c.solution.monthlyCostMinCents / 100 : 0,
-      monthly_cost_max: c.solution.monthlyCostMaxCents ? c.solution.monthlyCostMaxCents / 100 : 0,
-      delivery_days: c.solution.deliveryDays,
-      status: c.solution.status as import("@/types").SolutionStatus,
-      integrations: c.solution.integrations,
-      implementation_price_cents: c.solution.implementationPriceCents,
-    } as unknown as Solution : undefined,
+  // Fetch buyer display names
+  const buyerProfiles = await prisma.businessProfile.findMany({
+    where: { userId: { in: buyerIds } },
+    select: { userId: true, companyName: true, firstName: true, lastName: true },
+  });
+  const buyerProfileMap = Object.fromEntries(buyerProfiles.map((bp) => [bp.userId, bp]));
 
-    seller: {
-      id: c.seller.id,
-      user_id: c.seller.userId,
-      name: c.seller.displayName || c.seller.legalFullName,
-      verified: c.seller.verified,
-      founding: c.seller.isFoundingExpert,
-      completed_sales_count: c.seller.completedSalesCount,
-      tools: c.seller.tools,
-      calendarUrl: c.seller.calendarUrl
-    } as Expert
-  }));
+  const mappedConversations: Conversation[] = conversations.map(c => {
+    const bp = buyerProfileMap[c.buyerId];
+    const buyerName = bp?.companyName || (bp?.firstName ? `${bp.firstName}${bp.lastName ? ` ${bp.lastName}` : ""}` : null) || "Client";
+
+    return {
+      id: c.id,
+      buyer_id: c.buyerId,
+      seller_id: c.sellerId,
+      solution_id: c.solutionId || undefined,
+      order_id: c.orderId || undefined,
+      job_post_id: c.jobPostId || undefined,
+      created_at: c.createdAt.toISOString(),
+      updated_at: c.updatedAt.toISOString(),
+      buyer_name: buyerName,
+      buyer_image: buyerImageMap[c.buyerId] ?? null,
+
+      messages: c.messages.map(m => ({
+        id: m.id,
+        conversation_id: m.conversationId,
+        sender_id: m.senderId,
+        body: m.body,
+        type: m.type as "user" | "system" | "bid_card",
+        created_at: m.createdAt.toISOString()
+      })),
+
+      solution: c.solution ? {
+        ...c.solution,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        implementation_price: c.solution.implementationPriceCents / 100,
+        monthly_cost_min: c.solution.monthlyCostMinCents ? c.solution.monthlyCostMinCents / 100 : 0,
+        monthly_cost_max: c.solution.monthlyCostMaxCents ? c.solution.monthlyCostMaxCents / 100 : 0,
+        delivery_days: c.solution.deliveryDays,
+        status: c.solution.status as import("@/types").SolutionStatus,
+        integrations: c.solution.integrations,
+        implementation_price_cents: c.solution.implementationPriceCents,
+      } as unknown as Solution : undefined,
+
+      seller: {
+        id: c.seller.id,
+        user_id: c.seller.userId,
+        name: c.seller.displayName || c.seller.legalFullName,
+        verified: c.seller.verified,
+        founding: c.seller.isFoundingExpert,
+        completed_sales_count: c.seller.completedSalesCount,
+        tools: c.seller.tools,
+        calendarUrl: c.seller.calendarUrl,
+        profile_image_url: c.seller.user?.profileImageUrl ?? undefined,
+      } as Expert
+    };
+  });
 
   return (
     <div className="h-full">

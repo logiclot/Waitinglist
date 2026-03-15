@@ -31,7 +31,7 @@ export default async function InboxPage() {
     include: {
       messages: { orderBy: { createdAt: "asc" } },
       solution: { include: { expert: true } },
-      seller: true,
+      seller: { include: { user: { select: { profileImageUrl: true } } } },
       order: true,
     },
     orderBy: { updatedAt: "desc" },
@@ -41,9 +41,17 @@ export default async function InboxPage() {
   const buyerIds = [...new Set(conversations.map((c) => c.buyerId))];
   const buyerProfiles = await prisma.businessProfile.findMany({
     where: { userId: { in: buyerIds } },
-    select: { userId: true, firstName: true, lastName: true, companyName: true },
+    select: { userId: true, firstName: true, lastName: true, companyName: true, user: { select: { profileImageUrl: true } } },
   });
   const buyerProfileMap = Object.fromEntries(buyerProfiles.map((bp) => [bp.userId, bp]));
+
+  // Fetch seller user images separately (ensures fresh data)
+  const sellerUserIds = [...new Set(conversations.map((c) => c.seller.userId))];
+  const sellerUsers = await prisma.user.findMany({
+    where: { id: { in: sellerUserIds } },
+    select: { id: true, profileImageUrl: true },
+  });
+  const sellerImageMap = Object.fromEntries(sellerUsers.map((u) => [u.id, u.profileImageUrl]));
 
   const mappedConversations: Conversation[] = conversations.map((c) => {
     const bp = buyerProfileMap[c.buyerId];
@@ -59,6 +67,7 @@ export default async function InboxPage() {
       created_at: c.createdAt.toISOString(),
       updated_at: c.updatedAt.toISOString(),
       buyer_name: buyerName,
+      buyer_image: bp?.user?.profileImageUrl || null,
 
       messages: c.messages.map((m) => ({
         id: m.id,
@@ -88,6 +97,7 @@ export default async function InboxPage() {
         id: c.seller.id,
         user_id: c.seller.userId,
         name: c.seller.displayName || c.seller.legalFullName,
+        profile_image_url: sellerImageMap[c.seller.userId] ?? null,
         verified: c.seller.verified,
         founding: c.seller.isFoundingExpert,
         completed_sales_count: c.seller.completedSalesCount,

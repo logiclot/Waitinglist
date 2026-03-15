@@ -71,7 +71,8 @@ describe("ExpertOverview", () => {
 
   it("shows founding expert badge when isFoundingExpert is true", () => {
     render(<ExpertOverview isFoundingExpert={true} />);
-    expect(screen.getByText("11% Fee Locked")).toBeInTheDocument();
+    expect(screen.getByText("Founder", { exact: false })).toBeInTheDocument();
+    expect(screen.getByText("11% Fee")).toBeInTheDocument();
   });
 
   it("shows Improve Listing button in Top Solution section", () => {

@@ -113,7 +113,7 @@ export default function AddRequestPage() {
             >
               Post My Custom Project <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="text-xs text-slate-500 text-center mt-3">75% refund if no proposal meets your criteria</p>
+            <p className="text-xs text-slate-500 text-center mt-3">50% refund if no proposal meets your criteria</p>
           </div>
         </div>
 

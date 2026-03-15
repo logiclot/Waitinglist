@@ -115,7 +115,7 @@ export function CheckoutModal({ jobId, type, onClose }: CheckoutModalProps) {
             <>
               <div className="flex gap-3"><Check className="w-4 h-4 text-primary shrink-0" /><span>Get up to 5 high-quality expert proposals</span></div>
               <div className="flex gap-3"><Check className="w-4 h-4 text-primary shrink-0" /><span>Experts identify your best automation opportunities</span></div>
-              <div className="flex gap-3"><Check className="w-4 h-4 text-primary shrink-0" /><span>75% refund if no viable proposal meets your needs</span></div>
+              <div className="flex gap-3"><Check className="w-4 h-4 text-primary shrink-0" /><span>Posting fee credited toward your first project</span></div>
             </>
           ) : (
             <>

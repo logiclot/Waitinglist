@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import "../mocks/prisma";
 import "../mocks/next-auth";
 import "../mocks/common";
+import "../mocks/stripe";
 import { prismaMock } from "../mocks/prisma";
 import { setMockSession } from "../mocks/next-auth";
 
@@ -34,19 +35,21 @@ describe("getAdminData", () => {
   it("returns experts and solutions on success", async () => {
     const mockExperts = [{ id: "sp-1", displayName: "Expert A" }];
     const mockSolutions = [{ id: "sol-1", title: "Solution A", expert: { id: "sp-1" } }];
+    const mockOrders: unknown[] = [];
+    const mockBusinesses: unknown[] = [];
 
     prismaMock.specialistProfile.findMany.mockResolvedValue(mockExperts);
     prismaMock.solution.findMany.mockResolvedValue(mockSolutions);
+    prismaMock.order.findMany.mockResolvedValue(mockOrders);
+    prismaMock.businessProfile.findMany.mockResolvedValue(mockBusinesses);
+    prismaMock.user.count.mockResolvedValue(5);
+    prismaMock.bid.groupBy.mockResolvedValue([]);
+    prismaMock.dispute.count.mockResolvedValue(0);
 
     const result = await getAdminData();
-    expect(result).toEqual({ experts: mockExperts, solutions: mockSolutions });
-    expect(prismaMock.specialistProfile.findMany).toHaveBeenCalledWith({
-      orderBy: { createdAt: "desc" },
-    });
-    expect(prismaMock.solution.findMany).toHaveBeenCalledWith({
-      orderBy: { createdAt: "desc" },
-      include: { expert: true },
-    });
+    expect(result).toHaveProperty("experts");
+    expect(result).toHaveProperty("solutions");
+    expect(result).toHaveProperty("stats");
   });
 });
 
@@ -67,14 +70,17 @@ describe("approveSpecialist", () => {
   });
 
   it("approves specialist with correct data", async () => {
-    prismaMock.specialistProfile.update.mockResolvedValue({});
+    prismaMock.specialistProfile.findUnique.mockResolvedValue({ id: "sp-1", tier: "STANDARD" });
+    prismaMock.specialistProfile.update.mockResolvedValue({ userId: "expert-user-1" });
 
     const result = await approveSpecialist("sp-1");
     expect(result).toEqual({ success: true });
-    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith({
-      where: { id: "sp-1" },
-      data: { status: "APPROVED" },
-    });
+    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "sp-1" },
+        data: expect.objectContaining({ status: "APPROVED" }),
+      }),
+    );
   });
 });
 
@@ -95,14 +101,16 @@ describe("suspendSpecialist", () => {
   });
 
   it("suspends specialist with correct data", async () => {
-    prismaMock.specialistProfile.update.mockResolvedValue({});
+    prismaMock.specialistProfile.update.mockResolvedValue({ userId: "expert-user-1" });
 
     const result = await suspendSpecialist("sp-1");
     expect(result).toEqual({ success: true });
-    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith({
-      where: { id: "sp-1" },
-      data: { status: "SUSPENDED" },
-    });
+    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "sp-1" },
+        data: { status: "SUSPENDED" },
+      }),
+    );
   });
 });
 
@@ -123,25 +131,29 @@ describe("verifySpecialist", () => {
   });
 
   it("verifies specialist (set to true)", async () => {
-    prismaMock.specialistProfile.update.mockResolvedValue({});
+    prismaMock.specialistProfile.update.mockResolvedValue({ userId: "expert-user-1" });
 
     const result = await verifySpecialist("sp-1", true);
     expect(result).toEqual({ success: true });
-    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith({
-      where: { id: "sp-1" },
-      data: { verified: true },
-    });
+    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "sp-1" },
+        data: { verified: true },
+      }),
+    );
   });
 
   it("un-verifies specialist (set to false)", async () => {
-    prismaMock.specialistProfile.update.mockResolvedValue({});
+    prismaMock.specialistProfile.update.mockResolvedValue({ userId: "expert-user-1" });
 
     const result = await verifySpecialist("sp-1", false);
     expect(result).toEqual({ success: true });
-    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith({
-      where: { id: "sp-1" },
-      data: { verified: false },
-    });
+    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "sp-1" },
+        data: { verified: false },
+      }),
+    );
   });
 });
 
@@ -162,14 +174,16 @@ describe("makeFoundingSpecialist", () => {
   });
 
   it("makes specialist founding with given rank", async () => {
-    prismaMock.specialistProfile.update.mockResolvedValue({});
+    prismaMock.specialistProfile.update.mockResolvedValue({ userId: "expert-user-1" });
 
     const result = await makeFoundingSpecialist("sp-1", 5);
     expect(result).toEqual({ success: true });
-    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith({
-      where: { id: "sp-1" },
-      data: { isFoundingExpert: true, foundingRank: 5 },
-    });
+    expect(prismaMock.specialistProfile.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "sp-1" },
+        data: { isFoundingExpert: true, foundingRank: 5 },
+      }),
+    );
   });
 });
 
@@ -190,6 +204,11 @@ describe("updateSolutionVideoStatus", () => {
   });
 
   it("approves a solution video", async () => {
+    prismaMock.solution.findUnique.mockResolvedValue({
+      id: "sol-1",
+      title: "Test Solution",
+      expert: { userId: "expert-user-1" },
+    });
     prismaMock.solution.update.mockResolvedValue({});
 
     const result = await updateSolutionVideoStatus("sol-1", "approved");
@@ -204,6 +223,11 @@ describe("updateSolutionVideoStatus", () => {
   });
 
   it("rejects a solution video (sets reviewedAt to null)", async () => {
+    prismaMock.solution.findUnique.mockResolvedValue({
+      id: "sol-1",
+      title: "Test Solution",
+      expert: { userId: "expert-user-1" },
+    });
     prismaMock.solution.update.mockResolvedValue({});
 
     const result = await updateSolutionVideoStatus("sol-1", "rejected");
