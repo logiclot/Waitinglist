@@ -12,6 +12,8 @@ import { randomBytes } from "crypto";
 import { APP_URL as BASE_APP_URL } from "@/lib/app-url";
 import { Prisma } from "@prisma/client";
 
+import { validatePassword } from "@/lib/password-rules";
+
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
 // NEXTAUTH_URL is always set locally (127.0.0.1:3000); NEXT_PUBLIC_APP_URL overrides in production
 const APP_URL =
@@ -39,9 +41,8 @@ export async function signUp(prevState: unknown, formData: FormData) {
     return { error: "Passwords do not match" };
   }
 
-  if (password.length < 8) {
-    return { error: "Password must be at least 8 characters" };
-  }
+  const pwError = validatePassword(password);
+  if (pwError) return { error: pwError };
 
   try {
     // If invite token provided, validate it
@@ -239,9 +240,8 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
 
 export async function resetPassword(token: string, newPassword: string) {
   if (!token) return { error: "Missing reset token." };
-  if (!newPassword || newPassword.length < 8) {
-    return { error: "Password must be at least 8 characters." };
-  }
+  const pwError = validatePassword(newPassword);
+  if (pwError) return { error: pwError };
 
   try {
     const resetToken = await prisma.passwordResetToken.findUnique({

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { resetPassword } from "@/actions/auth";
+import { PASSWORD_RULES } from "@/lib/password-rules";
 import { CheckCircle, Eye, EyeOff } from "lucide-react";
 
 export default function ResetPasswordPage() {
@@ -48,10 +49,12 @@ export default function ResetPasswordPage() {
     );
   }
 
+  const allRulesPass = PASSWORD_RULES.every((r) => r.test(password));
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password !== confirm) { setError("Passwords don't match."); return; }
-    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (!allRulesPass) { setError("Password does not meet all requirements."); return; }
 
     setLoading(true);
     setError(null);
@@ -69,7 +72,7 @@ export default function ResetPasswordPage() {
     <div className="max-w-sm w-full space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">Choose a new password</h1>
-          <p className="text-muted-foreground mt-2">Make it strong — at least 8 characters.</p>
+          <p className="text-muted-foreground mt-2">Make it strong and secure.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -93,6 +96,19 @@ export default function ResetPasswordPage() {
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {password && (
+              <ul className="mt-2 space-y-1">
+                {PASSWORD_RULES.map((rule) => {
+                  const pass = rule.test(password);
+                  return (
+                    <li key={rule.label} className={`text-xs flex items-center gap-1.5 ${pass ? "text-emerald-600" : "text-muted-foreground"}`}>
+                      <span>{pass ? "✓" : "○"}</span>
+                      {rule.label}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
 
           <div>

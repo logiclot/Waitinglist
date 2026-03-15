@@ -2,6 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { signUp } from "@/actions/auth";
+import { PASSWORD_RULES } from "@/lib/password-rules";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
@@ -27,6 +28,7 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
   const [inviteEmail, setInviteEmail] = useState<string | null>(null);
   const [inviteName, setInviteName] = useState<string | null>(null);
   const [inviteValid, setInviteValid] = useState<boolean | null>(null); // null = loading
+  const [password, setPassword] = useState("");
   const hasSocial = hasGoogle || hasLinkedIn;
 
   // Validate invite token on mount
@@ -208,6 +210,8 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
                 required
                 minLength={8}
                 autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-white border border-border rounded-md px-3 py-2.5 pr-10 text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none min-h-[44px] touch-manipulation"
               />
               <button
@@ -220,6 +224,19 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {password && (
+              <ul className="mt-2 space-y-1">
+                {PASSWORD_RULES.map((rule) => {
+                  const pass = rule.test(password);
+                  return (
+                    <li key={rule.label} className={`text-xs flex items-center gap-1.5 ${pass ? "text-emerald-600" : "text-muted-foreground"}`}>
+                      <span>{pass ? "✓" : "○"}</span>
+                      {rule.label}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-2 text-foreground">Confirm Password</label>
