@@ -1,12 +1,41 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Loader2, AlertCircle, ClipboardList, ArrowRight } from "lucide-react";
 import { BRAND_NAME } from "@/lib/branding";
 import { LogoBrand } from "@/components/LogoBrand";
 import { LogoMark } from "@/components/LogoMark";
 
+// ---------------------------------------------------------------------------
+// Countdown hook — ticks every second until launch date
+// ---------------------------------------------------------------------------
+const LAUNCH_DATE = new Date("2026-04-08T00:00:00Z");
+
+function useCountdown(target: Date) {
+  const calc = () => {
+    const diff = Math.max(0, target.getTime() - Date.now());
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+      seconds: Math.floor((diff / 1000) % 60),
+      done: diff === 0,
+    };
+  };
+  // Start null to avoid SSR hydration mismatch (server vs client time differ)
+  const [time, setTime] = useState<ReturnType<typeof calc> | null>(null);
+  useEffect(() => {
+    setTime(calc());
+    const id = setInterval(() => setTime(calc()), 1_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return time;
+}
+
 export default function WaitlistPage() {
+  const countdown = useCountdown(LAUNCH_DATE);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"business" | "expert" | "">("");
@@ -57,9 +86,46 @@ export default function WaitlistPage() {
             <LogoMark size={40} />
           </div>
           <h1 className="text-3xl font-bold mb-4">You&apos;re in.</h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-muted-foreground mb-4">
             {successMessage}
           </p>
+
+          {/* Countdown on success */}
+          {countdown && !countdown.done && (
+            <div className="mb-6">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">Launching in</p>
+              <div className="flex items-center justify-center gap-3">
+                {[
+                  { v: countdown.days, l: "days" },
+                  { v: countdown.hours, l: "hrs" },
+                  { v: countdown.minutes, l: "min" },
+                  { v: countdown.seconds, l: "sec" },
+                ].map(({ v, l }) => (
+                  <div key={l} className="text-center">
+                    <span className="text-2xl font-black text-primary tabular-nums">{String(v).padStart(2, "0")}</span>
+                    <p className="text-[10px] text-muted-foreground uppercase">{l}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Free audit nudge */}
+          <div className="bg-secondary/40 border border-border rounded-xl p-4 mb-6">
+            <p className="text-sm font-semibold text-foreground mb-1">While you wait...</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Take a free 2-minute automation audit. Find out exactly where your business is losing time and money.
+            </p>
+            <Link
+              href="/free-audit"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
+            >
+              <ClipboardList className="h-4 w-4" />
+              Take the Free Audit
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           <p className="text-sm text-muted-foreground/60">
             No spam. Unsubscribe anytime.
           </p>
@@ -80,9 +146,26 @@ export default function WaitlistPage() {
             <LogoBrand size="lg" />
           </div>
           <h1 className="text-4xl font-bold mb-4 tracking-tight">Join the {BRAND_NAME} waitlist</h1>
-          <p className="text-lg text-muted-foreground mb-6">
-            We&apos;re opening early access soon. Leave your email — we&apos;ll notify you first.
+          <p className="text-lg text-muted-foreground mb-2">
+            We launch on <span className="font-semibold text-foreground">April 8th</span>. Leave your email — we&apos;ll notify you first.
           </p>
+
+          {/* Countdown */}
+          {countdown && !countdown.done && (
+            <div className="flex items-center justify-center gap-4 mt-4 mb-2">
+              {[
+                { v: countdown.days, l: "days" },
+                { v: countdown.hours, l: "hrs" },
+                { v: countdown.minutes, l: "min" },
+                { v: countdown.seconds, l: "sec" },
+              ].map(({ v, l }) => (
+                <div key={l} className="text-center">
+                  <span className="text-3xl font-black text-primary tabular-nums">{String(v).padStart(2, "0")}</span>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{l}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Form */}
@@ -173,6 +256,24 @@ export default function WaitlistPage() {
             )}
           </button>
         </form>
+
+        {/* Free audit nudge */}
+        <div className="mt-6 bg-secondary/40 border border-border rounded-xl p-5 text-center">
+          <p className="text-sm font-semibold text-foreground mb-1">
+            Not ready to sign up yet?
+          </p>
+          <p className="text-xs text-muted-foreground mb-3">
+            Take a free 2-minute automation audit. Find out where your business is losing time — no account needed.
+          </p>
+          <Link
+            href="/free-audit"
+            className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:text-primary/80 transition-colors"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Take the Free Audit
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
 
         <div className="text-center mt-8 text-xs text-muted-foreground">
           © {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.

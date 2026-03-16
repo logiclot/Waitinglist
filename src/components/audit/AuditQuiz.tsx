@@ -504,7 +504,7 @@ function computeResults(answers: Answers) {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean; solutions?: Solution[] } = {}) {
+export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }: { newTab?: boolean; solutions?: Solution[]; prelaunch?: boolean } = {}) {
   const { data: session } = useSession();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<Answers>>({
@@ -1168,8 +1168,8 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
             )}
           </div>
 
-          {/* Account creation nudge — only for anonymous visitors */}
-          {!session?.user && (
+          {/* Account creation nudge — only for anonymous visitors (hidden in prelaunch) */}
+          {!prelaunch && !session?.user && (
             <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8 flex items-start gap-4">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <UserPlus className="h-5 w-5 text-primary" />
@@ -1189,9 +1189,72 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
             </div>
           )}
 
+          {/* Pre-launch waitlist CTA — replaces solutions & account nudge */}
+          {prelaunch && (
+            <div className="bg-white border border-primary/20 rounded-2xl shadow-sm p-6 md:p-8">
+              <div className="text-center mb-6">
+                <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
+                  Launching April 8th
+                </p>
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  Ready to fix these bottlenecks?
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                  LogicLot launches on April 8th. Join the waitlist now and be the first to
+                  get matched with verified experts who can solve these exact problems.
+                </p>
+              </div>
+
+              {/* What's available at launch */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground mb-1">Browse Solutions</p>
+                  <p className="text-xs text-muted-foreground">
+                    Pre-built automations matched to your bottlenecks, ready to implement.
+                  </p>
+                </div>
+                <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                    <Users className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground mb-1">Discovery Scan</p>
+                  <p className="text-xs text-muted-foreground">
+                    A 1-on-1 deep-dive with an expert to map your full automation roadmap.
+                  </p>
+                </div>
+                <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground mb-1">Custom Projects</p>
+                  <p className="text-xs text-muted-foreground">
+                    Bespoke automation built for your exact workflow by verified experts.
+                  </p>
+                </div>
+              </div>
+
+              {/* Waitlist CTA */}
+              <div className="text-center">
+                <Link
+                  href="/waitlist"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
+                >
+                  Join the Waitlist <ArrowRight className="h-4 w-4" />
+                </Link>
+                <p className="text-xs text-muted-foreground mt-3">
+                  No spam. We&apos;ll email you when early access opens.
+                </p>
+              </div>
+            </div>
+          )}
+
           </div>{/* end narrow wrapper */}
 
-          {/* CTA — Personalized recommendations based on audit answers */}
+          {/* CTA — Personalized recommendations based on audit answers (hidden in prelaunch) */}
+          {!prelaunch && (
           <div className="space-y-6">
             <div className="text-center">
               <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
@@ -1233,6 +1296,7 @@ export function AuditQuiz({ newTab = false, solutions = [] }: { newTab?: boolean
             </div>
             <SmartEmptyState relatedSolutions={recommendedSolutions} matchLabels={matchLabels} />
           </div>
+          )}
 
           {/* Retake */}
           <p className="text-center text-xs text-muted-foreground pb-4">
