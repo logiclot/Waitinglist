@@ -233,8 +233,24 @@ export async function POST(req: Request) {
         // Transfer to expert minus platform fee (2 EUR = 200 cents)
         const platformFeeCents = 200;
         const transferAmount = Math.max(0, priceCents - platformFeeCents);
-        
+
         if (transferAmount > 0 && solution.expert.stripeAccountId) {
+            // Verify the expert's Stripe account can still receive payments
+            try {
+              const account = await stripe.accounts.retrieve(solution.expert.stripeAccountId);
+              if (!account.charges_enabled || !account.payouts_enabled) {
+                return NextResponse.json(
+                  { error: "This expert's payment account is not currently active. Please contact support." },
+                  { status: 400 }
+                );
+              }
+            } catch {
+              return NextResponse.json(
+                { error: "Unable to verify expert payment account. Please try again later." },
+                { status: 400 }
+              );
+            }
+
             sessionConfig.payment_intent_data = {
                 application_fee_amount: platformFeeCents,
                 transfer_data: {
@@ -242,8 +258,7 @@ export async function POST(req: Request) {
                 },
             };
         } else {
-            // If no connected account or price <= fee, platform keeps it all (or logic fails, but we assume platform keeps)
-             // Or we just don't transfer.
+            // If no connected account or price <= fee, platform keeps it all
         }
     }
 

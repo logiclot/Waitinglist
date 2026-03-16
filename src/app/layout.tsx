@@ -55,6 +55,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: {
+    google: "pN5nAN5ZcyOWs4i2JxpHYMgDC7nT0HaOMhPWDc32Dh0",
+  },
+  manifest: "/manifest.json",
 };
 
 import { trackUserLogin } from "@/actions/referral";
@@ -81,6 +85,43 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "LogicLot",
+              url: "https://logiclot.io",
+              logo: "https://logiclot.io/og.png",
+              description: "LogicLot is a B2B marketplace where businesses buy ready-to-implement AI automations and work directly with the specialists who deliver them. Every project runs on milestones with escrow-protected payments.",
+              foundingDate: "2025",
+              founder: {
+                "@type": "Person",
+                name: "Claudiu",
+              },
+              sameAs: [],
+              contactPoint: {
+                "@type": "ContactPoint",
+                email: "contact@logiclot.io",
+                contactType: "customer service",
+              },
+              knowsAbout: [
+                "AI automation",
+                "business process automation",
+                "workflow automation",
+                "n8n",
+                "Make.com",
+                "CRM automation",
+                "sales automation",
+                "marketing automation",
+              ],
+              slogan: "Buy ready-to-implement automations for your business",
+            }),
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}
       >

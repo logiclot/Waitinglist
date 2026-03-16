@@ -207,7 +207,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15 overflow-hidden relative">
               {solution.expert.profile_image_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={solution.expert.profile_image_url} alt={solution.expert.name} className="absolute inset-0 w-full h-full object-cover" />
+                <img src={solution.expert.profile_image_url} alt={solution.expert.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
               ) : (
                 (solution.expert.name || "?").slice(0, 2).toUpperCase()
               )}

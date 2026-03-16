@@ -29,13 +29,13 @@ export async function generateMetadata({ params }: PageProps) {
       url,
       type: "article",
       siteName: BRAND_NAME,
-      images: [{ url: `https://${BRAND_DOMAIN}/og-image.png`, width: 1200, height: 630, alt: doc.title }],
+      images: [{ url: `https://${BRAND_DOMAIN}/og.png`, width: 1200, height: 630, alt: doc.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: doc.title,
       description: doc.description,
-      images: [`https://${BRAND_DOMAIN}/og-image.png`],
+      images: [`https://${BRAND_DOMAIN}/og.png`],
     },
   };
 }
@@ -182,7 +182,7 @@ function ArticleSchema({ doc, slug }: { doc: { title: string; description: strin
       "@type": "WebPage",
       "@id": url,
     },
-    image: `https://${BRAND_DOMAIN}/og-image.png`,
+    image: `https://${BRAND_DOMAIN}/og.png`,
   };
   return (
     <script
@@ -261,7 +261,8 @@ export default async function DocPage({ params }: PageProps) {
         <p className="text-xs text-muted-foreground mb-4">
           {estimateReadTime(doc.content)} min read
         </p>
-        <p className="text-lg text-muted-foreground mb-8">{doc.description}</p>
+        <p className="text-xs text-muted-foreground mt-2">By LogicLot Team · Last updated March 2026</p>
+        <p className="text-lg text-muted-foreground mb-8 mt-4">{doc.description}</p>
 
         <DocContent content={doc.content} />
       </article>

@@ -43,7 +43,7 @@ export function Navbar({ user, isFoundingExpert }: { user?: Session["user"] & { 
   return (
     <nav className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 transition-all duration-300">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <LogoBrand href={user ? (user.role === "ADMIN" ? "/admin" : "/dashboard") : "/"} size="lg" />
+        <LogoBrand href="/" size="lg" />
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-6">

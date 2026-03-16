@@ -1,10 +1,25 @@
 import Link from "next/link";
 import { Search, Crown, Sparkles, ShieldCheck, CheckCircle2, ArrowRight } from "lucide-react";
-import { BRAND_NAME } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+const BASE_URL = `https://${BRAND_DOMAIN}`;
 
 export const metadata = {
   title: `For Businesses | ${BRAND_NAME}`,
-  description: "Three ways to automate your business: explore solutions, get an expert roadmap, or have something built exactly for you.",
+  description: "Three ways to automate your business: explore ready-made solutions, get an expert automation roadmap with a Discovery Scan, or have something custom built for you.",
+  openGraph: {
+    title: `For Businesses | ${BRAND_NAME}`,
+    description: "Three ways to automate your business. Ready-made solutions, Discovery Scans, and custom projects.",
+    url: `${BASE_URL}/for-businesses`,
+    siteName: BRAND_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `For Businesses | ${BRAND_NAME}`,
+    description: "Three ways to automate your business. Ready-made solutions, Discovery Scans, and custom projects.",
+  },
+  alternates: { canonical: `${BASE_URL}/for-businesses` },
+  keywords: ["business automation", "automate my business", "buy AI automation", "Discovery Scan", "custom automation project", "B2B automation"],
 };
 
 export default function ForBusinessesPage() {
@@ -166,6 +181,7 @@ export default function ForBusinessesPage() {
         </div>
       </section>
 
+      <p className="text-xs text-muted-foreground/50 text-center mt-12">Last updated: March 2026</p>
     </div>
   );
 }

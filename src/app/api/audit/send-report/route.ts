@@ -183,9 +183,9 @@ const VALID_TASKS = Object.keys(TASK_COPY);
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-    const rl = publicFormLimiter.check(ip);
-    if (!rl.success) {
+    const ip = (request.headers.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
+    const ipCheck = publicFormLimiter.check(`ip:${ip}`);
+    if (!ipCheck.success) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
@@ -194,6 +194,12 @@ export async function POST(request: Request) {
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
       return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
+    }
+
+    // Also rate limit by target email to prevent flooding a specific address
+    const emailCheck = publicFormLimiter.check(`email:${email.toLowerCase()}`);
+    if (!emailCheck.success) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
     if (

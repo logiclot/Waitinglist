@@ -42,7 +42,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid type. Use JPEG, PNG, or WebP." }, { status: 400 });
   }
 
-  const ext = file.name.split(".").pop() || "jpg";
+  // Derive extension from validated MIME type, not user-supplied filename
+  const MIME_TO_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+  const ext = MIME_TO_EXT[file.type] || "jpg";
   const path = `${session.user.id}/${Date.now()}.${ext}`;
 
   const arrayBuffer = await file.arrayBuffer();

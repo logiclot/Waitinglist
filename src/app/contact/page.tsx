@@ -1,4 +1,25 @@
-export const metadata = { title: "Contact — LogicLot" };
+import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+
+const BASE_URL = `https://${BRAND_DOMAIN}`;
+
+export const metadata = {
+  title: `Contact | ${BRAND_NAME}`,
+  description: "Get in touch with LogicLot. Whether you have questions about automation solutions, need support, or want to explore a partnership, our team responds within one business day. Email us at contact@logiclot.io.",
+  openGraph: {
+    title: `Contact | ${BRAND_NAME}`,
+    description: "Questions, support, or partnerships. Our team responds within one business day.",
+    url: `${BASE_URL}/contact`,
+    siteName: BRAND_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Contact | ${BRAND_NAME}`,
+    description: "Questions, support, or partnerships. Our team responds within one business day.",
+  },
+  alternates: { canonical: `${BASE_URL}/contact` },
+  keywords: ["contact LogicLot", "automation support", "business automation help", "LogicLot support"],
+};
 
 export default function ContactPage() {
   return (

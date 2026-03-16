@@ -1,16 +1,74 @@
 import Link from "next/link";
 import { ShieldCheck, RefreshCw, MessageSquare, Euro, HelpCircle, Award, TrendingUp, Star, ArrowRight, CheckCircle } from "lucide-react";
 import { TIER_THRESHOLDS, SALES_THRESHOLDS } from "@/lib/commission";
-import { BRAND_NAME } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+const BASE_URL = `https://${BRAND_DOMAIN}`;
 
 export const metadata = {
   title: `Pricing & Fees | ${BRAND_NAME}`,
-  description: "Transparent pricing and fee structure.",
+  description: "Transparent pricing for LogicLot. Businesses pay zero platform fees. Experts keep more as they grow with tiered commissions from 16% down to 11%. Escrow-protected payments.",
+  openGraph: {
+    title: `Pricing & Fees | ${BRAND_NAME}`,
+    description: "Transparent pricing. Zero platform fees for buyers. Expert commissions from 16% down to 11%.",
+    url: `${BASE_URL}/pricing`,
+    siteName: BRAND_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Pricing & Fees | ${BRAND_NAME}`,
+    description: "Transparent pricing. Zero platform fees for buyers. Expert commissions from 16% down to 11%.",
+  },
+  alternates: { canonical: `${BASE_URL}/pricing` },
+  keywords: ["LogicLot pricing", "automation marketplace fees", "expert commission rates", "escrow payments", "transparent pricing"],
 };
 
 export default function PricingPage() {
   return (
     <div className="container mx-auto px-4 py-20 bg-[#FBFAF8]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "What is the refund policy?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Discovery Scan posting fees (€50) are non-refundable but credited toward your first project. Custom Project posting fees (€100): 50% refund if no expert proposal meets your criteria. For funded projects, you can raise a dispute; our team will mediate and may award full or partial refunds based on deliverables.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How do disputes work?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "If you're unhappy with the delivery, you can raise a dispute. Our platform support team will review the project requirements and the delivered work to mediate a fair resolution, which may include a full or partial refund.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "What does 'Monthly AI Cost Estimate' mean?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "This is an estimated range of what you'll pay to third-party providers (like OpenAI, Anthropic, or Make.com) to run the automation. These costs depend on your usage volume and are billed directly by those providers, not by LogicLot.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "When do experts get paid?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Experts receive their payout typically 3 days after you mark the project as complete. This cooling-off period ensures that everything is working correctly before funds are final.",
+                },
+              },
+            ],
+          }),
+        }}
+      />
       <div className="max-w-3xl mx-auto text-center mb-14">
         <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-3">Fees &amp; Commissions</p>
         <h1 className="text-4xl font-bold mb-4 tracking-tight">Transparent Pricing</h1>
@@ -309,6 +367,7 @@ export default function PricingPage() {
           </Link>
         </div>
       </div>
+      <p className="text-xs text-muted-foreground/50 text-center mt-12">Last updated: March 2026</p>
     </div>
   );
 }

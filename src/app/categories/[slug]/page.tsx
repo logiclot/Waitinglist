@@ -34,6 +34,35 @@ export default function CategoryPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://logiclot.io",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Categories",
+                item: "https://logiclot.io/categories",
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: category.name,
+                item: `https://logiclot.io/categories/${params.slug}`,
+              },
+            ],
+          }),
+        }}
+      />
       <div className="mb-8">
         <Link href="/categories" className="text-sm text-muted-foreground hover:text-foreground flex items-center mb-4">
           <ArrowLeft className="mr-1 h-3 w-3" /> Back to categories

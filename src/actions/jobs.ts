@@ -9,6 +9,7 @@ import { maxProposalsForCategory } from "@/lib/job-config";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 import { stripe } from "@/lib/stripe";
+import { Prisma } from "@prisma/client";
 import { CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 
 export async function createJobPost(prevState: unknown, formData: FormData) {
@@ -359,7 +360,7 @@ export async function submitBid(prevState: unknown, formData: FormData) {
             type: "bid_card",
           },
         });
-      });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (txErr) {
       const msg = txErr instanceof Error ? txErr.message : "";
       if (msg.startsWith("FULL:")) {

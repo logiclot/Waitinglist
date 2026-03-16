@@ -1,11 +1,26 @@
 import Link from "next/link";
 import { CheckCircle2, ShieldCheck, TrendingUp, Users, Lock, Award, Clock, XCircle, Zap, Crown } from "lucide-react";
-import { BRAND_NAME } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
 import { prisma } from "@/lib/prisma";
+const BASE_URL = `https://${BRAND_DOMAIN}`;
 
 export const metadata = {
   title: `For Experts | ${BRAND_NAME}`,
-  description: "Productize your AI automations and sell them repeatedly.",
+  description: "Productize your AI automations and sell them repeatedly on LogicLot. Fixed scope, milestone-based payouts, and qualified buyers who are ready to purchase.",
+  openGraph: {
+    title: `For Experts | ${BRAND_NAME}`,
+    description: "Productize your AI automations and sell them repeatedly. Fixed scope and protected payouts.",
+    url: `${BASE_URL}/for-experts`,
+    siteName: BRAND_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `For Experts | ${BRAND_NAME}`,
+    description: "Productize your AI automations and sell them repeatedly. Fixed scope and protected payouts.",
+  },
+  alternates: { canonical: `${BASE_URL}/for-experts` },
+  keywords: ["sell automation", "automation expert", "productize AI", "sell on LogicLot", "automation freelancer", "milestone payments"],
 };
 
 export default async function ForExpertsPage() {
@@ -315,6 +330,7 @@ export default async function ForExpertsPage() {
           </p>
         </div>
       </section>
+      <p className="text-xs text-muted-foreground/50 text-center mt-12">Last updated: March 2026</p>
     </div>
   );
 }

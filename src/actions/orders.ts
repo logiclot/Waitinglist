@@ -179,6 +179,9 @@ export async function submitDispute(
     if (reason.trim().length < 20) {
       return { error: "Please provide at least 20 characters describing the issue." };
     }
+    if (reason.length > 4000) {
+      return { error: "Dispute reason must be under 4,000 characters." };
+    }
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -242,6 +245,10 @@ export async function submitDelivery(
   orderId: string,
   note?: string
 ): Promise<{ success: true } | { error: string }> {
+  if (note && note.length > 4000) {
+    return { error: "Delivery note must be under 4,000 characters." };
+  }
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { error: "Not authenticated" };
@@ -357,6 +364,9 @@ export async function requestRevision(
 
     if (note.trim().length < 20) {
       return { error: "Please provide at least 20 characters describing the changes needed." };
+    }
+    if (note.length > 4000) {
+      return { error: "Revision note must be under 4,000 characters." };
     }
 
     const order = await prisma.order.findUnique({
@@ -535,6 +545,9 @@ export async function denyRevision(
     if (trimmedReason.length < 20) {
       return { error: "Please provide at least 20 characters explaining why you're denying." };
     }
+    if ((reason?.length || 0) > 4000) {
+      return { error: "Reason must be under 4,000 characters." };
+    }
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -651,6 +664,9 @@ export async function submitDisputeStatement(
     const trimmed = statement.trim();
     if (trimmed.length < 10) {
       return { error: "Please provide at least 10 characters." };
+    }
+    if (statement.length > 4000) {
+      return { error: "Statement must be under 4,000 characters." };
     }
 
     const order = await prisma.order.findUnique({

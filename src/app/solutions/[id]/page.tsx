@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { CheckCircle, Zap, Euro, ShieldCheck, Award, Info, PlayCircle, Star, ChevronDown, MessageSquare, Layers, ArrowRight, Sparkles } from "lucide-react";
 import { DemoVideoSection } from "@/components/DemoVideoSection";
 import { SimilarSolutions } from "@/components/SimilarSolutions";
-import { BRAND_NAME } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
 import { prisma } from "@/lib/prisma";
 import { Solution } from "@/types";
 import { getEcosystemsForSolution } from "@/actions/ecosystems";
@@ -92,9 +92,31 @@ async function getSolution(idOrSlug: string) {
 export async function generateMetadata({ params }: PageProps) {
   const solution = await getSolution(params.id);
   if (!solution) return { title: "Solution Not Found" };
+  const url = `https://${BRAND_DOMAIN}/solutions/${params.id}`;
+  const description = solution.short_summary || solution.description || `${solution.title} on ${BRAND_NAME}`;
   return {
     title: `${solution.title} | ${BRAND_NAME}`,
-    description: solution.short_summary || solution.description,
+    description,
+    openGraph: {
+      title: `${solution.title} | ${BRAND_NAME}`,
+      description,
+      url,
+      siteName: BRAND_NAME,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${solution.title} | ${BRAND_NAME}`,
+      description,
+    },
+    alternates: { canonical: url },
+    keywords: [
+      solution.title,
+      solution.category,
+      "AI automation",
+      "business automation",
+      ...(solution.integrations || []).slice(0, 5),
+    ].filter(Boolean),
   };
 }
 
@@ -175,6 +197,75 @@ export default async function SolutionPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen pb-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: solution.title,
+            description: solution.short_summary || solution.description,
+            url: `https://logiclot.io/solutions/${solution.id}`,
+            brand: {
+              "@type": "Organization",
+              name: "LogicLot",
+            },
+            category: solution.category,
+            offers: {
+              "@type": "Offer",
+              price: solution.implementation_price,
+              priceCurrency: "EUR",
+              availability: "https://schema.org/InStock",
+              seller: solution.expert ? {
+                "@type": "Person",
+                name: solution.expert.name,
+              } : undefined,
+            },
+            ...(solution.faq && solution.faq.length > 0 ? {
+              subjectOf: {
+                "@type": "FAQPage",
+                mainEntity: solution.faq.map((item: { question: string; answer: string }) => ({
+                  "@type": "Question",
+                  name: item.question,
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: item.answer,
+                  },
+                })),
+              },
+            } : {}),
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://logiclot.io",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Solutions",
+                item: "https://logiclot.io/solutions",
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: solution.title,
+                item: `https://logiclot.io/solutions/${solution.id}`,
+              },
+            ],
+          }),
+        }}
+      />
       <div className="container mx-auto px-4 py-8">
 
         {/* Back to Browse */}
@@ -531,7 +622,7 @@ export default async function SolutionPage({ params }: PageProps) {
                     <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center font-bold text-lg relative shrink-0 overflow-hidden">
                       {solution.expert.profile_image_url ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={solution.expert.profile_image_url} alt={solution.expert.name} className="absolute inset-0 w-full h-full object-cover" />
+                        <img src={solution.expert.profile_image_url} alt={solution.expert.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
                       ) : (
                         solution.expert.name.substring(0, 2).toUpperCase()
                       )}

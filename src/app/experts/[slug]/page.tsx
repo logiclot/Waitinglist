@@ -6,6 +6,7 @@ import { ShieldCheck, MessageSquare, ArrowLeft, Clock, CheckCircle } from "lucid
 import { Solution } from "@/types";
 import { TierBadge } from "@/components/ui/TierBadge";
 import { mapPrismaExpert } from "@/lib/solutions/data";
+import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
 
 interface PageProps {
   params: {
@@ -18,9 +19,31 @@ export async function generateMetadata({ params }: PageProps) {
     where: { slug: params.slug },
   });
   if (!expert) return { title: "Expert Not Found" };
+  const url = `https://${BRAND_DOMAIN}/experts/${params.slug}`;
+  const description = expert.bio || `Hire ${expert.displayName} for AI automations on ${BRAND_NAME}.`;
   return {
-    title: `${expert.displayName} | LogicLot`,
-    description: expert.bio || `Hire ${expert.displayName} for AI automations.`,
+    title: `${expert.displayName} | ${BRAND_NAME}`,
+    description,
+    openGraph: {
+      title: `${expert.displayName} | ${BRAND_NAME}`,
+      description,
+      url,
+      siteName: BRAND_NAME,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${expert.displayName} | ${BRAND_NAME}`,
+      description,
+    },
+    alternates: { canonical: url },
+    keywords: [
+      expert.displayName,
+      "automation expert",
+      "AI specialist",
+      ...(expert.tools || []).slice(0, 5),
+      BRAND_NAME,
+    ],
   };
 }
 
@@ -68,6 +91,26 @@ export default async function ExpertProfilePage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen pb-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: expert.displayName,
+            url: `https://logiclot.io/experts/${params.slug}`,
+            jobTitle: "Automation Expert",
+            description: expert.bio || `AI automation expert on LogicLot`,
+            image: expert.user?.profileImageUrl || undefined,
+            worksFor: {
+              "@type": "Organization",
+              name: "LogicLot",
+              url: "https://logiclot.io",
+            },
+            knowsAbout: expert.tools || [],
+          }),
+        }}
+      />
       <div className="bg-secondary/10 border-b border-border py-12">
         <div className="container mx-auto px-4">
           <Link href="/solutions" className="text-sm text-muted-foreground hover:text-foreground flex items-center mb-8 w-fit">

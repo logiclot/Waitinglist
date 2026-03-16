@@ -13,6 +13,12 @@ import { APP_URL as BASE_APP_URL } from "@/lib/app-url";
 import { Prisma } from "@prisma/client";
 
 import { validatePassword } from "@/lib/password-rules";
+import { createRateLimiter } from "@/lib/rate-limit";
+
+/** 5 signup attempts per email per hour */
+const signupLimiter = createRateLimiter({ limit: 5, windowMs: 60 * 60_000 });
+/** 3 password-reset requests per email per hour */
+const resetLimiter = createRateLimiter({ limit: 3, windowMs: 60 * 60_000 });
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
 // NEXTAUTH_URL is always set locally (127.0.0.1:3000); NEXT_PUBLIC_APP_URL overrides in production
@@ -33,6 +39,12 @@ export async function signUp(prevState: unknown, formData: FormData) {
     return { error: "All fields are required" };
   }
 
+  // Rate limit by email to prevent enumeration and spam
+  const rl = signupLimiter.check(email.toLowerCase());
+  if (!rl.success) {
+    return { error: "Too many signup attempts. Please try again later." };
+  }
+
   if (!termsAccepted) {
     return { error: "You must accept the Terms & Conditions and Privacy Policy to continue." };
   }
@@ -45,31 +57,7 @@ export async function signUp(prevState: unknown, formData: FormData) {
   if (pwError) return { error: pwError };
 
   try {
-    // If invite token provided, validate it
-    let invite: { id: string; email: string; role: string } | null = null;
-    if (inviteToken) {
-      const found = await prisma.waitlistSignup.findUnique({
-        where: { inviteToken },
-        select: { id: true, email: true, role: true, usedAt: true },
-      });
-      if (!found || found.usedAt) {
-        return { error: "This invite link is invalid or has already been used." };
-      }
-      if (found.email.toLowerCase() !== email.toLowerCase()) {
-        return { error: "This invite link is for a different email address." };
-      }
-      invite = found;
-    }
-
-    const existingUser = await prisma.user.findFirst({
-      where: { email: { equals: email, mode: "insensitive" } },
-    });
-
-    if (existingUser) {
-      return { error: "An account with this email already exists" };
-    }
-
-    // Validate referral code if provided
+    // Validate referral code if provided (outside transaction — read-only)
     let validReferralCode: string | null = null;
     if (referralCode) {
       const referrer = await prisma.user.findUnique({ where: { referralCode } });
@@ -78,33 +66,65 @@ export async function signUp(prevState: unknown, formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // If invite token provided, run entire signup + invite-consume atomically
+    if (inviteToken) {
+      const result = await prisma.$transaction(async (tx) => {
+        const found = await tx.waitlistSignup.findUnique({
+          where: { inviteToken },
+          select: { id: true, email: true, role: true, usedAt: true },
+        });
+        if (!found || found.usedAt) {
+          throw new Error("INVITE_INVALID");
+        }
+        if (found.email.toLowerCase() !== email.toLowerCase()) {
+          throw new Error("INVITE_EMAIL_MISMATCH");
+        }
+
+        const existingUser = await tx.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
+        });
+        if (existingUser) throw new Error("USER_EXISTS");
+
+        const user = await tx.user.create({
+          data: {
+            email,
+            passwordHash: hashedPassword,
+            referredBy: validReferralCode,
+            role: found.role === "expert" ? "EXPERT" : "BUSINESS",
+            emailVerifiedAt: new Date(),
+          },
+        });
+
+        await tx.waitlistSignup.update({
+          where: { id: found.id },
+          data: { usedAt: new Date() },
+        });
+
+        return user;
+      });
+
+      Analytics.signedUp(result.id, { hasReferral: !!validReferralCode });
+      return { success: true, email, invited: true };
+    }
+
+    // Normal flow (no invite token)
+    const existingUser = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+    });
+
+    if (existingUser) {
+      return { error: "An account with this email already exists" };
+    }
+
     const user = await prisma.user.create({
       data: {
         email,
         passwordHash: hashedPassword,
         referredBy: validReferralCode,
-        // Invite: set role directly and auto-verify email
-        ...(invite ? {
-          role: invite.role === "expert" ? "EXPERT" : "BUSINESS",
-          emailVerifiedAt: new Date(),
-        } : {}),
       },
     });
 
-    if (invite) {
-      // Mark invite as used
-      await prisma.waitlistSignup.update({
-        where: { id: invite.id },
-        data: { usedAt: new Date() },
-      });
-
-      Analytics.signedUp(user.id, { hasReferral: !!validReferralCode });
-
-      // No verification email needed — email already confirmed via invite
-      return { success: true, email, invited: true };
-    }
-
-    // Normal flow: send verification email
+    // Send verification email
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
@@ -118,6 +138,10 @@ export async function signUp(prevState: unknown, formData: FormData) {
 
     return { success: true, email };
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg === "INVITE_INVALID") return { error: "This invite link is invalid or has already been used." };
+    if (msg === "INVITE_EMAIL_MISMATCH") return { error: "This invite link is for a different email address." };
+    if (msg === "USER_EXISTS") return { error: "An account with this email already exists" };
     log.error("auth.signup_failed", { error: String(e) });
     return { error: "Something went wrong. Please try again." };
   }
@@ -194,6 +218,12 @@ export async function resendVerificationEmailForSession() {
 export async function requestPasswordReset(prevState: unknown, formData: FormData) {
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   if (!email) return { error: "Email is required." };
+
+  // Rate limit by email to prevent spam and enumeration
+  const rl = resetLimiter.check(email);
+  if (!rl.success) {
+    return { success: true }; // Return success to avoid leaking that the email exists
+  }
 
   try {
     const users = await prisma.user.findMany({

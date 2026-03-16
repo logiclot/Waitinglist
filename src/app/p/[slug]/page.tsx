@@ -14,7 +14,7 @@ import { PortfolioViewCount } from "@/components/portfolio/PortfolioViewCount";
 import { getPageBackgroundStyles, getFontConfig, isDarkBackground } from "@/lib/portfolio-customization";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { BRAND_NAME } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
 import type { Metadata } from "next";
 
 interface Props {
@@ -26,9 +26,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!expert) {
     return { title: `Expert Not Found | ${BRAND_NAME}` };
   }
+  const url = `https://${BRAND_DOMAIN}/p/${params.slug}`;
+  const description = expert.bio ?? `View ${expert.displayName}'s automation solutions on ${BRAND_NAME}.`;
   return {
-    title: `${expert.displayName} — Automation Expert | ${BRAND_NAME}`,
-    description: expert.bio ?? `View ${expert.displayName}'s automation solutions on ${BRAND_NAME}.`,
+    title: `${expert.displayName} - Automation Expert | ${BRAND_NAME}`,
+    description,
+    openGraph: {
+      title: `${expert.displayName} - Automation Expert | ${BRAND_NAME}`,
+      description,
+      url,
+      siteName: BRAND_NAME,
+      type: "profile",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${expert.displayName} - Automation Expert | ${BRAND_NAME}`,
+      description,
+    },
+    alternates: { canonical: url },
+    keywords: [
+      expert.displayName,
+      "automation portfolio",
+      "AI expert",
+      BRAND_NAME,
+    ],
   };
 }
 
@@ -119,7 +140,8 @@ export default async function ExpertPortfolioPage({ params }: Props) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={portfolioCoverImage}
-                  alt=""
+                  alt={`${displayName} portfolio cover`}
+                  loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover z-0"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20 z-[1]" />
@@ -169,6 +191,7 @@ export default async function ExpertPortfolioPage({ params }: Props) {
                   <img
                     src={profileImageUrl}
                     alt={displayName}
+                    loading="lazy"
                     className={`w-24 h-24 rounded-2xl object-cover shrink-0 border-2 shadow-lg ${
                       hasCover
                         ? "border-white/30 shadow-black/20"

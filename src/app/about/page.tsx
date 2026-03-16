@@ -1,11 +1,26 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Quote } from "lucide-react";
-import { BRAND_NAME } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+const BASE_URL = `https://${BRAND_DOMAIN}`;
 
 export const metadata = {
   title: `About | ${BRAND_NAME}`,
-  description: "Why LogicLot exists and who built it.",
+  description: "Why LogicLot exists and who built it. A marketplace that makes automation buyable, safe, and accountable for both businesses and experts.",
+  openGraph: {
+    title: `About | ${BRAND_NAME}`,
+    description: "Why LogicLot exists and who built it. A marketplace that makes automation buyable, safe, and accountable.",
+    url: `${BASE_URL}/about`,
+    siteName: BRAND_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `About | ${BRAND_NAME}`,
+    description: "Why LogicLot exists and who built it. A marketplace that makes automation buyable, safe, and accountable.",
+  },
+  alternates: { canonical: `${BASE_URL}/about` },
+  keywords: ["about LogicLot", "automation marketplace", "who built LogicLot", "B2B automation platform", "AI marketplace founder"],
 };
 
 export default function AboutPage() {
@@ -86,6 +101,7 @@ export default function AboutPage() {
         </div>
 
       </div>
+      <p className="text-xs text-muted-foreground/50 text-center mt-12">Last updated: March 2026</p>
     </div>
   );
 }

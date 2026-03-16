@@ -72,6 +72,20 @@ export async function createSolutionDraft(formData: FormData) {
   }
 }
 
+// Fields that experts are allowed to set via the solution wizard.
+// Any field NOT on this list is silently dropped to prevent privilege escalation.
+const SOLUTION_DRAFT_ALLOWED_FIELDS = new Set([
+  "title", "category", "shortSummary", "longDescription", "complexity",
+  "integrations", "included", "excluded", "requiredInputs",
+  "implementationPriceCents", "monthlyCostMinCents", "monthlyCostMaxCents", "demoPriceCents",
+  "milestones", "deliveryDays", "supportDays",
+  "outcome", "measurableOutcome",
+  "structureConsistent", "structureCustom", "businessGoals", "industries",
+  "outline", "skills", "lastStep",
+  "proofType", "proofContent",
+  "paybackPeriod", "demoVideoUrl",
+]);
+
 export async function updateSolutionDraft(solutionId: string, data: Partial<Solution>) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Not authenticated" };
@@ -96,8 +110,16 @@ export async function updateSolutionDraft(solutionId: string, data: Partial<Solu
   }
 
   try {
+    // Strip any fields not on the allowlist
+    const raw = data as Record<string, unknown>;
+    const updateData: Record<string, unknown> = {};
+    for (const key of Object.keys(raw)) {
+      if (SOLUTION_DRAFT_ALLOWED_FIELDS.has(key)) {
+        updateData[key] = raw[key];
+      }
+    }
+
     // If the video URL changed on a published solution, reset status to pending
-    const updateData = data as Record<string, unknown>;
     if (
       updateData.demoVideoUrl &&
       updateData.demoVideoUrl !== (existing as Record<string, unknown>).demoVideoUrl &&
