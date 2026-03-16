@@ -69,13 +69,16 @@ export function passwordResetEmail({ resetUrl }: { resetUrl: string }): string {
   `);
 }
 
-export function welcomeEmail({ firstName, role }: { firstName: string; role: "business" | "expert" }): string {
+export function welcomeEmail({ firstName, role, hasFreeScan }: { firstName: string; role: "business" | "expert"; hasFreeScan?: boolean }): string {
   const dashboardUrl = role === "business" ? `${BASE_URL}/business` : `${BASE_URL}/dashboard`;
   const headline = role === "business"
     ? `You're in — let's find the right automation for your business`
     : `Welcome to LogicLot — your first clients are waiting`;
+  const freeScanLine = hasFreeScan
+    ? `<br/><br/>As a waitlist member, you have <strong>1 free Discovery Scan</strong>. Let our experts assess your business and propose where automation can save you the most time and money.`
+    : "";
   const body = role === "business"
-    ? `Your account is set up and ready. Browse vetted automation solutions, post a Discovery Scan, or reach out to an Expert directly. Everything is fixed-price, milestone-based, and escrow-protected.`
+    ? `Your account is set up and ready. Browse vetted automation solutions, post a Discovery Scan, or reach out to an Expert directly. Everything is fixed-price, milestone-based, and escrow-protected.${freeScanLine}`
     : `Your expert profile is live. Complete your first solution listing to start appearing in searches and get matched with businesses looking for exactly what you build.`;
   const cta = role === "business" ? "Go to my dashboard" : "Create my first solution";
 

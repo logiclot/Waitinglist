@@ -5,6 +5,7 @@
  * window so the same notification is never sent twice.
  */
 import { createNotification, wasRecentlyNotified } from "@/lib/notifications";
+import { prisma } from "@/lib/prisma";
 
 // Use a large window (10 years in hours) to make notifications truly one-shot.
 const ONCE = 87_600;
@@ -101,6 +102,14 @@ export async function checkAndFirePortfolioNotification(
 // ── Business onboarding ───────────────────────────────────────────────────────
 
 export async function fireBusinessOnboardingNotifications(userId: string) {
+  // Check whether this user has a free Discovery Scan (waitlist perk).
+  // If so, tailor the Discovery Scan notification to reflect the free credit.
+  const profile = await prisma.businessProfile.findUnique({
+    where: { userId },
+    select: { freeDiscoveryScansRemaining: true },
+  });
+  const hasFreeScan = (profile?.freeDiscoveryScansRemaining ?? 0) > 0;
+
   const checks = await Promise.all([
     wasRecentlyNotified(userId, "🔍 Browse ready-made solutions", ONCE),
     wasRecentlyNotified(userId, "🧭 Try the Discovery Scan", ONCE),
@@ -114,7 +123,7 @@ export async function fireBusinessOnboardingNotifications(userId: string) {
       createNotification(
         userId,
         "🔍 Browse ready-made solutions",
-        "Explore pre-built automations vetted by our team — live in days, not months.",
+        "Explore pre-built automations vetted by our team, live in days, not months.",
         "info",
         "/solutions"
       )
@@ -126,7 +135,9 @@ export async function fireBusinessOnboardingNotifications(userId: string) {
       createNotification(
         userId,
         "🧭 Try the Discovery Scan",
-        "Not sure where to start? For €50 an expert maps your business and returns a custom automation roadmap.",
+        hasFreeScan
+          ? "You have a free Discovery Scan. Let our experts assess your business and propose where automation can save you the most time and money."
+          : "Not sure where to start? Post a Discovery Scan and let an expert map your business and return a custom automation roadmap.",
         "info",
         "/jobs/discovery"
       )
@@ -138,7 +149,7 @@ export async function fireBusinessOnboardingNotifications(userId: string) {
       createNotification(
         userId,
         "✏️ Need something custom?",
-        "Post a Custom Project brief and get proposals from vetted experts — fast.",
+        "Post a Custom Project brief and get proposals from vetted experts, fast.",
         "info",
         "/jobs/new"
       )

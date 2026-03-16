@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Lightbulb, Check, X, Loader2, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Lightbulb, Check, X, Loader2, Zap, Sparkles } from "lucide-react";
 import { DISCOVERY_SCAN_PRICE_CENTS, CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 import { formatCentsToCurrency } from "@/lib/commission";
 
@@ -14,9 +14,20 @@ interface CheckoutModalProps {
 export function CheckoutModal({ jobId, type, onClose }: CheckoutModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [freeScans, setFreeScans] = useState<number | null>(null);
 
   const isDiscovery = type === "discovery";
   const price = formatCentsToCurrency(isDiscovery ? DISCOVERY_SCAN_PRICE_CENTS : CUSTOM_PROJECT_PRICE_CENTS);
+  const hasFreeCredit = isDiscovery && (freeScans ?? 0) > 0;
+
+  // Fetch free scan eligibility on mount (discovery only)
+  useEffect(() => {
+    if (!isDiscovery) return;
+    fetch("/api/business/free-scans")
+      .then((r) => r.json())
+      .then((d) => setFreeScans(d.remaining ?? 0))
+      .catch(() => setFreeScans(0));
+  }, [isDiscovery]);
 
   const handlePay = async () => {
     setLoading(true);
@@ -96,18 +107,29 @@ export function CheckoutModal({ jobId, type, onClose }: CheckoutModalProps) {
           </p>
         </div>
 
-        <div className="bg-secondary/50 rounded-lg p-4 mb-6 border border-border">
+        <div className={`rounded-lg p-4 mb-6 border ${hasFreeCredit ? "bg-emerald-500/5 border-emerald-500/20" : "bg-secondary/50 border-border"}`}>
           <div className="flex justify-between items-center mb-2">
             <span className="font-medium text-foreground">
               {isDiscovery ? "Discovery Scan Fee" : "Project Posting Fee"}
             </span>
-            <span className="font-bold text-xl text-foreground">{price} one-time</span>
+            {hasFreeCredit ? (
+              <span className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground line-through">{price}</span>
+                <span className="font-bold text-xl text-emerald-600">FREE</span>
+              </span>
+            ) : (
+              <span className="font-bold text-xl text-foreground">{price} one-time</span>
+            )}
           </div>
-          {isDiscovery && (
+          {hasFreeCredit ? (
+            <div className="text-xs text-emerald-600 flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3" /> Your waitlist credit covers this. Click below to go live instantly.
+            </div>
+          ) : isDiscovery ? (
             <div className="text-xs text-emerald-600 flex items-center gap-1.5">
               <Check className="w-3 h-3" /> Fee credited toward your first build when you proceed
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="space-y-3 mb-6 text-sm text-muted-foreground">
@@ -148,10 +170,16 @@ export function CheckoutModal({ jobId, type, onClose }: CheckoutModalProps) {
           <button
             onClick={handlePay}
             disabled={loading}
-            className="w-full py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-lg transition-all shadow-lg shadow-primary/20 disabled:opacity-70 flex items-center justify-center gap-2"
+            className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg disabled:opacity-70 flex items-center justify-center gap-2 ${
+              hasFreeCredit
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
+                : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20"
+            }`}
           >
             {loading ? (
-              <><Loader2 className="w-5 h-5 animate-spin" /> Redirecting to payment…</>
+              <><Loader2 className="w-5 h-5 animate-spin" /> {hasFreeCredit ? "Activating…" : "Redirecting to payment…"}</>
+            ) : hasFreeCredit ? (
+              <><Sparkles className="w-5 h-5" /> Activate for Free</>
             ) : (
               `Pay ${price} & Go Live`
             )}
@@ -159,7 +187,7 @@ export function CheckoutModal({ jobId, type, onClose }: CheckoutModalProps) {
         )}
 
         <p className="text-xs text-center text-muted-foreground mt-4">
-          Secure payment via Stripe. One-time fee.
+          {hasFreeCredit ? "No payment required. Your waitlist credit will be applied." : "Secure payment via Stripe. One-time fee."}
         </p>
         <p className="text-[10px] text-center text-muted-foreground/80 mt-2">
           By paying you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Terms</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Privacy Policy</a>.

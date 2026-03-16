@@ -9,13 +9,19 @@ export function JobPaymentFeedback() {
   const searchParams = useSearchParams();
   const paid = searchParams.get("paid");
   const canceled = searchParams.get("canceled");
+  const free = searchParams.get("free");
 
   useEffect(() => {
     if (paid === "true") {
-      toast.success("Payment successful! Your post is now live and visible to experts.");
+      toast.success(
+        free === "true"
+          ? "Your free Discovery Scan is live! Experts are being notified now."
+          : "Payment successful! Your post is now live and visible to experts."
+      );
       const params = new URLSearchParams(searchParams.toString());
       params.delete("paid");
       params.delete("canceled");
+      params.delete("free");
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false });
     } else if (canceled === "true") {
@@ -23,10 +29,11 @@ export function JobPaymentFeedback() {
       const params = new URLSearchParams(searchParams.toString());
       params.delete("paid");
       params.delete("canceled");
+      params.delete("free");
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false });
     }
-  }, [paid, canceled, router, searchParams]);
+  }, [paid, canceled, free, router, searchParams]);
 
   return null;
 }

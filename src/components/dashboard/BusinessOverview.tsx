@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Zap, CheckCircle2, Clock, Users, Copy, Gift, ArrowRight, BarChart2 } from "lucide-react";
+import { Zap, CheckCircle2, Clock, Users, Copy, Gift, ArrowRight, BarChart2, Sparkles } from "lucide-react";
 import { ActiveCoupons } from "./ActiveCoupons";
 import { toast } from "sonner";
 
@@ -41,6 +41,7 @@ interface BusinessOverviewProps {
   activeOrders?: ActiveOrder[];
   recommendedSolutions?: RecommendedSolution[];
   completedProjectCount?: number;
+  freeDiscoveryScans?: number;
 }
 
 export function BusinessOverview({
@@ -49,6 +50,7 @@ export function BusinessOverview({
   activeOrders = [],
   recommendedSolutions = [],
   completedProjectCount = 0,
+  freeDiscoveryScans = 0,
 }: BusinessOverviewProps) {
   const hasActiveWork = activeOrders.length > 0;
 
@@ -89,6 +91,33 @@ export function BusinessOverview({
           </div>
           <div className="flex-1 flex flex-wrap gap-2 sm:justify-end">
             <ActiveCoupons coupons={activeCoupons} />
+          </div>
+        </section>
+      )}
+
+      {/* Free Discovery Scan Banner */}
+      {freeDiscoveryScans > 0 && (
+        <section className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 md:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <Sparkles className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  You have {freeDiscoveryScans} free Discovery Scan{freeDiscoveryScans !== 1 ? "s" : ""}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Tell us what&apos;s slowing your business down. Up to 5 verified automation experts will review your challenge and send tailored proposals, no cost, no commitment.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/jobs/discovery"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors shrink-0"
+            >
+              Post Your Free Discovery Scan <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </section>
       )}

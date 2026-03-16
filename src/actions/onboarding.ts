@@ -31,7 +31,7 @@ async function sendWelcomeEmail(userId: string, role: "business" | "expert") {
       where: { id: userId },
       select: {
         email: true,
-        businessProfile: { select: { firstName: true } },
+        businessProfile: { select: { firstName: true, freeDiscoveryScansRemaining: true } },
         specialistProfile: { select: { displayName: true, legalFullName: true } },
       },
     });
@@ -42,13 +42,15 @@ async function sendWelcomeEmail(userId: string, role: "business" | "expert") {
         ? (user.businessProfile?.firstName ?? "there")
         : (user.specialistProfile?.displayName ?? user.specialistProfile?.legalFullName ?? "there");
 
+    const hasFreeScan = role === "business" && (user.businessProfile?.freeDiscoveryScansRemaining ?? 0) > 0;
+
     await resend.emails.send({
       from: FROM_EMAIL,
       to: user.email,
       subject: role === "business"
         ? "You're all set on LogicLot — here's what to do next"
         : "Welcome to LogicLot — your profile is live",
-      html: welcomeEmail({ firstName, role }),
+      html: welcomeEmail({ firstName, role, hasFreeScan }),
     });
   } catch (e) {
     log.error("onboarding.welcome_email_failed", { userId, error: String(e) });
@@ -210,9 +212,9 @@ async function grantWaitlistFreeDiscoveryScan(userId: string) {
   await createNotification(
     userId,
     "🎁 Free Discovery Scan unlocked!",
-    "As a thank-you for joining our waitlist, you have 1 free Discovery Scan. Post a job and get matched with automation experts — no payment required.",
+    "As a waitlist member, you have 1 free Discovery Scan. Let our experts assess your business and propose where automation can save you the most time and money.",
     "success",
-    "/business/post-job"
+    "/jobs/discovery"
   );
 
   log.info("onboarding.free_discovery_scan_granted", { userId });
