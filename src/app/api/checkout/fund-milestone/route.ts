@@ -85,9 +85,13 @@ export async function POST(req: Request) {
       });
     }
 
+    if (!stripeCustomerId) {
+      return NextResponse.json({ error: "Could not resolve Stripe customer. Please complete your business profile first." }, { status: 400 });
+    }
+
     // Check for existing open checkout session for this milestone (deduplication)
     const existingSessions = await stripe.checkout.sessions.list({
-      customer: stripeCustomerId!,
+      customer: stripeCustomerId,
       limit: 5,
     });
     const existingOpen = existingSessions.data.find(
@@ -102,7 +106,7 @@ export async function POST(req: Request) {
     }
 
     const checkoutSession = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId!,
+      customer: stripeCustomerId,
       payment_method_types: ["card"],
       // No promo codes on subsequent milestone funding — discount only on initial checkout
       allow_promotion_codes: false,

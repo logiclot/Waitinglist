@@ -8,7 +8,7 @@ import { checkBusinessReferralCondition } from "@/actions/referral";
 import { log } from "@/lib/logger";
 import { captureException } from "@/lib/sentry";
 import { resend } from "@/lib/resend";
-import { demoBookedEmail } from "@/lib/email-templates";
+import { demoBookedEmail, expertDemoBookedEmail } from "@/lib/email-templates";
 import Stripe from "stripe";
 import type { Prisma } from "@prisma/client";
 
@@ -70,9 +70,54 @@ async function sendDemoBookedEmail({
   }
 }
 
+/**
+ * Fire-and-forget helper to send the demo-booked email to the expert.
+ */
+async function sendExpertDemoBookedEmail({
+  expertId,
+  expertFirstName,
+  buyerName,
+  solutionTitle,
+  orderId,
+}: {
+  expertId: string;
+  expertFirstName: string;
+  buyerName: string;
+  solutionTitle: string;
+  orderId: string;
+}) {
+  if (!FROM_EMAIL) return;
+
+  try {
+    const expertUser = await prisma.user.findUnique({
+      where: { id: expertId },
+      select: { email: true },
+    });
+
+    if (!expertUser?.email) return;
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: expertUser.email,
+      subject: `New demo booking for "${solutionTitle}"`,
+      html: expertDemoBookedEmail({
+        expertFirstName,
+        buyerName,
+        solutionTitle,
+      }),
+    });
+  } catch (error) {
+    log.error("webhook.expert_demo_booked_email_send_failed", {
+      expertId,
+      orderId,
+      error: String(error),
+    });
+  }
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
-  const signature = headers().get("Stripe-Signature");
+  const signature = (await headers()).get("Stripe-Signature");
 
   if (!signature) {
     log.error("webhook.missing_signature");
@@ -149,11 +194,19 @@ export async function POST(req: Request) {
       try {
         // Idempotency: only process if the order is still in "draft" state.
         // A second delivery of this event will find status "in_progress" and skip.
-        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        const order = await prisma.order.findUnique({
+          where: { id: orderId },
+          include: { solution: { select: { title: true } } },
+        });
         if (!order || order.status !== "draft") {
           // Already processed — acknowledge without re-running
           return NextResponse.json({ received: true });
         }
+
+        // Resolve the PaymentIntent ID for potential future refunds
+        const demoPaymentIntentId = typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent as Stripe.PaymentIntent | null)?.id ?? null;
 
         const expert = await prisma.specialistProfile.findUnique({
           where: { id: expertId },
@@ -177,7 +230,10 @@ export async function POST(req: Request) {
           await prisma.$transaction([
             prisma.order.update({
               where: { id: orderId },
-              data: { status: "in_progress" },
+              data: {
+                status: "in_progress",
+                ...(demoPaymentIntentId ? { stripePaymentIntentId: demoPaymentIntentId } : {}),
+              },
             }),
             prisma.message.create({
               data: {
@@ -208,7 +264,7 @@ export async function POST(req: Request) {
             `/invoice/${orderId}`
           );
 
-          // Send demo booked email (fire-and-forget)
+          // Send demo booked email to buyer (fire-and-forget)
           sendDemoBookedEmail({
             buyerId,
             expertName: expert.displayName || expert.legalFullName,
@@ -216,6 +272,35 @@ export async function POST(req: Request) {
             calendarUrl: expert.calendarUrl,
           }).catch((emailErr) =>
             log.error("webhook.demo_booked_email_failed", { err: String(emailErr) })
+          );
+
+          // Notify expert (in-app + email) so they don't miss the booking
+          await createNotification(
+            expert.userId,
+            "📅 New demo booking!",
+            "A client has booked and paid for a demo. Check your messages and reach out to schedule the call.",
+            "alert",
+            "/inbox"
+          );
+
+          // Look up buyer name for the expert email
+          const buyer = await prisma.user.findUnique({
+            where: { id: buyerId },
+            select: { businessProfile: { select: { firstName: true, lastName: true, companyName: true } } },
+          });
+          const buyerLabel = buyer?.businessProfile
+            ? `${buyer.businessProfile.firstName} ${buyer.businessProfile.lastName}${buyer.businessProfile.companyName ? ` (${buyer.businessProfile.companyName})` : ""}`
+            : "A client";
+
+          // Send expert demo booked email (fire-and-forget)
+          sendExpertDemoBookedEmail({
+            expertId: expert.userId,
+            expertFirstName: expert.displayName?.split(" ")[0] || expert.legalFullName?.split(" ")[0] || "there",
+            buyerName: buyerLabel,
+            solutionTitle: order?.solution?.title || "your solution",
+            orderId,
+          }).catch((emailErr) =>
+            log.error("webhook.expert_demo_booked_email_failed", { err: String(emailErr) })
           );
         }
       } catch (err) {
@@ -298,7 +383,7 @@ export async function POST(req: Request) {
               await tx.user.update({
                 where: { id: order.buyerId },
                 data: {
-                  referralRewards: { ...rewards, businessDiscountCount: count - 1 },
+                  referralRewards: { ...rewards, businessDiscountCount: Math.max(0, count - 1) },
                 },
               });
             }
@@ -373,6 +458,10 @@ export async function POST(req: Request) {
         // Return 500 so Stripe will retry this critical payment event
         return NextResponse.json({ error: "Processing failed" }, { status: 500 });
       }
+
+    // ─── Unknown checkout type — log so we notice quickly ──────────────────────
+    } else if (type) {
+      log.warn("webhook.unknown_checkout_type", { type, orderId, sessionId: session.id });
     }
 
   // ═══ charge.dispute.created ═══════════════════════════════════════════════
@@ -391,14 +480,30 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
       }
 
-      // Find the order by its per-milestone or order-level PaymentIntent
-      const order = await prisma.order.findFirst({
+      // Find the order by order-level PaymentIntent first
+      let order = await prisma.order.findFirst({
         where: { stripePaymentIntentId: paymentIntentId },
         include: {
           seller: { select: { userId: true, displayName: true } },
           solution: { select: { title: true } },
         },
       });
+
+      // Fallback: search inside per-milestone PaymentIntents (milestones JSON)
+      // This covers multi-milestone orders where each milestone has its own PI
+      if (!order) {
+        const allOrders = await prisma.order.findMany({
+          where: { status: { notIn: ["refunded", "disputed"] } },
+          include: {
+            seller: { select: { userId: true, displayName: true } },
+            solution: { select: { title: true } },
+          },
+        });
+        order = allOrders.find((o) => {
+          const milestones = (o.milestones as unknown as { stripePaymentIntentId?: string }[]) || [];
+          return milestones.some((m) => m.stripePaymentIntentId === paymentIntentId);
+        }) ?? null;
+      }
 
       if (!order) {
         // Might be a job posting or demo — log and acknowledge
@@ -450,6 +555,23 @@ export async function POST(req: Request) {
             )
           : Promise.resolve(),
       ]);
+
+      // Notify all admin users — chargebacks have strict response deadlines
+      const adminUsers = await prisma.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true },
+      });
+      await Promise.all(
+        adminUsers.map((admin) =>
+          createNotification(
+            admin.id,
+            "🚨 Chargeback alert — action required",
+            `A chargeback of ${amountStr} has been filed on "${projectName}" (Order ${order!.id.slice(-8)}). Respond before Stripe's deadline.`,
+            "alert",
+            "/admin"
+          )
+        )
+      );
 
       log.warn("webhook.chargeback_received", {
         orderId: order.id,
@@ -538,6 +660,94 @@ export async function POST(req: Request) {
       log.error("webhook.account_updated_failed", { err: String(err), accountId: account.id });
       captureException(err, { context: "webhook.account_updated" });
       // Non-critical — don't return 500, we'll sync on next event or status check
+    }
+
+  // ═══ payment_intent.payment_failed ════════════════════════════════════════
+  // A payment attempt failed (card declined, insufficient funds, etc.).
+  // Notify the buyer so they can retry with a different payment method.
+  } else if (event.type === "payment_intent.payment_failed") {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    try {
+      const failureMessage = paymentIntent.last_payment_error?.message || "Your payment could not be processed.";
+      const buyerId = paymentIntent.metadata?.buyerId;
+      const type = paymentIntent.metadata?.type;
+
+      if (buyerId) {
+        await createNotification(
+          buyerId,
+          "❌ Payment failed",
+          `${failureMessage} Please try again with a different payment method.`,
+          "alert",
+          type === "job_posting" ? "/business/post-job" : "/business/projects"
+        );
+      }
+
+      log.warn("webhook.payment_failed", {
+        paymentIntentId: paymentIntent.id,
+        buyerId: buyerId || "unknown",
+        type: type || "unknown",
+        failureCode: paymentIntent.last_payment_error?.code,
+        failureMessage,
+      });
+    } catch (err) {
+      log.error("webhook.payment_failed_handler_error", { err: String(err), paymentIntentId: paymentIntent.id });
+      captureException(err, { context: "webhook.payment_intent_failed" });
+      // Non-critical — buyer already sees a Stripe error page. Don't return 500.
+    }
+
+  // ═══ checkout.session.expired ═════════════════════════════════════════════
+  // Buyer opened checkout but never completed payment. Clean up the draft
+  // order/job so orphan records don't accumulate.
+  } else if (event.type === "checkout.session.expired") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const { orderId, jobId, type } = session.metadata || {};
+
+    try {
+      // Clean up abandoned job postings — only if still in pending_payment
+      if (type === "job_posting" && jobId) {
+        const job = await prisma.jobPost.findUnique({ where: { id: jobId } });
+        if (job && job.status === "pending_payment") {
+          await prisma.jobPost.update({
+            where: { id: jobId },
+            data: { status: "cancelled" },
+          });
+          log.info("webhook.expired_job_cleaned_up", { jobId });
+        }
+      }
+
+      // Clean up abandoned orders — ONLY delete if still in "draft" status
+      // AND has no linked conversations/reviews/disputes (extra safety).
+      // Any order that has progressed beyond draft (paid, in_progress, etc.)
+      // must NEVER be touched here — the strict "draft" check guarantees this.
+      if (orderId) {
+        const order = await prisma.order.findUnique({
+          where: { id: orderId },
+          include: {
+            conversations: { select: { id: true }, take: 1 },
+            review: { select: { id: true } },
+            dispute: { select: { id: true } },
+          },
+        });
+        if (
+          order &&
+          order.status === "draft" &&
+          order.conversations.length === 0 &&
+          !order.review &&
+          !order.dispute
+        ) {
+          await prisma.order.delete({
+            where: { id: orderId },
+          });
+          log.info("webhook.expired_order_cleaned_up", { orderId, type: type || "unknown" });
+        } else if (order && order.status === "draft") {
+          // Draft order has linked records — can't safely delete, just log
+          log.warn("webhook.expired_order_has_relations", { orderId, type: type || "unknown" });
+        }
+      }
+    } catch (err) {
+      log.error("webhook.session_expired_handler_error", { err: String(err), sessionId: session.id });
+      captureException(err, { context: "webhook.checkout_session_expired" });
+      // Non-critical — orphan cleanup failure is not worth retrying
     }
   }
 

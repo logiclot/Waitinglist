@@ -419,6 +419,31 @@ export function demoBookedEmail({
   `);
 }
 
+// ── Expert Demo Booked Email ─────────────────────────────────────────────────
+
+export function expertDemoBookedEmail({
+  expertFirstName,
+  buyerName,
+  solutionTitle,
+}: {
+  expertFirstName: string;
+  buyerName: string;
+  solutionTitle: string;
+}): string {
+  return shell(`
+    <tr>
+      <td style="padding:36px 28px;">
+        <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#111827;">New demo booking!</h1>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Hi ${expertFirstName},</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;"><strong>${buyerName}</strong> has just booked and paid for a demo of <strong>${solutionTitle}</strong>.</p>
+        <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.7;">Please check your messages and reach out to schedule the call.</p>
+        <tr><td style="padding:0 0 24px;"><a href="${BASE_URL}/inbox" style="display:inline-block;background:#2563EB;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;">Go to Inbox</a></td></tr>
+        <p style="margin:0;font-size:14px;color:#6b7280;">Don&apos;t keep them waiting &mdash; a fast response makes a great first impression.</p>
+      </td>
+    </tr>
+  `);
+}
+
 // ── Expert Invite Email ──────────────────────────────────────────────────────
 
 export function expertInviteEmail({ name, inviteUrl }: { name: string; inviteUrl: string }): string {

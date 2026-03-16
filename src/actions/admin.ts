@@ -658,6 +658,8 @@ export async function resolveDispute(
               amount,
               reason: "requested_by_customer",
               metadata: { orderId, resolution: "admin_full_refund" },
+            }, {
+              idempotencyKey: `refund-full-${orderId}-${pi}`,
             });
           } catch (refundErr) {
             log.warn("dispute.refund_failed_for_pi", { orderId, paymentIntent: pi, amount, error: String(refundErr) });
@@ -740,6 +742,8 @@ export async function resolveDispute(
             amount: refundAmount,
             reason: "requested_by_customer",
             metadata: { orderId, resolution: "admin_partial_refund", milestoneTitle: m.title },
+          }, {
+            idempotencyKey: `refund-partial-${orderId}-${pi}-${refundAmount}`,
           });
           remaining -= refundAmount;
           anyRefundIssued = true;
