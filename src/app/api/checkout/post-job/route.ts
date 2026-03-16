@@ -19,6 +19,8 @@ import { stripe } from "@/lib/stripe";
 import { log } from "@/lib/logger";
 import { DISCOVERY_SCAN_PRICE_CENTS, CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 import { APP_URL } from "@/lib/app-url";
+import { activateJobPost } from "@/actions/jobs";
+import { createNotification } from "@/lib/notifications";
 
 const JOB_PRICES: Record<string, { cents: number; label: string }> = {
   "Discovery Scan": { cents: DISCOVERY_SCAN_PRICE_CENTS, label: "Discovery Scan — Expert Proposals" },
@@ -49,6 +51,40 @@ export async function POST(req: Request) {
     }
     if (job.status !== "pending_payment") {
       return NextResponse.json({ error: "Job already paid" }, { status: 400 });
+    }
+
+    // ─── Free Discovery Scan bypass ──────────────────────────────────────────
+    // Waitlist signups get 1 free Discovery Scan. If eligible, skip Stripe
+    // entirely and activate the job immediately.
+    const isDiscoveryScan = job.category === "Discovery Scan" || job.category === "Discovery";
+    const freeScansLeft = job.buyer.businessProfile?.freeDiscoveryScansRemaining ?? 0;
+
+    if (isDiscoveryScan && freeScansLeft > 0) {
+      // Atomically decrement free scans and activate the job
+      await prisma.businessProfile.update({
+        where: { userId: session.user.id },
+        data: { freeDiscoveryScansRemaining: { decrement: 1 } },
+      });
+
+      await prisma.jobPost.update({
+        where: { id: jobId },
+        data: { paymentProvider: "free_waitlist_credit" },
+      });
+
+      await activateJobPost(jobId, "simulated");
+
+      if (session.user.id) {
+        await createNotification(
+          session.user.id,
+          "🎉 Free Discovery Scan activated!",
+          `"${job.title}" is now live. Your free waitlist credit has been used.`,
+          "success",
+          `/jobs/${jobId}`
+        );
+      }
+
+      log.info("checkout.free_discovery_scan_used", { jobId, userId: session.user.id });
+      return NextResponse.json({ url: `${APP_URL}/jobs/${jobId}?paid=true&free=true` });
     }
 
     // Dev bypass: when Stripe is not configured, return simulate instructions

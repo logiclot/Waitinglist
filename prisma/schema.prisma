@@ -204,6 +204,9 @@ model BusinessProfile {
   // Stripe Customer
   stripeCustomerId        String?
 
+  // Free Discovery Scan — granted to waitlist signups
+  freeDiscoveryScansRemaining  Int  @default(0)
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

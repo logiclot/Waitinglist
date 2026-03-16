@@ -13,6 +13,7 @@ import {
   fireBusinessOnboardingNotifications,
   fireExpertOnboardingNotifications,
 } from "@/lib/onboarding-notifications";
+import { createNotification } from "@/lib/notifications";
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
 
@@ -151,6 +152,12 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
       },
     });
 
+    // Grant 1 free Discovery Scan if the user signed up via the waitlist
+    grantWaitlistFreeDiscoveryScan(session.user.id).catch((err) => {
+      log.warn("onboarding.free_scan_grant_failed", { error: String(err) });
+      Sentry.captureException(err);
+    });
+
     sendWelcomeEmail(session.user.id, "business").catch((err) => {
       log.warn("onboarding.welcome_email_failed", { error: String(err) });
       Sentry.captureException(err);
@@ -166,6 +173,49 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
     log.error("onboarding.create_business_profile_failed", { error: String(e) });
     return { error: "Failed to create profile" };
   }
+}
+
+/**
+ * Checks if the user signed up via the waitlist (as a business) and grants
+ * 1 free Discovery Scan if they haven't already received one.
+ * Safe to call multiple times — only grants once (idempotent).
+ */
+async function grantWaitlistFreeDiscoveryScan(userId: string) {
+  // Look up the user's email to check against waitlist
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, businessProfile: { select: { id: true, freeDiscoveryScansRemaining: true } } },
+  });
+  if (!user?.email || !user.businessProfile) return;
+
+  // Already granted? Skip (idempotent)
+  if (user.businessProfile.freeDiscoveryScansRemaining > 0) return;
+
+  // Check if this email exists on the waitlist as a business signup
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const waitlistEntry = await (prisma as any).waitlistSignup.findUnique({
+    where: { email: user.email },
+    select: { role: true },
+  });
+
+  if (!waitlistEntry || waitlistEntry.role !== "business") return;
+
+  // Grant 1 free Discovery Scan
+  await prisma.businessProfile.update({
+    where: { id: user.businessProfile.id },
+    data: { freeDiscoveryScansRemaining: 1 },
+  });
+
+  // Notify the user
+  await createNotification(
+    userId,
+    "🎁 Free Discovery Scan unlocked!",
+    "As a thank-you for joining our waitlist, you have 1 free Discovery Scan. Post a job and get matched with automation experts — no payment required.",
+    "success",
+    "/business/post-job"
+  );
+
+  log.info("onboarding.free_discovery_scan_granted", { userId });
 }
 
 export async function createSpecialistProfile(prevState: unknown, formData: FormData) {

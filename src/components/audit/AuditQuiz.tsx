@@ -1200,8 +1200,41 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                   Ready to fix these bottlenecks?
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                  LogicLot launches on April 8th. Join the waitlist now and be the first to
-                  get matched with verified experts who can solve these exact problems.
+                  Join the waitlist now and get a <strong className="text-foreground">free Discovery Scan</strong> — a
+                  personalised deep-dive with a verified automation expert to map out exactly
+                  what to automate first, how much it would save you, and a step-by-step
+                  plan to get there.
+                </p>
+              </div>
+
+              {/* What is a Discovery Scan? */}
+              <div className="bg-primary/5 border border-primary/10 rounded-xl p-5 mb-6">
+                <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  What is a Discovery Scan?
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                  <div>
+                    <p className="text-xs font-semibold text-foreground mb-1">1. Post your challenge</p>
+                    <p className="text-xs text-muted-foreground">
+                      Describe what&apos;s slowing you down — the repetitive tasks, the manual processes, the bottlenecks.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground mb-1">2. Experts propose solutions</p>
+                    <p className="text-xs text-muted-foreground">
+                      Up to 5 verified automation experts review your challenge and submit tailored proposals.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground mb-1">3. Pick the best fit</p>
+                    <p className="text-xs text-muted-foreground">
+                      Compare approaches, timelines and pricing. Choose the expert you trust to deliver results.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3 text-center italic">
+                  Normally costs €50 — <strong className="text-primary not-italic">free for waitlist members</strong>.
                 </p>
               </div>
 
@@ -1220,9 +1253,9 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                     <Users className="h-4 w-4 text-primary" />
                   </div>
-                  <p className="text-sm font-semibold text-foreground mb-1">Discovery Scan</p>
+                  <p className="text-sm font-semibold text-foreground mb-1">Free Discovery Scan</p>
                   <p className="text-xs text-muted-foreground">
-                    A 1-on-1 deep-dive with an expert to map your full automation roadmap.
+                    A 1-on-1 deep-dive with an expert to map your full automation roadmap — <strong>on us</strong>.
                   </p>
                 </div>
                 <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
@@ -1242,7 +1275,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                   href="/waitlist"
                   className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
                 >
-                  Join the Waitlist <ArrowRight className="h-4 w-4" />
+                  Join the Waitlist — Get a Free Discovery Scan <ArrowRight className="h-4 w-4" />
                 </Link>
                 <p className="text-xs text-muted-foreground mt-3">
                   No spam. We&apos;ll email you when early access opens.
