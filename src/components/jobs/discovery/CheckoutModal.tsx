@@ -177,9 +177,9 @@ export function CheckoutModal({ jobId, type, onClose }: CheckoutModalProps) {
             }`}
           >
             {loading ? (
-              <><Loader2 className="w-5 h-5 animate-spin" /> {hasFreeCredit ? "Activating…" : "Redirecting to payment…"}</>
+              <><Loader2 className="w-5 h-5 animate-spin" /> {hasFreeCredit ? "Posting…" : "Redirecting to payment…"}</>
             ) : hasFreeCredit ? (
-              <><Sparkles className="w-5 h-5" /> Activate for Free</>
+              <><Sparkles className="w-5 h-5" /> Post for Free</>
             ) : (
               `Pay ${price} & Go Live`
             )}
