@@ -6,7 +6,7 @@ export default function AuditLayout({
   return (
     <>
       {/* Hide navbar + footer on the public audit page */}
-      <style>{`nav { display: none !important; } footer { display: none !important; }`}</style>
+      <style>{`nav { display: none !important; } footer { display: none !important; } header { display: none !important; }`}</style>
       {children}
     </>
   );
