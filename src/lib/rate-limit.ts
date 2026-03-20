@@ -1,20 +1,17 @@
 /**
- * In-process sliding-window rate limiter.
+ * Sliding-window rate limiter with Upstash Redis support.
  *
- * Suitable for a single-server Node.js deployment.
- * For multi-server / serverless, swap the Map for an Upstash Redis store
- * (drop-in: replace `store` with `new Redis(...)` and use @upstash/ratelimit).
+ * Uses Upstash Redis in production (stateless, works across serverless instances).
+ * Falls back to in-memory Map for local development when Redis is not configured.
  *
- * Usage (in middleware or route handler):
+ * Usage:
  *   const limiter = createRateLimiter({ limit: 5, windowMs: 60_000 });
- *   const result = limiter.check(ip);
+ *   const result = await limiter.check(identifier);
  *   if (!result.success) return new Response("Too Many Requests", { status: 429 });
  */
 
-interface RateWindow {
-  count: number;
-  resetAt: number;
-}
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 interface RateLimiterOptions {
   /** Maximum requests allowed in the window */
@@ -23,25 +20,43 @@ interface RateLimiterOptions {
   windowMs: number;
 }
 
-interface CheckResult {
+export interface CheckResult {
   success: boolean;
   remaining: number;
   resetAt: number;
 }
 
-export function createRateLimiter(opts: RateLimiterOptions) {
+// ── Redis client (singleton) ────────────────────────────────────────────────
+
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const useRedis = !!(UPSTASH_URL && UPSTASH_TOKEN);
+
+let redis: Redis | null = null;
+function getRedis(): Redis {
+  if (!redis) {
+    redis = new Redis({ url: UPSTASH_URL!, token: UPSTASH_TOKEN! });
+  }
+  return redis;
+}
+
+// ── In-memory fallback (for local development without Redis) ────────────────
+
+interface RateWindow {
+  count: number;
+  resetAt: number;
+}
+
+function createInMemoryLimiter(opts: RateLimiterOptions) {
   const store = new Map<string, RateWindow>();
 
-  // Periodically clean up expired windows so the Map doesn't grow forever
-  const cleanup = () => {
-    const now = Date.now();
-    store.forEach((window, key) => {
-      if (now > window.resetAt) store.delete(key);
-    });
-  };
-  // Run cleanup every 5 minutes (only on server side)
   if (typeof setInterval !== "undefined") {
-    setInterval(cleanup, 5 * 60 * 1000);
+    setInterval(() => {
+      const now = Date.now();
+      store.forEach((window, key) => {
+        if (now > window.resetAt) store.delete(key);
+      });
+    }, 5 * 60 * 1000);
   }
 
   return {
@@ -50,7 +65,6 @@ export function createRateLimiter(opts: RateLimiterOptions) {
       const existing = store.get(identifier);
 
       if (!existing || now > existing.resetAt) {
-        // Start a new window
         const resetAt = now + opts.windowMs;
         store.set(identifier, { count: 1, resetAt });
         return { success: true, remaining: opts.limit - 1, resetAt };
@@ -66,7 +80,38 @@ export function createRateLimiter(opts: RateLimiterOptions) {
   };
 }
 
-// ── Pre-built limiters for common routes ──────────────────────────────────────
+// ── Upstash Redis limiter ───────────────────────────────────────────────────
+
+function createRedisLimiter(opts: RateLimiterOptions) {
+  const windowSec = Math.max(1, Math.ceil(opts.windowMs / 1000));
+
+  const ratelimit = new Ratelimit({
+    redis: getRedis(),
+    limiter: Ratelimit.slidingWindow(opts.limit, `${windowSec} s`),
+    analytics: false,
+  });
+
+  return {
+    check(identifier: string): CheckResult | Promise<CheckResult> {
+      return ratelimit.limit(identifier).then(({ success, remaining, reset }) => ({
+        success,
+        remaining,
+        resetAt: reset,
+      }));
+    },
+  };
+}
+
+// ── Factory ─────────────────────────────────────────────────────────────────
+
+export function createRateLimiter(opts: RateLimiterOptions) {
+  if (useRedis) {
+    return createRedisLimiter(opts);
+  }
+  return createInMemoryLimiter(opts);
+}
+
+// ── Pre-built limiters for common routes ────────────────────────────────────
 
 /** Auth routes: 10 attempts per IP per minute */
 export const authLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 });

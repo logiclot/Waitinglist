@@ -68,7 +68,7 @@ export default function OnboardingPage() {
           </div>
           <h2 className="text-2xl font-bold mb-3 text-foreground">Business</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Buy ready to implement automations for your day to day business.
+            Find proven automations and have them deployed in your tools by vetted experts.
           </p>
         </button>
 
@@ -80,9 +80,9 @@ export default function OnboardingPage() {
           <div className="bg-secondary p-6 rounded-full mb-6 group-hover:scale-110 transition-transform duration-300">
             <Wrench className="h-10 w-10 text-foreground" />
           </div>
-          <h2 className="text-2xl font-bold mb-3 text-foreground">Specialist</h2>
+          <h2 className="text-2xl font-bold mb-3 text-foreground">Expert</h2>
           <p className="text-muted-foreground leading-relaxed">
-            List productized solutions and deliver implementations to businesses.
+            Package your automation expertise into fixed-scope solutions and sell them repeatedly.
           </p>
         </button>
       </div>

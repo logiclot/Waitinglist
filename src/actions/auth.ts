@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { resend } from "@/lib/resend";
+import { resend, getFromEmail } from "@/lib/resend";
 import { verificationEmail, passwordResetEmail } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
 import { Analytics } from "@/lib/analytics";
@@ -20,7 +20,7 @@ const signupLimiter = createRateLimiter({ limit: 5, windowMs: 60 * 60_000 });
 /** 3 password-reset requests per email per hour */
 const resetLimiter = createRateLimiter({ limit: 3, windowMs: 60 * 60_000 });
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const FROM_EMAIL = getFromEmail();
 // NEXTAUTH_URL is always set locally (127.0.0.1:3000); NEXT_PUBLIC_APP_URL overrides in production
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
@@ -40,7 +40,7 @@ export async function signUp(prevState: unknown, formData: FormData) {
   }
 
   // Rate limit by email to prevent enumeration and spam
-  const rl = signupLimiter.check(email.toLowerCase());
+  const rl = await signupLimiter.check(email.toLowerCase());
   if (!rl.success) {
     return { error: "Too many signup attempts. Please try again later." };
   }
@@ -220,7 +220,7 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
   if (!email) return { error: "Email is required." };
 
   // Rate limit by email to prevent spam and enumeration
-  const rl = resetLimiter.check(email);
+  const rl = await resetLimiter.check(email);
   if (!rl.success) {
     return { success: true }; // Return success to avoid leaking that the email exists
   }

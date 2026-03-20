@@ -85,7 +85,7 @@ export function BidList({ bids, jobId, isOwner }: { bids: BidItem[], jobId: stri
         <div key={bid.id} className="bg-card border border-border rounded-xl p-6">
           <div className="flex justify-between items-start gap-4 mb-4">
             <div>
-              <div className="font-bold text-lg">{bid.specialist?.displayName ?? "Specialist"}</div>
+              <div className="font-bold text-lg">{bid.specialist?.displayName ?? "Expert"}</div>
               <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
                 <TierBadge
                   tier={bid.specialist?.tier ?? "STANDARD"}

@@ -320,7 +320,7 @@ function ProposalReviewCard({
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-base">{bid.specialist?.displayName ?? "Specialist"}</span>
+                <span className="font-bold text-base">{bid.specialist?.displayName ?? "Expert"}</span>
                 <TierBadge
                   tier={bid.specialist?.tier ?? "STANDARD"}
                   isFoundingExpert={bid.specialist?.isFoundingExpert ?? false}
@@ -660,7 +660,7 @@ export function ProposalReviewClient({ job }: { job: Job }) {
         <h1 className="text-2xl font-bold text-foreground mt-2">{job.title}</h1>
         <p className="text-muted-foreground text-sm mt-1">
           {job.bids.length === 0
-            ? "No proposals yet — experts will respond within 24 hours."
+            ? "No proposals yet — experts will respond within 48 hours."
             : job.bids.length === 1
             ? "1 proposal received"
             : `${job.bids.length} proposals received`}
@@ -689,7 +689,7 @@ export function ProposalReviewClient({ job }: { job: Job }) {
           <h3 className="font-semibold text-lg mb-1">Waiting for proposals</h3>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto">
             Qualified experts are reviewing your brief. First proposals typically
-            arrive within 24 hours.
+            arrive within 48 hours.
           </p>
         </div>
       )}

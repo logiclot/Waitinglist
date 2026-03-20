@@ -6,7 +6,7 @@ import { log } from "@/lib/logger";
 export async function POST(request: Request) {
   try {
     const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-    const rl = pageViewLimiter.check(ip);
+    const rl = await pageViewLimiter.check(ip);
     if (!rl.success) return NextResponse.json({ ok: true });
 
     const { slug } = await request.json();

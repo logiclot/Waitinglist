@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { Role } from "@prisma/client";
-import { resend } from "@/lib/resend";
+import { resend, getFromEmail } from "@/lib/resend";
 import { welcomeEmail } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
@@ -15,7 +15,7 @@ import {
 } from "@/lib/onboarding-notifications";
 import { createNotification } from "@/lib/notifications";
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const FROM_EMAIL = getFromEmail();
 
 /** Converts "JOHN DOE" or "john doe" → "John Doe" */
 function toTitleCase(s: string): string {
@@ -48,8 +48,8 @@ async function sendWelcomeEmail(userId: string, role: "business" | "expert") {
       from: FROM_EMAIL,
       to: user.email,
       subject: role === "business"
-        ? "You're all set on LogicLot — here's what to do next"
-        : "Welcome to LogicLot — your profile is live",
+        ? "You're all set on LogicLot. Here's what to do next"
+        : "Welcome to LogicLot. Your profile is live",
       html: welcomeEmail({ firstName, role, hasFreeScan }),
     });
   } catch (e) {

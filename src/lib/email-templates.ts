@@ -24,7 +24,7 @@ function shell(body: string): string {
             <td style="${FOOTER_STYLE}">
               <p style="${FOOTER_TEXT_STYLE}">
                 You&apos;re receiving this because you have an account on LogicLot.<br/>
-                <a href="${BASE_URL}" style="color:#94a3b8;">logiclot.com</a>
+                <a href="${BASE_URL}" style="color:#94a3b8;">logiclot.io</a>
               </p>
             </td>
           </tr>
@@ -62,7 +62,7 @@ export function passwordResetEmail({ resetUrl }: { resetUrl: string }): string {
         <p style="margin:0 0 8px;font-size:14px;color:#64748b;line-height:1.7;">
           We received a request to reset the password for your LogicLot account. Click below to choose a new one.
         </p>
-        <p style="margin:0 0 28px;font-size:13px;color:#94a3b8;">This link expires in 1 hour. If you didn&apos;t request a reset, you can safely ignore this email — your password hasn&apos;t changed.</p>
+        <p style="margin:0 0 28px;font-size:13px;color:#94a3b8;">This link expires in 1 hour. If you didn&apos;t request a reset, you can safely ignore this email. Your password hasn&apos;t changed.</p>
         <a href="${resetUrl}" style="${BTN_STYLE}">Reset my password &rarr;</a>
       </td>
     </tr>
@@ -72,13 +72,13 @@ export function passwordResetEmail({ resetUrl }: { resetUrl: string }): string {
 export function welcomeEmail({ firstName, role, hasFreeScan }: { firstName: string; role: "business" | "expert"; hasFreeScan?: boolean }): string {
   const dashboardUrl = role === "business" ? `${BASE_URL}/business` : `${BASE_URL}/dashboard`;
   const headline = role === "business"
-    ? `You're in — let's find the right automation for your business`
-    : `Welcome to LogicLot — your first clients are waiting`;
+    ? `You're in. Let's find the right automation for your business`
+    : `Welcome to LogicLot. Your first clients are waiting`;
   const freeScanLine = hasFreeScan
     ? `<br/><br/>As a waitlist member, you have <strong>1 free Discovery Scan</strong>. Let our experts assess your business and propose where automation can save you the most time and money.`
     : "";
   const body = role === "business"
-    ? `Your account is set up and ready. Browse vetted automation solutions, post a Discovery Scan, or reach out to an Expert directly. Everything is fixed-price, milestone-based, and escrow-protected.${freeScanLine}`
+    ? `Your account is set up and ready. Browse verified automation solutions, post a Discovery Scan, or reach out to an Expert directly. Everything is fixed-price, milestone-based, and escrow-protected.${freeScanLine}`
     : `Your expert profile is live. Complete your first solution listing to start appearing in searches and get matched with businesses looking for exactly what you build.`;
   const cta = role === "business" ? "Go to my dashboard" : "Create my first solution";
 
@@ -414,7 +414,7 @@ export function demoBookedEmail({
       <td style="padding:36px 28px;">
         <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#111827;">Your demo is confirmed!</h1>
         <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Hi ${firstName},</p>
-        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Great news &mdash; your demo for <strong>${solutionTitle}</strong> with <strong>${expertName}</strong> has been confirmed.</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Great news. Your demo for <strong>${solutionTitle}</strong> with <strong>${expertName}</strong> has been confirmed.</p>
         ${calendarSection}
         <p style="margin:16px 0 0;font-size:14px;color:#6b7280;">You can also find the booking link in your messages inbox.</p>
       </td>
@@ -441,7 +441,7 @@ export function expertDemoBookedEmail({
         <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;"><strong>${buyerName}</strong> has just booked and paid for a demo of <strong>${solutionTitle}</strong>.</p>
         <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.7;">Please check your messages and reach out to schedule the call.</p>
         <tr><td style="padding:0 0 24px;"><a href="${BASE_URL}/inbox" style="display:inline-block;background:#2563EB;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;">Go to Inbox</a></td></tr>
-        <p style="margin:0;font-size:14px;color:#6b7280;">Don&apos;t keep them waiting &mdash; a fast response makes a great first impression.</p>
+        <p style="margin:0;font-size:14px;color:#6b7280;">Don&apos;t keep them waiting. A fast response makes a great first impression.</p>
       </td>
     </tr>
   `);
@@ -456,7 +456,7 @@ export function expertInviteEmail({ name, inviteUrl }: { name: string; inviteUrl
       <td style="padding:36px 28px;">
         <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#111827;">You&apos;re invited to LogicLot</h1>
         <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Hi ${firstName},</p>
-        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">We&apos;re opening LogicLot to a small group of automation specialists &mdash; and you&apos;re in.</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">We&apos;re opening LogicLot to a small group of automation experts, and you&apos;re in.</p>
         <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">LogicLot is a marketplace where businesses buy ready-to-implement automations directly from verified experts like you. List your solutions, get matched with clients, and earn on your terms.</p>
         <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.7;">Click below to set up your password and complete your profile. It takes about 2 minutes.</p>
         <a href="${inviteUrl}" style="${BTN_STYLE}">Set Up My Account</a>

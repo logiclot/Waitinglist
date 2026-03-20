@@ -3,6 +3,7 @@
 import { CheckCircle2, Lock, Crown, Sparkles, Search, ArrowRight, Zap, Eye, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useMorseCode } from "@/hooks/useMorseCode";
+import { DISCOVERY_SCAN_COPY, DISCOVERY_SCAN_BULLETS, CUSTOM_PROJECT_COPY, CUSTOM_PROJECT_BULLETS } from "@/lib/copy/requestCards";
 
 const ESCROW_STEPS = [
   {
@@ -253,7 +254,7 @@ export function HowItWorksBusinessView() {
             <div className="text-primary font-bold mb-3 flex items-center gap-2 bg-primary/8 px-3 py-1 rounded-full text-sm">
               <Crown className="h-4 w-4" /> Custom Project
             </div>
-            <p className="text-foreground font-semibold mb-2">&ldquo;Like Hiring a Specialist&rdquo;</p>
+            <p className="text-foreground font-semibold mb-2">&ldquo;Like Hiring an Expert&rdquo;</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
               You know exactly what you want built. Experts submit scoped proposals with a clear timeline and price. You pick the one that fits.
             </p>
@@ -307,31 +308,26 @@ export function HowItWorksBusinessView() {
         <div className="relative p-8 rounded-2xl bg-[#111827] border border-white/8 shadow-xl flex flex-col min-h-[420px]">
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs font-bold mb-4 border border-white/10">
-              Most Popular
+              {DISCOVERY_SCAN_COPY.badge}
             </div>
             <div className="flex items-start justify-between mb-3">
               <div className="p-3 bg-white/8 text-white/80 rounded-xl border border-white/10">
                 <Sparkles className="h-6 w-6" />
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-white">&euro;50</div>
-                <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">one-time posting fee</div>
+                <div className="text-3xl font-bold text-white">{DISCOVERY_SCAN_COPY.price}</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
               </div>
             </div>
             <h4 className="text-2xl font-bold text-white mb-1">Discovery Scan</h4>
-            <p className="text-xs text-white/40 uppercase tracking-wide font-medium mt-2">Up to 5 expert proposals</p>
+            <p className="text-xs text-white/40 uppercase tracking-wide font-medium mt-2">{DISCOVERY_SCAN_COPY.proposalNote.replace("Discovery Scan · ", "")}</p>
           </div>
           <div className="flex-grow mb-8">
             <p className="text-white/60 leading-relaxed text-sm mb-6">
-              Tell us how your business runs. Experts analyse your workflows and come back with a concrete plan to save you time and money.
+              {DISCOVERY_SCAN_COPY.description}
             </p>
             <ul className="space-y-3">
-              {[
-                "Know exactly where you\u2019re bleeding hours and what to fix first",
-                "Get a clear ROI estimate before spending a cent on implementation",
-                "See a live demo of the proposed solution before you commit",
-                "Walk away with an actionable roadmap, even if you don\u2019t proceed",
-              ].map((item) => (
+              {DISCOVERY_SCAN_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-white/40 shrink-0 mt-0.5" /> {item}
                 </li>
@@ -343,9 +339,9 @@ export function HowItWorksBusinessView() {
               href="/jobs/discovery"
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
             >
-              Get My Automation Roadmap <ArrowRight className="h-4 w-4" />
+              {DISCOVERY_SCAN_COPY.cta} <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="text-xs text-white/30 text-center mt-3">First proposals arrive within 24 hours</p>
+            <p className="text-xs text-white/30 text-center mt-3">{DISCOVERY_SCAN_COPY.footer}</p>
           </div>
         </div>
 
@@ -354,32 +350,26 @@ export function HowItWorksBusinessView() {
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/60 rounded-t-2xl" />
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs font-bold mb-4 border border-white/10">
-              For Complex Workflows
+              {CUSTOM_PROJECT_COPY.badge}
             </div>
             <div className="flex items-start justify-between mb-3">
               <div className="p-3 bg-white/8 text-white/80 rounded-xl border border-white/10">
                 <Crown className="h-6 w-6" />
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-white">&euro;100</div>
-                <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">one-time posting fee</div>
+                <div className="text-3xl font-bold text-white">{CUSTOM_PROJECT_COPY.price}</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
               </div>
             </div>
             <h4 className="text-2xl font-bold text-white mb-1">Custom Project</h4>
-            <p className="text-xs text-white/40 uppercase tracking-wide font-medium mt-2">Max 3 tailored proposals</p>
+            <p className="text-xs text-white/40 uppercase tracking-wide font-medium mt-2">{CUSTOM_PROJECT_COPY.proposalNote.replace("Custom Project · ", "")}</p>
           </div>
           <div className="flex-grow mb-8">
             <p className="text-white/60 leading-relaxed text-sm mb-6">
-              You know what needs to be built. Post your brief and vetted experts compete with proposals scoped to your exact tools and process.
+              {CUSTOM_PROJECT_COPY.description}
             </p>
             <ul className="space-y-3">
-              {[
-                "Your team stops doing repetitive work that should have been automated years ago",
-                "You get a live, working automation, not a plan or a prototype",
-                "Full cost transparency upfront: build cost and monthly running costs, itemised",
-                "Every proposal is tailored to your stack, not a generic template",
-                "Nothing goes live without your sign-off at every milestone",
-              ].map((item) => (
+              {CUSTOM_PROJECT_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-white/40 shrink-0 mt-0.5" /> {item}
                 </li>
@@ -391,9 +381,9 @@ export function HowItWorksBusinessView() {
               href="/jobs/new"
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
             >
-              Post My Custom Project <ArrowRight className="h-4 w-4" />
+              {CUSTOM_PROJECT_COPY.cta} <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="text-xs text-white/30 text-center mt-3">50% refund if no proposal meets your criteria</p>
+            <p className="text-xs text-white/30 text-center mt-3">{CUSTOM_PROJECT_COPY.footer}</p>
           </div>
         </div>
       </div>

@@ -2,9 +2,10 @@
 
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider, usePostHog } from "posthog-js/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { hasAnalyticsConsent, CONSENT_CHANGED_EVENT } from "@/lib/consent";
 
 const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -22,13 +23,15 @@ function getSessionId() {
   return sid;
 }
 
-// ── Local DB page view tracker (fires for ALL visitors) ───────────────────────
+// ── Local DB page view tracker (respects analytics consent) ─────────────────
 
 function DbPageViewTracker() {
   const pathname = usePathname();
   const isFirst = useRef(true);
 
   useEffect(() => {
+    if (!hasAnalyticsConsent()) return;
+
     try {
       const blob = new Blob(
         [JSON.stringify({
@@ -56,7 +59,7 @@ function PostHogPageViewTracker() {
   const ph = usePostHog();
 
   useEffect(() => {
-    if (!ph) return;
+    if (!ph || !hasAnalyticsConsent()) return;
     const url = window.location.origin + pathname + (searchParams.toString() ? `?${searchParams}` : "");
     ph.capture("$pageview", { $current_url: url });
   }, [pathname, searchParams, ph]);
@@ -72,7 +75,7 @@ function UserIdentifier() {
   const identified = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!ph || !session?.user?.id) return;
+    if (!ph || !session?.user?.id || !hasAnalyticsConsent()) return;
     if (identified.current === session.user.id) return;
 
     ph.identify(session.user.id, {
@@ -88,27 +91,51 @@ function UserIdentifier() {
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  const [analyticsAllowed, setAnalyticsAllowed] = useState(false);
+
+  const updateConsent = useCallback(() => {
+    setAnalyticsAllowed(hasAnalyticsConsent());
+  }, []);
+
+  useEffect(() => {
+    updateConsent();
+    const handleConsentChange = () => updateConsent();
+    window.addEventListener(CONSENT_CHANGED_EVENT, handleConsentChange);
+    return () => window.removeEventListener(CONSENT_CHANGED_EVENT, handleConsentChange);
+  }, [updateConsent]);
+
+  // Initialize or teardown PostHog based on consent
   useEffect(() => {
     if (!KEY) return;
 
-    posthog.init(KEY, {
-      api_host: "/ingest",
-      ui_host: "https://eu.posthog.com",
-      person_profiles: "identified_only",
-      capture_pageview: false,
-      capture_pageleave: true,
-      session_recording: {
-        maskAllInputs: true,
-        maskTextSelector: "[data-ph-mask]",
-      },
-      loaded: (ph) => {
-        if (process.env.NODE_ENV === "development") ph.debug(false);
-      },
-    });
-  }, []);
+    if (analyticsAllowed) {
+      if (!posthog.__loaded) {
+        posthog.init(KEY, {
+          api_host: "/ingest",
+          ui_host: "https://eu.posthog.com",
+          person_profiles: "identified_only",
+          capture_pageview: false,
+          capture_pageleave: true,
+          session_recording: {
+            maskAllInputs: true,
+            maskTextSelector: "[data-ph-mask]",
+          },
+          loaded: (ph) => {
+            if (process.env.NODE_ENV === "development") ph.debug(false);
+          },
+        });
+      } else {
+        posthog.opt_in_capturing();
+      }
+    } else {
+      if (posthog.__loaded) {
+        posthog.opt_out_capturing();
+      }
+    }
+  }, [analyticsAllowed]);
 
-  // DbPageViewTracker always renders (tracks all visitors to local DB)
-  if (!KEY) {
+  // When no PostHog key or no consent, just render DB tracker + children
+  if (!KEY || !analyticsAllowed) {
     return (
       <>
         <DbPageViewTracker />

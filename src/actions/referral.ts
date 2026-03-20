@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { log } from "@/lib/logger";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import * as Sentry from "@sentry/nextjs";
 
 // Helper to type the JSON field
@@ -12,6 +14,11 @@ interface ReferralRewards {
 
 export async function getReferralStats(userId: string) {
   try {
+    // Verify the caller owns this userId
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || session.user.id !== userId) {
+      return { error: "Unauthorized" };
+    }
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -55,6 +62,10 @@ export async function getReferralStats(userId: string) {
 
 export async function trackUserLogin(userId: string) {
   try {
+    // Verify the caller owns this userId
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || session.user.id !== userId) return;
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { lastLoginAt: true, loginDaysCount: true }

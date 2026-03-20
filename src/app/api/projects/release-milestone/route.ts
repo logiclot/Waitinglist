@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   // Rate limit: max 60 writes per minute per user
-  const rl = apiWriteLimiter.check(session.user.id);
+  const rl = await apiWriteLimiter.check(session.user.id);
   if (!rl.success) {
     log.warn("milestone.release_rate_limited", { userId: session.user.id });
     return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });

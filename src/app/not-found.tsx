@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Home, ArrowLeft } from "lucide-react";
-import { BRAND_NAME } from "@/lib/branding";
 import { LogoMark } from "@/components/LogoMark";
 
 export default function NotFound() {
@@ -17,15 +16,15 @@ export default function NotFound() {
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Page not found</h1>
         <p className="text-muted-foreground mb-8">
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          This page doesn&apos;t exist, but your next automation might. Browse solutions or start a Discovery Scan.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/"
+            href="/solutions"
             className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
           >
             <Home className="h-4 w-4" />
-            Back to {BRAND_NAME}
+            Browse Solutions
           </Link>
           <button
             type="button"

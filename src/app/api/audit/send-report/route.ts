@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resend } from "@/lib/resend";
+import { resend, getFromEmail } from "@/lib/resend";
 import { auditReportEmail } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
 import { publicFormLimiter } from "@/lib/rate-limit";
@@ -184,7 +184,7 @@ const VALID_TASKS = Object.keys(TASK_COPY);
 export async function POST(request: Request) {
   try {
     const ip = (request.headers.get("x-forwarded-for") ?? "unknown").split(",")[0].trim();
-    const ipCheck = publicFormLimiter.check(`ip:${ip}`);
+    const ipCheck = await publicFormLimiter.check(`ip:${ip}`);
     if (!ipCheck.success) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
@@ -197,7 +197,7 @@ export async function POST(request: Request) {
     }
 
     // Also rate limit by target email to prevent flooding a specific address
-    const emailCheck = publicFormLimiter.check(`email:${email.toLowerCase()}`);
+    const emailCheck = await publicFormLimiter.check(`email:${email.toLowerCase()}`);
     if (!emailCheck.success) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
@@ -217,7 +217,7 @@ export async function POST(request: Request) {
 
     const results = computeResults(answers as Answers);
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    const fromEmail = getFromEmail();
     if (!fromEmail) {
       return NextResponse.json({ error: "Email sending not configured" }, { status: 500 });
     }

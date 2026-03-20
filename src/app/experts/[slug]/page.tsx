@@ -62,9 +62,9 @@ export default async function ExpertProfilePage({ params }: PageProps) {
     // Admin override? For V1, just show not found/public
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-        <h1 className="text-3xl font-bold mb-4">Specialist not found</h1>
+        <h1 className="text-3xl font-bold mb-4">Expert not found</h1>
         <p className="text-muted-foreground mb-8">
-          The specialist you are looking for does not exist or has not been approved yet.
+          The expert you are looking for does not exist or has not been approved yet.
         </p>
         <Link
           href="/solutions"

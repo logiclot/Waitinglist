@@ -11,42 +11,42 @@ import { GlowBorder } from "@/components/ui/glow-border";
 import { ClipboardList, ShieldCheck, Clock } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "LogicLot — Vetted Automation Solutions for Growing Businesses",
+  title: "LogicLot | Verified Automation Solutions for Growing Businesses",
   description:
-    "Browse fixed-price automation solutions built by vetted experts. From CRM to invoicing to lead generation — every project milestone-protected and escrow-secured.",
+    "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
   keywords: [
     "automation solutions", "business automation", "workflow automation",
     "no-code experts", "automation marketplace", "CRM automation",
     "Zapier experts", "Make.com experts", "automation consultants",
   ],
   openGraph: {
-    title: "LogicLot — Vetted Automation Solutions",
+    title: "LogicLot | Verified Automation Solutions",
     description:
-      "Fixed-price automation solutions from vetted experts. Milestone payments, escrow-protected.",
-    url: "https://logiclot.com",
+      "Fixed-price automation solutions from verified experts. Milestone payments, escrow-protected.",
+    url: "https://logiclot.io",
     siteName: "LogicLot",
     type: "website",
     images: [
       {
-        url: "https://logiclot.com/og-image.png",
+        url: "https://logiclot.io/og-image.png",
         width: 1200,
         height: 630,
-        alt: "LogicLot — Automation Marketplace",
+        alt: "LogicLot | Automation Marketplace",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "LogicLot — Vetted Automation Solutions",
-    description: "Fixed-price automation solutions. Milestone payments, escrow-protected.",
-    images: ["https://logiclot.com/og-image.png"],
+    title: "LogicLot | Verified Automation Solutions",
+    description: "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
+    images: ["https://logiclot.io/og-image.png"],
   },
   robots: {
     index: true,
     follow: true,
     googleBot: { index: true, follow: true },
   },
-  alternates: { canonical: "https://logiclot.com" },
+  alternates: { canonical: "https://logiclot.io" },
 };
 
 export default function Home() {

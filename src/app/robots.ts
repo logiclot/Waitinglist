@@ -22,6 +22,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://logiclot.com/sitemap.xml",
+    sitemap: "https://logiclot.io/sitemap.xml",
   };
 }

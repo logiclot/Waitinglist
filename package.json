@@ -18,6 +18,8 @@
     "@supabase/supabase-js": "^2.93.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/pg": "^8.16.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",

@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { resend } from "@/lib/resend";
+import { resend, getFromEmail } from "@/lib/resend";
 import { notificationEmail } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
 
 export type NotificationType = "info" | "success" | "alert";
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const FROM_EMAIL = getFromEmail();
 
 async function sendNotificationEmail(
   userId: string,

@@ -13,11 +13,11 @@ import { log } from "@/lib/logger";
 import { captureException } from "@/lib/sentry";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
-import { resend } from "@/lib/resend";
+import { resend, getFromEmail } from "@/lib/resend";
 import { welcomeEmail } from "@/lib/email-templates";
 import { fireBusinessOnboardingNotifications } from "@/lib/onboarding-notifications";
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const FROM_EMAIL = getFromEmail();
 
 async function checkAdmin() {
   const session = await getServerSession(authOptions);
@@ -891,7 +891,7 @@ export async function adminCreateBusinessAccount(params: {
       resend.emails.send({
         from: FROM_EMAIL,
         to: user.email,
-        subject: "You're all set on LogicLot — here's what to do next",
+        subject: "You're all set on LogicLot. Here's what to do next",
         html: welcomeEmail({ firstName, role: "business" }),
       }).catch((e) => log.error("admin.welcome_email_failed", { userId: user.id, error: String(e) }));
     }
@@ -1515,7 +1515,8 @@ export async function sendExpertInvites() {
 
   if (pending.length === 0) return { sent: 0 };
 
-  const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+  const { getFromEmail: getFrom } = await import("@/lib/resend");
+  const FROM_EMAIL = getFrom();
   if (!FROM_EMAIL) return { error: "RESEND_FROM_EMAIL not configured" };
 
   // Lazy import to avoid circular dependency issues

@@ -8,47 +8,52 @@
 import { DISCOVERY_SCAN_PRICE_CENTS, CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 
 function formatEuros(cents: number): string {
-  return `€${cents / 100}`;
+  return `\u20AC${cents / 100}`;
 }
 
 export const DISCOVERY_SCAN_BULLETS = [
-  "Find your 3 biggest time or cost leaks — identified by real experts",
-  "Get 2–5 proposals with full scope, timeline, and ROI estimate",
-  "Live demo before any commitment or access is granted",
-  "Walk away with clarity — even if you don\u2019t proceed",
+  "Uncover where your team is bleeding 10\u201330+ hours a week on repetitive work",
+  "Get a clear ROI breakdown before you spend another cent",
+  "Receive 2\u20135 competing proposals with scope, timeline, and fixed pricing",
+  "No system access needed, no commitment to proceed",
 ] as const;
 
 export const CUSTOM_PROJECT_BULLETS = [
-  "Your team stops doing manually what should have been automated a long time ago.",
-  "The problem you describe is the exact problem that gets solved",
-  "You leave with a live, working automation \u2014 not a plan or a prototype",
-  "Know your total cost upfront \u2014 implementation and monthly running costs, itemised",
-  "Nothing ships without your sign-off \u2014 you stay in control at every step",
-  "Every proposal you receive is built for your tools and process.",
+  "Stop paying people to do work that software handles in seconds",
+  "Get a live, working automation deployed inside your existing tools",
+  "Fixed price agreed upfront. No scope creep, no surprise invoices",
+  "Funds held in escrow. Released only when you approve the result",
+  "Every proposal is built for your exact workflow, not a generic template",
 ] as const;
 
 export const DISCOVERY_SCAN_COPY = {
   badge: "Most Popular",
   price: formatEuros(DISCOVERY_SCAN_PRICE_CENTS),
+  priceCents: DISCOVERY_SCAN_PRICE_CENTS,
   priceNote: "one-time posting fee",
   proposalNote: "Discovery Scan \u00b7 Up to 5 expert proposals",
-  headline: "Stop guessing.\nStart automating.",
+  headline: "Not sure what to automate?\nWe'll find it for you.",
   description:
-    "Describe how your business runs. Automation experts identify your biggest wins and send you concrete proposals \u2014 no access required, no commitment.",
+    "You don't need to know what to automate. Describe how your team works day-to-day. Experts analyse your operations and come back with a prioritised plan: what to automate first, how much it saves, and exactly how to build it.",
+  shortDescription:
+    "You don't need to know what to automate. Describe how your team works. Experts come back with a prioritised plan and fixed-price proposals within 48 hours.",
   cta: "Get My Automation Roadmap",
-  footer: "First proposals arrive within 24 hours",
+  footer: "First proposals arrive within 48 hours",
   trustNote:
-    "You don\u2019t need to know what to automate. Just describe your business \u2014 the analysis is on us.",
+    "You don't need to know what to automate. Just describe your business. The analysis is on us.",
 } as const;
 
 export const CUSTOM_PROJECT_COPY = {
   badge: "For Complex Workflows",
   price: formatEuros(CUSTOM_PROJECT_PRICE_CENTS),
+  priceCents: CUSTOM_PROJECT_PRICE_CENTS,
   priceNote: "one-time posting fee",
   proposalNote: "Custom Project \u00b7 Max 3 tailored proposals",
-  headline: "Describe it once.\nGet it built right.",
+  headline: "Know what you need?\nGet it built.",
   description:
-    "You know what needs to change. Post your requirement \u2014 Elite experts compete for the job with tailored proposals, not generic advice.",
+    "You already know what's broken or what you want built. Post your requirement once. Verified experts compete for the job with a fixed price, clear timeline, and a working result. Not a plan. Not a prototype.",
+  shortDescription:
+    "Post your requirement once. Verified experts compete with fixed-price proposals, clear timelines, and working results. Not advice.",
   cta: "Post My Custom Project",
   footer: "50% refund if no proposal meets your criteria",
   trustNote:

@@ -65,6 +65,38 @@ export default function PricingPage() {
                   text: "Experts receive their payout typically 3 days after you mark the project as complete. This cooling-off period ensures that everything is working correctly before funds are final.",
                 },
               },
+              {
+                "@type": "Question",
+                name: "How long does implementation take?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "It depends on the solution. Simple automations can be deployed in 2-3 days. More complex workflows typically take 1-2 weeks. Every solution listing includes an estimated delivery timeline, and custom projects are scoped with clear milestones before work begins.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "What happens if I need changes after delivery?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Each solution includes a support period after delivery (typically 7-14 days) for bug fixes and minor adjustments. If you need changes beyond the original scope, you can discuss an additional milestone with the expert or purchase extended support.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Can I talk to the expert before buying?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Yes. Once you purchase a solution or post a project, you get direct on-platform messaging with the expert. For Discovery Scans and Custom Projects, experts submit detailed proposals first so you can evaluate their approach before committing to implementation.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "What if the automation breaks after the support period?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Automations are built inside your own tools, so you retain full ownership and access. If something breaks due to a third-party update, you can reach out to the expert for a follow-up engagement or purchase an extended support plan for ongoing coverage.",
+                },
+              },
             ],
           }),
         }}
@@ -343,6 +375,42 @@ export default function PricingPage() {
             </h3>
             <p className="text-muted-foreground pl-8">
               Experts receive their payout typically 3 days after you mark the project as complete. This cooling-off period ensures that everything is working correctly before funds are final.
+            </p>
+          </div>
+          <div className="border border-border rounded-lg p-6 bg-card">
+            <h3 className="font-bold flex items-start gap-3 mb-2">
+              <HelpCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+              How long does implementation take?
+            </h3>
+            <p className="text-muted-foreground pl-8">
+              It depends on the solution. Simple automations can be deployed in 2-3 days. More complex workflows typically take 1-2 weeks. Every solution listing includes an estimated delivery timeline, and custom projects are scoped with clear milestones before work begins.
+            </p>
+          </div>
+          <div className="border border-border rounded-lg p-6 bg-card">
+            <h3 className="font-bold flex items-start gap-3 mb-2">
+              <HelpCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+              What happens if I need changes after delivery?
+            </h3>
+            <p className="text-muted-foreground pl-8">
+              Each solution includes a support period after delivery (typically 7-14 days) for bug fixes and minor adjustments. If you need changes beyond the original scope, you can discuss an additional milestone with the expert or purchase extended support.
+            </p>
+          </div>
+          <div className="border border-border rounded-lg p-6 bg-card">
+            <h3 className="font-bold flex items-start gap-3 mb-2">
+              <HelpCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+              Can I talk to the expert before buying?
+            </h3>
+            <p className="text-muted-foreground pl-8">
+              Yes. Once you purchase a solution or post a project, you get direct on-platform messaging with the expert. For Discovery Scans and Custom Projects, experts submit detailed proposals first so you can evaluate their approach before committing to implementation.
+            </p>
+          </div>
+          <div className="border border-border rounded-lg p-6 bg-card">
+            <h3 className="font-bold flex items-start gap-3 mb-2">
+              <HelpCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+              What if the automation breaks after the support period?
+            </h3>
+            <p className="text-muted-foreground pl-8">
+              Automations are built inside your own tools, so you retain full ownership and access. If something breaks due to a third-party update, you can reach out to the expert for a follow-up engagement or purchase an extended support plan for ongoing coverage.
             </p>
           </div>
         </div>

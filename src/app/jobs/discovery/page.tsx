@@ -24,6 +24,7 @@ import {
 } from "@/components/jobs/questionnaire/QuestionnaireFields";
 import { buildBriefData } from "@/components/jobs/questionnaire/buildBriefData";
 import * as C from "./constants";
+import { DISCOVERY_SCAN_COPY, DISCOVERY_SCAN_BULLETS } from "@/lib/copy/requestCards";
 
 export default function DiscoveryWizardPage() {
   const [step, setStep] = useState(0); // 0 = Intro
@@ -248,14 +249,14 @@ export default function DiscoveryWizardPage() {
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Stop guessing. Start automating.</h1>
+              <h1 className="text-xl font-bold">{DISCOVERY_SCAN_COPY.headline.replace("\n", " ")}</h1>
               <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                Discovery Scan &middot; &euro;50 one-time &middot; Up to 5 expert proposals
+                {DISCOVERY_SCAN_COPY.proposalNote} &middot; {DISCOVERY_SCAN_COPY.price} one-time
               </p>
             </div>
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Describe how your business runs. Automation experts identify your biggest wins and send you concrete proposals — no access required, no commitment.
+            {DISCOVERY_SCAN_COPY.description}
           </p>
         </div>
 
@@ -266,12 +267,7 @@ export default function DiscoveryWizardPage() {
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">What you get</p>
             <ul className="space-y-2.5">
-              {[
-                "Find your 3 biggest time or cost leaks — identified by real experts",
-                "Get 2\u20135 proposals with full scope, timeline, and ROI estimate",
-                "Live demo before any commitment or access is granted",
-                "Walk away with clarity — even if you don\u2019t proceed",
-              ].map((item) => (
+              {DISCOVERY_SCAN_BULLETS.map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                   <span className="text-foreground">{item}</span>
@@ -283,12 +279,12 @@ export default function DiscoveryWizardPage() {
           {/* Right: Pricing + CTA */}
           <div className="flex flex-col gap-4">
             <div className="bg-secondary/40 rounded-xl p-5 border border-border">
-              <div className="text-2xl font-bold text-foreground mb-0.5">&euro;50</div>
+              <div className="text-2xl font-bold text-foreground mb-0.5">{DISCOVERY_SCAN_COPY.price}</div>
               <div className="text-xs text-muted-foreground mb-3">One-time posting fee</div>
               <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
-                  First proposals within 24 hours
+                  {DISCOVERY_SCAN_COPY.footer.replace("First proposals arrive", "First proposals")}
                 </li>
                 <li className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
@@ -302,16 +298,16 @@ export default function DiscoveryWizardPage() {
             </div>
 
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-600 dark:text-blue-400">
-              You don&apos;t need to know what to automate. Just describe your business — the analysis is on us.
+              {DISCOVERY_SCAN_COPY.trustNote}
             </div>
 
             <button
               onClick={() => setStep(1)}
               className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary/20"
             >
-              Get My Automation Roadmap &rarr;
+              {DISCOVERY_SCAN_COPY.cta} &rarr;
             </button>
-            <p className="text-xs text-muted-foreground text-center -mt-1">First proposals arrive within 24 hours</p>
+            <p className="text-xs text-muted-foreground text-center -mt-1">{DISCOVERY_SCAN_COPY.footer}</p>
           </div>
         </div>
       </div>

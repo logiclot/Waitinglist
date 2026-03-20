@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Sparkles, Crown } from "lucide-react";
 import { SolutionCard } from "@/components/SolutionCard";
 import { solutions } from "@/data/mock";
+import { DISCOVERY_SCAN_COPY, CUSTOM_PROJECT_COPY } from "@/lib/copy/requestCards";
 
 export function FeaturedSolutions() {
   // Use the first 4 solutions from mock data as featured
@@ -39,7 +40,7 @@ export function FeaturedSolutions() {
               </div>
             </div>
             <p className="text-sm text-white/50 leading-relaxed">
-              Describe how your business runs. Experts identify your biggest automation wins and send you concrete proposals within 24 hours.
+              {DISCOVERY_SCAN_COPY.shortDescription}
             </p>
             <Link
               href="/jobs/discovery"
@@ -60,7 +61,7 @@ export function FeaturedSolutions() {
               </div>
             </div>
             <p className="text-sm text-white/50 leading-relaxed">
-              Write your requirement once. Elite experts compete for the job with scoped proposals, a fixed price, and a clear timeline.
+              {CUSTOM_PROJECT_COPY.shortDescription}
             </p>
             <Link
               href="/jobs/new"

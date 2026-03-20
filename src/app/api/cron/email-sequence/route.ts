@@ -17,7 +17,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resend } from "@/lib/resend";
+import { resend, getFromEmail } from "@/lib/resend";
 import { sequenceEmail, postApprovalEmail, reEngagementEmail } from "@/lib/email-templates";
 import type { NurtureRecommendation } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
@@ -25,7 +25,7 @@ import { fireWelcomeCoupon } from "@/lib/onboarding-notifications";
 import { APP_URL } from "@/lib/app-url";
 import { getPersonalizedRecommendations } from "@/lib/recommendation-engine";
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const FROM_EMAIL = getFromEmail();
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,7 @@ const SEQUENCE: Record<Role, { d3: SequenceStep; d7: SequenceStep }> = {
     d3: {
       subject: "Found what you're looking for?",
       headline: "Still looking for the right automation?",
-      body: `Most businesses start small — one process, one hour saved per day.<br/><br/>
+      body: `Most businesses start small. One process, one hour saved per day.<br/><br/>
 Here are the three most popular starting points right now:<br/>
 → A CRM that updates itself when leads come in<br/>
 → Invoices that send automatically after project milestones<br/>
@@ -48,10 +48,10 @@ Any of these sound familiar?`,
       ctaUrl: `${APP_URL}/solutions`,
     },
     d7: {
-      subject: "8 hours back per week — here's how",
+      subject: "8 hours back per week. Here's how",
       headline: "One automation. One hour to set up. Eight hours back every week.",
       body: `The businesses seeing the best results on LogicLot all started with the same thing: a <strong>Discovery Scan</strong>.<br/><br/>
-For a flat fee, an expert maps exactly what's slowing you down and delivers a clear automation roadmap — no jargon, no vague proposals.<br/><br/>
+For a flat fee, an expert maps exactly what's slowing you down and delivers a clear automation roadmap. No jargon, no vague proposals.<br/><br/>
 <strong>No ongoing commitment. No agency retainer.</strong> Just clarity on what to build first.`,
       ctaLabel: "Book a Discovery Scan",
       ctaUrl: `${APP_URL}/solutions?category=discovery`,
@@ -61,7 +61,7 @@ For a flat fee, an expert maps exactly what's slowing you down and delivers a cl
   EXPERT: {
     d3: {
       subject: "One solution listing changes everything",
-      headline: "Your profile is live — but businesses can't find you yet.",
+      headline: "Your profile is live, but businesses can't find you yet.",
       body: `Without at least one published solution, you don't appear in any category search or expert listing.<br/><br/>
 It takes about 20 minutes to set up. Here's what happens after:<br/>
 → You appear in relevant category searches<br/>
@@ -79,7 +79,7 @@ Each new solution you add:<br/>
 → Covers a new category search<br/>
 → Gives businesses more reasons to reach out<br/>
 → Builds your credibility with proof and case studies<br/><br/>
-The second listing always converts better than the first — because visitors see depth.`,
+The second listing always converts better than the first, because visitors see depth.`,
       ctaLabel: "Add another solution",
       ctaUrl: `${APP_URL}/expert/add-solution`,
       footnote: "Your existing solution is already live. This is just about adding more reach.",
@@ -215,7 +215,7 @@ async function sendPostApprovalEmails(now: Date): Promise<number> {
         await resend.emails.send({
           from: FROM_EMAIL,
           to: email,
-          subject: `How's your automation working? — ${projectTitle}`,
+          subject: `How's your automation working? ${projectTitle}`,
           html: postApprovalEmail({ firstName, projectTitle, recommendations: recs }),
         });
       } else {

@@ -85,7 +85,7 @@ export function SmartEmptyState({
                 Not sure where to start?
               </h4>
               <p className="text-xs text-white/50">
-                Tell us what you need and get expert proposals within 48h.
+                Describe how your team works. Experts find your biggest automation wins within 48h.
               </p>
             </div>
           </div>

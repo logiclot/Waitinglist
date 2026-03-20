@@ -8,7 +8,7 @@ const VALID_EVENTS = ["quiz_start", "step_complete", "quiz_complete", "email_sen
 export async function POST(request: Request) {
   try {
     const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-    const rl = auditTrackLimiter.check(ip);
+    const rl = await auditTrackLimiter.check(ip);
     if (!rl.success) {
       return NextResponse.json({ ok: true }); // silently drop, don't error for tracking
     }

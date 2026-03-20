@@ -213,7 +213,7 @@ export function ProposalCard({ bid, jobId, isOwner, isExpertView = false, isPost
 
   const isAwarded = bid.status === "accepted";
   const canUndo = isAwarded && !isFunded && isOwner;
-  const displayName = isPostTenderView ? (anonymizedLabel ?? "Expert") : (bid.specialist?.displayName ?? "Specialist");
+  const displayName = isPostTenderView ? (anonymizedLabel ?? "Expert") : (bid.specialist?.displayName ?? "Expert");
 
   return (
     <div className={`bg-card border rounded-xl overflow-hidden transition-all ${
@@ -518,7 +518,7 @@ export function ProposalList({ bids, jobId, isOwner, isExpertView = false, isPos
       <div className="text-center py-12 border border-dashed border-border rounded-xl">
         <h3 className="text-lg font-medium mb-1">No proposals yet</h3>
         <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-          Qualified experts will submit structured proposals here. Typically within 24 hours.
+          Qualified experts will submit structured proposals here. Typically within 48 hours.
         </p>
       </div>
     );

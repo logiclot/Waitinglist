@@ -2,6 +2,14 @@
 
 import { LogoMark } from "@/components/LogoMark";
 import { useMorseCode } from "@/hooks/useMorseCode";
+import { useEffect, useState } from "react";
+
+const TRUST_SIGNALS = [
+  "Every project is NDA-protected",
+  "0% platform fee for businesses",
+  "Escrow on every payment",
+  "You approve before funds release",
+];
 
 /* ── Panel component ───────────────────────────────────────────────── */
 
@@ -9,6 +17,15 @@ export function AuthBrandingPanel() {
   const { on: morseOn, cycleCount } = useMorseCode();
   // Rotate one node position (45°) after each full morse message
   const rotation = cycleCount * 45;
+
+  const [trustIndex, setTrustIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTrustIndex((prev) => (prev + 1) % TRUST_SIGNALS.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="relative flex flex-col items-center justify-center h-full w-full overflow-hidden select-none">
@@ -53,10 +70,29 @@ export function AuthBrandingPanel() {
         >
           Log<span className="opacity-60">|</span>cLot
         </h2>
-        <p className="mt-3 text-white/50 text-sm tracking-wide">
-          Automate your daily grind.
+        <p
+          key={trustIndex}
+          className="mt-3 text-white/50 text-sm tracking-wide"
+          style={{
+            animation: "fadeInUp 0.5s ease-out both",
+          }}
+        >
+          {TRUST_SIGNALS[trustIndex]}
         </p>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }

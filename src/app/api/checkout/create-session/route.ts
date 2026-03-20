@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   // Rate limit by user ID (20 checkout attempts per minute)
-  const rl = checkoutLimiter.check(session.user.id);
+  const rl = await checkoutLimiter.check(session.user.id);
   if (!rl.success) {
     log.warn("checkout.rate_limited", { userId: session.user.id });
     return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });

@@ -123,7 +123,7 @@ export async function fireBusinessOnboardingNotifications(userId: string) {
       createNotification(
         userId,
         "🔍 Browse ready-made solutions",
-        "Explore pre-built automations vetted by our team, live in days, not months.",
+        "Explore pre-built automations verified by our team, live in days, not months.",
         "info",
         "/solutions"
       )
@@ -149,7 +149,7 @@ export async function fireBusinessOnboardingNotifications(userId: string) {
       createNotification(
         userId,
         "✏️ Need something custom?",
-        "Post a Custom Project brief and get proposals from vetted experts, fast.",
+        "Post a Custom Project brief and get proposals from verified experts, fast.",
         "info",
         "/jobs/new"
       )

@@ -322,7 +322,8 @@ export async function submitDelivery(
     );
 
     // Send delivery-ready email to buyer (fire-and-forget)
-    const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+    const { getFromEmail } = await import("@/lib/resend");
+    const FROM_EMAIL = getFromEmail();
     if (FROM_EMAIL && order.buyer?.email) {
       resend.emails
         .send({

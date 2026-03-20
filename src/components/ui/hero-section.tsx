@@ -217,8 +217,8 @@ export function Hero() {
               className="mt-4 md:mt-5 text-xl md:text-3xl lg:text-4xl font-medium leading-[1.35] text-balance"
               style={{ color: "rgba(17,24,39,0.52)" }}
             >
-              <span className="word" style={{ animation: "word-appear 0.7s ease-out 500ms both" }}>Hire vetted automation experts.</span>{" "}
-              <span className="word" style={{ animation: "word-appear 0.7s ease-out 660ms both" }}>Get real results, not promises.</span>
+              <span className="word" style={{ animation: "word-appear 0.7s ease-out 500ms both" }}>Browse proven automations.</span>{" "}
+              <span className="word" style={{ animation: "word-appear 0.7s ease-out 660ms both" }}>See them work. Deploy in days.</span>
             </div>
           </h1>
 

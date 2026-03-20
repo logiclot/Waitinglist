@@ -73,7 +73,7 @@ export const authOptions: NextAuthOptions = {
           const email = credentials.email.trim().toLowerCase();
 
           // Brute-force protection
-          const rateCheck = loginLimiter.check(`login:${email}`);
+          const rateCheck = await loginLimiter.check(`login:${email}`);
           if (!rateCheck.success) {
             log.warn("auth.credentials.rate_limited", { emailPrefix: email.slice(0, 5) + "***" });
             throw new Error("Too many login attempts. Please try again in 15 minutes.");
@@ -299,5 +299,6 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 60 * 60, // 1 hour — forces re-authentication; refresh cycle (5 min) keeps session fresh within this window
   },
 };

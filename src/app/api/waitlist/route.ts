@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resend } from "@/lib/resend";
+import { resend, getFromEmail } from "@/lib/resend";
 import { log } from "@/lib/logger";
 import { publicFormLimiter } from "@/lib/rate-limit";
 
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     // Rate limit: 5 submissions per IP per 10 minutes
     const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-    const rl = publicFormLimiter.check(ip);
+    const rl = await publicFormLimiter.check(ip);
     if (!rl.success) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     });
 
     // Send confirmation email (only if sender is configured)
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    const fromEmail = getFromEmail();
     if (fromEmail) {
       try {
         await resend.emails.send({

@@ -32,24 +32,24 @@ const BASE_URL = `https://${BRAND_DOMAIN}`;
 
 export const metadata: Metadata = {
   title: {
-    default: `${BRAND_NAME} — Buy ready to implement automations for your day to day business`,
+    default: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses`,
     template: `%s | ${BRAND_NAME}`,
   },
-  description: `${BRAND_NAME} is a marketplace where businesses buy ready to implement automations and work directly with specialists who deliver them.`,
+  description: "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
   metadataBase: new URL(BASE_URL),
   openGraph: {
-    title: `${BRAND_NAME} — Automation marketplace`,
-    description: `${BRAND_NAME} is a marketplace where businesses buy ready to implement automations and work directly with specialists who deliver them.`,
+    title: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses`,
+    description: "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
     url: BASE_URL,
     siteName: BRAND_NAME,
     locale: "en_US",
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: `${BRAND_NAME} — Automation marketplace` }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses` }],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${BRAND_NAME} — Automation marketplace`,
-    description: `${BRAND_NAME} is a marketplace where businesses buy ready to implement automations and work directly with specialists who deliver them.`,
+    title: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses`,
+    description: "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
   },
   robots: {
     index: true,

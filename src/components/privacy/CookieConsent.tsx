@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CONSENT_CHANGED_EVENT } from "@/lib/consent";
 
 export function CookieConsent() {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +35,8 @@ export function CookieConsent() {
     }));
     setShowBanner(false);
     setIsOpen(false);
+    // Notify analytics providers that consent state changed
+    window.dispatchEvent(new CustomEvent(CONSENT_CHANGED_EVENT, { detail: prefsToSave }));
   };
 
   const acceptAll = () => {

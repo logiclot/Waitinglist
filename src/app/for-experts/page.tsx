@@ -39,9 +39,9 @@ export default async function ForExpertsPage() {
             Build once. Sell repeatedly.
           </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              Productize your best AI automations into repeatable implementations.
+              Turn your best automation work into a product.
               <br />
-              Clear scope, qualified buyers, and protected milestone payouts.
+              Sell it to qualified buyers, get paid on approval.
             </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
@@ -77,7 +77,7 @@ export default async function ForExpertsPage() {
       <section className="py-20 bg-card/30">
         <div className="container mx-auto px-4 max-w-5xl">
           <h2 className="text-2xl md:text-3xl font-bold mb-12 text-center">
-            If you&apos;re doing AI automations, you&apos;ve felt this&hellip;
+            Sound familiar?
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 mb-12">

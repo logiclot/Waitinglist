@@ -7,12 +7,12 @@ import { markJobAsPaid } from "@/actions/jobs";
 import { checkBusinessReferralCondition } from "@/actions/referral";
 import { log } from "@/lib/logger";
 import { captureException } from "@/lib/sentry";
-import { resend } from "@/lib/resend";
+import { resend, getFromEmail } from "@/lib/resend";
 import { demoBookedEmail, expertDemoBookedEmail } from "@/lib/email-templates";
 import Stripe from "stripe";
 import type { Prisma } from "@prisma/client";
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const FROM_EMAIL = getFromEmail();
 
 /**
  * Fire-and-forget helper to send the demo-booked email to the buyer.
@@ -168,7 +168,7 @@ export async function POST(req: Request) {
           await createNotification(
             buyerId,
             "🚀 Your post is live!",
-            `"${job.title}" is now visible to experts. Expect proposals within 24 hours.`,
+            `"${job.title}" is now visible to experts. Expect proposals within 48 hours.`,
             "success",
             `/jobs/${jobId}`
           );
