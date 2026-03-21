@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { Toaster } from "sonner";
 import { SavedSolutionsProvider } from "@/hooks/SavedSolutionsContext";
 import { SavedSuitesProvider } from "@/hooks/SavedSuitesContext";
+import { Analytics } from "@vercel/analytics/react";
 
 
 const geistSans = localFont({
@@ -132,6 +133,7 @@ export default async function RootLayout({
           <Navbar user={session?.user} isFoundingExpert={isFoundingExpert} />
           <main className="flex-1">{children}</main>
           <Footer />
+          <Analytics />
           <Toaster
             position="top-right"
             theme="light"
