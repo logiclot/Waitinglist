@@ -449,6 +449,183 @@ export function expertDemoBookedEmail({
 
 // ── Expert Invite Email ──────────────────────────────────────────────────────
 
+// ── Launch countdown emails (waitlist) ────────────────────────────────────────
+
+function launchShell(body: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
+          <tr><td style="${HEADER_STYLE}"><span style="${LOGO_STYLE}">LogicLot</span></td></tr>
+          ${body}
+          <tr>
+            <td style="${FOOTER_STYLE}">
+              <p style="${FOOTER_TEXT_STYLE}">
+                You&apos;re receiving this because you joined the LogicLot waitlist.<br/>
+                <a href="${BASE_URL}" style="color:#94a3b8;">logiclot.io</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+type LaunchDay = "d14" | "d7" | "d2" | "launch";
+type WaitlistRole = "business" | "expert";
+
+interface LaunchEmailContent {
+  subject: string;
+  headline: string;
+  body: string;
+  ctaLabel: string;
+  ctaUrl: string;
+  footnote?: string;
+}
+
+export const LAUNCH_SEQUENCE: Record<WaitlistRole, Record<LaunchDay, LaunchEmailContent>> = {
+  business: {
+    d14: {
+      subject: "LogicLot launches April 8th. You're getting first access.",
+      headline: "In two weeks, on April 8th, LogicLot goes live and you're getting first access.",
+      body: `As a waitlist member, you'll be among the first businesses to browse verified automation solutions, connect with verified experts, and stop overpaying for work that should run itself.<br/><br/>
+Here's what's waiting for you on launch day:<br/><br/>
+&bull; <strong>Browse &amp; buy</strong> fixed-price automation solutions, no proposals, no guesswork<br/>
+&bull; <strong>Discovery Scans</strong> let an expert audit your workflows and show you exactly where to automate. Because you're on the waitlist, your first Discovery Scan is completely free.<br/>
+&bull; <strong>Custom Projects</strong> have a specific automation need? Post a brief and get proposals from verified experts, scoped and priced before any work begins.<br/>
+&bull; <strong>Escrow-protected payments</strong> you only pay when milestones are delivered and approved<br/><br/>
+You're on the list. When the doors open on April 8th, you'll be the first to walk through.`,
+      ctaLabel: "Get ready",
+      ctaUrl: BASE_URL,
+    },
+    d7: {
+      subject: "One week to launch 🚀",
+      headline: "LogicLot goes live in 7 days.",
+      body: `Businesses just like yours are wasting 20+ hours a week on tasks that could run automatically: data entry, client onboarding, reporting, invoicing. That ends next week.<br/><br/>
+On launch day you'll be able to:<br/><br/>
+&bull; Browse automation solutions built for real business problems<br/>
+&bull; Use your <strong>free Discovery Scan</strong> to find out exactly where you're losing time<br/>
+&bull; Post a <strong>Custom Project</strong> brief and get scoped proposals from verified experts<br/>
+&bull; Hire with milestone-based, escrow-protected pricing<br/><br/>
+No long contracts. No vague proposals. Just results.<br/><br/>
+We'll email you the moment the doors open.`,
+      ctaLabel: "Preview what's coming",
+      ctaUrl: BASE_URL,
+    },
+    d2: {
+      subject: "48 hours. This is happening.",
+      headline: "LogicLot launches in 2 days.",
+      body: `Experts are listing their solutions right now. On launch day, you'll be able to browse, compare, and buy, all in one place, all with escrow protection.<br/><br/>
+Quick reminder of what you'll get as a waitlist member:<br/><br/>
+&#10003; <strong>First access</strong> before we open to the public<br/>
+&#10003; <strong>1 free Discovery Scan</strong> an expert reviews your business and tells you where automation saves you the most<br/>
+&#10003; <strong>Priority support</strong> during launch week<br/><br/>
+Check your inbox in 48 hours. We'll send your access link.`,
+      ctaLabel: "Learn more",
+      ctaUrl: BASE_URL,
+    },
+    launch: {
+      subject: "LogicLot is LIVE. Your access is ready.",
+      headline: "It's here. LogicLot is officially live.",
+      body: `You now have full access to the marketplace. Browse automation solutions, post a Custom Project, or hire an expert, all with fixed pricing and escrow protection.<br/><br/>
+&#128275; <strong>Your waitlist account is active.</strong> Log in and start exploring.<br/><br/>
+Not sure where to start? Use your <strong>free Discovery Scan</strong>. An expert will analyze your workflows and show you the #1 thing to automate first. It's the best way to begin and it's completely free for waitlist members.<br/><br/>
+Welcome to LogicLot. Let's automate the boring stuff.`,
+      ctaLabel: "Enter LogicLot",
+      ctaUrl: BASE_URL,
+      footnote: "The LogicLot team",
+    },
+  },
+  expert: {
+    d14: {
+      subject: "LogicLot launches April 8th. Your first clients are waiting.",
+      headline: "Two weeks from now, on April 8th, LogicLot opens to businesses and they're already signing up.",
+      body: `As an early expert, you'll have the advantage of being visible from day one. Businesses on our waitlist are actively looking for automation help, and the earlier you list your solutions, the more visibility you get.<br/><br/>
+Here's what's ready for you:<br/><br/>
+&bull; <strong>List your solutions</strong> with fixed pricing, clear deliverables, and demo videos<br/>
+&bull; <strong>Get matched</strong> with businesses who need exactly what you build<br/>
+&bull; <strong>Earn with confidence</strong> escrow-protected milestone payments, and as a founding expert you're locked in at our lowest commission rate of just 11%, permanently<br/><br/>
+Early experts who list before launch day will rank higher in search from the start.`,
+      ctaLabel: "Set up your profile",
+      ctaUrl: BASE_URL,
+    },
+    d7: {
+      subject: "One week until businesses start buying",
+      headline: "In 7 days, LogicLot opens and businesses will start purchasing solutions.",
+      body: `We're launching with a small, curated group of experts, which means more visibility for your listings and less noise to compete with from day one.<br/><br/>
+What to do this week:<br/><br/>
+&bull; <strong>Finalize your solution listings</strong> title, pricing, deliverables, demo video<br/>
+&bull; <strong>Complete your expert profile</strong> photo, bio, portfolio links<br/>
+&bull; <strong>Set your pricing</strong> fixed-price sells faster on LogicLot than hourly<br/><br/>
+As a founding expert, your commission is locked in at just <strong>11%</strong>, permanently.<br/><br/>
+The marketplace opens in 7 days. Be ready.`,
+      ctaLabel: "Prepare your listings",
+      ctaUrl: BASE_URL,
+    },
+    d2: {
+      subject: "48 hours. Be listed when the doors open.",
+      headline: "In 48 hours, businesses will start browsing and buying on LogicLot.",
+      body: `If your solutions are live when the marketplace opens, you'll be in front of buyers from minute one. If not, you're leaving early sales on the table.<br/><br/>
+Final checklist:<br/><br/>
+&#10003; At least <strong>3 solutions listed</strong> with clear deliverables and pricing<br/>
+&#10003; <strong>Profile complete</strong> photo, bio, and skills<br/>
+&#10003; <strong>Demo video</strong> uploaded (solutions with demos get 3&times; more clicks)<br/><br/>
+Founding expert commission: <strong>11%</strong>, the lowest it will ever be. Locked in permanently when you list before launch.<br/><br/>
+See you on the other side.`,
+      ctaLabel: "Finalize your listings",
+      ctaUrl: BASE_URL,
+    },
+    launch: {
+      subject: "We're LIVE. Businesses are browsing right now.",
+      headline: "LogicLot is officially open. Businesses are logging in right now.",
+      body: `If your solutions are listed, they're already visible. If not, there's no better time than right now.<br/><br/>
+&#128275; <strong>Your expert account is active.</strong> Log in and check your dashboard.<br/><br/>
+Here's what to do today:<br/><br/>
+&bull; <strong>Check your solution listings</strong> are published and looking sharp<br/>
+&bull; <strong>Watch for order notifications</strong> respond fast, first impressions matter<br/>
+&bull; <strong>Share your LogicLot profile</strong> on LinkedIn to drive traffic to your solutions<br/><br/>
+Founding expert commission: <strong>11%</strong>, locked in. Let's build something great.<br/><br/>
+Welcome to LogicLot. Your first clients are waiting.`,
+      ctaLabel: "Go to my dashboard",
+      ctaUrl: BASE_URL,
+      footnote: "The LogicLot team",
+    },
+  },
+};
+
+export function launchSequenceEmail({
+  firstName,
+  role,
+  day,
+}: {
+  firstName: string;
+  role: WaitlistRole;
+  day: LaunchDay;
+}): string {
+  const content = LAUNCH_SEQUENCE[role][day];
+  return launchShell(`
+    <tr>
+      <td style="padding:36px 28px;">
+        <p style="margin:0 0 6px;font-size:14px;color:#64748b;">Hi ${firstName},</p>
+        <h1 style="margin:0 0 16px;font-size:19px;font-weight:700;color:#0f172a;line-height:1.4;">${content.headline}</h1>
+        <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.8;">${content.body}</p>
+        <a href="${content.ctaUrl}" style="${BTN_STYLE}">${content.ctaLabel} &rarr;</a>
+        ${content.footnote ? `<p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">${content.footnote}</p>` : ""}
+      </td>
+    </tr>
+  `);
+}
+
 export function expertInviteEmail({ name, inviteUrl }: { name: string; inviteUrl: string }): string {
   const firstName = name.split(" ")[0] || "there";
   return shell(`
