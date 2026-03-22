@@ -42,7 +42,7 @@ const SEQUENCE: Record<Role, { d3: SequenceStep; d7: SequenceStep }> = {
 Here are the three most popular starting points right now:<br/>
 → A CRM that updates itself when leads come in<br/>
 → Invoices that send automatically after project milestones<br/>
-→ A lead pipeline that runs while you sleep<br/><br/>
+→ A lead pipeline that works around the clock<br/><br/>
 Any of these sound familiar?`,
       ctaLabel: "Browse ready-to-deploy solutions",
       ctaUrl: `${APP_URL}/solutions`,

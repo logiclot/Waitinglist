@@ -643,7 +643,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                 <div className="bg-secondary/40 border border-border rounded-xl p-5 text-center">
                   <CheckCircle2 className="h-7 w-7 text-muted-foreground mx-auto mb-2" />
                   <p className="font-semibold text-sm">Project awarded</p>
-                  <p className="text-xs text-muted-foreground mt-1">The client chose an expert. Keep your proposals sharp.</p>
+                  <p className="text-xs text-muted-foreground mt-1">This project has been awarded to another expert.</p>
                 </div>
                 <ClientCard job={job} isDiscovery={isDiscovery} maxBids={maxBids} bidCount={bidCount} isFull={isFull} />
               </>

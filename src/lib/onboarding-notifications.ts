@@ -38,7 +38,7 @@ export async function fireExpertOnboardingNotifications(userId: string) {
       createNotification(
         userId,
         "📅 Connect your calendar",
-        "Let businesses book a demo call straight from your profile — zero back-and-forth.",
+        "Let businesses book a demo call directly from your profile, no scheduling emails needed.",
         "info",
         "/expert/settings"
       )
@@ -149,7 +149,7 @@ export async function fireBusinessOnboardingNotifications(userId: string) {
       createNotification(
         userId,
         "✏️ Need something custom?",
-        "Post a Custom Project brief and get proposals from verified experts, fast.",
+        "Post a Custom Project brief and receive proposals from verified experts.",
         "info",
         "/jobs/new"
       )

@@ -441,7 +441,7 @@ export function expertDemoBookedEmail({
         <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;"><strong>${buyerName}</strong> has just booked and paid for a demo of <strong>${solutionTitle}</strong>.</p>
         <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.7;">Please check your messages and reach out to schedule the call.</p>
         <tr><td style="padding:0 0 24px;"><a href="${BASE_URL}/inbox" style="display:inline-block;background:#2563EB;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;">Go to Inbox</a></td></tr>
-        <p style="margin:0;font-size:14px;color:#6b7280;">Don&apos;t keep them waiting. A fast response makes a great first impression.</p>
+        <p style="margin:0;font-size:14px;color:#6b7280;">We recommend responding promptly to make a great first impression.</p>
       </td>
     </tr>
   `);

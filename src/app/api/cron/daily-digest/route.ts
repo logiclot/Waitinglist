@@ -109,7 +109,7 @@ export async function GET(request: Request) {
                 conversationId,
                 senderId: order.buyerId,
                 type: "system",
-                body: "We're sorry, but we couldn't reach the expert within 48 hours. Your payment has been fully refunded. We sincerely apologize for the inconvenience and have penalized the expert. Thank you for your understanding.",
+                body: "The expert did not respond within 48 hours, so your payment has been fully refunded. We apologize for the delay. If you'd like, you can reorder or browse other solutions.",
               },
             })
           );
@@ -180,7 +180,7 @@ export async function GET(request: Request) {
       await createNotification(
         job.buyerId,
         title,
-        `You have ${bidCount} expert proposal${bidCount > 1 ? "s" : ""} on "${job.title}" that need your review. Proposals go stale — take a look before experts move on.`,
+        `You have ${bidCount} expert proposal${bidCount > 1 ? "s" : ""} on "${job.title}" waiting for your review. We recommend reviewing them soon so you can move forward with the best fit.`,
         "alert",
         `/business/jobs/${job.id}`
       );
@@ -344,7 +344,7 @@ export async function GET(request: Request) {
         await createNotification(
           expert.userId,
           title,
-          `New client projects are live: ${jobTitles}${more}. The first expert to submit a strong proposal usually wins the brief.`,
+          `New client projects are live: ${jobTitles}${more}. Review the details and submit a proposal if it's a good fit.`,
           "info",
           `/jobs`
         );

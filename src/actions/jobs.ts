@@ -576,7 +576,7 @@ export async function awardBid(jobId: string, bidId: string) {
         createNotification(
           otherBid.specialist.userId,
           "📋 Project awarded to another expert",
-          `"${job.title}" has been awarded to another candidate. Keep your proposals sharp — new projects are posted daily.`,
+          `"${job.title}" has been awarded to another expert. New projects are posted regularly, so keep an eye on the marketplace for upcoming opportunities.`,
           "info",
           `/jobs`
         ),
@@ -779,7 +779,7 @@ export async function rateProposal(
         await createNotification(
           bid.specialist.userId,
           "⏸️ Proposal submissions temporarily paused",
-          `You've received ${THUMBS_DOWN_BAN_THRESHOLD} low-quality flags from clients in the past ${THUMBS_DOWN_WINDOW_DAYS} days. Proposal submissions are paused for ${BAN_DURATION_DAYS} days while you review your approach. Focus on quality over quantity.`,
+          `Your proposals have received ${THUMBS_DOWN_BAN_THRESHOLD} negative ratings from clients in the past ${THUMBS_DOWN_WINDOW_DAYS} days. Proposal submissions have been paused for ${BAN_DURATION_DAYS} days. Please review our proposal guidelines to improve your success rate.`,
           "alert",
           "/dashboard"
         );
@@ -913,7 +913,7 @@ export async function rejectAllBidsAndRefund(
         createNotification(
           bid.specialist.userId,
           "📋 Project closed — no proposals selected",
-          `The client for "${job.title}" chose not to proceed with any proposal. This isn't a reflection on your work — keep submitting!`,
+          `The client for "${job.title}" chose not to proceed with any proposal at this time. New projects are posted regularly, and we encourage you to continue submitting.`,
           "info",
           "/jobs"
         )
