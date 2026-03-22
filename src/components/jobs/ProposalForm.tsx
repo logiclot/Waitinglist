@@ -13,17 +13,35 @@ import {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Outcome {
-  what: string;   // e.g. "Hours saved per week"
-  value: string;  // e.g. "12"
-  timeframe: string; // e.g. "Within 30 days"
+  what: string;        // e.g. "Hours saved per week"
+  value: string;       // e.g. "12"
+  timeframe: string;   // e.g. "30"
+  timeframeUnit: string; // "days" | "weeks" | "months"
 }
 
 interface Phase {
   name: string;
   scope: string;
-  duration: string;
-  price?: string; // optional per-phase price in EUR — becomes a payment milestone
+  duration: string;      // numeric value
+  durationUnit: string;  // "days" | "weeks" | "months"
+  price?: string;        // optional per-phase price in EUR — becomes a payment milestone
 }
+
+const OUTCOME_PLACEHOLDERS = [
+  "e.g. Hours saved per week",
+  "e.g. Revenue increase",
+  "e.g. Error rate reduction",
+  "e.g. Leads generated per month",
+  "e.g. Customer response time",
+];
+
+const TIMEFRAME_UNITS = ["days", "weeks", "months"] as const;
+const DURATION_UNITS = ["days", "weeks", "months"] as const;
+const SUPPORT_OPTIONS = [
+  { value: "14", label: "14 days" },
+  { value: "30", label: "30 days" },
+  { value: "60", label: "60 days" },
+] as const;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -85,8 +103,8 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
 
   // Outcomes (measurable results)
   const [outcomes, setOutcomes] = useState<Outcome[]>([
-    { what: "", value: "", timeframe: "" },
-    { what: "", value: "", timeframe: "" },
+    { what: "", value: "", timeframe: "", timeframeUnit: "days" },
+    { what: "", value: "", timeframe: "", timeframeUnit: "days" },
   ]);
 
   // Tools
@@ -94,9 +112,12 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
 
   // Phases
   const [phases, setPhases] = useState<Phase[]>([
-    { name: "Phase 1", scope: "", duration: "", price: "" },
-    { name: "Phase 2", scope: "", duration: "", price: "" },
+    { name: "Phase 1", scope: "", duration: "", durationUnit: "weeks", price: "" },
+    { name: "Phase 2", scope: "", duration: "", durationUnit: "weeks", price: "" },
   ]);
+
+  // Support period
+  const [supportDays, setSupportDays] = useState("30");
 
   // Scope
   const [included, setIncluded] = useState<string[]>(["", "", ""]);
@@ -105,6 +126,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
   // Deal
   const [price, setPrice] = useState("");
   const [timeline, setTimeline] = useState("");
+  const [timelineUnit, setTimelineUnit] = useState("weeks");
   const [credibility, setCredibility] = useState("");
 
   const [pending, setPending] = useState(false);
@@ -136,7 +158,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
 
   // When a phase is added or removed, redistribute if total is set
   const addPhase = () => {
-    const newPhases = [...phases, { name: `Phase ${phases.length + 1}`, scope: "", duration: "", price: "" }];
+    const newPhases = [...phases, { name: `Phase ${phases.length + 1}`, scope: "", duration: "", durationUnit: "weeks", price: "" }];
     const total = parseFloat(price);
     if (!isNaN(total) && total > 0) {
       const per = (total / newPhases.length).toFixed(2);
@@ -181,15 +203,22 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
       automationTitle,
       problemAddressed,
       whatYoullBuild,
-      outcomes: outcomes.filter(o => o.what && o.value),
+      outcomes: outcomes.filter(o => o.what && o.value).map(o => ({
+        what: o.what,
+        value: o.value,
+        timeframe: o.timeframe ? `${o.timeframe} ${o.timeframeUnit}` : "",
+      })),
       tools: tools.filter(Boolean),
       phases: phases.filter(p => p.scope).map(p => ({
-        ...p,
+        name: p.name,
+        scope: p.scope,
+        duration: p.duration ? `${p.duration} ${p.durationUnit}` : "",
         price: p.price ? parseFloat(p.price) : undefined,
       })),
       included: included.filter(Boolean),
       excluded: excluded.filter(Boolean),
       credibility,
+      supportDays: parseInt(supportDays),
     });
   }
 
@@ -229,7 +258,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
 
       <form onSubmit={handleSubmit} className="p-5 space-y-4">
         <input type="hidden" name="jobId" value={jobId} />
-        <input type="hidden" name="estimatedTime" value={timeline} />
+        <input type="hidden" name="estimatedTime" value={timeline ? `${timeline} ${timelineUnit}` : ""} />
         <input type="hidden" name="priceEstimate" value={price ? `€${price}` : ""} />
         <input type="hidden" name="message" value={summary} />
 
@@ -253,7 +282,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
               className={`${input} resize-none`}
               rows={4}
               maxLength={1500}
-              placeholder="Based on their pain points around manual onboarding and 60 sign-ups/month, I recommend building a fully automated pipeline that handles the entire new-customer journey — CRM entry, welcome email, Slack invite, and kickoff scheduling — with zero manual intervention."
+              placeholder="Based on their pain points around manual onboarding and 60 sign-ups/month, I recommend building a fully automated pipeline that handles the entire new-customer journey: CRM entry, welcome email, Slack invite, and kickoff scheduling, with zero manual intervention."
               value={summary}
               onChange={e => setSummary(e.target.value)}
             />
@@ -264,7 +293,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
               className={`${input} resize-none`}
               rows={4}
               maxLength={2000}
-              placeholder='e.g. "45 minutes per customer onboarding, 60 customers/month" — this eliminates that entirely. At scale, that compounds fast.'
+              placeholder='e.g. "45 minutes per customer onboarding, 60 customers/month." This automation eliminates that entirely, and at scale, the savings compound quickly.'
               value={problemAddressed}
               onChange={e => setProblemAddressed(e.target.value)}
             />
@@ -282,43 +311,56 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
               className={`${input} resize-none`}
               rows={6}
               maxLength={3000}
-              placeholder="When a new customer pays via Stripe, a Make.com automation starts automatically. It saves their details to HubSpot, sends them a personalised welcome email, invites them to your Slack workspace, and books a kickoff call with their account manager in Calendly — all in under 2 minutes, with no manual steps. If anything goes wrong, your ops team gets an alert in Slack so nothing is ever missed."
+              placeholder="When a new customer pays via Stripe, a Make.com automation starts automatically. It saves their details to HubSpot, sends them a personalised welcome email, invites them to your Slack workspace, and books a kickoff call with their account manager in Calendly. The entire process takes under 2 minutes with no manual steps. If anything goes wrong, your ops team receives an alert in Slack so nothing is missed."
               value={whatYoullBuild}
               onChange={e => setWhatYoullBuild(e.target.value)}
             />
           </Field>
 
           {/* Measurable outcomes */}
-          <Field label="Measurable outcomes" required hint="Be specific. Numbers win deals.">
-            <div className="space-y-2">
+          <Field label="Measurable outcomes" required hint="Be specific. Quantify the impact your automation will deliver.">
+            <div className="space-y-3">
               {outcomes.map((o, i) => (
-                <div key={i} className="grid grid-cols-12 gap-2 items-start">
+                <div key={i} className="border border-border rounded-lg p-3 space-y-2 bg-secondary/5 relative group">
+                  <button type="button" onClick={() => setOutcomes(prev => prev.filter((_, j) => j !== i))}
+                    className="absolute top-2.5 right-2.5 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                   <input
-                    className={`${input} col-span-5`}
-                    placeholder="What changes (e.g. Hours saved/week)"
+                    className={input}
+                    placeholder={OUTCOME_PLACEHOLDERS[i % OUTCOME_PLACEHOLDERS.length]}
                     value={o.what}
                     onChange={e => setOutcomes(prev => prev.map((x, j) => j === i ? { ...x, what: e.target.value } : x))}
                   />
-                  <input
-                    className={`${input} col-span-3`}
-                    placeholder="By how much"
-                    value={o.value}
-                    onChange={e => setOutcomes(prev => prev.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
-                  />
-                  <input
-                    className={`${input} col-span-3`}
-                    placeholder="When"
-                    value={o.timeframe}
-                    onChange={e => setOutcomes(prev => prev.map((x, j) => j === i ? { ...x, timeframe: e.target.value } : x))}
-                  />
-                  <button type="button" onClick={() => setOutcomes(prev => prev.filter((_, j) => j !== i))}
-                    className="col-span-1 text-muted-foreground hover:text-destructive transition-colors pt-2">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      className={input}
+                      placeholder="By how much (e.g. 12)"
+                      value={o.value}
+                      onChange={e => setOutcomes(prev => prev.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
+                    />
+                    <input
+                      className={input}
+                      placeholder="Within (e.g. 30)"
+                      type="number"
+                      min="1"
+                      value={o.timeframe}
+                      onChange={e => setOutcomes(prev => prev.map((x, j) => j === i ? { ...x, timeframe: e.target.value } : x))}
+                    />
+                    <select
+                      className={input}
+                      value={o.timeframeUnit}
+                      onChange={e => setOutcomes(prev => prev.map((x, j) => j === i ? { ...x, timeframeUnit: e.target.value } : x))}
+                    >
+                      {TIMEFRAME_UNITS.map(u => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               ))}
               <button type="button"
-                onClick={() => setOutcomes(prev => [...prev, { what: "", value: "", timeframe: "" }])}
+                onClick={() => setOutcomes(prev => [...prev, { what: "", value: "", timeframe: "", timeframeUnit: "days" }])}
                 className="flex items-center gap-1 text-xs text-primary hover:underline"
               >
                 <Plus className="h-3 w-3" /> Add outcome
@@ -411,12 +453,25 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
                     </div>
                     <div className="space-y-1.5">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Duration</p>
-                      <input
-                        className={input}
-                        placeholder="e.g. 1 week"
-                        value={p.duration}
-                        onChange={e => setPhases(prev => prev.map((x, j) => j === i ? { ...x, duration: e.target.value } : x))}
-                      />
+                      <div className="flex gap-1.5">
+                        <input
+                          className={`${input} flex-1`}
+                          placeholder="e.g. 2"
+                          type="number"
+                          min="1"
+                          value={p.duration}
+                          onChange={e => setPhases(prev => prev.map((x, j) => j === i ? { ...x, duration: e.target.value } : x))}
+                        />
+                        <select
+                          className={`${input} w-24 shrink-0`}
+                          value={p.durationUnit}
+                          onChange={e => setPhases(prev => prev.map((x, j) => j === i ? { ...x, durationUnit: e.target.value } : x))}
+                        >
+                          {DURATION_UNITS.map(u => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -432,7 +487,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
           </Field>
 
           {/* Included */}
-          <Field label="What's included" hint="Deliverables, documentation, support window...">
+          <Field label="What's included" hint="List all deliverables: automations, documentation, training, etc.">
             <div className="space-y-2">
               {included.map((item, i) => (
                 <div key={i} className="flex gap-2">
@@ -479,35 +534,68 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
           subtitle="Price, timeline, and why you"
         >
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Total price (€)" required hint="Set total to auto-split across phases, or set each phase price to auto-calculate here.">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
-                <input
-                  className={`${input} pl-6`}
-                  placeholder="1800"
-                  type="number"
-                  min="0"
-                  value={price}
-                  onChange={e => handleTotalPriceChange(e.target.value)}
-                />
-              </div>
-            </Field>
-            <Field label="Total delivery time" required>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-foreground">
+                Total price (€) <span className="text-primary">*</span>
+              </label>
+              <p className="text-xs text-muted-foreground">Set total to auto-split across phases, or set each phase price to auto-calculate here.</p>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-foreground">
+                Total delivery time <span className="text-primary">*</span>
+              </label>
+              <p className="text-xs text-muted-foreground">How long until the entire project is delivered.</p>
+            </div>
+            <div className="relative -mt-2">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">€</span>
               <input
-                className={input}
-                placeholder="e.g. 2–3 weeks"
+                className={`${input} pl-6`}
+                placeholder="1800"
+                type="number"
+                min="0"
+                value={price}
+                onChange={e => handleTotalPriceChange(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-5 gap-2 -mt-2">
+              <input
+                className={`${input} col-span-2`}
+                placeholder="e.g. 3"
+                type="number"
+                min="1"
                 value={timeline}
                 onChange={e => setTimeline(e.target.value)}
               />
-            </Field>
+              <select
+                className={`${input} col-span-3`}
+                value={timelineUnit}
+                onChange={e => setTimelineUnit(e.target.value)}
+              >
+                {DURATION_UNITS.map(u => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          <Field label="Post-delivery support" required hint="How long you will provide support after the project is delivered and approved.">
+            <select
+              className={input}
+              value={supportDays}
+              onChange={e => setSupportDays(e.target.value)}
+            >
+              {SUPPORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </Field>
 
           <Field label="Why you" hint="Relevant experience, similar builds, results you achieved. The more specific, the more trust you build.">
             <textarea
               className={`${input} resize-none`}
               rows={5}
               maxLength={2000}
-              placeholder="I've built 12 customer onboarding automations for B2B SaaS companies at this scale — 3 on Make.com with HubSpot. One client went from 45 min/customer to 0 manual steps, handling 200+ sign-ups/month. Another saved 38 hours/month in their first week. I always work inside your own tools so your team can maintain everything after handover — no lock-in."
+              placeholder="I have built 12 customer onboarding automations for B2B SaaS companies at this scale, including 3 on Make.com with HubSpot. One client went from 45 min/customer to 0 manual steps, handling 200+ sign-ups/month. Another saved 38 hours/month in their first week. I always work inside your existing tools so your team can maintain everything after handover, with no lock-in."
               value={credibility}
               onChange={e => setCredibility(e.target.value)}
             />

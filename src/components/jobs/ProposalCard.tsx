@@ -31,6 +31,7 @@ interface ProposalData {
   included?: string[];
   excluded?: string[];
   credibility?: string;
+  supportDays?: number;
 }
 
 function parseProposal(raw: string | null | undefined): ProposalData | null {
@@ -489,6 +490,15 @@ export function ProposalCard({ bid, jobId, isOwner, isExpertView = false, isPost
                   </ul>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Support period */}
+          {proposal.supportDays && (
+            <div className="flex items-center gap-2 pl-6 text-sm">
+              <Clock className="h-4 w-4 text-primary" />
+              <span className="font-medium">Post-delivery support:</span>
+              <span className="text-muted-foreground">{proposal.supportDays} days</span>
             </div>
           )}
 
