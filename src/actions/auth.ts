@@ -226,12 +226,10 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
   }
 
   try {
-    const users = await prisma.user.findMany({
+    const user = await prisma.user.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
       orderBy: { createdAt: "asc" },
-      take: 1,
     });
-    const user = users[0];
 
     // Always return success to prevent email enumeration attacks
     if (!user || !user.passwordHash) {
@@ -315,13 +313,22 @@ export async function deleteMyAccount(password: string) {
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
     if (!passwordValid) return { error: "Incorrect password." };
 
-    // Block if buyer has active orders (not yet completed/refunded)
-    const activeOrdersAsBuyer = await prisma.order.count({
-      where: {
-        buyerId: userId,
-        status: { notIn: ["approved", "refunded"] },
-      },
-    });
+    const [activeOrdersAsBuyer, activeJobs, expert] = await Promise.all([
+      prisma.order.count({
+        where: {
+          buyerId: userId,
+          status: { notIn: ["approved", "refunded"] },
+        },
+      }),
+      prisma.jobPost.count({
+        where: {
+          buyerId: userId,
+          status: { notIn: ["draft", "cancelled", "closed"] },
+        },
+      }),
+      prisma.specialistProfile.findUnique({ where: { userId } }),
+    ]);
+
     if (activeOrdersAsBuyer > 0) {
       return {
         error:
@@ -329,13 +336,6 @@ export async function deleteMyAccount(password: string) {
       };
     }
 
-    // Block if buyer has active job posts
-    const activeJobs = await prisma.jobPost.count({
-      where: {
-        buyerId: userId,
-        status: { notIn: ["draft", "cancelled", "closed"] },
-      },
-    });
     if (activeJobs > 0) {
       return {
         error:
@@ -343,8 +343,6 @@ export async function deleteMyAccount(password: string) {
       };
     }
 
-    // Block if expert has active client orders
-    const expert = await prisma.specialistProfile.findUnique({ where: { userId } });
     if (expert) {
       const activeOrdersAsSeller = await prisma.order.count({
         where: {
@@ -455,6 +453,17 @@ export async function deleteMyAccount(password: string) {
     log.error("auth.account_delete_failed", { userId, error: String(e) });
     return { error: "Something went wrong. Please try again or contact contact@logiclot.io." };
   }
+}
+
+export async function getFoundingExpertStatus(): Promise<boolean> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id || session.user.role !== "EXPERT") return false;
+
+  const expert = await prisma.specialistProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { isFoundingExpert: true },
+  });
+  return expert?.isFoundingExpert ?? false;
 }
 
 async function sendVerificationEmail(to: string, token: string) {

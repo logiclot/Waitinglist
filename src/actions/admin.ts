@@ -28,7 +28,7 @@ export async function getAdminData() {
   const isAdmin = await checkAdmin();
   if (!isAdmin) return { error: "Unauthorized" };
 
-  const [experts, solutions, orders, businesses, userCount] = await Promise.all([
+  const [experts, solutions, orders, businesses, userCount, bidFeedbackRaw, openDisputeCount] = await Promise.all([
     prisma.specialistProfile.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -56,14 +56,15 @@ export async function getAdminData() {
       include: { user: { select: { id: true, email: true, createdAt: true } } },
     }),
     prisma.user.count(),
+    prisma.bid.groupBy({
+      by: ["specialistId", "feedback"],
+      where: { feedback: { not: null } },
+      _count: { feedback: true },
+    }),
+    prisma.dispute.count({
+      where: { status: { not: "resolved" } },
+    }),
   ]);
-
-  // Bid quality stats per expert (thumbs up / down counts)
-  const bidFeedbackRaw = await prisma.bid.groupBy({
-    by: ["specialistId", "feedback"],
-    where: { feedback: { not: null } },
-    _count: { feedback: true },
-  });
   const bidQualityMap: Record<string, { up: number; down: number }> = {};
   for (const row of bidFeedbackRaw) {
     if (!bidQualityMap[row.specialistId]) bidQualityMap[row.specialistId] = { up: 0, down: 0 };
@@ -81,9 +82,6 @@ export async function getAdminData() {
     .filter((o) => ["delivered", "approved"].includes(o.status))
     .reduce((sum, o) => sum + o.priceCents, 0);
 
-  const openDisputeCount = await prisma.dispute.count({
-    where: { status: { not: "resolved" } },
-  });
 
   return {
     experts: expertsWithStats,
@@ -1055,18 +1053,23 @@ export async function getAuditAnalytics() {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const events = await (prisma as any).auditEvent.findMany({
-    where: { createdAt: { gte: thirtyDaysAgo } },
-    select: {
-      sessionId: true,
-      event: true,
-      step: true,
-      score: true,
-      scoreLabel: true,
-      createdAt: true,
-    },
-  }) as { sessionId: string; event: string; step: number | null; score: number | null; scoreLabel: string | null; createdAt: Date }[];
+  // Fetch 30-day events and all-time completions in parallel
+  const [events, allTimeCompletions] = await Promise.all([
+    prisma.auditEvent.findMany({
+      where: { createdAt: { gte: thirtyDaysAgo } },
+      select: {
+        sessionId: true,
+        event: true,
+        step: true,
+        score: true,
+        scoreLabel: true,
+        createdAt: true,
+      },
+    }),
+    prisma.auditEvent.count({
+      where: { event: "quiz_complete" },
+    }),
+  ]);
 
   // Group by session
   const sessions = new Map<string, typeof events>();
@@ -1128,11 +1131,6 @@ export async function getAuditAnalytics() {
     ? Math.round(completionEvents.reduce((sum, e) => sum + (e.score ?? 0), 0) / completionEvents.length)
     : 0;
 
-  // All-time completions (for social proof)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allTimeCompletions = await (prisma as any).auditEvent.count({
-    where: { event: "quiz_complete" },
-  }) as number;
 
   return {
     totalStarts,
@@ -1152,11 +1150,10 @@ export async function getAuditAnalytics() {
 export async function getAuditCompletions() {
   if (!(await checkAdmin())) return null;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const completions = await (prisma as any).auditEvent.findMany({
+  const completions = await prisma.auditEvent.findMany({
     where: { event: "quiz_complete" },
     orderBy: { createdAt: "desc" },
-    take: 200,
+    take: 50,
     select: {
       id: true,
       sessionId: true,
@@ -1165,16 +1162,21 @@ export async function getAuditCompletions() {
       answers: true,
       createdAt: true,
     },
-  }) as { id: string; sessionId: string; score: number | null; scoreLabel: string | null; answers: unknown; createdAt: Date }[];
+  });
 
   // For each completion, find the email (if submitted) from the same session
   const sessionIds = [...new Set(completions.map(c => c.sessionId))];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const emailEvents = sessionIds.length > 0 ? await (prisma as any).auditEvent.findMany({
-    where: { event: "email_sent", sessionId: { in: sessionIds } },
-    select: { sessionId: true, email: true },
-  }) as { sessionId: string; email: string | null }[] : [];
+  const emailEvents =
+    sessionIds.length > 0
+      ? await prisma.auditEvent.findMany({
+          where: {
+            sessionId: { in: sessionIds },
+            event: "email_sent",
+          },
+          select: { sessionId: true, email: true },
+        })
+      : [];
 
   const emailMap = new Map<string, string>();
   for (const e of emailEvents) {
@@ -1200,27 +1202,28 @@ export async function getJobAnalytics(category: "Discovery Scan" | "Custom Proje
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // All-time counts
-  const allTimePosted = await prisma.jobPost.count({
-    where: { category, status: { not: "draft" } },
-  });
 
-  // Last 30 days jobs (with bids + order info)
-  const jobs = await prisma.jobPost.findMany({
-    where: { category, createdAt: { gte: thirtyDaysAgo }, status: { not: "draft" } },
-    select: {
-      id: true,
-      status: true,
-      paidAt: true,
-      rejectedAt: true,
-      rejectionFeedback: true,
-      viewCount: true,
-      createdAt: true,
-      bids: {
-        select: { id: true, status: true, feedback: true, createdAt: true },
+  // All-time counts and last 30 days jobs (with bids + order info)
+  const [allTimePosted, jobs] = await Promise.all([
+    prisma.jobPost.count({
+      where: { category, status: { not: "draft" } },
+    }),
+    prisma.jobPost.findMany({
+      where: { category, createdAt: { gte: thirtyDaysAgo }, status: { not: "draft" } },
+      select: {
+        id: true,
+        status: true,
+        paidAt: true,
+        rejectedAt: true,
+        rejectionFeedback: true,
+        viewCount: true,
+        createdAt: true,
+        bids: {
+          select: { id: true, status: true, feedback: true, createdAt: true },
+        },
       },
-    },
-  });
+    }),
+  ]);
 
   // KPIs
   const totalPendingPayment = jobs.filter(j => j.status === "pending_payment").length;

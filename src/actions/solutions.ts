@@ -224,7 +224,7 @@ export async function publishSolution(solutionId: string) {
       });
 
       // Notify them
-      await Promise.all(previousOrders.map(order => 
+      await Promise.all(previousOrders.map(order =>
         createNotification(
           order.buyerId,
           "🆕 New Version Available",
@@ -271,10 +271,10 @@ export async function publishSolution(solutionId: string) {
     await checkExpertReferralCondition(session.user.id);
 
     // Fire Suites notification once the expert has 3+ published solutions
-    checkAndFireSuitesNotification(session.user.id, publishedCount).catch(() => {});
+    checkAndFireSuitesNotification(session.user.id, publishedCount).catch(() => { });
 
     // Fire Portfolio customization unlock notification
-    checkAndFirePortfolioNotification(session.user.id, publishedCount, expert.slug).catch(() => {});
+    checkAndFirePortfolioNotification(session.user.id, publishedCount, expert.slug).catch(() => { });
 
     return { success: true };
   } catch (e) {
@@ -385,7 +385,7 @@ export async function getPublishedSolutionCount(): Promise<number> {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id || session.user.role !== "EXPERT") return 0;
 
-    const expert = await prisma.specialistProfile.findUnique({
+    const expert = await prisma.specialistProfile.findFirst({
       where: { userId: session.user.id },
       select: { id: true },
     });

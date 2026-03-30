@@ -27,25 +27,10 @@ export default async function JobsLayout({
   // EXPERT keeps their sidebar; everyone else (BUSINESS, ADMIN) gets the BUSINESS sidebar
   const sidebarRole = role === "EXPERT" ? "EXPERT" : "BUSINESS";
 
-  let publishedSolutionCount = 0;
-  if (sidebarRole === "EXPERT") {
-    const expert = await prisma.specialistProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { id: true },
-    });
-    if (expert) {
-      publishedSolutionCount = await prisma.solution.count({
-        where: { expertId: expert.id, status: "published" },
-      });
-    }
-  }
-
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar role={sidebarRole} publishedSolutionCount={publishedSolutionCount} />
-      <main className="flex-1 min-h-screen">
-        {children}
-      </main>
+      <Sidebar role={sidebarRole} />
+      <main className="flex-1 min-h-screen">{children}</main>
     </div>
   );
 }

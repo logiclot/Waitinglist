@@ -11,11 +11,19 @@ import * as Sentry from "@sentry/nextjs";
 import { stripe } from "@/lib/stripe";
 import { Prisma } from "@prisma/client";
 import { CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
+import { apiWriteLimiter } from "@/lib/rate-limit";
 
 export async function createJobPost(prevState: unknown, formData: FormData) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "BUSINESS") {
     return { error: "Unauthorized. Only businesses can post jobs." };
+  }
+
+  // Rate limit: max 60 writes per minute per user
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.create_job_rate_limited", { userId: session.user.id });
+    return { error: "Too many requests. Please slow down." };
   }
 
   const title = formData.get("title") as string;
@@ -59,9 +67,16 @@ export async function createDiscoveryJobPost(formData: FormData) {
     return { success: false, error: "Unauthorized. Only businesses can post jobs." };
   }
 
+  // Rate limit: max 60 writes per minute per user
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.create_discovery_rate_limited", { userId: session.user.id });
+    return { success: false, error: "Too many requests. Please slow down." };
+  }
+
   // Accepts the same fields as createJobPost — wizard now sends goal as BriefV2 JSON
   const title = formData.get("title") as string;
-  const goal  = formData.get("goal")  as string;
+  const goal = formData.get("goal") as string;
   const toolsRaw = formData.get("tools") as string;
 
   if (!title || !goal) {
@@ -148,6 +163,13 @@ export async function activateJobPost(jobId: string, provider: "stripe" | "simul
 export async function markJobAsPaid(jobId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Unauthorized" };
+  
+  // Rate limit: max 60 writes per minute per user
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.mark_paid_rate_limited", { userId: session.user.id });
+    return { error: "Too many requests. Please slow down." };
+  }
 
   try {
     const job = await prisma.jobPost.findUnique({ where: { id: jobId } });
@@ -178,6 +200,13 @@ export async function updateBid(bidId: string, updates: {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "EXPERT") {
     return { error: "Unauthorized." };
+  }
+
+  // Rate limit: max 60 writes per minute per user
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.update_bid_rate_limited", { userId: session.user.id });
+    return { error: "Too many requests. Please slow down." };
   }
 
   try {
@@ -215,14 +244,21 @@ export async function updateBid(bidId: string, updates: {
 
 // ── Bid quality moderation constants ─────────────────────────────────────────
 const THUMBS_DOWN_BAN_THRESHOLD = 5;   // ban after this many thumbs-down
-const THUMBS_DOWN_WINDOW_DAYS   = 30;  // sliding window to count thumbs-down in
-const BAN_DURATION_DAYS         = 30;  // how long the ban lasts
+const THUMBS_DOWN_WINDOW_DAYS = 30;  // sliding window to count thumbs-down in
+const BAN_DURATION_DAYS = 30;  // how long the ban lasts
 
 
 export async function submitBid(prevState: unknown, formData: FormData) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "EXPERT") {
     return { error: "You must be signed in as an expert to submit a proposal." };
+  }
+
+  // Rate limit: max 60 writes per minute per user
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.submit_bid_rate_limited", { userId: session.user.id });
+    return { error: "Too many requests. Please slow down." };
   }
 
   const jobId = formData.get("jobId") as string;
@@ -401,10 +437,17 @@ export async function awardBid(jobId: string, bidId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Unauthorized" };
 
+  // Rate limit: max 60 writes per minute per user
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.award_bid_rate_limited", { userId: session.user.id });
+    return { error: "Too many requests. Please slow down." };
+  }
+
   try {
-    const job = await prisma.jobPost.findUnique({ 
-        where: { id: jobId },
-        include: { buyer: true }
+    const job = await prisma.jobPost.findUnique({
+      where: { id: jobId },
+      include: { buyer: true }
     });
     if (!job || job.buyerId !== session.user.id) {
       return { error: "Unauthorized" };
@@ -456,21 +499,21 @@ export async function awardBid(jobId: string, bidId: string) {
     const phases = proposalData.phases ?? [];
     const milestonesJson = phases.length > 0
       ? phases.map((p, i) => {
-          // Use per-phase price if provided, otherwise split evenly
-          const phaseCents = p.price
-            ? Math.round(p.price * 100)
-            : Math.round(totalCents / phases.length);
-          return {
-            index: i,
-            title: p.name,
-            description: p.scope,
-            duration: p.duration,
-            priceCents: phaseCents,
-            status: "pending",
-            fundedAt: null,
-            releasedAt: null,
-          };
-        })
+        // Use per-phase price if provided, otherwise split evenly
+        const phaseCents = p.price
+          ? Math.round(p.price * 100)
+          : Math.round(totalCents / phases.length);
+        return {
+          index: i,
+          title: p.name,
+          description: p.scope,
+          duration: p.duration,
+          priceCents: phaseCents,
+          status: "pending",
+          fundedAt: null,
+          releasedAt: null,
+        };
+      })
       : null;
 
     // Transaction: re-check status atomically, then update job + bid + create order + conversation
@@ -530,8 +573,8 @@ export async function awardBid(jobId: string, bidId: string) {
       // System message showing the agreed milestone plan
       const milestoneLines = milestonesJson
         ? milestonesJson.map((m, i) =>
-            `Phase ${i + 1}: ${m.title}${m.duration ? ` (${m.duration})` : ""} — €${(m.priceCents / 100).toLocaleString("de-DE")}`
-          ).join("\n")
+          `Phase ${i + 1}: ${m.title}${m.duration ? ` (${m.duration})` : ""} — €${(m.priceCents / 100).toLocaleString("de-DE")}`
+        ).join("\n")
         : "";
 
       const body = milestoneLines
@@ -611,6 +654,13 @@ export async function awardBid(jobId: string, bidId: string) {
 export async function unawardBid(jobId: string, bidId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+  // Rate limit: max 60 writes per minute per user
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.unaward_bid_rate_limited", { userId: session.user.id });
+    return { success: false, error: "Too many requests. Please slow down." };
+  }
 
   try {
     const job = await prisma.jobPost.findUnique({
@@ -726,6 +776,13 @@ export async function rateProposal(
     return { success: false, error: "Only business accounts can rate proposals." };
   }
 
+  // Rate limit: max 60 writes per minute per user (general protection)
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.rate_proposal_rate_limited", { userId: session.user.id });
+    return { success: false, error: "Too many requests. Please slow down." };
+  }
+
   try {
     // ── 1. Load the bid + job to verify ownership ────────────────────────────
     const bid = await prisma.bid.findUnique({
@@ -827,6 +884,13 @@ export async function rejectAllBidsAndRefund(
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "BUSINESS") {
     return { success: false, error: "Only business accounts can reject proposals." };
+  }
+
+  // Rate limit
+  const rl = await apiWriteLimiter.check(session.user.id);
+  if (!rl.success) {
+    log.warn("jobs.reject_all_rate_limited", { userId: session.user.id });
+    return { success: false, error: "Too many requests. Please slow down." };
   }
 
   if (!feedback || feedback.trim().length < 20) {
@@ -973,6 +1037,10 @@ export async function markJobsViewed() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return;
+
+    // Rate limit view updates too, to be safe
+    const rl = await apiWriteLimiter.check(session.user.id);
+    if (!rl.success) return;
 
     await prisma.user.update({
       where: { id: session.user.id },

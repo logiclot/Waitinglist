@@ -50,14 +50,27 @@ export default async function InvoicesPage() {
   const role = session.user.role as string;
   const userId = session.user.id;
 
-  // Mark invoices as viewed (clears the badge)
-  await markInvoicesViewed();
-
+  // Fetch mark-as-viewed and data in parallel
   if (role === "EXPERT") {
-    const profile = await prisma.specialistProfile.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
+    const [profile, orders] = await Promise.all([
+      prisma.specialistProfile.findUnique({
+        where: { userId },
+        select: { id: true },
+      }),
+      prisma.order.findMany({
+        where: { seller: { userId }, status: { notIn: ["draft"] } },
+        select: {
+          id: true,
+          status: true,
+          priceCents: true,
+          createdAt: true,
+          solution: { select: { title: true } },
+          buyer: { select: { email: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      markInvoicesViewed(),
+    ]);
 
     if (!profile) {
       return (
@@ -66,22 +79,6 @@ export default async function InvoicesPage() {
         </div>
       );
     }
-
-    const orders = await prisma.order.findMany({
-      where: {
-        sellerId: profile.id,
-        status: { notIn: ["draft"] },
-      },
-      select: {
-        id: true,
-        status: true,
-        priceCents: true,
-        createdAt: true,
-        solution: { select: { title: true } },
-        buyer: { select: { email: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
 
     const items: InvoiceItem[] = orders.map((o) => {
       const sc = STATUS_LABELS[o.status] ?? { label: o.status, className: "bg-gray-100 text-gray-700" };
@@ -132,6 +129,7 @@ export default async function InvoicesPage() {
       },
       orderBy: { paidAt: "desc" },
     }),
+    markInvoicesViewed(),
   ]);
 
   const orderItems: InvoiceItem[] = orders.map((o) => {

@@ -93,19 +93,22 @@ export default async function InvoicePage({
   if (!session?.user?.id) redirect("/auth/sign-in");
 
   const { orderId } = await params;
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: { specialistProfile: true, businessProfile: true },
-  });
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: {
-      buyer: { include: { businessProfile: true } },
-      seller: true,
-      solution: true,
-    },
-  });
+  // Parallelize initial lookups
+  const [user, order] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { specialistProfile: true, businessProfile: true },
+    }),
+    prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        buyer: { include: { businessProfile: true } },
+        seller: true,
+        solution: true,
+      },
+    }),
+  ]);
 
   if (!order) notFound();
 

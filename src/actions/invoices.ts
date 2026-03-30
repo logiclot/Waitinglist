@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { log } from "@/lib/logger";
+import { revalidatePath } from "next/cache";
+import * as Sentry from "@sentry/nextjs";
 
 /**
  * Returns the count of invoices (orders + paid job postings) created
@@ -26,15 +28,17 @@ export async function getUnseenInvoiceCount(): Promise<number> {
 
     const since = user.lastInvoiceViewedAt ?? new Date(0);
 
+    // Fetch counts in parallel based on role
     if (user.role === "EXPERT" && user.specialistProfile) {
-      // Experts see invoices for orders where they are the seller
-      const orderCount = await prisma.order.count({
-        where: {
-          sellerId: user.specialistProfile.id,
-          status: { notIn: ["draft"] },
-          createdAt: { gt: since },
-        },
-      });
+      const [orderCount] = await Promise.all([
+        prisma.order.count({
+          where: {
+            sellerId: user.specialistProfile.id,
+            status: { notIn: ["draft"] },
+            createdAt: { gt: since },
+          },
+        }),
+      ]);
       return orderCount;
     }
 
@@ -60,6 +64,7 @@ export async function getUnseenInvoiceCount(): Promise<number> {
     log.error("invoices.get_unseen_count_failed", {
       error: e instanceof Error ? e.message : String(e),
     });
+    Sentry.captureException(e);
     return 0;
   }
 }
@@ -77,9 +82,14 @@ export async function markInvoicesViewed() {
       where: { id: session.user.id },
       data: { lastInvoiceViewedAt: new Date() },
     });
+
+    // Revalidate sidebar and invoices page to clear badges
+    revalidatePath("/dashboard/invoices");
+    revalidatePath("/dashboard");
   } catch (e) {
     log.error("invoices.mark_viewed_failed", {
       error: e instanceof Error ? e.message : String(e),
     });
+    Sentry.captureException(e);
   }
 }
