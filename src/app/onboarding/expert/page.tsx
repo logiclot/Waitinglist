@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ProfilePicUpload } from "@/components/ProfilePicUpload";
+import { COUNTRY_NAME_TO_ISO } from "@/lib/stripe-countries";
 
 const initialState = {
   error: null as string | null,
@@ -24,33 +25,7 @@ const initialState = {
 
 // --- Constants ---
 
-const COUNTRIES = [
-  "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia",
-  "Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium",
-  "Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei",
-  "Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada",
-  "Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo (Brazzaville)",
-  "Congo (Kinshasa)","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti",
-  "Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea",
-  "Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany",
-  "Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras",
-  "Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica",
-  "Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia",
-  "Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar",
-  "Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius",
-  "Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique",
-  "Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria",
-  "North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama",
-  "Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania",
-  "Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines",
-  "Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles",
-  "Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa",
-  "South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland",
-  "Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga",
-  "Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine",
-  "United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu",
-  "Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe",
-];
+const COUNTRIES = Object.keys(COUNTRY_NAME_TO_ISO).sort();
 
 const TEAM_SIZES = ["1–5", "6–20", "21–50", "50+"];
 
@@ -65,7 +40,7 @@ const ACQUISITION_SOURCES = [
 const PRIMARY_TOOLS = ["n8n", "Make", "Zapier", "Custom code", "Other"];
 
 const SECONDARY_TOOLS = [
-  "HubSpot", "Salesforce", "Shopify", "Stripe", "Google Sheets", 
+  "HubSpot", "Salesforce", "Shopify", "Stripe", "Google Sheets",
   "Notion", "Slack", "AWS", "Azure", "Other"
 ];
 
@@ -88,7 +63,7 @@ export default function ExpertOnboardingPage() {
   const [displayName, setDisplayName] = useState("");
   const [country, setCountry] = useState("");
   const [roleType, setRoleType] = useState("Individual");
-  
+
   const [agencyName, setAgencyName] = useState("");
   const [businessId, setBusinessId] = useState("");
   const [agencyTeamSize, setAgencyTeamSize] = useState("");
@@ -179,7 +154,7 @@ export default function ExpertOnboardingPage() {
   return (
     <div className="min-h-screen py-12 px-4 bg-background flex flex-col items-center font-sans">
       <div className="max-w-2xl w-full space-y-8">
-        
+
         {/* Progress Bubbles */}
         <div className="flex flex-col items-center space-y-2 mb-8">
           <div className="flex items-center gap-3">
@@ -188,7 +163,7 @@ export default function ExpertOnboardingPage() {
               const isCompleted = s < step;
               return (
                 <div key={s} className="flex items-center">
-                  <div 
+                  <div
                     className={`
                       w-3 h-3 rounded-full transition-all duration-300 
                       ${isActive ? 'bg-primary scale-125 ring-2 ring-primary/30' : ''}
@@ -221,7 +196,7 @@ export default function ExpertOnboardingPage() {
           formData.append("displayName", displayName || legalFullName);
           formData.append("country", country);
           formData.append("roleType", roleType);
-          
+
           if (roleType === "Agency") {
             formData.append("agencyName", agencyName);
             formData.append("businessIdentificationNumber", businessId);
@@ -316,7 +291,7 @@ export default function ExpertOnboardingPage() {
                   <label className="block text-sm font-medium mb-3">Role Type <span className="text-primary">*</span></label>
                   <div className="grid grid-cols-2 gap-4">
                     {["Individual", "Agency"].map(type => (
-                      <div 
+                      <div
                         key={type}
                         onClick={() => setRoleType(type)}
                         className={`cursor-pointer border rounded-lg p-4 flex flex-col items-center gap-2 transition-all ${roleType === type ? "bg-primary/5 border-primary text-primary ring-1 ring-primary/20" : "hover:bg-secondary"}`}
@@ -352,9 +327,9 @@ export default function ExpertOnboardingPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Team Size</label>
-                      <select 
-                        value={agencyTeamSize} 
-                        onChange={e => setAgencyTeamSize(e.target.value)} 
+                      <select
+                        value={agencyTeamSize}
+                        onChange={e => setAgencyTeamSize(e.target.value)}
                         className="w-full bg-background border border-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                       >
                         <option value="">Select...</option>
@@ -376,7 +351,7 @@ export default function ExpertOnboardingPage() {
               </div>
 
               <div className="bg-card border border-border rounded-xl p-8 space-y-8 shadow-sm">
-                
+
                 {/* Years Experience */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Years of hands-on automation experience <span className="text-primary">*</span></label>
@@ -412,7 +387,7 @@ export default function ExpertOnboardingPage() {
                   <label className="block text-sm font-medium mb-3">Typical project size you’ve handled <span className="text-primary">*</span></label>
                   <div className="flex flex-wrap gap-3">
                     {PROJECT_SIZES.map(s => (
-                      <label 
+                      <label
                         key={s}
                         className={`
                           flex items-center justify-center px-4 py-2 rounded-full border cursor-pointer transition-all min-w-[80px]
@@ -446,7 +421,7 @@ export default function ExpertOnboardingPage() {
                   </div>
                   {acquisitionSources.includes("Other") && (
                     <div className="mt-3">
-                      <input 
+                      <input
                         value={customSource}
                         onChange={e => setCustomSource(e.target.value)}
                         placeholder="Tell us more..."
@@ -461,9 +436,9 @@ export default function ExpertOnboardingPage() {
                   <label className="block text-sm font-medium mb-2">Portfolio / LinkedIn / GitHub URL <span className="text-muted-foreground font-normal">(Optional)</span></label>
                   <div className="relative">
                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input 
-                      value={portfolioUrl} 
-                      onChange={e => setPortfolioUrl(e.target.value)} 
+                    <input
+                      value={portfolioUrl}
+                      onChange={e => setPortfolioUrl(e.target.value)}
                       className="w-full bg-background border border-border rounded-lg pl-10 pr-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                       placeholder="https://..."
                     />
@@ -483,7 +458,7 @@ export default function ExpertOnboardingPage() {
               </div>
 
               <div className="bg-card border border-border rounded-xl p-8 space-y-8 shadow-sm">
-                
+
                 {/* Primary Tool */}
                 <div>
                   <label className="block text-sm font-medium mb-3">Primary Automation Tool <span className="text-primary">*</span></label>
@@ -527,9 +502,9 @@ export default function ExpertOnboardingPage() {
                       </button>
                     ))}
                   </div>
-                   {secondaryTools.includes("Other") && (
+                  {secondaryTools.includes("Other") && (
                     <div className="mt-3">
-                      <input 
+                      <input
                         value={customSecondaryTool}
                         onChange={e => setCustomSecondaryTool(e.target.value)}
                         placeholder="Other tools..."
@@ -572,10 +547,10 @@ export default function ExpertOnboardingPage() {
                   <ShieldCheck className="w-8 h-8 text-primary shrink-0 mt-0.5 opacity-80" />
                   <div>
                     <h3 className="font-bold text-sm mb-1">
-                    <Link href="/nda" target="_blank" className="hover:text-primary transition-colors underline underline-offset-2">
-                      Mutual NDA
-                    </Link>{" "}— automatic on sign-up
-                  </h3>
+                      <Link href="/nda" target="_blank" className="hover:text-primary transition-colors underline underline-offset-2">
+                        Mutual NDA
+                      </Link>{" "}— automatic on sign-up
+                    </h3>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       All business data, workflows, and expert proposals shared on LogicLot are automatically covered by a legally binding Mutual Non-Disclosure Agreement. Neither party may share the other&apos;s confidential information outside the platform.
                     </p>
@@ -657,23 +632,23 @@ export default function ExpertOnboardingPage() {
             (step === 3 && !validateStep3()) ||
             (step === 4 && !validateStep4())
           ) && (
-            <p className="text-sm text-red-500 text-right max-w-2xl mx-auto w-full -mb-4">
-              Please complete all required fields before continuing.
-            </p>
-          )}
+              <p className="text-sm text-red-500 text-right max-w-2xl mx-auto w-full -mb-4">
+                Please complete all required fields before continuing.
+              </p>
+            )}
           <div className="flex justify-between pt-8 max-w-2xl mx-auto w-full">
-            <button 
-              type="button" 
-              onClick={handleBack} 
+            <button
+              type="button"
+              onClick={handleBack}
               className={`px-6 py-3 text-muted-foreground hover:text-foreground font-medium transition-colors ${step === 1 ? 'invisible' : ''}`}
             >
               Back
             </button>
-            
+
             {step < 4 ? (
-              <button 
-                type="button" 
-                onClick={handleNext} 
+              <button
+                type="button"
+                onClick={handleNext}
                 className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
               >
                 Continue <ChevronRight className="w-4 h-4" />

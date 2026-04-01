@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
-import { markJobAsPaid } from "@/actions/jobs";
+import { activateJobPost } from "@/actions/jobs";
 import { checkBusinessReferralCondition } from "@/actions/referral";
 import { log } from "@/lib/logger";
 import { captureException } from "@/lib/sentry";
@@ -161,7 +161,10 @@ export async function POST(req: Request) {
           },
         });
 
-        await markJobAsPaid(jobId);
+        const result = await activateJobPost(jobId, "stripe");
+        if (!result.success) {
+          throw new Error(result.error || "Failed to activate job");
+        }
 
         // Confirm to buyer + invoice notification
         if (buyerId) {

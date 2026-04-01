@@ -126,7 +126,6 @@ export default async function RootLayout({
               <SavedSuitesProvider>
                 <Navbar user={session?.user} />
                 <main className="flex-1">{children}</main>
-                <Footer />
                 <Analytics />
                 <Toaster
                   position="top-right"

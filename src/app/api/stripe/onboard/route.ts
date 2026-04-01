@@ -6,6 +6,7 @@ import { stripe } from "@/lib/stripe";
 import { log } from "@/lib/logger";
 import { APP_URL } from "@/lib/app-url";
 import { resolveStripeCountryCode } from "@/lib/stripe-countries";
+import { captureException } from "@/lib/sentry";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- route handler signature requires req
 export async function POST(req: Request) {
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
       } catch (stripeError) {
         log.error("stripe.onboard.account_creation_failed", { error: String(stripeError), expertId: expert.id });
         const detail = process.env.NODE_ENV !== "production" ? `: ${(stripeError as Error).message}` : "";
+        captureException(stripeError, { context: "stripe.onboard.account_creation_failed" });
         return NextResponse.json({ error: `Failed to create Stripe account${detail}` }, { status: 500 });
       }
     }

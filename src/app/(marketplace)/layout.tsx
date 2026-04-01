@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { prisma } from "@/lib/prisma";
 
@@ -9,7 +8,7 @@ function SidebarSkeleton() {
   return (
     <aside className="w-64 bg-card border-r border-border h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto hidden md:flex flex-col">
       <div className="p-4 space-y-1 flex-1">
-        {Array.from({ length: 10 }).map((_, i) => (
+        {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 px-3 py-2">
             <div className="h-4 w-4 rounded bg-muted animate-pulse" />
             <div
@@ -34,16 +33,35 @@ function SidebarSkeleton() {
   );
 }
 
-async function ExpertSidebar({ userId }: { userId: string }) {
-  const expert = await prisma.specialistProfile.findUnique({
-    where: { userId },
-    select: { id: true, slug: true },
-  });
+async function SidebarWithData({
+  userId,
+  role,
+}: {
+  userId: string;
+  role: "EXPERT" | "BUSINESS" | "ADMIN";
+}) {
+  let portfolioSlug: string | null = null;
+  let isFoundingExpert = false;
 
-  return <Sidebar role="EXPERT" portfolioSlug={expert?.slug ?? null} />;
+  if (role === "EXPERT") {
+    const expert = await prisma.specialistProfile.findUnique({
+      where: { userId },
+      select: { isFoundingExpert: true, slug: true },
+    });
+    isFoundingExpert = expert?.isFoundingExpert || false;
+    portfolioSlug = expert?.slug || null;
+  }
+
+  return (
+    <Sidebar
+      role={role}
+      isFoundingExpert={isFoundingExpert}
+      portfolioSlug={portfolioSlug}
+    />
+  );
 }
 
-export default async function ExpertLayout({
+export default async function MarketplaceLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -51,17 +69,27 @@ export default async function ExpertLayout({
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect("/auth/sign-in?callbackUrl=/dashboard");
+    return <>{children}</>;
   }
 
-  if (session.user.role !== "EXPERT" && session.user.role !== "ADMIN") {
-    redirect("/dashboard");
+  const role = session.user.role;
+  const sidebarRole: "EXPERT" | "BUSINESS" | "ADMIN" | null =
+    role === "EXPERT"
+      ? "EXPERT"
+      : role === "ADMIN"
+        ? "ADMIN"
+        : role === "BUSINESS"
+          ? "BUSINESS"
+          : null;
+
+  if (!sidebarRole) {
+    return <>{children}</>;
   }
 
   return (
     <div className="flex min-h-screen bg-background">
       <Suspense fallback={<SidebarSkeleton />}>
-        <ExpertSidebar userId={session.user.id} />
+        <SidebarWithData userId={session.user.id} role={sidebarRole} />
       </Suspense>
       <main className="flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
         {children}

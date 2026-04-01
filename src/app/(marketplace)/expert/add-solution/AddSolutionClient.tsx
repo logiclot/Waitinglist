@@ -8,10 +8,19 @@ import { CategorySaturationPanel } from "@/components/solutions/CategorySaturati
 import type { WizardState } from "@/components/solutions/SolutionWizard";
 
 type ImportableData = Partial<
-  Pick<WizardState, "title" | "integrations" | "category" | "requiredInputs" | "short_summary">
+  Pick<
+    WizardState,
+    "title" | "integrations" | "category" | "requiredInputs" | "short_summary"
+  >
 >;
 
-const ALL_FIELDS = ["Title", "Tools used", "Category", "Required access", "Short summary"];
+const ALL_FIELDS = [
+  "Title",
+  "Tools used",
+  "Category",
+  "Required access",
+  "Short summary",
+];
 
 interface AddSolutionClientProps {
   saturationData: { category: string; count: number }[];
@@ -19,18 +28,18 @@ interface AddSolutionClientProps {
 
 export function AddSolutionClient({ saturationData }: AddSolutionClientProps) {
   const [importedData, setImportedData] = useState<ImportableData>({});
-  const [importKey, setImportKey]       = useState(0);
+  const [importKey, setImportKey] = useState(0);
   const [importResult, setImportResult] = useState<{
     populated: string[];
     missing: string[];
   } | null>(null);
 
-  function handleImport(data: ImportableData, populatedFields: string[]) {
-    const missing = ALL_FIELDS.filter((f) => !populatedFields.includes(f));
-    setImportedData(data);
-    setImportKey((k) => k + 1); // force wizard re-mount with fresh initial data
-    setImportResult({ populated: populatedFields, missing });
-  }
+  // function handleImport(data: ImportableData, populatedFields: string[]) {
+  //   const missing = ALL_FIELDS.filter((f) => !populatedFields.includes(f));
+  //   setImportedData(data);
+  //   setImportKey((k) => k + 1); // force wizard re-mount with fresh initial data
+  //   setImportResult({ populated: populatedFields, missing });
+  // }
 
   return (
     <>
@@ -38,10 +47,10 @@ export function AddSolutionClient({ saturationData }: AddSolutionClientProps) {
       <CategorySaturationPanel saturationData={saturationData} />
 
       {/* Import banner */}
-      <div className="mb-6 p-4 rounded-xl border border-border bg-secondary/30">
+      {/* <div className="mb-6 p-4 rounded-xl border border-border bg-secondary/30">
         <p className="text-sm font-bold text-foreground mb-2">Have an existing workflow?</p>
         <JsonImportButton onImport={handleImport} />
-      </div>
+      </div> */}
 
       {/* Import result banner */}
       {importResult && (
