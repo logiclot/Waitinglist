@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { log } from "@/lib/logger";
 import { createRateLimiter } from "@/lib/rate-limit";
+import * as Sentry from "@sentry/nextjs";
 
 // How long (ms) before the JWT re-fetches fresh role/onboarding from DB.
 // Keeps session data live without hitting DB on every single request.
@@ -19,6 +20,52 @@ function toTitleCase(s: string): string {
   return s
     .toLowerCase()
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Tracks login activity (lastLoginAt / loginDaysCount) and checks expert
+ * referral conditions.  Called once per sign-in from the signIn callback
+ * so it never runs on regular page navigations.
+ */
+async function trackLoginActivity(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { lastLoginAt: true, loginDaysCount: true },
+    });
+    if (!user) return;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    let shouldUpdate = false;
+    let newLoginDaysCount = user.loginDaysCount;
+
+    if (!user.lastLoginAt) {
+      shouldUpdate = true;
+      newLoginDaysCount = 1;
+    } else {
+      const lastLogin = new Date(user.lastLoginAt);
+      const lastLoginDate = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
+      if (today.getTime() > lastLoginDate.getTime()) {
+        shouldUpdate = true;
+        newLoginDaysCount += 1;
+      }
+    }
+
+    if (shouldUpdate) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { lastLoginAt: now, loginDaysCount: newLoginDaysCount },
+      });
+
+      const { checkExpertReferralCondition } = await import("@/actions/referral");
+      await checkExpertReferralCondition(userId);
+    }
+  } catch (error) {
+    log.error("auth.track_login_failed", { error: error instanceof Error ? error.message : String(error) });
+    Sentry.captureException(error);
+  }
 }
 
 export const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim());
@@ -195,6 +242,7 @@ export const authOptions: NextAuthOptions = {
             },
           });
 
+          await trackLoginActivity(existingUser.id);
           return true;
         } else {
           // Create new user — persist OAuth profile image
@@ -228,8 +276,12 @@ export const authOptions: NextAuthOptions = {
           user.emailVerifiedAt = newUser.emailVerifiedAt;
           user.onboardingCompletedAt = null;
           user.image = newUser.profileImageUrl || user.image;
+          await trackLoginActivity(newUser.id);
           return true;
         }
+      }
+      if (user?.id) {
+        await trackLoginActivity(user.id as string);
       }
       return true;
     },

@@ -16,9 +16,9 @@ export default async function MessagesLayout({
   }
 
   const role = session.user.role || "BUSINESS";
-  const sidebarRole = role === "EXPERT" ? "EXPERT" : role === "ADMIN" ? "ADMIN" : "BUSINESS";
+  const sidebarRole =
+    role === "EXPERT" ? "EXPERT" : role === "ADMIN" ? "ADMIN" : "BUSINESS";
 
-  let publishedSolutionCount = 0;
   let portfolioSlug: string | null = null;
 
   if (sidebarRole === "EXPERT") {
@@ -27,23 +27,14 @@ export default async function MessagesLayout({
       select: { id: true, slug: true },
     });
     if (expert) {
-      publishedSolutionCount = await prisma.solution.count({
-        where: { expertId: expert.id, status: "published" },
-      });
       portfolioSlug = expert.slug;
     }
   }
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar
-        role={sidebarRole}
-        publishedSolutionCount={publishedSolutionCount}
-        portfolioSlug={portfolioSlug}
-      />
-      <main className="flex-1 min-h-screen">
-        {children}
-      </main>
+      <Sidebar role={sidebarRole} portfolioSlug={portfolioSlug} />
+      <main className="flex-1 min-h-screen">{children}</main>
     </div>
   );
 }

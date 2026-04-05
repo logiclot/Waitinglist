@@ -29,7 +29,7 @@ import {
   getDefaultDiscoveryFormData,
   type DiscoveryFormData,
 } from "@/components/jobs/questionnaire/buildBriefData";
-import * as C from "@/app/jobs/discovery/constants";
+import * as C from "@/app/(marketplace)/jobs/discovery/constants";
 
 interface JobData {
   id: string;
@@ -58,10 +58,19 @@ interface Props {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending_payment: { label: "Pending Payment", color: "text-amber-600 bg-amber-50 border-amber-200" },
+  pending_payment: {
+    label: "Pending Payment",
+    color: "text-amber-600 bg-amber-50 border-amber-200",
+  },
   open: { label: "Open", color: "text-green-700 bg-green-50 border-green-200" },
-  awarded: { label: "Awarded", color: "text-blue-700 bg-blue-50 border-blue-200" },
-  closed: { label: "Closed", color: "text-muted-foreground bg-secondary border-border" },
+  awarded: {
+    label: "Awarded",
+    color: "text-blue-700 bg-blue-50 border-blue-200",
+  },
+  closed: {
+    label: "Closed",
+    color: "text-muted-foreground bg-secondary border-border",
+  },
 };
 
 /** Try to restore formData from a previously saved goal JSON. */
@@ -78,7 +87,11 @@ function restoreFormData(goalJson: string | null): DiscoveryFormData | null {
   }
 }
 
-export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) {
+export function AdminQuestionnaireFill({
+  job,
+  paymentUrl,
+  isSimulated,
+}: Props) {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -86,20 +99,31 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
   // Restore formData from existing goal if possible
   const restoredData = restoreFormData(job.goal);
   const [formData, setFormData] = useState<DiscoveryFormData>(
-    restoredData ?? getDefaultDiscoveryFormData()
+    restoredData ?? getDefaultDiscoveryFormData(),
   );
 
   const totalSteps = 7;
   const bp = job.buyer.businessProfile;
-  const businessName = bp?.companyName || (bp ? `${bp.firstName} ${bp.lastName}` : job.buyer.email);
-  const statusInfo = STATUS_LABELS[job.status] ?? { label: job.status, color: "text-muted-foreground bg-secondary border-border" };
+  const businessName =
+    bp?.companyName ||
+    (bp ? `${bp.firstName} ${bp.lastName}` : job.buyer.email);
+  const statusInfo = STATUS_LABELS[job.status] ?? {
+    label: job.status,
+    color: "text-muted-foreground bg-secondary border-border",
+  };
 
   // Generic Handlers
-  const handleSingleSelect = (key: string, value: string, otherKey?: string) => {
+  const handleSingleSelect = (
+    key: string,
+    value: string,
+    otherKey?: string,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [key]: value,
-      ...(otherKey && value !== "Other" && value !== "Yes" ? { [otherKey]: "" } : {}),
+      ...(otherKey && value !== "Other" && value !== "Yes"
+        ? { [otherKey]: "" }
+        : {}),
     }));
   };
 
@@ -109,7 +133,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
     const isSelected = current.includes(value);
     setFormData((prev) => ({
       ...prev,
-      [key]: isSelected ? current.filter((item) => item !== value) : [...current, value],
+      [key]: isSelected
+        ? current.filter((item) => item !== value)
+        : [...current, value],
     }));
   };
 
@@ -140,7 +166,7 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         setSaving(false);
       }
     },
-    [job.id]
+    [job.id],
   );
 
   const handleNext = async () => {
@@ -152,7 +178,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
     } else {
       // Final save on last step
       await saveGoal(formData);
-      toast.success("Questionnaire complete! Share the payment link with the business.");
+      toast.success(
+        "Questionnaire complete! Share the payment link with the business.",
+      );
     }
   };
 
@@ -177,7 +205,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         </div>
         <div>
           <h2 className="text-2xl font-bold">Business Context</h2>
-          <p className="text-sm text-muted-foreground">Basic details about the organization.</p>
+          <p className="text-sm text-muted-foreground">
+            Basic details about the organization.
+          </p>
         </div>
       </div>
 
@@ -185,7 +215,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="1. What best describes the business model?"
         options={C.BUSINESS_MODELS}
         value={formData.businessModel}
-        onChange={(v) => handleSingleSelect("businessModel", v, "otherBusinessModel")}
+        onChange={(v) =>
+          handleSingleSelect("businessModel", v, "otherBusinessModel")
+        }
         otherValue={formData.otherBusinessModel}
         onOtherChange={(v) => handleChange("otherBusinessModel", v)}
       />
@@ -201,7 +233,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="3. Approximate company size"
         options={C.COMPANY_SIZES}
         value={formData.companySize}
-        onChange={(v) => handleSingleSelect("companySize", v, "otherCompanySize")}
+        onChange={(v) =>
+          handleSingleSelect("companySize", v, "otherCompanySize")
+        }
         otherValue={formData.otherCompanySize}
         onOtherChange={(v) => handleChange("otherCompanySize", v)}
       />
@@ -216,7 +250,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         </div>
         <div>
           <h2 className="text-2xl font-bold">Revenue & Operations</h2>
-          <p className="text-sm text-muted-foreground">How money and work flow through the business.</p>
+          <p className="text-sm text-muted-foreground">
+            How money and work flow through the business.
+          </p>
         </div>
       </div>
 
@@ -232,7 +268,13 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="5. How do customers usually convert?"
         options={C.CONVERSION_MECHANISMS}
         value={formData.conversionMechanism}
-        onChange={(v) => handleSingleSelect("conversionMechanism", v, "otherConversionMechanism")}
+        onChange={(v) =>
+          handleSingleSelect(
+            "conversionMechanism",
+            v,
+            "otherConversionMechanism",
+          )
+        }
         otherValue={formData.otherConversionMechanism}
         onOtherChange={(v) => handleChange("otherConversionMechanism", v)}
         helperText="Think about the moment someone becomes a paying customer."
@@ -249,7 +291,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="7. How is revenue tracked today?"
         options={C.REVENUE_TRACKING}
         value={formData.revenueTracking}
-        onChange={(v) => handleSingleSelect("revenueTracking", v, "otherRevenueTracking")}
+        onChange={(v) =>
+          handleSingleSelect("revenueTracking", v, "otherRevenueTracking")
+        }
         otherValue={formData.otherRevenueTracking}
         onOtherChange={(v) => handleChange("otherRevenueTracking", v)}
       />
@@ -263,7 +307,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="9. What happens when volume increases?"
         options={C.SCALING_IMPACT}
         value={formData.scalingImpact}
-        onChange={(v) => handleSingleSelect("scalingImpact", v, "otherScalingImpact")}
+        onChange={(v) =>
+          handleSingleSelect("scalingImpact", v, "otherScalingImpact")
+        }
         otherValue={formData.otherScalingImpact}
         onOtherChange={(v) => handleChange("otherScalingImpact", v)}
       />
@@ -287,7 +333,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         </div>
         <div>
           <h2 className="text-2xl font-bold">Tools & Stack</h2>
-          <p className="text-sm text-muted-foreground">Technical constraints and integration effort.</p>
+          <p className="text-sm text-muted-foreground">
+            Technical constraints and integration effort.
+          </p>
         </div>
       </div>
 
@@ -311,7 +359,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label='12. Where is the "source of truth" today?'
         options={C.SOURCE_OF_TRUTH}
         value={formData.sourceOfTruth}
-        onChange={(v) => handleSingleSelect("sourceOfTruth", v, "otherSourceOfTruth")}
+        onChange={(v) =>
+          handleSingleSelect("sourceOfTruth", v, "otherSourceOfTruth")
+        }
         otherValue={formData.otherSourceOfTruth}
         onOtherChange={(v) => handleChange("otherSourceOfTruth", v)}
         helperText="This is where the most reliable business data lives."
@@ -333,12 +383,15 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         </div>
         <div>
           <h2 className="text-2xl font-bold">Process Pain Signals</h2>
-          <p className="text-sm text-muted-foreground">Where friction exists in day-to-day.</p>
+          <p className="text-sm text-muted-foreground">
+            Where friction exists in day-to-day.
+          </p>
         </div>
       </div>
 
       <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-8 text-sm text-amber-600">
-        Ask the client to describe their day-to-day. They don&apos;t need to identify bottlenecks.
+        Ask the client to describe their day-to-day. They don&apos;t need to
+        identify bottlenecks.
       </div>
 
       <MultiSelectMax2
@@ -377,7 +430,13 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="18. How visible are operations right now?"
         options={C.OPERATIONS_VISIBILITY}
         value={formData.operationsVisibility}
-        onChange={(v) => handleSingleSelect("operationsVisibility", v, "otherOperationsVisibility")}
+        onChange={(v) =>
+          handleSingleSelect(
+            "operationsVisibility",
+            v,
+            "otherOperationsVisibility",
+          )
+        }
         otherValue={formData.otherOperationsVisibility}
         onOtherChange={(v) => handleChange("otherOperationsVisibility", v)}
       />
@@ -392,7 +451,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         </div>
         <div>
           <h2 className="text-2xl font-bold">Risk, Access & Constraints</h2>
-          <p className="text-sm text-muted-foreground">Boundaries for the proposed solution.</p>
+          <p className="text-sm text-muted-foreground">
+            Boundaries for the proposed solution.
+          </p>
         </div>
       </div>
 
@@ -416,7 +477,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="21. Are there tools or vendors that must NOT be changed?"
         options={C.VENDOR_CONSTRAINTS}
         value={formData.vendorConstraints}
-        onChange={(v) => handleSingleSelect("vendorConstraints", v, "vendorConstraintDetails")}
+        onChange={(v) =>
+          handleSingleSelect("vendorConstraints", v, "vendorConstraintDetails")
+        }
         otherValue={formData.vendorConstraintDetails}
         onOtherChange={(v) => handleChange("vendorConstraintDetails", v)}
       />
@@ -431,7 +494,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         </div>
         <div>
           <h2 className="text-2xl font-bold">Outcome Orientation</h2>
-          <p className="text-sm text-muted-foreground">What success looks like.</p>
+          <p className="text-sm text-muted-foreground">
+            What success looks like.
+          </p>
         </div>
       </div>
 
@@ -439,7 +504,13 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="22. When do they need a solution implemented?"
         options={C.IMPLEMENTATION_TIMELINE}
         value={formData.implementationTimeline}
-        onChange={(v) => handleSingleSelect("implementationTimeline", v, "otherImplementationTimeline")}
+        onChange={(v) =>
+          handleSingleSelect(
+            "implementationTimeline",
+            v,
+            "otherImplementationTimeline",
+          )
+        }
         otherValue={formData.otherImplementationTimeline}
         onOtherChange={(v) => handleChange("otherImplementationTimeline", v)}
         helperText="This helps experts align proposals with the timeline."
@@ -456,7 +527,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="24. Which outcome matters most right now?"
         options={C.PRIMARY_OUTCOME}
         value={formData.primaryOutcome}
-        onChange={(v) => handleSingleSelect("primaryOutcome", v, "otherPrimaryOutcome")}
+        onChange={(v) =>
+          handleSingleSelect("primaryOutcome", v, "otherPrimaryOutcome")
+        }
         otherValue={formData.otherPrimaryOutcome}
         onOtherChange={(v) => handleChange("otherPrimaryOutcome", v)}
       />
@@ -464,7 +537,13 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         label="25. If nothing changes, what happens?"
         options={C.INACTION_CONSEQUENCE}
         value={formData.inactionConsequence}
-        onChange={(v) => handleSingleSelect("inactionConsequence", v, "otherInactionConsequence")}
+        onChange={(v) =>
+          handleSingleSelect(
+            "inactionConsequence",
+            v,
+            "otherInactionConsequence",
+          )
+        }
         otherValue={formData.otherInactionConsequence}
         onOtherChange={(v) => handleChange("otherInactionConsequence", v)}
       />
@@ -487,13 +566,16 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
         </div>
         <div>
           <h2 className="text-2xl font-bold">Final Clarifier</h2>
-          <p className="text-sm text-muted-foreground">One last check before finishing.</p>
+          <p className="text-sm text-muted-foreground">
+            One last check before finishing.
+          </p>
         </div>
       </div>
 
       <div className="space-y-3">
         <label className="block text-lg font-bold text-foreground">
-          27. Is there anything about this business that would change how solutions should be designed?
+          27. Is there anything about this business that would change how
+          solutions should be designed?
         </label>
         <p className="text-sm text-muted-foreground -mt-2">
           Only include details that affect daily operations, scale, or risk.
@@ -513,7 +595,8 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
           <span className="text-sm font-bold">Questionnaire complete</span>
         </div>
         <p className="text-sm text-green-700 mb-4">
-          Share the payment link with the business. Once they pay, the job goes live automatically and experts will be notified.
+          Share the payment link with the business. Once they pay, the job goes
+          live automatically and experts will be notified.
         </p>
 
         {paymentUrl && (
@@ -534,7 +617,11 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
                 onClick={() => handleCopy(paymentUrl)}
                 className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg border border-green-200 bg-white hover:bg-green-50 transition-colors text-sm font-bold text-foreground"
               >
-                {copied ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                {copied ? (
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
                 {copied ? "Copied!" : "Copy"}
               </button>
               <a
@@ -570,7 +657,9 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className={`inline-flex items-center px-2.5 py-1 rounded border text-xs font-bold ${statusInfo.color}`}>
+            <span
+              className={`inline-flex items-center px-2.5 py-1 rounded border text-xs font-bold ${statusInfo.color}`}
+            >
               {statusInfo.label}
             </span>
             <span className="text-xs text-muted-foreground">
@@ -585,11 +674,15 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
             {isSimulated && (
               <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200 mb-2">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
-                <p className="text-[10px] text-amber-700">Dev placeholder — Stripe not configured.</p>
+                <p className="text-[10px] text-amber-700">
+                  Dev placeholder — Stripe not configured.
+                </p>
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-foreground shrink-0">Payment Link:</span>
+              <span className="text-xs font-bold text-foreground shrink-0">
+                Payment Link:
+              </span>
               <input
                 readOnly
                 value={paymentUrl}
@@ -599,7 +692,11 @@ export function AdminQuestionnaireFill({ job, paymentUrl, isSimulated }: Props) 
                 onClick={() => handleCopy(paymentUrl)}
                 className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border bg-background hover:bg-secondary transition-colors text-xs font-bold text-foreground"
               >
-                {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
                 {copied ? "Copied!" : "Copy"}
               </button>
             </div>

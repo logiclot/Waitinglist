@@ -10,7 +10,7 @@ import { getUnseenInvoiceCount } from "@/actions/invoices";
 import { getUnseenJobCount } from "@/actions/jobs";
 import { getPublishedSolutionCount } from "@/actions/solutions";
 import { getActionNeededProjectCount } from "@/actions/orders";
-import { 
+import {
   LayoutDashboard,
   MessageSquare,
   PlusCircle,
@@ -19,8 +19,6 @@ import {
   BarChart2,
   Bell,
   Settings,
-
-
   Layers,
   Package,
   Briefcase as ProjectsIcon,
@@ -40,7 +38,11 @@ interface SidebarProps {
   publishedSolutionCount?: number;
 }
 
-export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSlug, publishedSolutionCount: initialCount = 0 }: SidebarProps) {
+export function Sidebar({
+  role,
+  isFoundingExpert: _isFoundingExpert,
+  portfolioSlug,
+}: SidebarProps) {
   void _isFoundingExpert;
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -50,7 +52,7 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
   const [unseenJobs, setUnseenJobs] = useState(0);
   const [projectActions, setProjectActions] = useState(0);
   const [showFeedbackBubble, setShowFeedbackBubble] = useState(false);
-  const [pubSolCount, setPubSolCount] = useState(initialCount);
+  const [pubSolCount, setPubSolCount] = useState(0);
   const suitesLocked = role === "EXPERT" && pubSolCount < 3;
 
   useEffect(() => {
@@ -79,10 +81,18 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
   }, []);
 
   const isActive = (path: string) => {
-    if (pathname === path) return true;
+    if (path === "/dashboard") {
+      return pathname === "/dashboard";
+    }
     if (pathname.startsWith(path + "/")) return true;
+    if (pathname === path) return true;
     // "Post a Request" hub is also active when inside the wizard pages
-    if (path === "/business/add-request" && (pathname.startsWith("/jobs/new") || pathname.startsWith("/jobs/discovery"))) return true;
+    if (
+      path === "/business/add-request" &&
+      (pathname.startsWith("/jobs/new") ||
+        pathname.startsWith("/jobs/discovery"))
+    )
+      return true;
     // "Find Work" is active on any /jobs route for experts
     if (path === "/jobs" && pathname.startsWith("/jobs")) return true;
     return false;
@@ -90,53 +100,72 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
 
   // Expert Navigation — ordered by workflow: engage → deliver → manage → review
   const expertLinks = [
-    { label: "Overview",        href: "/dashboard",           icon: LayoutDashboard },
-    { label: "Messages",        href: "/dashboard/messages",  icon: MessageSquare },
-    { label: "Projects",        href: "/expert/projects",     icon: ProjectsIcon },
-    { label: "Active Bids",     href: "/expert/active-bids",  icon: FileText },
-    { label: "Find Work",       href: "/jobs",                icon: Search },
-    { label: "Add Solution",    href: "/expert/add-solution", icon: PlusCircle },
-    { label: "My Solutions",    href: "/expert/my-solutions", icon: Layers },
-    ...(portfolioSlug ? [{ label: "My Portfolio", href: `/p/${portfolioSlug}`, icon: Globe }] : []),
-    { label: "Suites",          href: "/expert/ecosystems",   icon: Package },
-    { label: "Invoices",        href: "/dashboard/invoices",  icon: FileText },
+    { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Messages", href: "/dashboard/messages", icon: MessageSquare },
+    { label: "Projects", href: "/expert/projects", icon: ProjectsIcon },
+    { label: "Active Bids", href: "/expert/active-bids", icon: FileText },
+    { label: "Find Work", href: "/jobs", icon: Search },
+    { label: "Add Solution", href: "/expert/add-solution", icon: PlusCircle },
+    { label: "My Solutions", href: "/expert/my-solutions", icon: Layers },
+    ...(portfolioSlug
+      ? [{ label: "My Portfolio", href: `/p/${portfolioSlug}`, icon: Globe }]
+      : []),
+    { label: "Suites", href: "/expert/ecosystems", icon: Package },
+    { label: "Invoices", href: "/dashboard/invoices", icon: FileText },
   ];
 
   const expertBottom = [
-    { label: "Feedback",      href: "/dashboard/feedback",   icon: MessageCircle },
+    { label: "Feedback", href: "/dashboard/feedback", icon: MessageCircle },
     { label: "Notifications", href: "/expert/notifications", icon: Bell },
-    { label: "Settings",      href: "/expert/settings",      icon: Settings },
+    { label: "Settings", href: "/expert/settings", icon: Settings },
   ];
 
   // Business Navigation — ordered by buyer journey: discover → request → track → admin
   const businessLinks = [
-    { label: "Overview",         href: "/dashboard",             icon: LayoutDashboard },
-    { label: "Browse Solutions", href: "/solutions",             icon: Search },
-    { label: "Post a Request",   href: "/business/add-request",  icon: PlusCircle },
-    { label: "My Requests",      href: "/jobs",                  icon: ClipboardList },
-    { label: "My Projects",      href: "/business/projects",     icon: ProjectsIcon },
-    { label: "Messages",         href: "/dashboard/messages",    icon: MessageSquare },
-    { label: "Invoices",         href: "/dashboard/invoices",    icon: FileText },
+    { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Browse Solutions", href: "/solutions", icon: Search },
+    {
+      label: "Post a Request",
+      href: "/business/add-request",
+      icon: PlusCircle,
+    },
+    { label: "My Requests", href: "/jobs", icon: ClipboardList },
+    { label: "My Projects", href: "/business/projects", icon: ProjectsIcon },
+    { label: "Messages", href: "/dashboard/messages", icon: MessageSquare },
+    { label: "Invoices", href: "/dashboard/invoices", icon: FileText },
   ];
 
   const businessBottom = [
-    { label: "Feedback",      href: "/dashboard/feedback",    icon: MessageCircle },
+    { label: "Feedback", href: "/dashboard/feedback", icon: MessageCircle },
     { label: "Notifications", href: "/business/notifications", icon: Bell },
-    { label: "Settings",      href: "/business/settings",      icon: Settings },
+    { label: "Settings", href: "/business/settings", icon: Settings },
   ];
 
   const links = role === "EXPERT" ? expertLinks : businessLinks;
   const bottomLinks = role === "EXPERT" ? expertBottom : businessBottom;
 
-  const adminLinks = role === "ADMIN"
-    ? [
-        { label: "Admin",           href: "/admin",                 icon: ShieldCheck },
-        { label: "Post on Behalf",  href: "/admin/post-on-behalf",  icon: Users },
-        { label: "Audit Analytics", href: "/admin/audit-analytics", icon: BarChart2 },
-        { label: "Job Analytics",   href: "/admin/job-analytics",   icon: Activity },
-        { label: "Traffic",         href: "/admin/traffic",         icon: Globe },
-      ]
-    : [];
+  const adminLinks =
+    role === "ADMIN"
+      ? [
+          { label: "Admin", href: "/admin", icon: ShieldCheck },
+          {
+            label: "Post on Behalf",
+            href: "/admin/post-on-behalf",
+            icon: Users,
+          },
+          {
+            label: "Audit Analytics",
+            href: "/admin/audit-analytics",
+            icon: BarChart2,
+          },
+          {
+            label: "Job Analytics",
+            href: "/admin/job-analytics",
+            icon: Activity,
+          },
+          { label: "Traffic", href: "/admin/traffic", icon: Globe },
+        ]
+      : [];
 
   return (
     <aside className="w-64 bg-card border-r border-border h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto hidden md:flex flex-col">
@@ -153,7 +182,8 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
           const showJobsBadge = isFindWork && unseenJobs > 0;
           const isInvoices = link.label === "Invoices";
           const showInvoiceBadge = isInvoices && unseenInvoices > 0;
-          const isProjects = link.label === "Projects" || link.label === "My Projects";
+          const isProjects =
+            link.label === "Projects" || link.label === "My Projects";
           const showProjectBadge = isProjects && projectActions > 0;
 
           return (
@@ -164,8 +194,8 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
                 active
                   ? "bg-primary/10 text-primary"
                   : isLockedSuites
-                  ? "text-muted-foreground/50 hover:bg-secondary hover:text-muted-foreground"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    ? "text-muted-foreground/50 hover:bg-secondary hover:text-muted-foreground"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
               <span className="relative">
@@ -204,7 +234,7 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
           );
         })}
       </div>
-      
+
       {/* Bottom Section */}
       <div className="p-4 border-t border-border space-y-1">
         {adminLinks.map((link) => (
@@ -224,7 +254,8 @@ export function Sidebar({ role, isFoundingExpert: _isFoundingExpert, portfolioSl
         {bottomLinks.map((link) => {
           const Icon = link.icon;
           const active = isActive(link.href);
-          const showUnreadDot = link.label === "Notifications" && unreadCount > 0;
+          const showUnreadDot =
+            link.label === "Notifications" && unreadCount > 0;
           const isFeedback = link.label === "Feedback";
 
           return (

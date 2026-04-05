@@ -134,13 +134,16 @@ export async function publishEcosystem(id: string, publish: boolean) {
       data: { isPublished: publish },
     });
 
-    revalidatePath(`/expert/ecosystems`);
-    revalidatePath(`/stacks/${existing.slug}`);
-    // Revalidate each solution page so the suite badge/section appears immediately
+    const paths = [
+      revalidatePath(`/expert/ecosystems`),
+      revalidatePath(`/stacks/${existing.slug}`)
+    ];
     for (const item of existing.items) {
-      revalidatePath(`/solutions/${item.solution.id}`);
-      revalidatePath(`/solutions/${item.solution.slug}`);
+      paths.push(revalidatePath(`/solutions/${item.solution.id}`));
+      paths.push(revalidatePath(`/solutions/${item.solution.slug}`));
     }
+    await Promise.all(paths);
+
     return { success: true };
   } catch (e) {
     log.error("ecosystems.publish_failed", { error: e instanceof Error ? e.message : String(e) });
@@ -160,28 +163,32 @@ export async function addSolutionToEcosystem(ecosystemId: string, solutionId: st
     const ecosystem = await prisma.ecosystem.findUnique({ where: { id: ecosystemId } });
     if (!ecosystem || ecosystem.expertId !== expertId) return { error: "Unauthorized" };
 
-    // Get current max position
-    const lastItem = await prisma.ecosystemItem.findFirst({
-      where: { ecosystemId },
-      orderBy: { position: 'desc' }
-    });
+    // Get current max position and solution info in parallel
+    const [lastItem, solution] = await Promise.all([
+      prisma.ecosystemItem.findFirst({
+        where: { ecosystemId },
+        orderBy: { position: "desc" },
+      }),
+      prisma.solution.findUnique({ where: { id: solutionId }, select: { slug: true } }),
+    ]);
+
     const position = (lastItem?.position ?? -1) + 1;
 
     await prisma.ecosystemItem.create({
       data: {
         ecosystemId,
         solutionId,
-        position
-      }
+        position,
+      },
     });
 
-    // Revalidate the solution's public page so the suite section appears immediately
-    const solution = await prisma.solution.findUnique({ where: { id: solutionId }, select: { slug: true } });
+    const paths = [revalidatePath(`/expert/ecosystems/${ecosystemId}`)];
     if (solution) {
-      revalidatePath(`/solutions/${solutionId}`);
-      revalidatePath(`/solutions/${solution.slug}`);
+      paths.push(revalidatePath(`/solutions/${solutionId}`));
+      paths.push(revalidatePath(`/solutions/${solution.slug}`));
     }
-    revalidatePath(`/expert/ecosystems/${ecosystemId}`);
+    await Promise.all(paths);
+
     return { success: true };
   } catch (e) {
     log.error("ecosystems.add_solution_failed", { error: e instanceof Error ? e.message : String(e) });
@@ -201,23 +208,26 @@ export async function removeSolutionFromEcosystem(ecosystemId: string, solutionI
     const ecosystem = await prisma.ecosystem.findUnique({ where: { id: ecosystemId } });
     if (!ecosystem || ecosystem.expertId !== expertId) return { error: "Unauthorized" };
 
-    await prisma.ecosystemItem.deleteMany({
-      where: { ecosystemId, solutionId }
-    });
-
-    // If this was a partner solution, update the invite status
-    await prisma.ecosystemInvite.updateMany({
-      where: { ecosystemId, solutionId, status: "accepted" },
-      data: { status: "withdrawn" },
-    });
-
-    // Revalidate the solution's public page so the suite badge is removed immediately
     const solution = await prisma.solution.findUnique({ where: { id: solutionId }, select: { slug: true } });
+
+    await Promise.all([
+      prisma.ecosystemItem.deleteMany({
+        where: { ecosystemId, solutionId }
+      }),
+      // If this was a partner solution, update the invite status
+      prisma.ecosystemInvite.updateMany({
+        where: { ecosystemId, solutionId, status: "accepted" },
+        data: { status: "withdrawn" },
+      })
+    ]);
+
+    const paths = [revalidatePath(`/expert/ecosystems/${ecosystemId}`)];
     if (solution) {
-      revalidatePath(`/solutions/${solutionId}`);
-      revalidatePath(`/solutions/${solution.slug}`);
+      paths.push(revalidatePath(`/solutions/${solutionId}`));
+      paths.push(revalidatePath(`/solutions/${solution.slug}`));
     }
-    revalidatePath(`/expert/ecosystems/${ecosystemId}`);
+    await Promise.all(paths);
+
     return { success: true };
   } catch (e) {
     log.error("ecosystems.remove_solution_failed", { error: e instanceof Error ? e.message : String(e) });
@@ -271,20 +281,23 @@ export async function deleteEcosystem(id: string) {
     where: { ecosystemId: id, status: "accepted" },
     include: { invitee: { select: { userId: true } }, solution: { select: { title: true } } },
   });
-  for (const invite of acceptedInvites) {
-    await createNotification(
+
+  await Promise.all(acceptedInvites.map(invite =>
+    createNotification(
       invite.invitee.userId,
       "🗂️ Suite removed",
       `The suite "${existing.title}" containing your solution "${invite.solution.title}" has been removed by the owner.`,
       "info"
-    );
-  }
+    )
+  ));
 
   // EcosystemItems + EcosystemInvites cascade-delete automatically via schema onDelete: Cascade
   await prisma.ecosystem.delete({ where: { id } });
 
-  revalidatePath("/expert/ecosystems");
-  if (existing.isPublished) revalidatePath(`/stacks/${existing.slug}`);
+  const paths = [revalidatePath("/expert/ecosystems")];
+  if (existing.isPublished) paths.push(revalidatePath(`/stacks/${existing.slug}`));
+  await Promise.all(paths);
+
   return { success: true };
 }
 
@@ -552,7 +565,7 @@ export async function respondToInvite(inviteId: string, accept: boolean) {
       });
       const position = (lastItem?.position ?? -1) + 1;
 
-      await prisma.$transaction([
+      await Promise.all([
         prisma.ecosystemInvite.update({
           where: { id: inviteId },
           data: { status: "accepted" },
@@ -588,16 +601,15 @@ export async function respondToInvite(inviteId: string, accept: boolean) {
       );
     }
 
-    revalidatePath("/expert/suite-invites");
-    revalidatePath(`/expert/ecosystems/${invite.ecosystemId}`);
-    if (invite.ecosystem.slug) {
-      revalidatePath(`/stacks/${invite.ecosystem.slug}`);
-    }
-    // Revalidate solution page so suite badge appears
-    revalidatePath(`/solutions/${invite.solutionId}`);
-    if (invite.solution.slug) {
-      revalidatePath(`/solutions/${invite.solution.slug}`);
-    }
+    const paths = [
+      revalidatePath("/expert/suite-invites"),
+      revalidatePath(`/expert/ecosystems/${invite.ecosystemId}`),
+      revalidatePath(`/solutions/${invite.solutionId}`)
+    ];
+    if (invite.ecosystem.slug) paths.push(revalidatePath(`/stacks/${invite.ecosystem.slug}`));
+    if (invite.solution.slug) paths.push(revalidatePath(`/solutions/${invite.solution.slug}`));
+
+    await Promise.all(paths);
     return { success: true };
   } catch (e) {
     log.error("ecosystems.respond_invite_failed", { error: e instanceof Error ? e.message : String(e) });
@@ -618,14 +630,15 @@ export async function withdrawFromEcosystem(ecosystemId: string, solutionId: str
     const solution = await prisma.solution.findUnique({ where: { id: solutionId } });
     if (!solution || solution.expertId !== expertId) return { error: "Unauthorized" };
 
-    await prisma.ecosystemItem.deleteMany({
-      where: { ecosystemId, solutionId },
-    });
-
-    await prisma.ecosystemInvite.updateMany({
-      where: { ecosystemId, solutionId, status: "accepted" },
-      data: { status: "withdrawn" },
-    });
+    await Promise.all([
+      prisma.ecosystemItem.deleteMany({
+        where: { ecosystemId, solutionId },
+      }),
+      prisma.ecosystemInvite.updateMany({
+        where: { ecosystemId, solutionId, status: "accepted" },
+        data: { status: "withdrawn" },
+      })
+    ]);
 
     const ecosystem = await prisma.ecosystem.findUnique({
       where: { id: ecosystemId },
@@ -641,8 +654,10 @@ export async function withdrawFromEcosystem(ecosystemId: string, solutionId: str
       );
     }
 
-    revalidatePath(`/expert/ecosystems/${ecosystemId}`);
-    revalidatePath("/expert/suite-invites");
+    await Promise.all([
+      revalidatePath(`/expert/ecosystems/${ecosystemId}`),
+      revalidatePath("/expert/suite-invites")
+    ]);
     return { success: true };
   } catch (e) {
     log.error("ecosystems.withdraw_failed", { error: e instanceof Error ? e.message : String(e) });

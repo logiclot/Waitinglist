@@ -24,7 +24,7 @@ import { createNotification } from "@/lib/notifications";
 
 const JOB_PRICES: Record<string, { cents: number; label: string }> = {
   "Discovery Scan": { cents: DISCOVERY_SCAN_PRICE_CENTS, label: "Discovery Scan — Expert Proposals" },
-  "Discovery":      { cents: DISCOVERY_SCAN_PRICE_CENTS, label: "Discovery Scan — Expert Proposals" },
+  "Discovery": { cents: DISCOVERY_SCAN_PRICE_CENTS, label: "Discovery Scan — Expert Proposals" },
   "Custom Project": { cents: CUSTOM_PROJECT_PRICE_CENTS, label: "Custom Project — Expert Proposals" },
 };
 
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         data: { paymentProvider: "free_waitlist_credit" },
       });
 
-      await activateJobPost(jobId, "simulated");
+      await activateJobPost(job);
 
       if (session.user.id) {
         await createNotification(
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
       ],
       mode: "payment",
       success_url: `${APP_URL}/jobs/${jobId}?paid=true`,
-      cancel_url:  `${APP_URL}/jobs/${jobId}?canceled=true`,
+      cancel_url: `${APP_URL}/jobs/${jobId}?canceled=true`,
       metadata: {
         type: "job_posting",
         jobId,

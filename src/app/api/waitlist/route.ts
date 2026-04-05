@@ -5,6 +5,8 @@ import { log } from "@/lib/logger";
 import { publicFormLimiter } from "@/lib/rate-limit";
 import fs from "fs";
 import path from "path";
+import { waitlistSchema } from "@/lib/validation";
+
 
 export async function POST(request: Request) {
   try {
@@ -16,21 +18,24 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { fullName, email, role, honeypot } = body;
+
+    const result = waitlistSchema.safeParse(body);
+
+    if (!result.success) {
+      const firstError = result.error.issues[0]?.message ?? "Invalid input";
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+
+    const { fullName, email, role, honeypot } = result.data;
 
     // Honeypot — bots fill this, real users don't see it
     if (honeypot) return NextResponse.json({ ok: true, status: "created" });
 
-    if (!fullName || !email || !role) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existing = await (prisma as any).waitlistSignup.findUnique({ where: { email } });
+    const existing = await prisma.waitlistSignup.findUnique({ where: { email } });
     if (existing) return NextResponse.json({ ok: true, status: "existing" });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (prisma as any).waitlistSignup.create({
+
+    await prisma.waitlistSignup.create({
       data: { fullName, email, role, source: "landing_waitlist" },
     });
 

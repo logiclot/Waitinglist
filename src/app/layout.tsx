@@ -7,12 +7,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Providers } from "@/components/providers/SessionProvider";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
-import { prisma } from "@/lib/prisma";
 import { Toaster } from "sonner";
 import { SavedSolutionsProvider } from "@/hooks/SavedSolutionsContext";
 import { SavedSuitesProvider } from "@/hooks/SavedSuitesContext";
 import { Analytics } from "@vercel/analytics/react";
-
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,6 +26,7 @@ const geistMono = localFont({
 });
 
 import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+import Script from "next/script";
 
 const BASE_URL = `https://${BRAND_DOMAIN}`;
 
@@ -36,21 +35,31 @@ export const metadata: Metadata = {
     default: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses`,
     template: `%s | ${BRAND_NAME}`,
   },
-  description: "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
+  description:
+    "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
   metadataBase: new URL(BASE_URL),
   openGraph: {
     title: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses`,
-    description: "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
+    description:
+      "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
     url: BASE_URL,
     siteName: BRAND_NAME,
     locale: "en_US",
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses` }],
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses`,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${BRAND_NAME} | Verified Automation Solutions for Growing Businesses`,
-    description: "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
+    description:
+      "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
   },
   robots: {
     index: true,
@@ -62,27 +71,12 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-import { trackUserLogin } from "@/actions/referral";
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const session = await getServerSession(authOptions);
-  
-  let isFoundingExpert = false;
-  if (session?.user?.id) {
-    // Track login activity
-    await trackUserLogin(session.user.id);
-    if (session.user.role === "EXPERT") {
-      const expert = await prisma.specialistProfile.findUnique({
-        where: { userId: session.user.id },
-        select: { isFoundingExpert: true }
-      });
-      isFoundingExpert = expert?.isFoundingExpert || false;
-    }
-  }
 
   return (
     <html lang="en">
@@ -96,7 +90,8 @@ export default async function RootLayout({
               name: "LogicLot",
               url: "https://logiclot.io",
               logo: "https://logiclot.io/og.png",
-              description: "LogicLot is a B2B marketplace where businesses buy ready-to-implement AI automations and work directly with the specialists who deliver them. Every project runs on milestones with escrow-protected payments.",
+              description:
+                "LogicLot is a B2B marketplace where businesses buy ready-to-implement AI automations and work directly with the specialists who deliver them. Every project runs on milestones with escrow-protected payments.",
               foundingDate: "2025",
               founder: {
                 "@type": "Person",
@@ -128,29 +123,32 @@ export default async function RootLayout({
       >
         <Providers>
           <PostHogProvider>
-          <SavedSolutionsProvider>
-          <SavedSuitesProvider>
-          <Navbar user={session?.user} isFoundingExpert={isFoundingExpert} />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <Analytics />
-          <Toaster
-            position="top-right"
-            theme="light"
-            toastOptions={{
-              duration: 2000,
-              classNames: {
-                toast: 'group toast group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
-                description: 'group-[.toast]:text-muted-foreground',
-                actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-                cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
-              }
-            }}
-          />
-          </SavedSuitesProvider>
-          </SavedSolutionsProvider>
+            <SavedSolutionsProvider>
+              <SavedSuitesProvider>
+                <Navbar user={session?.user} />
+                <main className="flex-1">{children}</main>
+                <Analytics />
+                <Toaster
+                  position="top-right"
+                  theme="light"
+                  toastOptions={{
+                    duration: 2000,
+                    classNames: {
+                      toast:
+                        "group toast group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+                      description: "group-[.toast]:text-muted-foreground",
+                      actionButton:
+                        "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+                      cancelButton:
+                        "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+                    },
+                  }}
+                />
+              </SavedSuitesProvider>
+            </SavedSolutionsProvider>
           </PostHogProvider>
         </Providers>
+        <Script src="/chat.js" async />
       </body>
     </html>
   );

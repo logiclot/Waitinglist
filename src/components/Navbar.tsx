@@ -9,14 +9,22 @@ import { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
+import { getFoundingExpertStatus } from "@/actions/auth";
 
 import { Session } from "next-auth";
 
-export function Navbar({ user, isFoundingExpert }: { user?: Session["user"] & { role?: string }, isFoundingExpert?: boolean }) {
+export function Navbar({ user }: { user?: Session["user"] & { role?: string } }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isFoundingExpert, setIsFoundingExpert] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (user?.role === "EXPERT") {
+      getFoundingExpertStatus().then(setIsFoundingExpert);
+    }
+  }, [user?.role]);
 
   useEffect(() => {
     if (!isProfileOpen) return;

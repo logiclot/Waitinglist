@@ -87,5 +87,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(data.path);
+
+  await prisma.user.update({ where: { id: session.user.id }, data: { profileImageUrl: urlData.publicUrl } })
   return NextResponse.json({ url: urlData.publicUrl });
 }

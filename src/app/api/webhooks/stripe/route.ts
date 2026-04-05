@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
-import { markJobAsPaid } from "@/actions/jobs";
+import { activateJobPost } from "@/actions/jobs";
 import { checkBusinessReferralCondition } from "@/actions/referral";
 import { log } from "@/lib/logger";
 import { captureException } from "@/lib/sentry";
@@ -116,6 +116,8 @@ async function sendExpertDemoBookedEmail({
 }
 
 export async function POST(req: Request) {
+  log.info("webhook.received", { url: req.url, method: req.method });
+
   const body = await req.text();
   const signature = (await headers()).get("Stripe-Signature");
 
@@ -146,6 +148,10 @@ export async function POST(req: Request) {
       try {
         // Idempotency: only activate once
         const job = await prisma.jobPost.findUnique({ where: { id: jobId } });
+
+        log.info("job.info", { ...job });
+
+
         if (!job || job.status !== "pending_payment") {
           return NextResponse.json({ received: true });
         }
@@ -155,13 +161,18 @@ export async function POST(req: Request) {
           where: { id: jobId },
           data: {
             paymentProvider: "stripe",
+            paidAt: new Date(),
+            status: "open",
             paymentIntentId: typeof session.payment_intent === "string"
               ? session.payment_intent
               : (session.payment_intent as Stripe.PaymentIntent | null)?.id ?? null,
           },
         });
 
-        await markJobAsPaid(jobId);
+        const result = await activateJobPost(job);
+        if (!result.success) {
+          throw new Error(result.error || "Failed to activate job");
+        }
 
         // Confirm to buyer + invoice notification
         if (buyerId) {
@@ -310,7 +321,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Processing failed" }, { status: 500 });
       }
 
-    // ─── Milestone funding / version upgrade ───────────────────────────────────
+      // ─── Milestone funding / version upgrade ───────────────────────────────────
     } else if ((type === "milestone_funding" || type === "version_upgrade") && orderId && milestoneIndex) {
       try {
         const order = await prisma.order.findUnique({
@@ -426,20 +437,20 @@ export async function POST(req: Request) {
           ),
           order.seller?.userId
             ? createNotification(
-                order.seller.userId,
-                type === "version_upgrade"
-                  ? "💰 Upgrade Purchased"
-                  : newStatus === "paid_pending_implementation"
-                    ? "🔔 New order — accept to begin"
-                    : "💰 Milestone Funded",
-                type === "version_upgrade"
-                  ? "A client has purchased an upgrade. Check your projects."
-                  : newStatus === "paid_pending_implementation"
-                    ? `A client has funded "${milestones[idx].title}". Please accept the order within 48 hours to start working.`
-                    : `Milestone "${milestones[idx].title}" has been funded by the client. You can continue work.`,
-                newStatus === "paid_pending_implementation" ? "alert" : "info",
-                "/expert/projects"
-              )
+              order.seller.userId,
+              type === "version_upgrade"
+                ? "💰 Upgrade Purchased"
+                : newStatus === "paid_pending_implementation"
+                  ? "🔔 New order — accept to begin"
+                  : "💰 Milestone Funded",
+              type === "version_upgrade"
+                ? "A client has purchased an upgrade. Check your projects."
+                : newStatus === "paid_pending_implementation"
+                  ? `A client has funded "${milestones[idx].title}". Please accept the order within 48 hours to start working.`
+                  : `Milestone "${milestones[idx].title}" has been funded by the client. You can continue work.`,
+              newStatus === "paid_pending_implementation" ? "alert" : "info",
+              "/expert/projects"
+            )
             : Promise.resolve(),
         ]);
 
@@ -459,14 +470,14 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Processing failed" }, { status: 500 });
       }
 
-    // ─── Unknown checkout type — log so we notice quickly ──────────────────────
+      // ─── Unknown checkout type — log so we notice quickly ──────────────────────
     } else if (type) {
       log.warn("webhook.unknown_checkout_type", { type, orderId, sessionId: session.id });
     }
 
-  // ═══ charge.dispute.created ═══════════════════════════════════════════════
-  // A buyer filed a chargeback with their bank.  Mark the affected order as
-  // disputed so the admin can act before Stripe's deadline.
+    // ═══ charge.dispute.created ═══════════════════════════════════════════════
+    // A buyer filed a chargeback with their bank.  Mark the affected order as
+    // disputed so the admin can act before Stripe's deadline.
   } else if (event.type === "charge.dispute.created") {
     const dispute = event.data.object as Stripe.Dispute;
     try {
@@ -547,12 +558,12 @@ export async function POST(req: Request) {
         ),
         order.seller?.userId
           ? createNotification(
-              order.seller.userId,
-              "⚠️ Chargeback received",
-              `A chargeback of ${amountStr} has been filed on "${projectName}". Funds are on hold pending review.`,
-              "alert",
-              "/expert/projects"
-            )
+            order.seller.userId,
+            "⚠️ Chargeback received",
+            `A chargeback of ${amountStr} has been filed on "${projectName}". Funds are on hold pending review.`,
+            "alert",
+            "/expert/projects"
+          )
           : Promise.resolve(),
       ]);
 
@@ -585,9 +596,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Processing failed" }, { status: 500 });
     }
 
-  // ═══ account.updated ════════════════════════════════════════════════════════
-  // Expert's Stripe Connect account status changed (onboarding completed,
-  // account disabled, etc.).  Sync capabilities to our DB.
+    // ═══ account.updated ════════════════════════════════════════════════════════
+    // Expert's Stripe Connect account status changed (onboarding completed,
+    // account disabled, etc.).  Sync capabilities to our DB.
   } else if (event.type === "account.updated") {
     const account = event.data.object as Stripe.Account;
     try {
@@ -662,9 +673,9 @@ export async function POST(req: Request) {
       // Non-critical — don't return 500, we'll sync on next event or status check
     }
 
-  // ═══ payment_intent.payment_failed ════════════════════════════════════════
-  // A payment attempt failed (card declined, insufficient funds, etc.).
-  // Notify the buyer so they can retry with a different payment method.
+    // ═══ payment_intent.payment_failed ════════════════════════════════════════
+    // A payment attempt failed (card declined, insufficient funds, etc.).
+    // Notify the buyer so they can retry with a different payment method.
   } else if (event.type === "payment_intent.payment_failed") {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
     try {
@@ -695,9 +706,9 @@ export async function POST(req: Request) {
       // Non-critical — buyer already sees a Stripe error page. Don't return 500.
     }
 
-  // ═══ checkout.session.expired ═════════════════════════════════════════════
-  // Buyer opened checkout but never completed payment. Clean up the draft
-  // order/job so orphan records don't accumulate.
+    // ═══ checkout.session.expired ═════════════════════════════════════════════
+    // Buyer opened checkout but never completed payment. Clean up the draft
+    // order/job so orphan records don't accumulate.
   } else if (event.type === "checkout.session.expired") {
     const session = event.data.object as Stripe.Checkout.Session;
     const { orderId, jobId, type } = session.metadata || {};

@@ -23,6 +23,7 @@ import { acceptOrder } from "@/actions/orders";
 import { BidCardMessage } from "@/components/messages/BidCardMessage";
 import { OrderCardMessage } from "@/components/messages/OrderCardMessage";
 import { MilestoneTimeline } from "@/components/projects/MilestoneTimeline";
+import { toast } from "sonner";
 // formatCentsToCurrency available from @/lib/commission if needed
 
 interface OrderContextProps {
@@ -173,9 +174,7 @@ export function ThreadView({
       <div className="px-5 py-4 border-b border-border bg-secondary/10 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <Link
-            href={
-              isBuyer ? "/business/projects" : "/dashboard/messages"
-            }
+            href={isBuyer ? "/business/projects" : "/dashboard/messages"}
             className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-secondary/50 transition-colors"
             title="Back"
           >
@@ -418,9 +417,7 @@ export function ThreadView({
                   className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-border hover:bg-secondary transition-colors disabled:opacity-50"
                 >
                   <Video className="w-3.5 h-3.5" />
-                  {sendingMeetLink
-                    ? "Sending..."
-                    : "Send my meeting link"}
+                  {sendingMeetLink ? "Sending..." : "Send my meeting link"}
                 </button>
               </div>
             )}
@@ -507,9 +504,7 @@ export function ThreadView({
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex items-center gap-2 text-xs text-blue-700">
                 <Lock className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  This session is covered by the LogicLot Mutual NDA.
-                </span>
+                <span>This session is covered by the LogicLot Mutual NDA.</span>
               </div>
 
               <div>
@@ -525,8 +520,11 @@ export function ThreadView({
               </div>
 
               <button
-                onClick={handleSchedule}
-                disabled={!meetingDate || scheduling}
+                onClick={() => {
+                  toast.info("Feature coming soon!");
+                  // handleSchedule()
+                }}
+                disabled={true || !meetingDate || scheduling}
                 className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {scheduling ? "Booking..." : "Confirm & Send Link"}
