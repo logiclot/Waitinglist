@@ -26,6 +26,7 @@ const geistMono = localFont({
 });
 
 import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+import Script from "next/script";
 
 const BASE_URL = `https://${BRAND_DOMAIN}`;
 
@@ -147,6 +148,7 @@ export default async function RootLayout({
             </SavedSolutionsProvider>
           </PostHogProvider>
         </Providers>
+        <Script src="/chat.js" async />
       </body>
     </html>
   );

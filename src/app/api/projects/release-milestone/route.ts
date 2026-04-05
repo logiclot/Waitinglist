@@ -154,19 +154,29 @@ export async function POST(req: Request) {
     // ─── STEP 3: Execute Stripe transfer ──────────────────────────────────────
     // This is outside the DB transaction because Stripe is an external call.
     // If it fails, we revert the milestone to "in_escrow" so it can be retried.
-    // The idempotency key uses fundedAt so that after a failure-and-revert cycle,
-    // a fresh attempt gets a new key. The Serializable DB transaction (Step 1)
-    // is the primary guard against double-payments; the key is defense-in-depth.
-    const fundedAt = milestone.fundedAt || "0";
+    // Double-payment is prevented by the Serializable transaction in Step 1
+    // which atomically claims the milestone; only one request can reach here.
     try {
+      const paymentIntent = await stripe.paymentIntents.retrieve(
+        milestone.stripePaymentIntentId ?? ""
+      );
+
+      const chargeId = typeof paymentIntent.latest_charge === 'string'
+        ? paymentIntent.latest_charge
+        : paymentIntent.latest_charge?.id;
+
+      if (!chargeId) {
+        throw new Error(`No charge found for PaymentIntent ${milestone.stripePaymentIntentId}`);
+      }
+
+
       await stripe.transfers.create({
         amount: transferAmount,
         currency: "eur",
         destination: order.seller.stripeAccountId,
         description: `Release for ${order.id} - ${milestone.title}`,
         transfer_group: `order_${order.id}`,
-      }, {
-        idempotencyKey: `release-${orderId}-${idx}-${fundedAt}`,
+        source_transaction: chargeId,
       });
     } catch (stripeErr) {
       const stripeMessage = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);

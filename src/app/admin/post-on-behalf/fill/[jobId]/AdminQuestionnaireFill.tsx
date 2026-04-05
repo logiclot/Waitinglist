@@ -29,7 +29,7 @@ import {
   getDefaultDiscoveryFormData,
   type DiscoveryFormData,
 } from "@/components/jobs/questionnaire/buildBriefData";
-import * as C from "@/app/(home)/jobs/discovery/constants";
+import * as C from "@/app/(marketplace)/jobs/discovery/constants";
 
 interface JobData {
   id: string;

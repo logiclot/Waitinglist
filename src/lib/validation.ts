@@ -3,6 +3,8 @@
  * Safe to use in both server actions and tests.
  */
 
+import z from "zod";
+
 // ── Text quality / gibberish detection ───────────────────────────────────────
 
 /**
@@ -267,3 +269,10 @@ export function milestoneMatchesPrice(
   const total = milestoneTotalCents(milestones);
   return Math.abs(total - implementationPriceCents) <= 5; // 5-cent rounding tolerance
 }
+
+export const waitlistSchema = z.object({
+  fullName: z.string().min(1, "Full name is required"),
+  email: z.email("Invalid email address"),
+  role: z.enum(["business", "expert"], { message: "Role must be business or expert" }),
+  honeypot: z.string().optional(),
+})

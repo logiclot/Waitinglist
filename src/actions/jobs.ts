@@ -9,7 +9,7 @@ import { maxProposalsForCategory } from "@/lib/job-config";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 import { stripe } from "@/lib/stripe";
-import { Prisma } from "@prisma/client";
+import { JobPost, Prisma } from "@prisma/client";
 import { CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 import { apiWriteLimiter } from "@/lib/rate-limit";
 
@@ -109,20 +109,8 @@ export async function createDiscoveryJobPost(formData: FormData) {
 }
 
 // Called by the Stripe webhook (and dev simulate) to activate a job and notify experts
-export async function activateJobPost(jobId: string, provider: "stripe" | "simulated" = "stripe") {
+export async function activateJobPost(job: JobPost) {
   try {
-    const job = await prisma.jobPost.update({
-      where: { id: jobId },
-      data: {
-        status: "open",
-        paidAt: new Date(),
-        paymentProvider: provider,
-      },
-    });
-
-    revalidatePath(`/jobs/${jobId}`);
-    revalidatePath("/jobs");
-
     // Notify eligible experts
     const isDiscovery = job.category === "Discovery" || job.category === "Discovery Scan";
     const experts = await prisma.specialistProfile.findMany({
@@ -163,7 +151,7 @@ export async function activateJobPost(jobId: string, provider: "stripe" | "simul
 export async function markJobAsPaid(jobId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Unauthorized" };
-  
+
   // Rate limit: max 60 writes per minute per user
   const rl = await apiWriteLimiter.check(session.user.id);
   if (!rl.success) {
@@ -177,7 +165,7 @@ export async function markJobAsPaid(jobId: string) {
       return { error: "Job not found or unauthorized" };
     }
 
-    const result = await activateJobPost(jobId);
+    const result = await activateJobPost(job);
     if (!result.success) return { error: result.error ?? "Activation failed" };
 
     return { success: true };
