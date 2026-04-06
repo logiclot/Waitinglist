@@ -190,7 +190,16 @@ function InvitePanel({
         </p>
       </div>
 
-      {stats && (
+      {!stats ? (
+        <div className="grid grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-secondary/30 rounded-lg p-4 text-center animate-pulse">
+              <div className="h-8 w-10 bg-secondary/50 rounded mx-auto" />
+              <div className="h-3 w-20 bg-secondary/50 rounded mx-auto mt-2" />
+            </div>
+          ))}
+        </div>
+      ) : (
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-secondary/30 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold">{stats.pendingCount}</div>
@@ -216,7 +225,9 @@ function InvitePanel({
       >
         {sending
           ? "Sending..."
-          : `Send Invites${stats ? ` (${stats.pendingCount})` : ""}`}
+          : !stats
+            ? "Loading stats..."
+            : `Send Invites (${stats.pendingCount})`}
       </button>
     </div>
   );
