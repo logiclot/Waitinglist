@@ -1,19 +1,21 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
+import { foundingExperts } from "@/data/experts";
+import { Analytics } from "@/lib/analytics";
 import { authOptions } from "@/lib/auth";
-import type { Role } from "@prisma/client";
-import { resend, getFromEmail } from "@/lib/resend";
+import { TIER_THRESHOLDS } from "@/lib/commission";
 import { welcomeEmail } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
-import * as Sentry from "@sentry/nextjs";
-import { Analytics } from "@/lib/analytics";
+import { createNotification } from "@/lib/notifications";
 import {
   fireBusinessOnboardingNotifications,
   fireExpertOnboardingNotifications,
 } from "@/lib/onboarding-notifications";
-import { createNotification } from "@/lib/notifications";
+import { prisma } from "@/lib/prisma";
+import { getFromEmail, resend } from "@/lib/resend";
+import type { Role } from "@prisma/client";
+import * as Sentry from "@sentry/nextjs";
+import { getServerSession } from "next-auth";
 import { randomUUID } from 'node:crypto';
 
 const FROM_EMAIL = getFromEmail();
@@ -226,7 +228,7 @@ async function grantWaitlistFreeDiscoveryScan(userId: string) {
 
 export async function createSpecialistProfile(prevState: unknown, formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return { error: "Not authenticated" };
+  if (!session?.user?.id || !session.user.email) return { error: "Not authenticated" };
 
   // --- Step 1: Identity — normalize casing ("JOHN DOE" → "John Doe") ---
   const rawName = formData.get("legalFullName") as string;
@@ -288,10 +290,11 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         displayName,
         country,
         isAgency,
+        isFoundingExpert: foundingExperts.includes(session.user.email),
+        platformFeePercentage: foundingExperts.includes(session.user.email) ? TIER_THRESHOLDS.FOUNDING : TIER_THRESHOLDS.STANDARD,
         agencyName: isAgency ? agencyName : null,
         businessIdentificationNumber: isAgency ? businessIdentificationNumber : null,
         agencyTeamSize: isAgency ? agencyTeamSize : null,
-
         yearsExperience,
         pastImplementations,
         typicalProjectSize,

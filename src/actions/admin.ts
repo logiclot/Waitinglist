@@ -1512,10 +1512,18 @@ export async function demoteFromElite(expertId: string, reason: string) {
 
 export async function sendExpertInvites() {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== "ADMIN") return { error: "Not authorized" };
+  if (session?.user?.role !== "ADMIN") return { error: "Not authorized" }
 
   const pending = await prisma.waitlistSignup.findMany({
-    where: { role: "expert", inviteSentAt: null },
+    where: {
+      role: "expert",
+      inviteSentAt: null,
+      createdAt: {
+        lte: new Date("2026-03-30T23:59:59.999Z")
+      }
+    },
+    take: 26,
+    orderBy: { createdAt: "asc" },
   });
 
   if (pending.length === 0) return { sent: 0 };
@@ -1564,10 +1572,14 @@ export async function getWaitlistInviteStats() {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== "ADMIN") return null;
 
+  // Only count the first 26 waitlist experts (signed up on or before 2026-03-30)
+  const INVITE_CUTOFF_DATE = new Date("2026-03-30T23:59:59.999Z");
+  const cutoffFilter = { role: "expert" as const, createdAt: { lte: INVITE_CUTOFF_DATE } };
+
   const [pendingCount, sentCount, usedCount] = await Promise.all([
-    prisma.waitlistSignup.count({ where: { role: "expert", inviteSentAt: null } }),
-    prisma.waitlistSignup.count({ where: { role: "expert", inviteSentAt: { not: null }, usedAt: null } }),
-    prisma.waitlistSignup.count({ where: { role: "expert", usedAt: { not: null } } }),
+    prisma.waitlistSignup.count({ where: { ...cutoffFilter, inviteSentAt: null } }),
+    prisma.waitlistSignup.count({ where: { ...cutoffFilter, inviteSentAt: { not: null }, usedAt: null } }),
+    prisma.waitlistSignup.count({ where: { ...cutoffFilter, usedAt: { not: null } } }),
   ]);
 
   return { pendingCount, sentCount, usedCount };

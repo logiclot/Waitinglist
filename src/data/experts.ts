@@ -1,0 +1,22 @@
+export const foundingExperts = [
+    "maria.botta@gmail.com",
+    "daniel@mauriquelabs.com",
+    "vas@scelia.io",
+    "iamabhay.mittal@gmail.com",
+    "abhinandanjain0001@gmail.com",
+    "andreu@atworx.pro",
+    "vitalik0674917234@gmail.com",
+    "oleh.sloboda@icloud.com",
+    "rishikothakota@gmail.com",
+    "santiago_gutierrez@hotmail.com",
+    "contact@christiancangussu.com",
+    "saadkhan96e@gmail.com",
+    "wahabilyas206@gmail.com",
+    "johnasad09@gmail.com",
+    "avilanatanael640@gmail.com",
+    "info.noctis.collective@gmail.com",
+    "tiagolemos@nodewave.io",
+    "shlomi@shlomiasaf.com",
+    "tristan.prekop13@gmail.com",
+    "albertbsnss0@gmail.com"
+];
