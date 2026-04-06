@@ -6,6 +6,7 @@ import { publicFormLimiter } from "@/lib/rate-limit";
 import fs from "fs";
 import path from "path";
 import { waitlistSchema } from "@/lib/validation";
+import { randomUUID } from 'node:crypto';
 
 
 export async function POST(request: Request) {
@@ -65,6 +66,9 @@ export async function POST(request: Request) {
               content: ebookBuffer,
             },
           ],
+          headers: {
+            'X-Entity-Ref-ID': randomUUID(),
+          }
         });
       } catch (emailError) {
         log.error("waitlist.email_send_failed", { email, error: String(emailError) });

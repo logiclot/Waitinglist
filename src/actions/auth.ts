@@ -8,7 +8,7 @@ import { Analytics } from "@/lib/analytics";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { APP_URL as BASE_APP_URL } from "@/lib/app-url";
 import { Prisma } from "@prisma/client";
 
@@ -256,6 +256,9 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
         to: user.email,
         subject: "Reset your LogicLot password",
         html: passwordResetEmail({ resetUrl: `${APP_URL}/auth/reset-password?token=${token}` }),
+        headers: {
+          'X-Entity-Ref-ID': randomUUID(),
+        }
       });
     }
 
@@ -481,6 +484,9 @@ async function sendVerificationEmail(to: string, token: string) {
       to,
       subject: "Verify your LogicLot email address",
       html: verificationEmail({ verifyUrl: `${APP_URL}/auth/verify?token=${token}` }),
+      headers: {
+        'X-Entity-Ref-ID': randomUUID(),
+      }
     });
   } catch (e) {
     // Non-fatal — user can request a resend

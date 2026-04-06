@@ -12,9 +12,9 @@ import { APP_URL } from "@/lib/app-url";
 import { log } from "@/lib/logger";
 import { captureException } from "@/lib/sentry";
 import bcrypt from "bcryptjs";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { resend, getFromEmail } from "@/lib/resend";
-import { welcomeEmail } from "@/lib/email-templates";
+import { expertInviteEmail, welcomeEmail } from "@/lib/email-templates";
 import { fireBusinessOnboardingNotifications } from "@/lib/onboarding-notifications";
 
 const FROM_EMAIL = getFromEmail();
@@ -68,7 +68,7 @@ export async function getAdminData() {
   const bidQualityMap: Record<string, { up: number; down: number }> = {};
   for (const row of bidFeedbackRaw) {
     if (!bidQualityMap[row.specialistId]) bidQualityMap[row.specialistId] = { up: 0, down: 0 };
-    if (row.feedback === "up")   bidQualityMap[row.specialistId].up   += row._count.feedback;
+    if (row.feedback === "up") bidQualityMap[row.specialistId].up += row._count.feedback;
     if (row.feedback === "down") bidQualityMap[row.specialistId].down += row._count.feedback;
   }
 
@@ -397,9 +397,8 @@ export async function updateSolutionVideoStatus(
   const approved = status === "approved";
   const message = approved
     ? `Your demo video for "${solution.title}" has been approved and is now live on your listing.`
-    : `Your demo video for "${solution.title}" was not approved.${
-        rejectionReason ? ` Reason: ${rejectionReason}` : " Please review our guidelines and resubmit via the solution editor."
-      }`;
+    : `Your demo video for "${solution.title}" was not approved.${rejectionReason ? ` Reason: ${rejectionReason}` : " Please review our guidelines and resubmit via the solution editor."
+    }`;
 
   await createNotification(
     solution.expert.userId,
@@ -457,7 +456,7 @@ export async function adminPostJobOnBehalf(params: {
   }
 
   const isDiscovery = jobType === "discovery";
-  const category    = isDiscovery ? "Discovery Scan" : "Custom Project";
+  const category = isDiscovery ? "Discovery Scan" : "Custom Project";
   const budgetRange = isDiscovery ? "€50 (Discovery)" : "€100 (Custom Project)";
 
   const job = await prisma.jobPost.create({
@@ -493,7 +492,7 @@ export async function adminGeneratePaymentLink(jobId: string) {
 
   const isDiscovery = job.category === "Discovery Scan" || job.category === "Discovery";
   const amountCents = isDiscovery ? DISCOVERY_SCAN_PRICE_CENTS : CUSTOM_PROJECT_PRICE_CENTS;
-  const label       = isDiscovery ? "Discovery Scan — Expert Proposals" : "Custom Project — Expert Proposals";
+  const label = isDiscovery ? "Discovery Scan — Expert Proposals" : "Custom Project — Expert Proposals";
 
   const stripeConfigured = !!process.env.STRIPE_SECRET_KEY?.trim();
   if (!stripeConfigured) {
@@ -521,7 +520,7 @@ export async function adminGeneratePaymentLink(jobId: string) {
     ],
     mode: "payment",
     success_url: `${APP_URL}/jobs/${jobId}?paid=true`,
-    cancel_url:  `${APP_URL}/jobs/${jobId}?canceled=true`,
+    cancel_url: `${APP_URL}/jobs/${jobId}?canceled=true`,
     metadata: { type: "job_posting", jobId, buyerId: job.buyerId },
   });
 
@@ -891,9 +890,12 @@ export async function adminCreateBusinessAccount(params: {
         to: user.email,
         subject: "You're all set on LogicLot. Here's what to do next",
         html: welcomeEmail({ firstName, role: "business" }),
+        headers: {
+          'X-Entity-Ref-ID': randomUUID(),
+        }
       }).catch((e) => log.error("admin.welcome_email_failed", { userId: user.id, error: String(e) }));
     }
-    fireBusinessOnboardingNotifications(user.id).catch(() => {});
+    fireBusinessOnboardingNotifications(user.id).catch(() => { });
 
     revalidatePath("/admin");
     revalidatePath("/admin/post-on-behalf");
@@ -1170,12 +1172,12 @@ export async function getAuditCompletions() {
   const emailEvents =
     sessionIds.length > 0
       ? await prisma.auditEvent.findMany({
-          where: {
-            sessionId: { in: sessionIds },
-            event: "email_sent",
-          },
-          select: { sessionId: true, email: true },
-        })
+        where: {
+          sessionId: { in: sessionIds },
+          event: "email_sent",
+        },
+        select: { sessionId: true, email: true },
+      })
       : [];
 
   const emailMap = new Map<string, string>();
@@ -1518,13 +1520,9 @@ export async function sendExpertInvites() {
 
   if (pending.length === 0) return { sent: 0 };
 
-  const { getFromEmail: getFrom } = await import("@/lib/resend");
-  const FROM_EMAIL = getFrom();
-  if (!FROM_EMAIL) return { error: "RESEND_FROM_EMAIL not configured" };
 
-  // Lazy import to avoid circular dependency issues
-  const { resend } = await import("@/lib/resend");
-  const { expertInviteEmail } = await import("@/lib/email-templates");
+  const FROM_EMAIL = getFromEmail();
+  if (!FROM_EMAIL) return { error: "RESEND_FROM_EMAIL not configured" };
 
   let sent = 0;
   const errors: string[] = [];
@@ -1545,6 +1543,9 @@ export async function sendExpertInvites() {
         to: entry.email,
         subject: "You're invited to LogicLot",
         html: expertInviteEmail({ name: entry.fullName, inviteUrl }),
+        headers: {
+          'X-Entity-Ref-ID': randomUUID(),
+        }
       });
 
       sent++;

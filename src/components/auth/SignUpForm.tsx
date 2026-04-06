@@ -53,6 +53,7 @@ export function SignUpForm({ hasGoogle, hasLinkedIn }: SignUpFormProps) {
       // Invited user: auto sign-in (email already verified, role already set)
       signIn("credentials", {
         email: state.email,
+        password,
         redirect: true,
         callbackUrl: "/onboarding",
       });

@@ -3,6 +3,7 @@ import { resend, getFromEmail } from "@/lib/resend";
 import { auditReportEmail } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
 import { publicFormLimiter } from "@/lib/rate-limit";
+import { randomUUID } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Scoring — mirrors computeResults() in AuditQuiz.tsx
@@ -227,6 +228,9 @@ export async function POST(request: Request) {
       to: email,
       subject: `Your Automation Audit: ${results.scoreLabel} (${results.overall}/100)`,
       html: auditReportEmail({ data: results }),
+      headers: {
+        'X-Entity-Ref-ID': randomUUID(),
+      }
     });
 
     if (sendError) {

@@ -24,6 +24,7 @@ import { log } from "@/lib/logger";
 import { fireWelcomeCoupon } from "@/lib/onboarding-notifications";
 import { APP_URL } from "@/lib/app-url";
 import { getPersonalizedRecommendations } from "@/lib/recommendation-engine";
+import { randomUUID } from 'node:crypto';
 
 const FROM_EMAIL = getFromEmail();
 
@@ -147,6 +148,9 @@ async function sendStep(
         to: email,
         subject: step.subject,
         html: sequenceEmail({ firstName, ...step }),
+        headers: {
+          'X-Entity-Ref-ID': randomUUID(),
+        }
       });
     } else {
       log.info("cron.sequence_email_dev", { userId, day, subject: step.subject });
@@ -217,6 +221,9 @@ async function sendPostApprovalEmails(now: Date): Promise<number> {
           to: email,
           subject: `How's your automation working? ${projectTitle}`,
           html: postApprovalEmail({ firstName, projectTitle, recommendations: recs }),
+          headers: {
+            'X-Entity-Ref-ID': randomUUID(),
+          }
         });
       } else {
         log.info("cron.post_approval_dev", { orderId: order.id, buyerId: order.buyerId });
@@ -292,6 +299,9 @@ async function sendReEngagementEmails(now: Date): Promise<number> {
           to: user.email,
           subject: "What else could you automate?",
           html: reEngagementEmail({ firstName, recommendations: recs }),
+          headers: {
+            'X-Entity-Ref-ID': randomUUID(),
+          }
         });
       } else {
         log.info("cron.reengage_dev", { userId: user.id });
@@ -321,7 +331,7 @@ export async function GET(req: Request) {
 
   // Find users whose onboarding completed in the relevant 24-hour window
   function windowFor(daysAgo: number) {
-    const end   = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    const end = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
     const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
     return { gte: start, lte: end };
   }

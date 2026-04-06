@@ -11,6 +11,7 @@ import { resend, getFromEmail } from "@/lib/resend";
 import { demoBookedEmail, expertDemoBookedEmail } from "@/lib/email-templates";
 import Stripe from "stripe";
 import type { Prisma } from "@prisma/client";
+import { randomUUID } from 'node:crypto';
 
 const FROM_EMAIL = getFromEmail();
 
@@ -61,6 +62,9 @@ async function sendDemoBookedEmail({
         solutionTitle,
         calendarUrl,
       }),
+      headers: {
+        'X-Entity-Ref-ID': randomUUID(),
+      }
     });
   } catch (error) {
     log.error("webhook.demo_booked_email_send_failed", {
@@ -105,6 +109,9 @@ async function sendExpertDemoBookedEmail({
         buyerName,
         solutionTitle,
       }),
+      headers: {
+        'X-Entity-Ref-ID': randomUUID(),
+      }
     });
   } catch (error) {
     log.error("webhook.expert_demo_booked_email_send_failed", {

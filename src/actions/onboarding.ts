@@ -14,6 +14,7 @@ import {
   fireExpertOnboardingNotifications,
 } from "@/lib/onboarding-notifications";
 import { createNotification } from "@/lib/notifications";
+import { randomUUID } from 'node:crypto';
 
 const FROM_EMAIL = getFromEmail();
 
@@ -51,6 +52,9 @@ async function sendWelcomeEmail(userId: string, role: "business" | "expert") {
         ? "You're all set on LogicLot. Here's what to do next"
         : "Welcome to LogicLot. Your profile is live",
       html: welcomeEmail({ firstName, role, hasFreeScan }),
+      headers: {
+        'X-Entity-Ref-ID': randomUUID(),
+      }
     });
   } catch (e) {
     log.error("onboarding.welcome_email_failed", { userId, error: String(e) });
@@ -91,13 +95,13 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
   const jobTitle = (formData.get("jobTitle") as string) || "";
   const website = formData.get("website") as string;
   const country = formData.get("country") as string;
-  
+
   const industry = formData.get("industry") as string;
   const companySize = formData.get("companySize") as string; // teamSize
-  
+
   const tools = formData.getAll("tools") as string[]; // coreTools
   const businessPrimaryProblems = formData.getAll("businessPrimaryProblems") as string[]; // painPoints
-  
+
   const intent = formData.get("intent") as string; // decisionContext
   const profileImageUrl = (formData.get("profileImageUrl") as string) || null;
 
@@ -106,7 +110,7 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
   const nameParts = normalizedName ? normalizedName.split(" ") : ["Business", "User"];
   const firstName = nameParts[0];
   const lastName = nameParts.slice(1).join(" ") || "";
-  
+
   const jobRole = jobTitle || "Admin";
   const howHeard = "Direct"; // Placeholder
 
@@ -231,7 +235,7 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
   const displayNameInput = rawDisplay ? toTitleCase(rawDisplay.trim()) : rawDisplay;
   const country = formData.get("country") as string;
   const isAgency = formData.get("roleType") === "Agency";
-  
+
   const agencyName = formData.get("agencyName") as string;
   const businessIdentificationNumber = formData.get("businessIdentificationNumber") as string;
   const agencyTeamSize = formData.get("agencyTeamSize") as string;
@@ -266,7 +270,7 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
   }
 
   if (!legalAgreed || !authorityConsent) {
-     return { error: "You must agree to the terms and authority consent." };
+    return { error: "You must agree to the terms and authority consent." };
   }
 
   // Generate a slug (using legal name or agency name)
@@ -287,22 +291,22 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         agencyName: isAgency ? agencyName : null,
         businessIdentificationNumber: isAgency ? businessIdentificationNumber : null,
         agencyTeamSize: isAgency ? agencyTeamSize : null,
-        
+
         yearsExperience,
         pastImplementations,
         typicalProjectSize,
         clientAcquisitionSource,
         portfolioUrl,
-        
+
         primaryTool,
         tools, // Secondary
         availability, // Capacity
-        
+
         legalStatus: legalAgreed ? "accepted" : "pending",
         termsAcceptedAt: new Date(),
         authorityConsent,
         marketingConsent,
-        
+
         // On update: preserve existing status (do NOT reset a SUSPENDED expert to APPROVED)
         specialties: [], // Deprecated in new flow or empty
         portfolioLinks: [], // Using portfolioUrl now
@@ -310,7 +314,7 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
       create: {
         userId: session.user.id,
         slug,
-        
+
         legalFullName,
         displayName,
         country,
@@ -318,22 +322,22 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         agencyName: isAgency ? agencyName : null,
         businessIdentificationNumber: isAgency ? businessIdentificationNumber : null,
         agencyTeamSize: isAgency ? agencyTeamSize : null,
-        
+
         yearsExperience,
         pastImplementations,
         typicalProjectSize,
         clientAcquisitionSource,
         portfolioUrl,
-        
+
         primaryTool,
         tools, // Secondary
         availability, // Capacity
-        
+
         legalStatus: legalAgreed ? "accepted" : "pending",
         termsAcceptedAt: new Date(),
         authorityConsent,
         marketingConsent,
-        
+
         // Defaults
         status: "APPROVED",
         specialties: [],

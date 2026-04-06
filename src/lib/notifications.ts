@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { resend, getFromEmail } from "@/lib/resend";
 import { notificationEmail } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
+import { randomUUID } from 'node:crypto';
 
 export type NotificationType = "info" | "success" | "alert";
 
@@ -29,6 +30,9 @@ async function sendNotificationEmail(
       to: user.email,
       subject: title,
       html: notificationEmail({ title, message, actionUrl }),
+      headers: {
+        'X-Entity-Ref-ID': randomUUID(),
+      }
     });
   } catch (error) {
     log.error("notification.email_send_failed", { userId, error: String(error) });

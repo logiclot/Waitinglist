@@ -22,6 +22,7 @@ import { prisma } from "@/lib/prisma";
 import { resend, getFromEmail } from "@/lib/resend";
 import { launchSequenceEmail, LAUNCH_SEQUENCE } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
+import { randomUUID } from 'node:crypto';
 
 export const dynamic = "force-dynamic";
 
@@ -163,6 +164,9 @@ export async function GET(req: Request) {
           to: signup.email,
           subject: content.subject,
           html: launchSequenceEmail({ firstName, role, day: todayEntry.day }),
+          headers: {
+            'X-Entity-Ref-ID': randomUUID(),
+          }
         });
       } else {
         log.info("cron.launch_email_dev", {
