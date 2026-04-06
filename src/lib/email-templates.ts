@@ -642,3 +642,28 @@ export function expertInviteEmail({ name, inviteUrl }: { name: string; inviteUrl
     </tr>
   `);
 }
+
+export function foundingExpertInviteEmail({ name, inviteUrl }: { name: string; inviteUrl: string }): string {
+  const firstName = name.split(" ")[0] || "there";
+  return shell(`
+    <tr>
+      <td style="padding:36px 28px;">
+        <div style="text-align:center;margin:0 0 24px;">
+          <span style="font-size:48px;line-height:1;">&#128081;</span>
+        </div>
+        <h1 style="margin:0 0 4px;font-size:22px;font-weight:700;color:#111827;text-align:center;">Founding Expert Invite</h1>
+        <p style="margin:0 0 24px;font-size:13px;color:#6b7280;text-align:center;">A lifetime benefit for our earliest experts</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">We&apos;re opening LogicLot to a small group of automation experts &mdash; and you&apos;ve been selected as a <strong>Founding Expert</strong>.</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">LogicLot is a marketplace where businesses buy ready-to-implement automations directly from verified experts like you. List your solutions, get matched with clients, and earn on your terms.</p>
+        <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:16px 20px;margin:0 0 24px;">
+          <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#92400e;">&#128081; Founding Expert Benefit</p>
+          <p style="margin:0;font-size:14px;color:#78350f;line-height:1.6;">You&apos;ll pay only an <strong>11% platform fee</strong> &mdash; the lowest rate on LogicLot, locked in for life. Standard experts start at 16%.</p>
+        </div>
+        <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.7;">Click below to set up your password and complete your profile. It takes about 2 minutes.</p>
+        <a href="${inviteUrl}" style="${BTN_STYLE}">Set Up My Account</a>
+        <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">This invite is unique to your email and can only be used once.</p>
+      </td>
+    </tr>
+  `);
+}

@@ -229,15 +229,22 @@ export function MilestoneTable({ orderId, milestones, isBuyer, isSeller, orderSt
                     )}
                   </button>
                 )}
-                {m.status === "waiting_for_funds" && isBuyer && (
-                  <button
-                    onClick={() => handleFund(idx)}
-                    disabled={loading}
-                    className="border border-border bg-background hover:bg-secondary text-foreground px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
-                  >
-                    {loading ? "Processing..." : "Fund Milestone"}
-                  </button>
-                )}
+                {m.status === "waiting_for_funds" && isBuyer && (() => {
+                  const prevFunded = idx === 0 || ["in_escrow", "releasing", "released"].includes(milestones[idx - 1].status);
+                  return prevFunded ? (
+                    <button
+                      onClick={() => handleFund(idx)}
+                      disabled={loading}
+                      className="border border-border bg-background hover:bg-secondary text-foreground px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                      {loading ? "Processing..." : "Fund Milestone"}
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-bold">
+                      <Lock className="w-3 h-3" /> Fund previous milestone first
+                    </span>
+                  );
+                })()}
                 {m.status === "released" && (
                   <span className="text-xs text-muted-foreground flex items-center justify-end gap-1">
                     <Check className="w-3 h-3" /> Paid

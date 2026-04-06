@@ -14,8 +14,9 @@ import { captureException } from "@/lib/sentry";
 import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
 import { resend, getFromEmail } from "@/lib/resend";
-import { expertInviteEmail, welcomeEmail } from "@/lib/email-templates";
+import { expertInviteEmail, foundingExpertInviteEmail, welcomeEmail } from "@/lib/email-templates";
 import { fireBusinessOnboardingNotifications } from "@/lib/onboarding-notifications";
+import { foundingExperts } from "@/data/experts";
 
 const FROM_EMAIL = getFromEmail();
 
@@ -1539,6 +1540,8 @@ export async function sendExpertInvites() {
     try {
       const token = randomBytes(32).toString("hex");
 
+      const isFoundingExpert = foundingExperts.includes(entry.email)
+
       await prisma.waitlistSignup.update({
         where: { id: entry.id },
         data: { inviteToken: token, inviteSentAt: new Date() },
@@ -1549,8 +1552,10 @@ export async function sendExpertInvites() {
       await resend.emails.send({
         from: FROM_EMAIL,
         to: entry.email,
-        subject: "You're invited to LogicLot",
-        html: expertInviteEmail({ name: entry.fullName, inviteUrl }),
+        subject: isFoundingExpert ? "You're a LogicLot Founding Expert" : "You're invited to LogicLot",
+        html: isFoundingExpert
+          ? foundingExpertInviteEmail({ name: entry.fullName, inviteUrl })
+          : expertInviteEmail({ name: entry.fullName, inviteUrl }),
         headers: {
           'X-Entity-Ref-ID': randomUUID(),
         }

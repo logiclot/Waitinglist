@@ -319,32 +319,39 @@ export function MilestoneTimeline({
             {isExpanded && isUpcoming && (
               <div className="px-4 pb-4">
                 <div className="border-t border-border/50 pt-3">
-                  {(milestone.status === "waiting_for_funds" || milestone.status === "pending_payment") && isBuyer && orderId ? (
-                    <div className="space-y-3">
-                      <p className="text-sm text-foreground">
-                        {milestone.status === "pending_payment"
-                          ? "Fund this milestone to kick off the project."
-                          : "The previous milestone has been completed. Fund this milestone to continue the project."}
+                  {(milestone.status === "waiting_for_funds" || milestone.status === "pending_payment") && isBuyer && orderId ? (() => {
+                    const prevFunded = idx === 0 || ["in_escrow", "releasing", "released"].includes(milestones[idx - 1].status);
+                    return prevFunded ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-foreground">
+                          {milestone.status === "pending_payment"
+                            ? "Fund this milestone to kick off the project."
+                            : "The previous milestone has been completed. Fund this milestone to continue the project."}
+                        </p>
+                        <button
+                          onClick={() => handleFundFromTimeline(idx)}
+                          disabled={fundingIdx === idx}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 shadow-sm"
+                        >
+                          {fundingIdx === idx ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="h-4 w-4" />
+                              Fund Milestone — {formatCentsToCurrency(milestone.priceCents)}
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Fund the previous milestone first before proceeding with this one.
                       </p>
-                      <button
-                        onClick={() => handleFundFromTimeline(idx)}
-                        disabled={fundingIdx === idx}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 shadow-sm"
-                      >
-                        {fundingIdx === idx ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <CreditCard className="h-4 w-4" />
-                            Fund Milestone — {formatCentsToCurrency(milestone.priceCents)}
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : (
+                    );
+                  })() : (
                     <p className="text-sm text-muted-foreground">
                       This milestone will begin once the previous milestones are completed and funded.
                     </p>
