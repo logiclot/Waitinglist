@@ -28,7 +28,7 @@ export default function OnboardingPage() {
 
     if (selected === existingRole) {
       router.push(
-        selected === "BUSINESS" ? "/onboarding/business" : "/onboarding/expert"
+        selected === "BUSINESS" ? "/onboarding/business" : "/onboarding/expert",
       );
       return;
     }
@@ -37,7 +37,7 @@ export default function OnboardingPage() {
     if (result.success) {
       await refreshSession();
       router.push(
-        selected === "BUSINESS" ? "/onboarding/business" : "/onboarding/expert"
+        selected === "BUSINESS" ? "/onboarding/business" : "/onboarding/expert",
       );
     } else {
       setPending(false);
@@ -45,10 +45,6 @@ export default function OnboardingPage() {
       signOut({ callbackUrl: "/auth/sign-in" });
     }
   };
-
-  const isAdmin =
-    session?.user?.email === "logiclot.helpdesk@gmail.com" ||
-    session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-12">
@@ -61,15 +57,6 @@ export default function OnboardingPage() {
             ? "Please confirm how you'd like to use your account."
             : "Choose your account type to get started."}
         </p>
-
-        {isAdmin && (
-          <button
-            onClick={() => router.push("/admin")}
-            className="mt-4 text-sm text-yellow-600 hover:underline"
-          >
-            Skip to Admin Dashboard
-          </button>
-        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
@@ -124,8 +111,8 @@ export default function OnboardingPage() {
           </h2>
           <p className="text-sm font-medium text-primary mb-3">Expert</p>
           <p className="text-muted-foreground leading-relaxed">
-            Package your automation expertise into fixed-scope solutions and sell
-            them repeatedly.
+            Package your automation expertise into fixed-scope solutions and
+            sell them repeatedly.
           </p>
         </button>
       </div>
