@@ -240,22 +240,58 @@ export function Navbar({ user }: { user?: Session["user"] & { role?: string } })
             <div className="border-t border-border pt-4 flex flex-col gap-3">
               {user ? (
                 <>
-                  <div className="px-2 text-center text-foreground">
-                    <p className="text-sm font-medium">{user.email}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{user.role?.toLowerCase()}</p>
+                  <div className="flex items-center gap-3 px-2">
+                    <Avatar
+                      src={user.image}
+                      name={user.name || user.email?.split("@")[0] || "User"}
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate text-foreground">{user.name || user.email?.split("@")[0]}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    </div>
+                    {isFoundingExpert && <ExpertBadge isFoundingExpert />}
                   </div>
-                  <Link
-                    href={user.role === "ADMIN" ? "/admin" : "/dashboard"}
-                    className="text-sm font-medium text-center py-2 rounded-md border border-primary/20 text-primary hover:bg-primary/10 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {user.role === "ADMIN" ? "Admin Dashboard" : "Dashboard"}
-                  </Link>
+
+                  <div className="flex flex-col gap-1">
+                    {user.role === 'ADMIN' && (
+                      <MobileMenuLink href="/admin" icon={ShieldCheck} label="Admin Dashboard" onClick={() => setIsMenuOpen(false)} />
+                    )}
+                    {user.role !== 'ADMIN' && (
+                      <MobileMenuLink href="/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={() => setIsMenuOpen(false)} />
+                    )}
+                    <MobileMenuLink href="/dashboard/messages" icon={MessageSquare} label="Messages" onClick={() => setIsMenuOpen(false)} />
+
+                    {user.role === 'EXPERT' && (
+                      <>
+                        <MobileMenuLink href="/expert/projects" icon={FolderKanban} label="Projects" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/expert/my-solutions" icon={Layers} label="My Solutions" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/jobs" icon={Briefcase} label="Browse Jobs" onClick={() => setIsMenuOpen(false)} />
+                      </>
+                    )}
+
+                    {user.role === 'BUSINESS' && (
+                      <>
+                        <MobileMenuLink href="/business/projects" icon={FolderKanban} label="My Projects" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/business/add-request" icon={PlusCircle} label="Post a Request" onClick={() => setIsMenuOpen(false)} />
+                      </>
+                    )}
+
+                    {user.role !== 'ADMIN' && (
+                      <MobileMenuLink
+                        href={user.role === 'EXPERT' ? '/expert/settings' : '/business/settings'}
+                        icon={Settings}
+                        label="Settings"
+                        onClick={() => setIsMenuOpen(false)}
+                      />
+                    )}
+                  </div>
+
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="text-sm font-medium text-center py-2 rounded-md border border-destructive/20 text-destructive hover:bg-destructive/10 transition-colors"
+                    className="text-sm font-medium text-center py-2 rounded-md border border-destructive/20 text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
                   >
-                    Sign Out
+                    <LogOut className="h-4 w-4" /> Sign Out
                   </button>
                 </>
               ) : (
@@ -272,6 +308,25 @@ export function Navbar({ user }: { user?: Session["user"] & { role?: string } })
         </div>
       )}
     </nav>
+  );
+}
+
+/** Reusable mobile menu link */
+function MobileMenuLink({ href, icon: Icon, label, onClick }: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2.5 px-2 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded-md transition-colors"
+      onClick={onClick}
+    >
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      {label}
+    </Link>
   );
 }
 
