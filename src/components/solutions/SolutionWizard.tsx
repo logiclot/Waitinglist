@@ -310,7 +310,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       if (!currentId) {
         // Create new draft first
         const res = await createSolutionDraft(payload);
-        if (res.error) throw new Error(res.error);
+        if (!res || res.error) throw new Error(res?.error || "Failed to create draft");
         currentId = res.solutionId;
         handleChange("id", currentId);
       }
@@ -371,7 +371,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         }
 
         const res = await updateSolutionDraft(currentId, updateData);
-        if (res.error) throw new Error(res.error);
+        if (!res || res.error) throw new Error(res?.error || "Failed to update draft");
       }
       return true;
     } catch (err: unknown) {
@@ -465,6 +465,12 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
     setLoading(true);
     const res = await publishSolution(formData.id);
     setLoading(false);
+
+    if (!res) {
+      toast.error("Something went wrong. Please try again.", { duration: 4000 });
+      setError("Something went wrong. Please try again.");
+      return;
+    }
 
     if (res.success) {
       // If the expert selected a suite, add the solution to it
