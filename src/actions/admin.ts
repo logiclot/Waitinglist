@@ -1519,11 +1519,7 @@ export async function sendExpertInvites() {
     where: {
       role: "expert",
       inviteSentAt: null,
-      createdAt: {
-        lte: new Date("2026-03-30T23:59:59.999Z")
-      }
     },
-    take: 26,
     orderBy: { createdAt: "asc" },
   });
 
