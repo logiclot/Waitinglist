@@ -8,7 +8,7 @@
  * Source: https://docs.stripe.com/connect/express-accounts#supported-countries
  */
 
-const COUNTRY_NAME_TO_ISO: Record<string, string> = {
+export const COUNTRY_NAME_TO_ISO: Record<string, string> = {
   // ── A ──
   "Afghanistan": "AF",
   "Albania": "AL",
