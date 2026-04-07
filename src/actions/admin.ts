@@ -1574,7 +1574,7 @@ export async function getWaitlistInviteStats() {
   if (session?.user?.role !== "ADMIN") return null;
 
   const [pendingCount, sentCount, usedCount] = await Promise.all([
-    prisma.waitlistSignup.count({ where: { inviteSentAt: null } }),
+    prisma.waitlistSignup.count({ where: { inviteSentAt: null, inviteToken: null, role: "expert" } }),
     prisma.waitlistSignup.count({ where: { inviteSentAt: { not: null }, usedAt: null } }),
     prisma.waitlistSignup.count({ where: { usedAt: { not: null } } }),
   ]);
