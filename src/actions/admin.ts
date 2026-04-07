@@ -1573,14 +1573,10 @@ export async function getWaitlistInviteStats() {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== "ADMIN") return null;
 
-  // Only count the first 26 waitlist experts (signed up on or before 2026-03-30)
-  const INVITE_CUTOFF_DATE = new Date("2026-03-30T23:59:59.999Z");
-  const cutoffFilter = { role: "expert" as const, createdAt: { lte: INVITE_CUTOFF_DATE } };
-
   const [pendingCount, sentCount, usedCount] = await Promise.all([
-    prisma.waitlistSignup.count({ where: { ...cutoffFilter, inviteSentAt: null } }),
-    prisma.waitlistSignup.count({ where: { ...cutoffFilter, inviteSentAt: { not: null }, usedAt: null } }),
-    prisma.waitlistSignup.count({ where: { ...cutoffFilter, usedAt: { not: null } } }),
+    prisma.waitlistSignup.count({ where: { inviteSentAt: null } }),
+    prisma.waitlistSignup.count({ where: { inviteSentAt: { not: null }, usedAt: null } }),
+    prisma.waitlistSignup.count({ where: { usedAt: { not: null } } }),
   ]);
 
   return { pendingCount, sentCount, usedCount };
