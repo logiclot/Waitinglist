@@ -185,8 +185,13 @@ export async function verifySpecialist(id: string, verified: boolean) {
   return { success: true };
 }
 
-export async function makeFoundingSpecialist(id: string, rank: number) {
+export async function makeFoundingSpecialist(id: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
+
+  const maxRank = await prisma.specialistProfile.aggregate({
+    _max: { foundingRank: true },
+  });
+  const rank = (maxRank._max.foundingRank ?? 0) + 1;
 
   const specialist = await prisma.specialistProfile.update({
     where: { id },

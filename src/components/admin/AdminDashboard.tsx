@@ -293,14 +293,13 @@ export function AdminDashboard({
       showMessage("Maximum of 20 Founding Experts reached.", true);
       return;
     }
-    await makeFoundingSpecialist(id, currentFounders + 1);
+    await makeFoundingSpecialist(id);
     setExpertList(
       expertList.map((e) =>
         e.id === id
           ? {
               ...e,
               isFoundingExpert: true,
-              foundingRank: currentFounders + 1,
               platformFeePercentage: 11,
             }
           : e,
