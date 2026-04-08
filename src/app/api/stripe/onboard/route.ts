@@ -16,6 +16,11 @@ export async function POST(req: Request) {
   }
 
   try {
+    const body = await req.json().catch(() => ({}));
+    const returnTo = typeof body.returnTo === "string" ? body.returnTo : "/expert/settings";
+    // Ensure returnTo is a relative path to prevent open redirects
+    const safePath = returnTo.startsWith("/") ? returnTo : "/expert/settings";
+
     const expert = await prisma.specialistProfile.findUnique({
       where: { userId: session.user.id },
     });
@@ -66,8 +71,8 @@ export async function POST(req: Request) {
 
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${APP_URL}/expert/settings?stripe=refresh`,
-      return_url: `${APP_URL}/expert/settings?stripe=return`,
+      refresh_url: `${APP_URL}${safePath}?stripe=refresh`,
+      return_url: `${APP_URL}${safePath}?stripe=return`,
       type: "account_onboarding",
     });
 

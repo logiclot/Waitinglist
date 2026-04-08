@@ -228,39 +228,41 @@ export function SolutionWizard({
   const stripeConnected = !!stripeStatus?.isConnected;
   const isStripeSupported = stripeStatus?.isStripeSupported !== false;
   const hasBankDetails = !!stripeStatus?.hasBankDetails;
-  const { data: expertSettingsData, isLoading: isExpertSettingsLoading } = useQuery({
-    queryKey: ["expert-settings"],
-    queryFn: async () => {
-      const res = await getExpertSettings();
-      if (!res.success || !res.settings) return null;
-      const s = res.settings as {
-        platformFeePercentage?: number;
-        isFoundingExpert?: boolean;
-        tier?: string;
-      };
-      const fee = s.platformFeePercentage ?? 16;
-      let label: string;
-      if (s.isFoundingExpert && s.tier === "ELITE")
-        label = `${fee}% (Founding Expert · Elite)`;
-      else if (s.isFoundingExpert && s.tier === "PROVEN")
-        label = `${fee}% (Founding Expert · Proven)`;
-      else if (s.isFoundingExpert) label = `${fee}% (Founding Expert)`;
-      else if (s.tier === "ELITE") label = `${fee}% (Elite)`;
-      else if (s.tier === "PROVEN") label = `${fee}% (Proven)`;
-      else label = `${fee}%`;
-      return { fee, label };
-    },
-  });
+  const { data: expertSettingsData, isLoading: isExpertSettingsLoading } =
+    useQuery({
+      queryKey: ["expert-settings"],
+      queryFn: async () => {
+        const res = await getExpertSettings();
+        if (!res.success || !res.settings) return null;
+        const s = res.settings as {
+          platformFeePercentage?: number;
+          isFoundingExpert?: boolean;
+          tier?: string;
+        };
+        const fee = s.platformFeePercentage ?? 16;
+        let label: string;
+        if (s.isFoundingExpert && s.tier === "ELITE")
+          label = `${fee}% (Founding Expert · Elite)`;
+        else if (s.isFoundingExpert && s.tier === "PROVEN")
+          label = `${fee}% (Founding Expert · Proven)`;
+        else if (s.isFoundingExpert) label = `${fee}% (Founding Expert)`;
+        else if (s.tier === "ELITE") label = `${fee}% (Elite)`;
+        else if (s.tier === "PROVEN") label = `${fee}% (Proven)`;
+        else label = `${fee}%`;
+        return { fee, label };
+      },
+    });
   const expertFeePercent = expertSettingsData?.fee ?? 16;
   const expertFeeLabel = expertSettingsData?.label ?? "Est. 16%";
 
-  const { data: expertSuites = [], isLoading: isExpertSuitesLoading } = useQuery({
-    queryKey: ["expert-ecosystems"],
-    queryFn: async () => {
-      const suites = await getExpertEcosystems();
-      return suites.map((s) => ({ id: s.id, title: s.title }));
-    },
-  });
+  const { data: expertSuites = [], isLoading: isExpertSuitesLoading } =
+    useQuery({
+      queryKey: ["expert-ecosystems"],
+      queryFn: async () => {
+        const suites = await getExpertEcosystems();
+        return suites.map((s) => ({ id: s.id, title: s.title }));
+      },
+    });
   const [selectedSuiteId, setSelectedSuiteId] = useState<string>("");
 
   useEffect(() => {
@@ -1527,6 +1529,8 @@ export function SolutionWizard({
                 onClick={async () => {
                   const res = await fetch("/api/stripe/onboard", {
                     method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ returnTo: window.location.pathname }),
                   });
                   const d = await res.json();
                   if (d.url) window.location.href = d.url;
