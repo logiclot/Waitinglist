@@ -141,11 +141,11 @@ export default function ExpertSettingsPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || "Failed to start Stripe onboarding");
+        toast.error(data.error || "Failed to start Stripe onboarding. Please contact support via the chat bubble below.");
       }
     } catch (error) {
       Sentry.captureException(error, { tags: { context: "stripe-onboard" } });
-      alert("Error connecting to Stripe");
+      toast.error("Error connecting to Stripe. Please reach out to support using the chat bubble in the bottom right.");
     } finally {
       setLoadingStripe(false);
     }
