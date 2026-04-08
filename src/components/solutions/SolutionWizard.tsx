@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   createSolutionDraft,
@@ -211,9 +212,22 @@ export function SolutionWizard({
   const [step, setStep] = useState(startStep);
   const [customToolInput, setCustomToolInput] = useState("");
   const [quickTotal, setQuickTotal] = useState<string>("");
-  const [stripeConnected, setStripeConnected] = useState<boolean | null>(null);
-  const [isStripeSupported, setIsStripeSupported] = useState<boolean>(true);
-  const [hasBankDetails, setHasBankDetails] = useState<boolean>(false);
+  const { data: stripeStatus, isLoading: isPayoutsLoading } = useQuery({
+    queryKey: ["stripe-status"],
+    queryFn: async () => {
+      const res = await fetch("/api/stripe/status");
+      if (!res.ok) return null;
+      return res.json() as Promise<{
+        isConnected?: boolean;
+        isStripeSupported?: boolean;
+        hasBankDetails?: boolean;
+      }>;
+    },
+  });
+
+  const stripeConnected = !!stripeStatus?.isConnected;
+  const isStripeSupported = stripeStatus?.isStripeSupported !== false;
+  const hasBankDetails = !!stripeStatus?.hasBankDetails;
   const [expertFeePercent, setExpertFeePercent] = useState<number>(16);
   const [expertFeeLabel, setExpertFeeLabel] = useState<string>("Est. 16%");
   const [expertSuites, setExpertSuites] = useState<
@@ -222,17 +236,6 @@ export function SolutionWizard({
   const [selectedSuiteId, setSelectedSuiteId] = useState<string>("");
 
   useEffect(() => {
-    // Fetch Stripe status
-    fetch("/api/stripe/status")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d) {
-          setStripeConnected(!!d.isConnected);
-          setIsStripeSupported(d.isStripeSupported !== false);
-          setHasBankDetails(!!d.hasBankDetails);
-        }
-      })
-      .catch(() => {});
     // Fetch calendar + fee info via expert settings
     getExpertSettings().then((res) => {
       if (res.success && res.settings) {
@@ -1483,20 +1486,26 @@ export function SolutionWizard({
           {/* Payout setup */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div
-                className={`w-2 h-2 rounded-full shrink-0 ${payoutReady ? "bg-green-500" : "bg-amber-400"}`}
-              />
+              {isPayoutsLoading ? (
+                <div className="w-2 h-2 rounded-full shrink-0 bg-muted animate-pulse" />
+              ) : (
+                <div
+                  className={`w-2 h-2 rounded-full shrink-0 ${payoutReady ? "bg-green-500" : "bg-amber-400"}`}
+                />
+              )}
               <span className="text-sm text-foreground">
-                {isStripeSupported
-                  ? stripeConnected
-                    ? "Stripe connected"
-                    : "Connect Stripe to get paid"
-                  : hasBankDetails
-                    ? "Bank details saved"
-                    : "Add bank details to get paid"}
+                {isPayoutsLoading
+                  ? "Fetching payouts status…"
+                  : isStripeSupported
+                    ? stripeConnected
+                      ? "Stripe connected"
+                      : "Connect Stripe to get paid"
+                    : hasBankDetails
+                      ? "Bank details saved"
+                      : "Add bank details to get paid"}
               </span>
             </div>
-            {payoutReady ? (
+            {isPayoutsLoading ? null : payoutReady ? (
               <Link
                 href="/expert/settings#payouts"
                 className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
