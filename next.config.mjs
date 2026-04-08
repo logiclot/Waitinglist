@@ -15,12 +15,6 @@ const nextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
   },
-  async redirects() {
-    // In development, we skip the waitlist redirect so we can work on the site
-    if (process.env.NODE_ENV === "development") {
-      return [];
-    }
-  },
   // Proxy PostHog through our own domain to bypass ad blockers
   async rewrites() {
     return [
