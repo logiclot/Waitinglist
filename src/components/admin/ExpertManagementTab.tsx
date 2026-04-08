@@ -184,7 +184,9 @@ export function ExpertManagementTab({
           <tbody className={`divide-y ${isPending ? "divide-yellow-500/20" : "divide-border"}`}>
             {experts.map((expert) => {
               const isExpanded = expandedExpertId === expert.id;
-              const fee = getCommissionPercent(toCommissionExpert(expert));
+              const fee = expert.platformFeePercentage != null
+                ? expert.platformFeePercentage
+                : getCommissionPercent(toCommissionExpert(expert));
               const tier = (expert.tier ?? "STANDARD") as "STANDARD" | "PROVEN" | "ELITE";
               const hasOverride = expert.commissionOverridePercent != null;
               const isFounding = expert.isFoundingExpert ?? false;
