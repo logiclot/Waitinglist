@@ -20,14 +20,6 @@ const nextConfig = {
     if (process.env.NODE_ENV === "development") {
       return [];
     }
-
-    return [
-      {
-        source: "/",
-        destination: "/waitlist",
-        permanent: false, // Temporary redirect
-      },
-    ];
   },
   // Proxy PostHog through our own domain to bypass ad blockers
   async rewrites() {
