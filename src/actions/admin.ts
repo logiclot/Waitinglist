@@ -1573,11 +1573,19 @@ export async function getWaitlistInviteStats() {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== "ADMIN") return null;
 
-  const [pendingCount, sentCount, usedCount] = await Promise.all([
-    prisma.waitlistSignup.count({ where: { inviteSentAt: null, inviteToken: null, role: "expert" } }),
-    prisma.waitlistSignup.count({ where: { inviteSentAt: { not: null }, usedAt: null } }),
-    prisma.waitlistSignup.count({ where: { usedAt: { not: null } } }),
-  ]);
+  // const [pendingCount, sentCount, usedCount] = await Promise.all([
+  //   prisma.waitlistSignup.count({ where: { inviteSentAt: null, inviteToken: null, role: "expert" } }),
+  //   prisma.waitlistSignup.count({ where: { inviteSentAt: { not: null }, usedAt: null } }),
+  //   prisma.waitlistSignup.count({ where: { usedAt: { not: null } } }),
+  // ]);
 
-  return { pendingCount, sentCount, usedCount };
+  const result = await prisma.$queryRaw`
+  SELECT
+    COUNT(*) FILTER (WHERE "inviteSentAt" IS NULL AND "inviteToken" IS NULL AND "role" = 'expert') AS "pendingCount",
+    COUNT(*) FILTER (WHERE "inviteSentAt" IS NOT NULL AND "usedAt" IS NULL) AS "sentCount",
+    COUNT(*) FILTER (WHERE "usedAt" IS NOT NULL) AS "usedCount"
+  FROM "waitlistSignup";
+`;
+
+  return result as { pendingCount: number, sentCount: number, usedCount: number };
 }
