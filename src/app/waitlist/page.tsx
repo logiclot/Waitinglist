@@ -7,9 +7,6 @@ import { BRAND_NAME } from "@/lib/branding";
 import { LogoBrand } from "@/components/LogoBrand";
 import { LogoMark } from "@/components/LogoMark";
 
-// ---------------------------------------------------------------------------
-// Countdown hook — ticks every second until launch date
-// ---------------------------------------------------------------------------
 const LAUNCH_DATE = new Date("2026-04-08T00:00:00Z");
 
 function useCountdown(target: Date) {
