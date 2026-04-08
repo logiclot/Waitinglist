@@ -35,6 +35,24 @@ export async function updateExpertProfile(data: {
   }
 }
 
+export async function updateExpertCountry(country: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  try {
+    await prisma.specialistProfile.update({
+      where: { userId: session.user.id },
+      data: { country },
+    });
+    revalidatePath("/expert/settings");
+    return { success: true };
+  } catch (e) {
+    log.error("expert.update_country_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
+    return { error: "Failed to update country" };
+  }
+}
+
 export async function updateExpertCalendar(calendarUrl: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Not authenticated" };

@@ -25,10 +25,21 @@ import {
   updateExpertCalendar,
   updateExpertInvoice,
   updateExpertBankDetails,
+  updateExpertCountry,
 } from "@/actions/expert";
-import { isStripeConnectSupported } from "@/lib/stripe-countries";
+import { isStripeConnectSupported, COUNTRY_NAME_TO_ISO } from "@/lib/stripe-countries";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
+import { useMutation } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const countryNames = Object.keys(COUNTRY_NAME_TO_ISO).sort();
 
 export default function ExpertSettingsPage() {
   const router = useRouter();
@@ -58,6 +69,20 @@ export default function ExpertSettingsPage() {
   const [bankName, setBankName] = useState("");
   const [bankCurrency, setBankCurrency] = useState("EUR");
   const [savingBank, setSavingBank] = useState(false);
+
+  const { mutate: saveCountry, isPending: savingCountry } = useMutation({
+    mutationFn: (country: string) => updateExpertCountry(country),
+    onSuccess: (result) => {
+      if ("error" in result) {
+        toast.error(result.error);
+      } else {
+        toast.success("Country updated successfully");
+      }
+    },
+    onError: () => {
+      toast.error("Failed to update country");
+    },
+  });
 
   useEffect(() => {
     checkStripeStatus();
@@ -267,6 +292,45 @@ export default function ExpertSettingsPage() {
               name={displayName || "Profile"}
               persistOnChange
             />
+          </div>
+
+          {/* Country Section */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" /> Country
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Your country determines how you receive payouts.
+            </p>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-1.5 block">
+                  Country
+                </label>
+                <Select
+                  value={expertCountry}
+                  onValueChange={(value) => setExpertCountry(value)}
+                >
+                  <SelectTrigger className="w-full h-10">
+                    <SelectValue placeholder="Select your country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countryNames.map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <button
+                onClick={() => saveCountry(expertCountry)}
+                disabled={savingCountry || !expertCountry}
+                className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold text-sm disabled:opacity-70"
+              >
+                {savingCountry ? "Saving..." : "Save Country"}
+              </button>
+            </div>
           </div>
 
           {/* Payouts Section */}
