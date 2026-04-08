@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { DeleteAccountButton } from "@/components/settings/DeleteAccountButton";
 import { ProfilePicUpload } from "@/components/ProfilePicUpload";
+import { ProfileSection } from "./ProfileSection";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -71,7 +72,7 @@ export default function ExpertSettingsPage() {
       setProfileImageUrl(res.settings.profileImageUrl || null);
       setCalendarUrl(res.settings.calendarUrl || "");
       setDisplayName(res.settings.displayName || "");
-      setTitle("");
+      setTitle(res.settings.title || "");
       setBio(res.settings.bio || "");
       setInvoiceCompanyName(res.settings.invoiceCompanyName || "");
       setInvoiceAddress(res.settings.invoiceAddress || "");
@@ -537,50 +538,11 @@ Country"
           </div>
 
           {/* Public Profile */}
-          <div className="scroll-mt-8 bg-card border border-border rounded-xl p-6">
-            <h2 className="text-xl font-bold mb-4">Public Profile</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-1 block">
-                    Display Name
-                  </label>
-                  <input
-                    className="w-full bg-background border border-border rounded-md px-3 py-2"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1 block">
-                    Title
-                  </label>
-                  <input
-                    className="w-full bg-background border border-border rounded-md px-3 py-2"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Automation Architect"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Bio</label>
-                <textarea
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 h-24"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Tell businesses about your expertise..."
-                />
-              </div>
-
-              <div className="pt-4 border-t border-border">
-                <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold text-sm">
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
+          <ProfileSection
+            initialDisplayName={displayName}
+            initialTitle={title}
+            initialBio={bio}
+          />
         </div>
       </div>
     </div>

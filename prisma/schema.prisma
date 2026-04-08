@@ -247,6 +247,7 @@ model SpecialistProfile {
   clientAcquisitionSource String[] // New
 
   bio          String? // Short bio for public profile
+  title        String? // e.g. "Automation Architect"
   responseTime String? // e.g. "Within 2 hours"
 
   // Status & Badges
@@ -475,10 +476,10 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  conversations  Conversation[]
-  review         Review?
-  dispute        Dispute?
-  manualPayouts  ManualPayout[]
+  conversations Conversation[]
+  review        Review?
+  dispute       Dispute?
+  manualPayouts ManualPayout[]
 
   @@index([buyerId])
   @@index([sellerId])
@@ -546,14 +547,14 @@ model ManualPayout {
   specialist   SpecialistProfile @relation(fields: [specialistId], references: [id], onDelete: Cascade)
 
   orderId String
-  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   milestoneIndex Int // Which milestone in the order
   milestoneTitle String
 
-  amountCents    Int // Amount owed to expert (after platform fee)
+  amountCents      Int // Amount owed to expert (after platform fee)
   platformFeeCents Int // Platform fee deducted
-  currency       String @default("EUR")
+  currency         String @default("EUR")
 
   status String @default("pending") // pending, transferred, cancelled
 

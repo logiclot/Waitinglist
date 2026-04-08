@@ -11,6 +11,7 @@ import * as Sentry from "@sentry/nextjs";
 export async function updateExpertProfile(data: {
   displayName?: string;
   bio?: string;
+  title?: string;
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "Not authenticated" };
@@ -21,6 +22,7 @@ export async function updateExpertProfile(data: {
       data: {
         displayName: data.displayName ?? undefined,
         bio: data.bio ?? undefined,
+        title: data.title ?? undefined,
       },
     });
     revalidatePath("/expert/settings");
@@ -123,6 +125,7 @@ export async function getExpertSettings() {
         profileImageUrl: expert.user?.profileImageUrl,
         calendarUrl: expert.calendarUrl,
         displayName: expert.displayName || expert.legalFullName,
+        title: expert.title || "",
         bio: expert.bio || "",
         platformFeePercentage: expert.platformFeePercentage ?? 16,
         isFoundingExpert: !!(expert.isFoundingExpert),
