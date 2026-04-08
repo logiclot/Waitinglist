@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createSolutionDraft, updateSolutionDraft, publishSolution } from "@/actions/solutions";
+import {
+  createSolutionDraft,
+  updateSolutionDraft,
+  publishSolution,
+} from "@/actions/solutions";
 import { getExpertSettings } from "@/actions/expert";
-import { getExpertEcosystems, addSolutionToEcosystem } from "@/actions/ecosystems";
-import { checkListForGibberish, checkFieldsForGibberish } from "@/lib/validation";
+import {
+  getExpertEcosystems,
+  addSolutionToEcosystem,
+} from "@/actions/ecosystems";
 import { SolutionPreview, SolutionFormData } from "./SolutionPreview";
 import { toast } from "sonner";
 import {
@@ -20,36 +26,50 @@ import {
   Lock,
   Copy,
   Wrench,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
+import Link from "next/link";
 
 // --- Constants ---
 
 const COMMON_TOOLS = [
-  "Make", "n8n", "Zapier", "OpenAI", "HubSpot", "Salesforce",
-  "Airtable", "Notion", "Google Sheets", "Slack", "Discord",
-  "Shopify", "Stripe", "Xero", "QuickBooks", "Python"
+  "Make",
+  "n8n",
+  "Zapier",
+  "OpenAI",
+  "HubSpot",
+  "Salesforce",
+  "Airtable",
+  "Notion",
+  "Google Sheets",
+  "Slack",
+  "Discord",
+  "Shopify",
+  "Stripe",
+  "Xero",
+  "QuickBooks",
+  "Python",
 ];
 
 const BUSINESS_GOALS = [
-  "Lead generation", 
-  "Sales automation", 
-  "Customer support", 
-  "Finance & invoicing", 
-  "Operations / internal efficiency", 
-  "Marketing automation", 
-  "Reporting & dashboards"
+  "Lead generation",
+  "Sales automation",
+  "Customer support",
+  "Finance & invoicing",
+  "Operations / internal efficiency",
+  "Marketing automation",
+  "Reporting & dashboards",
 ];
 
 const INDUSTRIES = [
-  "eCommerce", 
-  "SaaS", 
-  "Real estate", 
-  "Agencies", 
-  "Professional services", 
-  "Finance", 
-  "Healthcare"
+  "eCommerce",
+  "SaaS",
+  "Real estate",
+  "Agencies",
+  "Professional services",
+  "Finance",
+  "Healthcare",
 ];
 
 // --- Types ---
@@ -113,7 +133,10 @@ const INITIAL_STATE: WizardState = {
   longDescription: "",
   complexity: "Standard",
 
-  included: ["Fully configured automation workflow", "Video walkthrough & documentation"],
+  included: [
+    "Fully configured automation workflow",
+    "Video walkthrough & documentation",
+  ],
   excluded: "",
 
   requiredInputs: [],
@@ -131,9 +154,22 @@ const INITIAL_STATE: WizardState = {
   demoPrice: 2, // Default 2 EUR
 
   milestones: [
-    { title: "Core Logic Engine", description: "Setup and configuration of the main automation workflow.", price: 0 },
-    { title: "Environment Mapping", description: "Customizing fields and triggers to match your specific tools.", price: 0 },
-    { title: "QA & Handover", description: "Testing and final walkthrough session.", price: 0 }
+    {
+      title: "Core Logic Engine",
+      description: "Setup and configuration of the main automation workflow.",
+      price: 0,
+    },
+    {
+      title: "Environment Mapping",
+      description:
+        "Customizing fields and triggers to match your specific tools.",
+      price: 0,
+    },
+    {
+      title: "QA & Handover",
+      description: "Testing and final walkthrough session.",
+      price: 0,
+    },
   ],
 
   skills: [], // Optional skills list
@@ -150,7 +186,7 @@ const INITIAL_STATE: WizardState = {
   proofScreenshotUrl: "",
   proofCaseStudyText: "",
   demoVideoUrl: "",
-  lastStep: 1
+  lastStep: 1,
 };
 
 interface SolutionWizardProps {
@@ -159,51 +195,69 @@ interface SolutionWizardProps {
   lockReason?: string;
 }
 
-export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWizardProps) {
+export function SolutionWizard({
+  initialData,
+  isLocked,
+  lockReason,
+}: SolutionWizardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Determine start step: URL param > initialData.lastStep > 1
   const startStep = searchParams.get("step")
     ? parseInt(searchParams.get("step")!)
-    : (initialData?.lastStep || 1);
+    : initialData?.lastStep || 1;
 
   const [step, setStep] = useState(startStep);
   const [customToolInput, setCustomToolInput] = useState("");
   const [quickTotal, setQuickTotal] = useState<string>("");
   const [stripeConnected, setStripeConnected] = useState<boolean | null>(null);
-  const [calendarConnected, setCalendarConnected] = useState<boolean | null>(null);
+  const [isStripeSupported, setIsStripeSupported] = useState<boolean>(true);
+  const [hasBankDetails, setHasBankDetails] = useState<boolean>(false);
   const [expertFeePercent, setExpertFeePercent] = useState<number>(16);
   const [expertFeeLabel, setExpertFeeLabel] = useState<string>("Est. 16%");
-  const [expertSuites, setExpertSuites] = useState<{ id: string; title: string }[]>([]);
+  const [expertSuites, setExpertSuites] = useState<
+    { id: string; title: string }[]
+  >([]);
   const [selectedSuiteId, setSelectedSuiteId] = useState<string>("");
 
   useEffect(() => {
     // Fetch Stripe status
     fetch("/api/stripe/status")
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setStripeConnected(!!d.isConnected); })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) {
+          setStripeConnected(!!d.isConnected);
+          setIsStripeSupported(d.isStripeSupported !== false);
+          setHasBankDetails(!!d.hasBankDetails);
+        }
+      })
       .catch(() => {});
     // Fetch calendar + fee info via expert settings
-    getExpertSettings().then(res => {
+    getExpertSettings().then((res) => {
       if (res.success && res.settings) {
-        const s = res.settings as { calendarUrl?: string; platformFeePercentage?: number; isFoundingExpert?: boolean; tier?: string };
-        setCalendarConnected(!!(s.calendarUrl && s.calendarUrl.trim()));
+        const s = res.settings as {
+          platformFeePercentage?: number;
+          isFoundingExpert?: boolean;
+          tier?: string;
+        };
         const fee = s.platformFeePercentage ?? 16;
         setExpertFeePercent(fee);
         let label: string;
-        if (s.isFoundingExpert && s.tier === "ELITE")       label = `${fee}% (Founding Expert · Elite)`;
-        else if (s.isFoundingExpert && s.tier === "PROVEN") label = `${fee}% (Founding Expert · Proven)`;
-        else if (s.isFoundingExpert)                        label = `${fee}% (Founding Expert)`;
-        else if (s.tier === "ELITE")                        label = `${fee}% (Elite)`;
-        else if (s.tier === "PROVEN")                       label = `${fee}% (Proven)`;
-        else                                                label = `${fee}%`;
+        if (s.isFoundingExpert && s.tier === "ELITE")
+          label = `${fee}% (Founding Expert · Elite)`;
+        else if (s.isFoundingExpert && s.tier === "PROVEN")
+          label = `${fee}% (Founding Expert · Proven)`;
+        else if (s.isFoundingExpert) label = `${fee}% (Founding Expert)`;
+        else if (s.tier === "ELITE") label = `${fee}% (Elite)`;
+        else if (s.tier === "PROVEN") label = `${fee}% (Proven)`;
+        else label = `${fee}%`;
         setExpertFeeLabel(label);
       }
     });
     // Fetch expert's suites for Step 5 suite assignment
-    getExpertEcosystems().then(suites => {
-      setExpertSuites(suites.map(s => ({ id: s.id, title: s.title })));
+    getExpertEcosystems().then((suites) => {
+      setExpertSuites(suites.map((s) => ({ id: s.id, title: s.title })));
     });
   }, []);
 
@@ -213,16 +267,30 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
   // Parse existing proofContent back into screenshot/case study fields when loading a draft
   const parsedProof = (() => {
-    if (!initialData?.proofContent) return { proofScreenshotUrl: "", proofCaseStudyText: "" };
+    if (!initialData?.proofContent)
+      return { proofScreenshotUrl: "", proofCaseStudyText: "" };
     try {
       const parsed = JSON.parse(initialData.proofContent);
       if (typeof parsed === "object" && parsed !== null) {
-        return { proofScreenshotUrl: parsed.screenshot || "", proofCaseStudyText: parsed.caseStudy || "" };
+        return {
+          proofScreenshotUrl: parsed.screenshot || "",
+          proofCaseStudyText: parsed.caseStudy || "",
+        };
       }
-    } catch { /* not JSON */ }
+    } catch {
+      /* not JSON */
+    }
     // Legacy: single string stored as URL or text depending on proofType
-    if (initialData.proofType === "screenshot") return { proofScreenshotUrl: initialData.proofContent, proofCaseStudyText: "" };
-    if (initialData.proofType === "case_study") return { proofScreenshotUrl: "", proofCaseStudyText: initialData.proofContent };
+    if (initialData.proofType === "screenshot")
+      return {
+        proofScreenshotUrl: initialData.proofContent,
+        proofCaseStudyText: "",
+      };
+    if (initialData.proofType === "case_study")
+      return {
+        proofScreenshotUrl: "",
+        proofCaseStudyText: initialData.proofContent,
+      };
     return { proofScreenshotUrl: "", proofCaseStudyText: "" };
   })();
 
@@ -236,9 +304,10 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
     industries: initialData?.industries || [],
     skills: initialData?.skills || [],
     // Ensure outline has 3 slots
-    outline: initialData?.outline && initialData.outline.length > 0
-      ? [...initialData.outline, "", "", ""].slice(0, 3)
-      : ["", "", ""],
+    outline:
+      initialData?.outline && initialData.outline.length > 0
+        ? [...initialData.outline, "", "", ""].slice(0, 3)
+        : ["", "", ""],
     // Populate split proof fields from existing proofContent
     proofScreenshotUrl: parsedProof.proofScreenshotUrl,
     proofCaseStudyText: parsedProof.proofCaseStudyText,
@@ -247,9 +316,12 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
   const [error, setError] = useState<string | null>(null);
 
   // Helpers
-  const handleChange = <K extends keyof WizardState>(field: K, value: WizardState[K]) => {
+  const handleChange = <K extends keyof WizardState>(
+    field: K,
+    value: WizardState[K],
+  ) => {
     if (isLocked) return; // Prevent edits if locked
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleArrayToggle = (field: keyof WizardState, item: string) => {
@@ -258,7 +330,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
     const current = (formData[field] as any[]) || [];
     if (current.includes(item)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handleChange(field, current.filter(t => t !== item) as any);
+      handleChange(field, current.filter((t) => t !== item) as any);
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handleChange(field, [...current, item] as any);
@@ -272,9 +344,14 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
     handleChange("outline", newOutline);
   };
 
-  const handleStructureChange = (type: "consistent" | "custom", index: number, value: string) => {
+  const handleStructureChange = (
+    type: "consistent" | "custom",
+    index: number,
+    value: string,
+  ) => {
     if (isLocked) return;
-    const field = type === "consistent" ? "structureConsistent" : "structureCustom";
+    const field =
+      type === "consistent" ? "structureConsistent" : "structureCustom";
     const newArray = [...formData[field]];
     newArray[index] = value;
     handleChange(field, newArray);
@@ -296,7 +373,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         // Filter empty strings for submission if needed, but array handling is specific
         value.forEach((v: string) => payload.append(key, v));
       } else if (Array.isArray(value)) {
-        value.forEach(v => payload.append(key, v));
+        value.forEach((v) => payload.append(key, v));
       } else if (value !== undefined && value !== null) {
         payload.append(key, value.toString());
       }
@@ -310,7 +387,8 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       if (!currentId) {
         // Create new draft first
         const res = await createSolutionDraft(payload);
-        if (!res || res.error) throw new Error(res?.error || "Failed to create draft");
+        if (!res || res.error)
+          throw new Error(res?.error || "Failed to create draft");
         currentId = res.solutionId;
         handleChange("id", currentId);
       }
@@ -321,15 +399,20 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         const updateData: any = {
           title: formData.title,
           category: formData.category,
-          shortSummary: formData.short_summary || formData.longDescription?.slice(0, 120) || "",
+          shortSummary:
+            formData.short_summary ||
+            formData.longDescription?.slice(0, 120) ||
+            "",
           longDescription: formData.longDescription,
           complexity: formData.complexity,
           integrations: formData.integrations,
           included: formData.included,
-          excluded: formData.excluded.split("\n").filter(x => x.trim()),
+          excluded: formData.excluded.split("\n").filter((x) => x.trim()),
           requiredInputs: formData.requiredInputs,
 
-          implementationPriceCents: (formData.milestones.reduce((sum, m) => sum + (m.price || 0), 0)) * 100,
+          implementationPriceCents:
+            formData.milestones.reduce((sum, m) => sum + (m.price || 0), 0) *
+            100,
           monthlyCostMinCents: (formData.monthly_cost_min || 0) * 100,
           monthlyCostMaxCents: (formData.monthly_cost_max || 0) * 100,
           demoPriceCents: (formData.demoPrice || 2) * 100,
@@ -341,22 +424,40 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
           outcome: formData.outcome,
           measurableOutcome: formData.outcome, // Sync for V2 validation
 
-          structureConsistent: formData.structureConsistent?.filter(x => x.trim()) || [],
-          structureCustom: formData.structureCustom?.filter(x => x.trim()) || [],
-          businessGoals: formData.businessGoals?.filter(x => x.trim()) || [],
-          industries: formData.industries?.filter(x => x.trim()) || [],
+          structureConsistent:
+            formData.structureConsistent?.filter((x) => x.trim()) || [],
+          structureCustom:
+            formData.structureCustom?.filter((x) => x.trim()) || [],
+          businessGoals: formData.businessGoals?.filter((x) => x.trim()) || [],
+          industries: formData.industries?.filter((x) => x.trim()) || [],
 
-          outline: formData.outline.filter(l => l.trim()),
-          skills: formData.skills.filter(s => s.name.trim()),
+          outline: formData.outline.filter((l) => l.trim()),
+          skills: formData.skills.filter((s) => s.name.trim()),
           lastStep: currentStepToSave,
 
           ...(() => {
-            if (!formData.proofEnabled) return { proofType: null, proofContent: null };
-            const hasScreenshot = !!(formData.proofScreenshotUrl?.trim());
-            const hasCaseStudy = !!(formData.proofCaseStudyText?.trim());
-            if (hasScreenshot && hasCaseStudy) return { proofType: "both", proofContent: JSON.stringify({ screenshot: formData.proofScreenshotUrl!.trim(), caseStudy: formData.proofCaseStudyText!.trim() }) };
-            if (hasScreenshot) return { proofType: "screenshot", proofContent: formData.proofScreenshotUrl!.trim() };
-            if (hasCaseStudy) return { proofType: "case_study", proofContent: formData.proofCaseStudyText!.trim() };
+            if (!formData.proofEnabled)
+              return { proofType: null, proofContent: null };
+            const hasScreenshot = !!formData.proofScreenshotUrl?.trim();
+            const hasCaseStudy = !!formData.proofCaseStudyText?.trim();
+            if (hasScreenshot && hasCaseStudy)
+              return {
+                proofType: "both",
+                proofContent: JSON.stringify({
+                  screenshot: formData.proofScreenshotUrl!.trim(),
+                  caseStudy: formData.proofCaseStudyText!.trim(),
+                }),
+              };
+            if (hasScreenshot)
+              return {
+                proofType: "screenshot",
+                proofContent: formData.proofScreenshotUrl!.trim(),
+              };
+            if (hasCaseStudy)
+              return {
+                proofType: "case_study",
+                proofContent: formData.proofCaseStudyText!.trim(),
+              };
             return { proofType: null, proofContent: null };
           })(),
 
@@ -365,17 +466,21 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         };
 
         if (formData.requiredInputsText) {
-          updateData.requiredInputs = formData.requiredInputsText.split("\n").filter((x: string) => x.trim());
+          updateData.requiredInputs = formData.requiredInputsText
+            .split("\n")
+            .filter((x: string) => x.trim());
         } else {
           updateData.requiredInputs = [];
         }
 
         const res = await updateSolutionDraft(currentId, updateData);
-        if (!res || res.error) throw new Error(res?.error || "Failed to update draft");
+        if (!res || res.error)
+          throw new Error(res?.error || "Failed to update draft");
       }
       return true;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to save draft";
+      const message =
+        err instanceof Error ? err.message : "Failed to save draft";
       setError(message);
       return false;
     } finally {
@@ -386,55 +491,44 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
   const validateStep = (currentStep: number) => {
     switch (currentStep) {
       case 1:
-        return formData.title && 
-               formData.category && 
-               formData.integrations.length > 0 && 
-               formData.businessGoals.length > 0 &&
-               formData.longDescription;
+        return (
+          formData.title &&
+          formData.category &&
+          formData.integrations.length > 0 &&
+          formData.businessGoals.length > 0 &&
+          formData.longDescription
+        );
       case 2:
-        return formData.included.filter(i => i.trim()).length >= 3 && !!formData.requiredInputsText;
+        return (
+          formData.included.filter((i) => i.trim()).length >= 3 &&
+          !!formData.requiredInputsText
+        );
       case 3:
-        return formData.delivery_days > 0 && formData.support_days > 0 && formData.paybackPeriod;
+        return (
+          formData.delivery_days > 0 &&
+          formData.support_days > 0 &&
+          formData.paybackPeriod
+        );
       case 4:
-        return formData.implementation_price > 0 && (formData.demoPrice === undefined || (formData.demoPrice >= 2 && formData.demoPrice <= 32));
+        return (
+          formData.implementation_price > 0 &&
+          (formData.demoPrice === undefined ||
+            (formData.demoPrice >= 2 && formData.demoPrice <= 32))
+        );
       case 5:
-        return !formData.proofEnabled || !!(formData.proofScreenshotUrl?.trim() || formData.proofCaseStudyText?.trim());
+        return (
+          !formData.proofEnabled ||
+          !!(
+            formData.proofScreenshotUrl?.trim() ||
+            formData.proofCaseStudyText?.trim()
+          )
+        );
       default:
         return true;
     }
   };
 
   const handleNext = async () => {
-    // ── Gibberish guard per step ──
-    let gibberishIssue: string | null = null;
-    if (step === 1) {
-      gibberishIssue =
-        checkFieldsForGibberish([
-          { value: formData.title, label: "Title" },
-          { value: formData.longDescription, label: "Description" },
-        ]) ??
-        checkListForGibberish(formData.outline.filter(o => o.trim()), "Outcome");
-    } else if (step === 2) {
-      gibberishIssue =
-        checkListForGibberish(formData.included.filter(i => i.trim()), "Deliverable") ??
-        checkListForGibberish((formData.structureConsistent || []).filter(s => s.trim()), "Always-included item") ??
-        checkListForGibberish((formData.structureCustom || []).filter(s => s.trim()), "Customised item") ??
-        checkFieldsForGibberish([{ value: formData.requiredInputsText, label: "Client requirements" }]) ??
-        checkListForGibberish(formData.skills.map(s => s.name).filter(n => n.trim()), "Skill name") ??
-        checkListForGibberish(formData.skills.map(s => s.description).filter(d => d.trim()), "Skill description");
-    } else if (step === 4) {
-      gibberishIssue =
-        checkListForGibberish(formData.milestones.map(m => m.title).filter(t => t.trim()), "Milestone title") ??
-        checkListForGibberish(formData.milestones.map(m => m.description).filter(d => d.trim()), "Milestone description");
-    } else if (step === 5) {
-      gibberishIssue =
-        checkFieldsForGibberish([{ value: formData.proofCaseStudyText, label: "Case study" }]);
-    }
-    if (gibberishIssue) {
-      setError(gibberishIssue);
-      return;
-    }
-
     if (validateStep(step)) {
       const nextStep = step + 1;
       // Auto-save on next
@@ -445,9 +539,15 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       }
     } else {
       // Give a more helpful error based on what's actually missing
-      if (step === 2 && formData.included.filter(i => i.trim()).length < 3) {
-        setError(`Add at least 3 deliverables under "What's included" (currently ${formData.included.filter(i => i.trim()).length}).`);
-      } else if (step === 4 && formData.demoPrice !== undefined && (formData.demoPrice < 2 || formData.demoPrice > 32)) {
+      if (step === 2 && formData.included.filter((i) => i.trim()).length < 3) {
+        setError(
+          `Add at least 3 deliverables under "What's included" (currently ${formData.included.filter((i) => i.trim()).length}).`,
+        );
+      } else if (
+        step === 4 &&
+        formData.demoPrice !== undefined &&
+        (formData.demoPrice < 2 || formData.demoPrice > 32)
+      ) {
         setError("Discovery call price must be between €2 and €32.");
       } else {
         setError("Please fill all required fields marked with *");
@@ -467,7 +567,9 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
     setLoading(false);
 
     if (!res) {
-      toast.error("Something went wrong. Please try again.", { duration: 4000 });
+      toast.error("Something went wrong. Please try again.", {
+        duration: 4000,
+      });
       setError("Something went wrong. Please try again.");
       return;
     }
@@ -479,7 +581,10 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       }
       toast.success("Done! Your automation is now live.");
       if (formData.demoVideoUrl?.trim()) {
-        toast.info("Your demo video is pending review. It will appear on your listing automatically once approved.", { duration: 8000 });
+        toast.info(
+          "Your demo video is pending review. It will appear on your listing automatically once approved.",
+          { duration: 8000 },
+        );
       }
       router.push("/expert/my-solutions?tab=published");
     } else {
@@ -492,7 +597,9 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
   // 1. Basics
   const renderStep1 = () => {
-    const customTools = formData.integrations.filter(t => !COMMON_TOOLS.includes(t));
+    const customTools = formData.integrations.filter(
+      (t) => !COMMON_TOOLS.includes(t),
+    );
 
     const addCustomTool = () => {
       const val = customToolInput.trim();
@@ -504,29 +611,36 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
     return (
       <div className="space-y-7">
-
         {/* Title + Category */}
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
           <div className="sm:col-span-3">
-            <label className="block text-sm font-medium mb-1">Solution Title <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium mb-1">
+              Solution Title <span className="text-red-500">*</span>
+            </label>
             <input
               value={formData.title}
-              onChange={e => handleChange("title", e.target.value)}
+              onChange={(e) => handleChange("title", e.target.value)}
               disabled={isLocked}
               className="w-full bg-background border border-border rounded-md px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="e.g. Automated Lead Qualification System"
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium mb-1">Category <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium mb-1">
+              Category <span className="text-red-500">*</span>
+            </label>
             <select
               value={formData.category}
-              onChange={e => handleChange("category", e.target.value)}
+              onChange={(e) => handleChange("category", e.target.value)}
               disabled={isLocked}
               className="w-full bg-background border border-border rounded-md px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">Select…</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -535,9 +649,11 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
         {/* Tools Used */}
         <div>
-          <label className="block text-sm font-medium mb-2">Tools used <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium mb-2">
+            Tools used <span className="text-red-500">*</span>
+          </label>
           <div className="flex flex-wrap gap-2 mb-3">
-            {COMMON_TOOLS.map(tool => (
+            {COMMON_TOOLS.map((tool) => (
               <button
                 key={tool}
                 type="button"
@@ -552,7 +668,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                 {tool}
               </button>
             ))}
-            {customTools.map(tool => (
+            {customTools.map((tool) => (
               <span
                 key={tool}
                 className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border bg-primary/10 border-primary text-primary font-medium"
@@ -561,9 +677,16 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                 {!isLocked && (
                   <button
                     type="button"
-                    onClick={() => handleChange("integrations", formData.integrations.filter(t => t !== tool))}
+                    onClick={() =>
+                      handleChange(
+                        "integrations",
+                        formData.integrations.filter((t) => t !== tool),
+                      )
+                    }
                     className="ml-0.5 hover:text-red-500"
-                  >×</button>
+                  >
+                    ×
+                  </button>
                 )}
               </span>
             ))}
@@ -572,8 +695,13 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
             <div className="flex gap-2">
               <input
                 value={customToolInput}
-                onChange={e => setCustomToolInput(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomTool(); }}}
+                onChange={(e) => setCustomToolInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomTool();
+                  }
+                }}
                 className="flex-1 bg-background border border-border rounded-md px-3 py-1.5 text-sm"
                 placeholder="Other tool name…"
               />
@@ -593,9 +721,11 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         {/* Who is this for */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium mb-2">Business goals <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium mb-2">
+              Business goals <span className="text-red-500">*</span>
+            </label>
             <div className="flex flex-wrap gap-2">
-              {BUSINESS_GOALS.map(goal => (
+              {BUSINESS_GOALS.map((goal) => (
                 <button
                   key={goal}
                   type="button"
@@ -613,9 +743,14 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Best fit industries <span className="text-xs font-normal text-muted-foreground">(optional)</span></label>
+            <label className="block text-sm font-medium mb-2">
+              Best fit industries{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </label>
             <div className="flex flex-wrap gap-2">
-              {INDUSTRIES.map(ind => (
+              {INDUSTRIES.map((ind) => (
                 <button
                   key={ind}
                   type="button"
@@ -638,22 +773,35 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
         {/* Key outcomes */}
         <div>
-          <label className="block text-sm font-medium mb-1">Key outcomes <span className="text-xs font-normal text-muted-foreground">— first one shows on the solution card</span></label>
+          <label className="block text-sm font-medium mb-1">
+            Key outcomes{" "}
+            <span className="text-xs font-normal text-muted-foreground">
+              — first one shows on the solution card
+            </span>
+          </label>
           <div className="space-y-2 mt-2">
-            {[0, 1, 2].map(idx => (
+            {[0, 1, 2].map((idx) => (
               <div key={idx} className="flex gap-2 items-center">
-                <span className="text-xs text-muted-foreground w-4 text-right">{idx + 1}.</span>
+                <span className="text-xs text-muted-foreground w-4 text-right">
+                  {idx + 1}.
+                </span>
                 <div className="flex-1 relative">
                   <input
                     value={formData.outline[idx] || ""}
-                    onChange={e => {
+                    onChange={(e) => {
                       handleOutlineChange(idx, e.target.value);
                       if (idx === 0) handleChange("outcome", e.target.value);
                     }}
                     disabled={isLocked}
                     maxLength={60}
                     className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm pr-10 disabled:opacity-50"
-                    placeholder={idx === 0 ? "e.g. Saves 10h/week on reporting" : idx === 1 ? "e.g. Reduces errors by 90%" : "e.g. Fully hands-off after setup"}
+                    placeholder={
+                      idx === 0
+                        ? "e.g. Saves 10h/week on reporting"
+                        : idx === 1
+                          ? "e.g. Reduces errors by 90%"
+                          : "e.g. Fully hands-off after setup"
+                    }
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
                     {(formData.outline[idx] || "").length}/60
@@ -667,19 +815,22 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         {/* Description */}
         <div>
           <div className="flex justify-between items-baseline mb-1">
-            <label className="text-sm font-medium">Detailed description <span className="text-red-500">*</span></label>
-            <span className="text-xs text-muted-foreground">{formData.longDescription?.length || 0}/10000</span>
+            <label className="text-sm font-medium">
+              Detailed description <span className="text-red-500">*</span>
+            </label>
+            <span className="text-xs text-muted-foreground">
+              {formData.longDescription?.length || 0}/10000
+            </span>
           </div>
           <textarea
             value={formData.longDescription}
-            onChange={e => handleChange("longDescription", e.target.value)}
+            onChange={(e) => handleChange("longDescription", e.target.value)}
             disabled={isLocked}
             className="w-full h-36 bg-background border border-border rounded-md px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder="Describe the problem this solves, what's included, and what the client walks away with."
             maxLength={10000}
           />
         </div>
-
       </div>
     );
   };
@@ -687,44 +838,65 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
   // 2. Structure & Deliverables
   const renderStep2 = () => (
     <div className="space-y-7">
-
       {/* Solution Structure */}
       <div>
         <h3 className="text-sm font-medium mb-1 flex items-center gap-2">
-          <Wrench className="w-4 h-4 text-muted-foreground" /> Solution structure
+          <Wrench className="w-4 h-4 text-muted-foreground" /> Solution
+          structure
         </h3>
         <p className="text-xs text-muted-foreground mb-4">
-          Help buyers understand what is fixed and what gets adapted to their setup.
+          Help buyers understand what is fixed and what gets adapted to their
+          setup.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">What stays the same</label>
+            <label className="block text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">
+              What stays the same
+            </label>
             <div className="space-y-2">
-              {[0, 1, 2].map(idx => (
+              {[0, 1, 2].map((idx) => (
                 <input
                   key={`cons-${idx}`}
                   value={(formData.structureConsistent || [])[idx] || ""}
-                  onChange={e => handleStructureChange("consistent", idx, e.target.value)}
+                  onChange={(e) =>
+                    handleStructureChange("consistent", idx, e.target.value)
+                  }
                   disabled={isLocked}
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-50"
-                  placeholder={idx === 0 ? "e.g. Core automation logic" : idx === 1 ? "e.g. Trigger configuration" : "e.g. Error handling rules"}
+                  placeholder={
+                    idx === 0
+                      ? "e.g. Core automation logic"
+                      : idx === 1
+                        ? "e.g. Trigger configuration"
+                        : "e.g. Error handling rules"
+                  }
                 />
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">What gets customised</label>
+            <label className="block text-xs font-semibold text-foreground mb-2 uppercase tracking-wider">
+              What gets customised
+            </label>
             <div className="space-y-2">
-              {[0, 1, 2].map(idx => (
+              {[0, 1, 2].map((idx) => (
                 <input
                   key={`cust-${idx}`}
                   value={(formData.structureCustom || [])[idx] || ""}
-                  onChange={e => handleStructureChange("custom", idx, e.target.value)}
+                  onChange={(e) =>
+                    handleStructureChange("custom", idx, e.target.value)
+                  }
                   disabled={isLocked}
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-50"
-                  placeholder={idx === 0 ? "e.g. Connected tools and fields" : idx === 1 ? "e.g. Business-specific rules" : "e.g. Data mapping"}
+                  placeholder={
+                    idx === 0
+                      ? "e.g. Connected tools and fields"
+                      : idx === 1
+                        ? "e.g. Business-specific rules"
+                        : "e.g. Data mapping"
+                  }
                 />
               ))}
             </div>
@@ -740,20 +912,27 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
           <Sparkles className="w-4 h-4 text-muted-foreground" /> Skills
         </h3>
         <p className="text-xs text-muted-foreground mb-4">
-          If you trained the AI agent with specific skills, list them here. Buyers see these as built-in capabilities they get out of the box.
+          If you trained the AI agent with specific skills, list them here.
+          Buyers see these as built-in capabilities they get out of the box.
         </p>
 
         {formData.skills.length > 0 && (
           <div className="space-y-2 mb-3">
             {formData.skills.map((skill, idx) => (
-              <div key={idx} className="border border-border rounded-lg p-3 bg-card group relative">
+              <div
+                key={idx}
+                className="border border-border rounded-lg p-3 bg-card group relative"
+              >
                 <div className="flex gap-3 items-center mb-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-primary/60 shrink-0" />
                   <input
                     value={skill.name}
                     onChange={(e) => {
                       const newSkills = [...formData.skills];
-                      newSkills[idx] = { ...newSkills[idx], name: e.target.value };
+                      newSkills[idx] = {
+                        ...newSkills[idx],
+                        name: e.target.value,
+                      };
                       handleChange("skills", newSkills);
                     }}
                     disabled={isLocked}
@@ -761,7 +940,12 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                     className="flex-1 text-sm font-semibold bg-transparent border-none p-0 focus:ring-0 placeholder:text-muted-foreground/40 disabled:opacity-50"
                   />
                   <button
-                    onClick={() => handleChange("skills", formData.skills.filter((_, i) => i !== idx))}
+                    onClick={() =>
+                      handleChange(
+                        "skills",
+                        formData.skills.filter((_, i) => i !== idx),
+                      )
+                    }
                     disabled={isLocked}
                     className="p-1 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                   >
@@ -772,7 +956,10 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                   value={skill.description}
                   onChange={(e) => {
                     const newSkills = [...formData.skills];
-                    newSkills[idx] = { ...newSkills[idx], description: e.target.value };
+                    newSkills[idx] = {
+                      ...newSkills[idx],
+                      description: e.target.value,
+                    };
                     handleChange("skills", newSkills);
                   }}
                   disabled={isLocked}
@@ -786,7 +973,12 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
         {!isLocked && (
           <button
-            onClick={() => handleChange("skills", [...formData.skills, { name: "", description: "" }])}
+            onClick={() =>
+              handleChange("skills", [
+                ...formData.skills,
+                { name: "", description: "" },
+              ])
+            }
             className="w-full py-2 border border-dashed border-border rounded-lg text-xs text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors font-medium flex items-center justify-center gap-2"
           >
             <Plus className="w-3.5 h-3.5" /> Add skill
@@ -798,8 +990,12 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
       {/* Included Deliverables */}
       <div>
-        <label className="block text-sm font-medium mb-1">What&apos;s included <span className="text-red-500">*</span></label>
-        <p className="text-xs text-muted-foreground mb-3">List at least 3 concrete deliverables the buyer receives.</p>
+        <label className="block text-sm font-medium mb-1">
+          What&apos;s included <span className="text-red-500">*</span>
+        </label>
+        <p className="text-xs text-muted-foreground mb-3">
+          List at least 3 concrete deliverables the buyer receives.
+        </p>
         <div className="space-y-2 mb-3">
           {formData.included.map((item, idx) => (
             <div key={idx} className="flex gap-2">
@@ -814,7 +1010,12 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                 className="flex-1 bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <button
-                onClick={() => handleChange("included", formData.included.filter((_, i) => i !== idx))}
+                onClick={() =>
+                  handleChange(
+                    "included",
+                    formData.included.filter((_, i) => i !== idx),
+                  )
+                }
                 disabled={isLocked}
                 className="p-2 text-muted-foreground hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -830,23 +1031,29 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         >
           <Plus className="w-4 h-4" /> Add deliverable
         </button>
-        {formData.included.filter(i => i.trim()).length < 3 && (
+        {formData.included.filter((i) => i.trim()).length < 3 && (
           <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
             <AlertCircle className="w-3 h-3 shrink-0" />
-            {formData.included.filter(i => i.trim()).length === 0
+            {formData.included.filter((i) => i.trim()).length === 0
               ? "Add at least 3 deliverables to continue."
-              : `${formData.included.filter(i => i.trim()).length}/3 deliverables added — add ${3 - formData.included.filter(i => i.trim()).length} more to continue.`}
+              : `${formData.included.filter((i) => i.trim()).length}/3 deliverables added — add ${3 - formData.included.filter((i) => i.trim()).length} more to continue.`}
           </p>
         )}
       </div>
 
       {/* Required Inputs */}
       <div>
-        <label className="block text-sm font-medium mb-1">What the client needs to provide <span className="text-red-500">*</span></label>
-        <p className="text-xs text-muted-foreground mb-2">List access, data, or anything out of scope. Sets expectations before they buy and reduces disputes.</p>
+        <label className="block text-sm font-medium mb-1">
+          What the client needs to provide{" "}
+          <span className="text-red-500">*</span>
+        </label>
+        <p className="text-xs text-muted-foreground mb-2">
+          List access, data, or anything out of scope. Sets expectations before
+          they buy and reduces disputes.
+        </p>
         <textarea
           value={formData.requiredInputsText}
-          onChange={e => handleChange("requiredInputsText", e.target.value)}
+          onChange={(e) => handleChange("requiredInputsText", e.target.value)}
           disabled={isLocked}
           className="w-full h-28 bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           placeholder="e.g. Admin access to HubSpot, current leads CSV, brand colour codes. Custom integrations outside agreed scope are not included."
@@ -860,34 +1067,48 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Delivery Time (Days) <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium mb-1">
+            Delivery Time (Days) <span className="text-red-500">*</span>
+          </label>
           <input
             type="number"
             value={formData.delivery_days}
-            onChange={e => handleChange("delivery_days", parseInt(e.target.value))}
+            onChange={(e) =>
+              handleChange("delivery_days", parseInt(e.target.value))
+            }
             disabled={isLocked}
             className="w-full bg-background border border-border rounded-md px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             min={1}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Support Period (Days) <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium mb-1">
+            Support Period (Days) <span className="text-red-500">*</span>
+          </label>
           <select
             value={formData.support_days}
-            onChange={e => handleChange("support_days", parseInt(e.target.value))}
+            onChange={(e) =>
+              handleChange("support_days", parseInt(e.target.value))
+            }
             disabled={isLocked}
             className="w-full bg-background border border-border rounded-md px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {[7, 14, 30, 60].map(d => <option key={d} value={d}>{d} Days</option>)}
+            {[7, 14, 30, 60].map((d) => (
+              <option key={d} value={d}>
+                {d} Days
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Expected ROI Timeframe <span className="text-red-500">*</span></label>
+        <label className="block text-sm font-medium mb-1">
+          Expected ROI Timeframe <span className="text-red-500">*</span>
+        </label>
         <select
           value={formData.paybackPeriod || ""}
-          onChange={e => handleChange("paybackPeriod", e.target.value)}
+          onChange={(e) => handleChange("paybackPeriod", e.target.value)}
           disabled={isLocked}
           className="w-full bg-background border border-border rounded-md px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -903,13 +1124,16 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       </div>
 
       <div className="p-4 bg-purple-50 border border-purple-100 rounded-lg">
-        <label className="block text-sm font-bold text-purple-900 mb-1">Demo Video URL</label>
+        <label className="block text-sm font-bold text-purple-900 mb-1">
+          Demo Video URL
+        </label>
         <p className="text-xs text-purple-700 mb-3">
-          Mandatory for &quot;Demo-First&quot; trust. Must be a loom, youtube, or vimeo link showing the tool in action.
+          Mandatory for &quot;Demo-First&quot; trust. Must be a loom, youtube,
+          or vimeo link showing the tool in action.
         </p>
         <input
           value={formData.demoVideoUrl || ""}
-          onChange={e => handleChange("demoVideoUrl", e.target.value)}
+          onChange={(e) => handleChange("demoVideoUrl", e.target.value)}
           disabled={isLocked}
           className="w-full bg-white border border-purple-200 rounded-md px-3 py-2 text-sm focus:border-purple-500 focus:ring-purple-500/20"
           placeholder="https://..."
@@ -919,8 +1143,13 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       <div className="bg-secondary/30 p-4 rounded-lg border border-border flex gap-3">
         <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <div>
-          <h4 className="text-sm font-bold text-foreground">NDA Included by Default</h4>
-          <p className="text-xs text-muted-foreground">Platform policy protects both parties. Files and chats are confidential.</p>
+          <h4 className="text-sm font-bold text-foreground">
+            NDA Included by Default
+          </h4>
+          <p className="text-xs text-muted-foreground">
+            Platform policy protects both parties. Files and chats are
+            confidential.
+          </p>
         </div>
       </div>
     </div>
@@ -928,34 +1157,54 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
   // 4. Pricing (Milestones)
   const renderStep4 = () => {
-    const totalPrice = formData.milestones.reduce((sum, m) => sum + (m.price || 0), 0);
+    const totalPrice = formData.milestones.reduce(
+      (sum, m) => sum + (m.price || 0),
+      0,
+    );
     const platformFee = Math.round(totalPrice * (expertFeePercent / 100));
     const earnings = totalPrice - platformFee;
 
-    const handleMilestoneChange = (index: number, field: keyof Milestone, val: string | number) => {
+    const handleMilestoneChange = (
+      index: number,
+      field: keyof Milestone,
+      val: string | number,
+    ) => {
       const newMilestones = [...formData.milestones];
       // @ts-expect-error: dynamic field access
       newMilestones[index][field] = val;
       handleChange("milestones", newMilestones);
-      const newTotal = newMilestones.reduce((sum, m) => sum + (m.price || 0), 0);
+      const newTotal = newMilestones.reduce(
+        (sum, m) => sum + (m.price || 0),
+        0,
+      );
       handleChange("implementation_price", newTotal);
     };
 
     const addMilestone = () => {
-      handleChange("milestones", [...formData.milestones, { title: "", description: "", price: 0 }]);
+      handleChange("milestones", [
+        ...formData.milestones,
+        { title: "", description: "", price: 0 },
+      ]);
     };
 
     const removeMilestone = (index: number) => {
       const newMilestones = formData.milestones.filter((_, i) => i !== index);
       handleChange("milestones", newMilestones);
-      handleChange("implementation_price", newMilestones.reduce((sum, m) => sum + (m.price || 0), 0));
+      handleChange(
+        "implementation_price",
+        newMilestones.reduce((sum, m) => sum + (m.price || 0), 0),
+      );
     };
 
     const applyQuickTotal = () => {
       const total = parseFloat(quickTotal);
       if (!total || total <= 0 || formData.milestones.length === 0) return;
-      const perMilestone = Math.round((total / formData.milestones.length) * 100) / 100;
-      const updated = formData.milestones.map(m => ({ ...m, price: perMilestone }));
+      const perMilestone =
+        Math.round((total / formData.milestones.length) * 100) / 100;
+      const updated = formData.milestones.map((m) => ({
+        ...m,
+        price: perMilestone,
+      }));
       handleChange("milestones", updated);
       handleChange("implementation_price", total);
       setQuickTotal("");
@@ -963,22 +1212,26 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
     return (
       <div className="space-y-8">
-
         {/* Section 1: Implementation */}
         <div>
-          <p className="text-xs font-semibold text-foreground uppercase tracking-widest mb-1">1 — Implementation</p>
+          <p className="text-xs font-semibold text-foreground uppercase tracking-widest mb-1">
+            1 — Implementation
+          </p>
           <p className="text-xs text-muted-foreground mb-4">
-            Break the project into milestones. The client funds milestone 1 to start; each subsequent milestone is funded on approval.
+            Break the project into milestones. The client funds milestone 1 to
+            start; each subsequent milestone is funded on approval.
           </p>
 
           {/* Quick total input */}
           <div className="flex gap-2 mb-4 p-3 bg-secondary/30 rounded-lg border border-border items-end">
             <div className="flex-1">
-              <label className="block text-xs font-medium mb-1 text-muted-foreground">Set a total and split evenly across milestones</label>
+              <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                Set a total and split evenly across milestones
+              </label>
               <input
                 type="number"
                 value={quickTotal}
-                onChange={e => setQuickTotal(e.target.value)}
+                onChange={(e) => setQuickTotal(e.target.value)}
                 placeholder="e.g. 1200"
                 className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm"
               />
@@ -995,12 +1248,19 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
           {/* Milestone cards — compact */}
           <div className="space-y-2">
             {formData.milestones.map((milestone, idx) => (
-              <div key={idx} className="border border-border rounded-lg p-3 bg-card group relative">
+              <div
+                key={idx}
+                className="border border-border rounded-lg p-3 bg-card group relative"
+              >
                 <div className="flex gap-3 items-center mb-2">
-                  <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">{idx + 1}.</span>
+                  <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
+                    {idx + 1}.
+                  </span>
                   <input
                     value={milestone.title}
-                    onChange={(e) => handleMilestoneChange(idx, "title", e.target.value)}
+                    onChange={(e) =>
+                      handleMilestoneChange(idx, "title", e.target.value)
+                    }
                     placeholder="Milestone title"
                     className="flex-1 text-sm font-semibold bg-transparent border-none p-0 focus:ring-0 placeholder:text-muted-foreground/40"
                   />
@@ -1009,7 +1269,13 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                     <input
                       type="number"
                       value={milestone.price || ""}
-                      onChange={(e) => handleMilestoneChange(idx, "price", parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        handleMilestoneChange(
+                          idx,
+                          "price",
+                          parseFloat(e.target.value) || 0,
+                        )
+                      }
                       placeholder="0"
                       className="w-20 text-sm font-bold text-right bg-transparent border-b border-border p-0 pb-0.5 focus:ring-0 focus:border-primary"
                     />
@@ -1025,7 +1291,9 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                 </div>
                 <textarea
                   value={milestone.description}
-                  onChange={(e) => handleMilestoneChange(idx, "description", e.target.value)}
+                  onChange={(e) =>
+                    handleMilestoneChange(idx, "description", e.target.value)
+                  }
                   placeholder="What gets delivered in this milestone?"
                   className="w-full text-xs text-muted-foreground bg-secondary/20 border-none rounded resize-none h-12 px-2 py-1.5 focus:ring-1 focus:ring-primary/20 ml-8"
                 />
@@ -1043,21 +1311,40 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
           {/* Earnings summary */}
           <div className="mt-4 flex items-center justify-between bg-card border border-border rounded-lg px-4 py-3 text-sm">
             <div className="text-muted-foreground">
-              Total: <span className="font-bold text-foreground">€{totalPrice.toLocaleString("de-DE")}</span>
+              Total:{" "}
+              <span className="font-bold text-foreground">
+                €{totalPrice.toLocaleString("de-DE")}
+              </span>
               <span className="mx-2 opacity-30">·</span>
-              Fee {expertFeeLabel}: <span className="font-medium">-€{platformFee.toLocaleString("de-DE")}</span>
+              Fee {expertFeeLabel}:{" "}
+              <span className="font-medium">
+                -€{platformFee.toLocaleString("de-DE")}
+              </span>
             </div>
             <div className="font-bold text-foreground">
-              You earn: <span className="text-green-600">€{earnings.toLocaleString("de-DE")}</span>
+              You earn:{" "}
+              <span className="text-green-600">
+                €{earnings.toLocaleString("de-DE")}
+              </span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-1 text-right">
-            {expertFeePercent < 16 ? `Your current rate: ${expertFeePercent}% — ` : "Fee drops to 12–14% as you grow. "}
-            <a href="/pricing" target="_blank" className="underline hover:text-primary">See tiers</a>.
+            {expertFeePercent < 16
+              ? `Your current rate: ${expertFeePercent}% — `
+              : "Fee drops to 12–14% as you grow. "}
+            <a
+              href="/pricing"
+              target="_blank"
+              className="underline hover:text-primary"
+            >
+              See tiers
+            </a>
+            .
           </p>
           {totalPrice > 0 && totalPrice < 500 && (
             <p className="text-xs text-muted-foreground/70 mt-2 text-right">
-              Solutions priced at €500+ tend to attract more serious buyers and convert better on the platform.
+              Solutions priced at €500+ tend to attract more serious buyers and
+              convert better on the platform.
             </p>
           )}
         </div>
@@ -1066,28 +1353,41 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
         {/* Section 2: Monthly running costs */}
         <div>
-          <p className="text-xs font-semibold text-foreground uppercase tracking-widest mb-1">2 — Monthly running cost</p>
+          <p className="text-xs font-semibold text-foreground uppercase tracking-widest mb-1">
+            2 — Monthly running cost
+          </p>
           <p className="text-xs text-muted-foreground mb-4">
-            What will the buyer pay each month to keep this running? Include tool subscriptions (Make, n8n, Zapier), API usage (OpenAI tokens, etc.), and any ongoing licence fees. This goes directly to the buyer&apos;s budget — not to you.
+            What will the buyer pay each month to keep this running? Include
+            tool subscriptions (Make, n8n, Zapier), API usage (OpenAI tokens,
+            etc.), and any ongoing licence fees. This goes directly to the
+            buyer&apos;s budget — not to you.
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium mb-1 text-muted-foreground">Min (€/month)</label>
+              <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                Min (€/month)
+              </label>
               <input
                 type="number"
                 value={formData.monthly_cost_min || ""}
-                onChange={e => handleChange("monthly_cost_min", parseInt(e.target.value))}
+                onChange={(e) =>
+                  handleChange("monthly_cost_min", parseInt(e.target.value))
+                }
                 disabled={isLocked}
                 className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="0"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1 text-muted-foreground">Max (€/month)</label>
+              <label className="block text-xs font-medium mb-1 text-muted-foreground">
+                Max (€/month)
+              </label>
               <input
                 type="number"
                 value={formData.monthly_cost_max || ""}
-                onChange={e => handleChange("monthly_cost_max", parseInt(e.target.value))}
+                onChange={(e) =>
+                  handleChange("monthly_cost_max", parseInt(e.target.value))
+                }
                 disabled={isLocked}
                 className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="0"
@@ -1100,18 +1400,28 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
         {/* Section 3: Discovery call */}
         <div className="rounded-lg border border-border bg-[#1c1c1e] p-4">
-          <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-3">3 — Discovery call price</p>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-3">
+            3 — Discovery call price
+          </p>
 
           <div className="flex gap-3 items-end mb-2">
             <div className="flex-1">
-              <label className="block text-xs font-medium mb-1 text-white/60">Price per call (€) <span className="font-normal text-white/40">&mdash; you keep this minus €2 platform fee</span></label>
+              <label className="block text-xs font-medium mb-1 text-white/60">
+                Price per call (€){" "}
+                <span className="font-normal text-white/40">
+                  &mdash; you keep this minus €2 platform fee
+                </span>
+              </label>
               <input
                 type="number"
                 value={formData.demoPrice}
-                onChange={e => handleChange("demoPrice", parseFloat(e.target.value))}
+                onChange={(e) =>
+                  handleChange("demoPrice", parseFloat(e.target.value))
+                }
                 onBlur={() => {
                   const v = formData.demoPrice;
-                  if (v === undefined || isNaN(v) || v < 2) handleChange("demoPrice", 2);
+                  if (v === undefined || isNaN(v) || v < 2)
+                    handleChange("demoPrice", 2);
                   else if (v > 32) handleChange("demoPrice", 32);
                 }}
                 disabled={isLocked}
@@ -1120,16 +1430,26 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                 className="w-full bg-white/10 border border-white/15 text-white rounded-md px-3 py-2 text-sm placeholder:text-white/30 focus:outline-none disabled:opacity-50"
                 placeholder="2"
               />
-              <p className="text-[10px] text-white/30 mt-1">Min €2 (platform fee) · Max €32</p>
+              <p className="text-[10px] text-white/30 mt-1">
+                Min €2 (platform fee) · Max €32
+              </p>
             </div>
             <div className="text-right pb-0.5 shrink-0">
               <p className="text-xs text-white/40">You earn</p>
-              <p className="text-xl font-bold text-white">€{Math.max(0, Math.min(32, formData.demoPrice || 0) - 2).toLocaleString("de-DE")}</p>
+              <p className="text-xl font-bold text-white">
+                €
+                {Math.max(
+                  0,
+                  Math.min(32, formData.demoPrice || 0) - 2,
+                ).toLocaleString("de-DE")}
+              </p>
             </div>
           </div>
 
           <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-md px-3 py-2">
-            <p className="text-xs text-white/40">Needs a calendar link to go live.</p>
+            <p className="text-xs text-white/40">
+              Needs a calendar link to go live.
+            </p>
             <a
               href="/expert/settings#calendar"
               target="_blank"
@@ -1140,38 +1460,56 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
             </a>
           </div>
         </div>
-
-
       </div>
     );
   };
 
-
   // 5. Proof & Publish Requirements
-  const canPublish = stripeConnected === true && calendarConnected === true;
+  const payoutReady = isStripeSupported
+    ? stripeConnected === true
+    : hasBankDetails;
+  const canPublish = payoutReady;
 
   const renderStep5 = () => (
     <div className="space-y-6">
-
       {/* ── Required connections ─────────────────────────────────── */}
       <div>
         <label className="text-sm font-medium">Required to publish</label>
-        <p className="text-xs text-muted-foreground mt-0.5 mb-3">Connect both before you can go live.</p>
+        <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+          Set up payouts before you can go live.
+        </p>
 
         <div className="space-y-2">
-          {/* Stripe */}
+          {/* Payout setup */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className={`w-2 h-2 rounded-full shrink-0 ${stripeConnected ? "bg-green-500" : "bg-amber-400"}`} />
-              <span className="text-sm text-foreground">{stripeConnected ? "Stripe connected" : "Connect Stripe to get paid"}</span>
+              <div
+                className={`w-2 h-2 rounded-full shrink-0 ${payoutReady ? "bg-green-500" : "bg-amber-400"}`}
+              />
+              <span className="text-sm text-foreground">
+                {isStripeSupported
+                  ? stripeConnected
+                    ? "Stripe connected"
+                    : "Connect Stripe to get paid"
+                  : hasBankDetails
+                    ? "Bank details saved"
+                    : "Add bank details to get paid"}
+              </span>
             </div>
-            {stripeConnected ? (
-              <a href="/expert/settings" target="_blank" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">Manage</a>
-            ) : (
+            {payoutReady ? (
+              <Link
+                href="/expert/settings#payouts"
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+              >
+                Manage
+              </Link>
+            ) : isStripeSupported ? (
               <button
                 type="button"
                 onClick={async () => {
-                  const res = await fetch("/api/stripe/onboard", { method: "POST" });
+                  const res = await fetch("/api/stripe/onboard", {
+                    method: "POST",
+                  });
                   const d = await res.json();
                   if (d.url) window.location.href = d.url;
                 }}
@@ -1179,25 +1517,13 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
               >
                 Connect Stripe &#x2192;
               </button>
-            )}
-          </div>
-
-          {/* Calendar */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className={`w-2 h-2 rounded-full shrink-0 ${calendarConnected ? "bg-green-500" : "bg-amber-400"}`} />
-              <span className="text-sm text-foreground">{calendarConnected ? "Calendar connected" : "Connect your calendar"}</span>
-            </div>
-            {calendarConnected ? (
-              <a href="/expert/settings#calendar" target="_blank" className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">Manage</a>
             ) : (
-              <a
-                href="/expert/settings#calendar"
-                target="_blank"
-                className="text-xs font-medium px-3 py-1.5 border border-border rounded-md hover:bg-secondary transition-colors whitespace-nowrap"
+              <Link
+                href="/expert/settings#payouts"
+                className="text-xs font-semibold px-3 py-1.5 bg-foreground text-background rounded-md hover:opacity-90 transition-opacity whitespace-nowrap"
               >
-                Connect &#x2192;
-              </a>
+                Add Bank Details &#x2192;
+              </Link>
             )}
           </div>
         </div>
@@ -1210,14 +1536,19 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         <div className="flex items-center justify-between mb-1">
           <div>
             <label className="text-sm font-medium">Add Proof (Optional)</label>
-            <p className="text-xs text-muted-foreground mt-0.5">Show potential clients real results. Both fields are optional — fill in what you have.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Show potential clients real results. Both fields are optional —
+              fill in what you have.
+            </p>
           </div>
           <button
             onClick={() => handleChange("proofEnabled", !formData.proofEnabled)}
             disabled={isLocked}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.proofEnabled ? 'bg-primary' : 'bg-secondary'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.proofEnabled ? "bg-primary" : "bg-secondary"} ${isLocked ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.proofEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.proofEnabled ? "translate-x-6" : "translate-x-1"}`}
+            />
           </button>
         </div>
       </div>
@@ -1225,11 +1556,18 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       {formData.proofEnabled && (
         <div className="animate-in fade-in slide-in-from-top-2 space-y-4">
           <div>
-            <label className="block text-sm font-semibold mb-1">Anonymized Screenshot</label>
-            <p className="text-xs text-muted-foreground mb-2">A link to a screenshot showing the automation in action. Make sure no sensitive client data is visible.</p>
+            <label className="block text-sm font-semibold mb-1">
+              Anonymized Screenshot
+            </label>
+            <p className="text-xs text-muted-foreground mb-2">
+              A link to a screenshot showing the automation in action. Make sure
+              no sensitive client data is visible.
+            </p>
             <input
               value={formData.proofScreenshotUrl || ""}
-              onChange={e => handleChange("proofScreenshotUrl", e.target.value)}
+              onChange={(e) =>
+                handleChange("proofScreenshotUrl", e.target.value)
+              }
               disabled={isLocked}
               className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="https://..."
@@ -1238,11 +1576,18 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1">Short Case Study</label>
-            <p className="text-xs text-muted-foreground mb-2">Describe the problem, what you built, and what changed. Keep it short — 3 to 5 sentences is enough.</p>
+            <label className="block text-sm font-semibold mb-1">
+              Short Case Study
+            </label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Describe the problem, what you built, and what changed. Keep it
+              short — 3 to 5 sentences is enough.
+            </p>
             <textarea
               value={formData.proofCaseStudyText || ""}
-              onChange={e => handleChange("proofCaseStudyText", e.target.value)}
+              onChange={(e) =>
+                handleChange("proofCaseStudyText", e.target.value)
+              }
               disabled={isLocked}
               rows={4}
               className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm resize-none disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1257,25 +1602,33 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       <div className="space-y-2">
         <label className="text-sm font-medium">Add to a Suite (Optional)</label>
         <p className="text-xs text-muted-foreground">
-          If this solution is part of a larger automation flow, assign it to a suite so buyers can discover it in context.
+          If this solution is part of a larger automation flow, assign it to a
+          suite so buyers can discover it in context.
         </p>
         {expertSuites.length === 0 ? (
           <p className="text-xs text-muted-foreground italic">
             You have no suites yet.{" "}
-            <a href="/expert/ecosystems/new" target="_blank" className="text-primary underline hover:no-underline">
+            <a
+              href="/expert/ecosystems/new"
+              target="_blank"
+              className="text-primary underline hover:no-underline"
+            >
               Create one first
-            </a>, then come back here.
+            </a>
+            , then come back here.
           </p>
         ) : (
           <select
             value={selectedSuiteId}
-            onChange={e => setSelectedSuiteId(e.target.value)}
+            onChange={(e) => setSelectedSuiteId(e.target.value)}
             disabled={isLocked}
             className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="">— No suite —</option>
-            {expertSuites.map(suite => (
-              <option key={suite.id} value={suite.id}>{suite.title}</option>
+            {expertSuites.map((suite) => (
+              <option key={suite.id} value={suite.id}>
+                {suite.title}
+              </option>
             ))}
           </select>
         )}
@@ -1285,7 +1638,8 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
       {!canPublish && (
         <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 p-3 rounded-lg text-sm flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          Connect {!stripeConnected && "Stripe"}{!stripeConnected && !calendarConnected && " and "}{!calendarConnected && "Calendar"} above to publish your solution.
+          {isStripeSupported ? "Connect Stripe" : "Add bank details"} above to
+          publish your solution.
         </div>
       )}
     </div>
@@ -1293,10 +1647,8 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
       {/* LEFT COLUMN: WIZARD */}
       <div className="lg:col-span-7 bg-card border border-border rounded-xl p-6 shadow-sm">
-
         {/* Lock Banner */}
         {isLocked && (
           <div className="mb-6 bg-amber-500/10 border border-amber-500/20 text-amber-700 p-4 rounded-lg flex items-start gap-3">
@@ -1329,7 +1681,10 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
             </span>
           </div>
           <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-primary transition-all duration-300" style={{ width: `${(step / 5) * 100}%` }} />
+            <div
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${(step / 5) * 100}%` }}
+            />
           </div>
         </div>
 
@@ -1351,7 +1706,7 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
         {/* Navigation */}
         <div className="flex justify-between mt-8 pt-6 border-t border-border">
           <button
-            onClick={() => step > 1 ? setStep(s => s - 1) : router.back()}
+            onClick={() => (step > 1 ? setStep((s) => s - 1) : router.back())}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground font-medium transition-colors"
           >
             <ChevronLeft className="w-4 h-4" /> {step > 1 ? "Back" : "Cancel"}
@@ -1380,10 +1735,15 @@ export function SolutionWizard({ initialData, isLocked, lockReason }: SolutionWi
                 <button
                   onClick={handlePublish}
                   disabled={loading || !canPublish}
-                  title={!canPublish ? "Connect Stripe and Calendar to publish" : undefined}
+                  title={
+                    !canPublish
+                      ? "Connect Stripe and Calendar to publish"
+                      : undefined
+                  }
                   className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Publishing..." : "Publish Solution"} <Upload className="w-4 h-4" />
+                  {loading ? "Publishing..." : "Publish Solution"}{" "}
+                  <Upload className="w-4 h-4" />
                 </button>
               )
             )}

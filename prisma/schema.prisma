@@ -293,6 +293,13 @@ model SpecialistProfile {
   invoiceAddress     String? // Full address for invoices
   invoiceVatNumber   String? // VAT/Tax ID if applicable
 
+  // Manual payout bank details (for experts in Stripe-unsupported countries)
+  bankAccountHolder String? // Full name on the bank account
+  bankIban          String? // IBAN (e.g. UA213223130000026007233566001)
+  bankSwiftBic      String? // SWIFT/BIC code (e.g. COBABORJ)
+  bankName          String? // Bank name (e.g. "PrivatBank")
+  bankCurrency      String? // Preferred payout currency (EUR, USD, etc.)
+
   // Portfolio Customization
   portfolioBackground      String? // "gradient_default" | "grid" | "dots" | "wave" | "stripe"
   portfolioBorderColor     String? // hex from preset palette, e.g. "#8DC63F"
@@ -317,6 +324,7 @@ model SpecialistProfile {
   ecosystems         Ecosystem[]
   sentEcoInvites     EcosystemInvite[] @relation("SentEcoInvites")
   receivedEcoInvites EcosystemInvite[] @relation("ReceivedEcoInvites")
+  manualPayouts      ManualPayout[]
 }
 
 model EmailVerificationToken {
@@ -467,9 +475,10 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  conversations Conversation[]
-  review        Review?
-  dispute       Dispute?
+  conversations  Conversation[]
+  review         Review?
+  dispute        Dispute?
+  manualPayouts  ManualPayout[]
 
   @@index([buyerId])
   @@index([sellerId])
@@ -527,6 +536,37 @@ model Dispute {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Manual payouts — tracks money owed to experts in Stripe-unsupported countries
+model ManualPayout {
+  id String @id @default(uuid())
+
+  specialistId String
+  specialist   SpecialistProfile @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+
+  orderId String
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  milestoneIndex Int // Which milestone in the order
+  milestoneTitle String
+
+  amountCents    Int // Amount owed to expert (after platform fee)
+  platformFeeCents Int // Platform fee deducted
+  currency       String @default("EUR")
+
+  status String @default("pending") // pending, transferred, cancelled
+
+  // Transfer tracking
+  transferredAt DateTime?
+  transferNote  String? // e.g. "Wise transfer #12345"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([specialistId])
+  @@index([orderId])
+  @@index([status])
 }
 
 model Conversation {

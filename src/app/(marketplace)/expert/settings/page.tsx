@@ -1,12 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { User, Shield, Bell, CreditCard, ExternalLink, Loader2, CheckCircle, Calendar, Link as LinkIcon, FileText } from "lucide-react";
+import {
+  User,
+  Shield,
+  Bell,
+  CreditCard,
+  ExternalLink,
+  Loader2,
+  CheckCircle,
+  Calendar,
+  Link as LinkIcon,
+  FileText,
+  Landmark,
+  AlertTriangle,
+} from "lucide-react";
 import { DeleteAccountButton } from "@/components/settings/DeleteAccountButton";
 import { ProfilePicUpload } from "@/components/ProfilePicUpload";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getExpertSettings, updateExpertCalendar, updateExpertInvoice } from "@/actions/expert";
+import {
+  getExpertSettings,
+  updateExpertCalendar,
+  updateExpertInvoice,
+  updateExpertBankDetails,
+} from "@/actions/expert";
+import { isStripeConnectSupported } from "@/lib/stripe-countries";
 import { toast } from "sonner";
 import * as Sentry from "@sentry/nextjs";
 
@@ -16,7 +35,7 @@ export default function ExpertSettingsPage() {
   const [loadingStripe, setLoadingStripe] = useState(false);
   const [isStripeConnected, setIsStripeConnected] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  
+
   // Profile State
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [calendarUrl, setCalendarUrl] = useState("");
@@ -29,6 +48,15 @@ export default function ExpertSettingsPage() {
   const [invoiceAddress, setInvoiceAddress] = useState("");
   const [invoiceVatNumber, setInvoiceVatNumber] = useState("");
   const [savingInvoice, setSavingInvoice] = useState(false);
+
+  // Bank details (manual payout for unsupported countries)
+  const [expertCountry, setExpertCountry] = useState("");
+  const [bankAccountHolder, setBankAccountHolder] = useState("");
+  const [bankIban, setBankIban] = useState("");
+  const [bankSwiftBic, setBankSwiftBic] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankCurrency, setBankCurrency] = useState("EUR");
+  const [savingBank, setSavingBank] = useState(false);
 
   useEffect(() => {
     checkStripeStatus();
@@ -48,6 +76,12 @@ export default function ExpertSettingsPage() {
       setInvoiceCompanyName(res.settings.invoiceCompanyName || "");
       setInvoiceAddress(res.settings.invoiceAddress || "");
       setInvoiceVatNumber(res.settings.invoiceVatNumber || "");
+      setExpertCountry(res.settings.country || "");
+      setBankAccountHolder(res.settings.bankAccountHolder || "");
+      setBankIban(res.settings.bankIban || "");
+      setBankSwiftBic(res.settings.bankSwiftBic || "");
+      setBankName(res.settings.bankName || "");
+      setBankCurrency(res.settings.bankCurrency || "EUR");
     }
     setLoadingProfile(false);
   };
@@ -58,7 +92,7 @@ export default function ExpertSettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setIsStripeConnected(data.isConnected);
-        
+
         // If returning from Stripe flow
         if (searchParams.get("stripe") === "return" && data.isConnected) {
           setShowSuccess(true);
@@ -67,7 +101,9 @@ export default function ExpertSettingsPage() {
         }
       }
     } catch (error) {
-      Sentry.captureException(error, { tags: { context: "stripe-status-check" } });
+      Sentry.captureException(error, {
+        tags: { context: "stripe-status-check" },
+      });
     }
   };
 
@@ -94,10 +130,12 @@ export default function ExpertSettingsPage() {
       toast.error("Please enter a calendar URL");
       return;
     }
-    
+
     // Basic validation
     if (!calendarUrl.startsWith("http")) {
-      toast.error("Please enter a valid URL (starting with http:// or https://)");
+      toast.error(
+        "Please enter a valid URL (starting with http:// or https://)",
+      );
       return;
     }
 
@@ -124,6 +162,27 @@ export default function ExpertSettingsPage() {
     else toast.error(res.error || "Failed to update");
   };
 
+  const handleSaveBank = async () => {
+    if (!bankAccountHolder.trim() || !bankIban.trim() || !bankSwiftBic.trim()) {
+      toast.error("Account holder, IBAN, and SWIFT/BIC are required");
+      return;
+    }
+    setSavingBank(true);
+    const res = await updateExpertBankDetails({
+      bankAccountHolder: bankAccountHolder.trim(),
+      bankIban: bankIban.trim(),
+      bankSwiftBic: bankSwiftBic.trim(),
+      bankName: bankName.trim(),
+      bankCurrency: bankCurrency.trim() || "EUR",
+    });
+    setSavingBank(false);
+    if (res.success) toast.success("Bank details saved successfully");
+    else toast.error(res.error || "Failed to save bank details");
+  };
+
+  const isUnsupportedCountry =
+    expertCountry && !isStripeConnectSupported(expertCountry);
+
   if (loadingProfile) {
     return (
       <div className="p-8 flex items-center justify-center h-96">
@@ -139,35 +198,58 @@ export default function ExpertSettingsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Settings Nav */}
         <div className="space-y-1">
-          <a href="#profile" className="w-full text-left px-3 py-2 rounded-md bg-primary/10 text-primary font-medium text-sm flex items-center gap-2 hover:bg-primary/15 transition-colors">
+          <a
+            href="#profile"
+            className="w-full text-left px-3 py-2 rounded-md bg-primary/10 text-primary font-medium text-sm flex items-center gap-2 hover:bg-primary/15 transition-colors"
+          >
             <User className="h-4 w-4" /> Profile & Bio
           </a>
-          <a href="#payouts" className="w-full text-left px-3 py-2 rounded-md text-muted-foreground hover:bg-secondary transition-colors font-medium text-sm flex items-center gap-2">
+          <a
+            href="#payouts"
+            className="w-full text-left px-3 py-2 rounded-md text-muted-foreground hover:bg-secondary transition-colors font-medium text-sm flex items-center gap-2"
+          >
             <CreditCard className="h-4 w-4" /> Payouts
           </a>
-          <a href="#calendar" className="w-full text-left px-3 py-2 rounded-md text-muted-foreground hover:bg-secondary transition-colors font-medium text-sm flex items-center gap-2">
+          <a
+            href="#calendar"
+            className="w-full text-left px-3 py-2 rounded-md text-muted-foreground hover:bg-secondary transition-colors font-medium text-sm flex items-center gap-2"
+          >
             <Calendar className="h-4 w-4" /> Calendar
           </a>
-          <a href="#security" className="w-full text-left px-3 py-2 rounded-md text-muted-foreground hover:bg-secondary transition-colors font-medium text-sm flex items-center gap-2">
+          <a
+            href="#security"
+            className="w-full text-left px-3 py-2 rounded-md text-muted-foreground hover:bg-secondary transition-colors font-medium text-sm flex items-center gap-2"
+          >
             <Shield className="h-4 w-4" /> Security
           </a>
-          <Link href="/expert/notifications" className="w-full text-left px-3 py-2 rounded-md text-muted-foreground hover:bg-secondary transition-colors font-medium text-sm flex items-center gap-2">
+          <Link
+            href="/expert/notifications"
+            className="w-full text-left px-3 py-2 rounded-md text-muted-foreground hover:bg-secondary transition-colors font-medium text-sm flex items-center gap-2"
+          >
             <Bell className="h-4 w-4" /> Notifications
           </Link>
         </div>
 
         {/* Content Area */}
         <div className="md:col-span-3 space-y-6">
-          
           {/* Success Notification */}
           {showSuccess && (
             <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-start gap-3 mb-4 animate-in fade-in slide-in-from-top-2">
               <CheckCircle className="h-5 w-5 mt-0.5 text-green-600 flex-shrink-0" />
               <div>
-                <p className="font-bold text-sm">Payouts Connected Successfully!</p>
-                <p className="text-xs mt-1 text-green-700">You are now ready to receive payments for your solutions.</p>
+                <p className="font-bold text-sm">
+                  Payouts Connected Successfully!
+                </p>
+                <p className="text-xs mt-1 text-green-700">
+                  You are now ready to receive payments for your solutions.
+                </p>
               </div>
-              <button onClick={() => setShowSuccess(false)} className="ml-auto text-green-600 hover:text-green-800">×</button>
+              <button
+                onClick={() => setShowSuccess(false)}
+                className="ml-auto text-green-600 hover:text-green-800"
+              >
+                ×
+              </button>
             </div>
           )}
 
@@ -178,78 +260,190 @@ export default function ExpertSettingsPage() {
             </h2>
             <ProfilePicUpload
               value={profileImageUrl}
-              onChange={(url) => { setProfileImageUrl(url); }}
+              onChange={(url) => {
+                setProfileImageUrl(url);
+              }}
               name={displayName || "Profile"}
               persistOnChange
             />
           </div>
 
           {/* Payouts Section */}
-          <div id="payouts" className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6">
+          <div
+            id="payouts"
+            className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6"
+          >
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-primary" /> Payout Settings
             </h2>
-            <div className="bg-secondary/20 p-4 rounded-lg border border-border mb-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                {isStripeConnected 
-                  ? "Your Stripe account is connected. You can now receive automatic payouts to your bank account."
-                  : "To receive payments from clients, you must connect a Stripe account. LogicLot uses Stripe Connect to ensure secure, compliant payouts to your bank account."
-                }
-              </p>
-              
-              {isStripeConnected ? (
-                <button 
-                  disabled
-                  className="bg-green-100 text-green-700 border border-green-200 px-4 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 cursor-default"
-                >
-                  <CheckCircle className="h-4 w-4" /> Stripe Connected
-                </button>
-              ) : (
-                <button 
-                  onClick={handleConnectStripe}
-                  disabled={loadingStripe}
-                  className="bg-[#635BFF] hover:bg-[#5851df] text-white px-4 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {loadingStripe ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Connecting...
-                    </>
+
+            {isUnsupportedCountry ? (
+              <>
+                {/* Manual payout notice */}
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-start gap-3 mb-4">
+                  <AlertTriangle className="h-5 w-5 mt-0.5 text-amber-600 flex-shrink-0" />
+                  <div>
+                    <p className="font-bold text-sm">
+                      Stripe Connect is not available in {expertCountry}
+                    </p>
+                    <p className="text-xs mt-1 text-amber-700">
+                      Payouts for your milestones will be transferred manually
+                      via bank wire or Wise. Please provide your bank details
+                      below so we can process payments.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bank details form */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">
+                      Account Holder Name{" "}
+                      <span className="text-primary">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={bankAccountHolder}
+                      onChange={(e) => setBankAccountHolder(e.target.value)}
+                      placeholder="Full name as it appears on the account"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">
+                      IBAN <span className="text-primary">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={bankIban}
+                      onChange={(e) => setBankIban(e.target.value)}
+                      placeholder="UA213223130000026007233566001"
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm font-mono"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">
+                        SWIFT / BIC Code <span className="text-primary">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={bankSwiftBic}
+                        onChange={(e) => setBankSwiftBic(e.target.value)}
+                        placeholder="PABORJUX"
+                        className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">
+                        Bank Name
+                      </label>
+                      <input
+                        type="text"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        placeholder="e.g. PrivatBank"
+                        className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">
+                      Preferred Payout Currency
+                    </label>
+                    <input
+                      className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm disabled:opacity-70"
+                      defaultValue={bankCurrency}
+                      disabled
+                    />
+                  </div>
+                  <button
+                    onClick={handleSaveBank}
+                    disabled={savingBank}
+                    className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold text-sm disabled:opacity-70"
+                  >
+                    {savingBank ? "Saving..." : "Save Bank Details"}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-4">
+                  <Landmark className="h-3 w-3" /> Your bank details are stored
+                  securely and used only for manual payouts.
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bg-secondary/20 p-4 rounded-lg border border-border mb-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {isStripeConnected
+                      ? "Your Stripe account is connected. You can now receive automatic payouts to your bank account."
+                      : "To receive payments from clients, you must connect a Stripe account. LogicLot uses Stripe Connect to ensure secure, compliant payouts to your bank account."}
+                  </p>
+
+                  {isStripeConnected ? (
+                    <button
+                      disabled
+                      className="bg-green-100 text-green-700 border border-green-200 px-4 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 cursor-default"
+                    >
+                      <CheckCircle className="h-4 w-4" /> Stripe Connected
+                    </button>
                   ) : (
-                    <>
-                      Connect Stripe Payouts <ExternalLink className="h-4 w-4 opacity-80" />
-                    </>
+                    <button
+                      onClick={handleConnectStripe}
+                      disabled={loadingStripe}
+                      className="bg-[#635BFF] hover:bg-[#5851df] text-white px-4 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {loadingStripe ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          Connect Stripe Payouts{" "}
+                          <ExternalLink className="h-4 w-4 opacity-80" />
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Shield className="h-3 w-3" /> Payments are encrypted and processed securely by Stripe.
-            </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Shield className="h-3 w-3" /> Payments are encrypted and
+                  processed securely by Stripe.
+                </div>
+              </>
+            )}
           </div>
 
           {/* Calendar Section */}
-          <div id="calendar" className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6">
+          <div
+            id="calendar"
+            className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6"
+          >
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" /> Calendar & Booking
             </h2>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Link your calendar (Calendly, Cal.com, etc.) so clients can book discovery calls directly from your messages.
+                Link your calendar (Calendly, Cal.com, etc.) so clients can book
+                discovery calls directly from your messages.
               </p>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Booking URL</label>
+                <label className="text-sm font-medium mb-1.5 block">
+                  Booking URL
+                </label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input 
-                      type="url" 
+                    <input
+                      type="url"
                       value={calendarUrl}
                       onChange={(e) => setCalendarUrl(e.target.value)}
                       placeholder="https://calendly.com/your-name"
                       className="w-full bg-background border border-border rounded-md pl-9 pr-3 py-2 text-sm focus:border-primary transition-colors"
                     />
                   </div>
-                  <button 
+                  <button
                     onClick={handleSaveCalendar}
                     disabled={savingCalendar}
                     className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold text-sm disabled:opacity-70"
@@ -262,7 +456,10 @@ export default function ExpertSettingsPage() {
           </div>
 
           {/* Security Section */}
-          <div id="security" className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6">
+          <div
+            id="security"
+            className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6"
+          >
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" /> Security
             </h2>
@@ -279,16 +476,22 @@ export default function ExpertSettingsPage() {
           </div>
 
           {/* Invoice Template */}
-          <div id="invoice" className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6">
+          <div
+            id="invoice"
+            className="scroll-mt-8 bg-card border border-border rounded-xl p-6 mb-6"
+          >
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" /> Invoice Template
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Buyers receive an invoice when they pay. Add your company details so invoices show your legal name, address, and VAT number.
+              Buyers receive an invoice when they pay. Add your company details
+              so invoices show your legal name, address, and VAT number.
             </p>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Company / Trading Name</label>
+                <label className="text-sm font-medium mb-1.5 block">
+                  Company / Trading Name
+                </label>
                 <input
                   type="text"
                   value={invoiceCompanyName}
@@ -298,7 +501,9 @@ export default function ExpertSettingsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">Address</label>
+                <label className="text-sm font-medium mb-1.5 block">
+                  Address
+                </label>
                 <textarea
                   value={invoiceAddress}
                   onChange={(e) => setInvoiceAddress(e.target.value)}
@@ -310,7 +515,9 @@ Country"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block">VAT Number (optional)</label>
+                <label className="text-sm font-medium mb-1.5 block">
+                  VAT Number (optional)
+                </label>
                 <input
                   type="text"
                   value={invoiceVatNumber}
@@ -335,36 +542,42 @@ Country"
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Display Name</label>
-                  <input 
-                    className="w-full bg-background border border-border rounded-md px-3 py-2" 
+                  <label className="text-sm font-medium mb-1 block">
+                    Display Name
+                  </label>
+                  <input
+                    className="w-full bg-background border border-border rounded-md px-3 py-2"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="John Doe" 
+                    placeholder="John Doe"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Title</label>
-                  <input 
-                    className="w-full bg-background border border-border rounded-md px-3 py-2" 
+                  <label className="text-sm font-medium mb-1 block">
+                    Title
+                  </label>
+                  <input
+                    className="w-full bg-background border border-border rounded-md px-3 py-2"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Automation Architect" 
+                    placeholder="Automation Architect"
                   />
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Bio</label>
-                <textarea 
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 h-24" 
+                <textarea
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 h-24"
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  placeholder="Tell businesses about your expertise..." 
+                  placeholder="Tell businesses about your expertise..."
                 />
               </div>
-              
+
               <div className="pt-4 border-t border-border">
-                <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold text-sm">Save Changes</button>
+                <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-bold text-sm">
+                  Save Changes
+                </button>
               </div>
             </div>
           </div>

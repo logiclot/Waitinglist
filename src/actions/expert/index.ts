@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { log } from "@/lib/logger";
+import { isStripeConnectSupported } from "@/lib/stripe-countries";
 import * as Sentry from "@sentry/nextjs";
 
 export async function updateExpertProfile(data: {
@@ -113,7 +114,7 @@ export async function getExpertSettings() {
       where: { userId: session.user.id },
       include: { user: { select: { profileImageUrl: true } } }
     });
-    
+
     if (!expert) return { error: "Expert profile not found" };
 
     return {
@@ -129,12 +130,52 @@ export async function getExpertSettings() {
         invoiceCompanyName: expert.invoiceCompanyName,
         invoiceAddress: expert.invoiceAddress,
         invoiceVatNumber: expert.invoiceVatNumber,
+        country: expert.country,
+        bankAccountHolder: expert.bankAccountHolder,
+        bankIban: expert.bankIban,
+        bankSwiftBic: expert.bankSwiftBic,
+        bankName: expert.bankName,
+        bankCurrency: expert.bankCurrency,
       }
     };
   } catch (e) {
     log.error("expert.fetch_settings_failed", { error: e instanceof Error ? e.message : String(e) });
     Sentry.captureException(e);
     return { error: "Failed to fetch settings" };
+  }
+}
+
+export async function updateExpertBankDetails(data: {
+  bankAccountHolder: string;
+  bankIban: string;
+  bankSwiftBic: string;
+  bankName: string;
+  bankCurrency: string;
+}) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { error: "Not authenticated" };
+
+  if (!data.bankAccountHolder?.trim() || !data.bankIban?.trim() || !data.bankSwiftBic?.trim()) {
+    return { error: "Account holder, IBAN, and SWIFT/BIC are required" };
+  }
+
+  try {
+    await prisma.specialistProfile.update({
+      where: { userId: session.user.id },
+      data: {
+        bankAccountHolder: data.bankAccountHolder.trim(),
+        bankIban: data.bankIban.trim().replace(/\s/g, ""),
+        bankSwiftBic: data.bankSwiftBic.trim().toUpperCase(),
+        bankName: data.bankName.trim() || null,
+        bankCurrency: data.bankCurrency.trim().toUpperCase() || "EUR",
+      },
+    });
+    revalidatePath("/expert/settings");
+    return { success: true };
+  } catch (e) {
+    log.error("expert.update_bank_details_failed", { error: e instanceof Error ? e.message : String(e) });
+    Sentry.captureException(e);
+    return { error: "Failed to update bank details" };
   }
 }
 
@@ -148,11 +189,13 @@ export async function getExpertOverviewData() {
       id: true,
       displayName: true,
       calendarUrl: true,
+      country: true,
       stripeAccountId: true,
       stripeDetailsSubmitted: true,
       isFoundingExpert: true,
       completedSalesCount: true,
       tier: true,
+      bankIban: true,
     },
   });
 
@@ -215,8 +258,12 @@ export async function getExpertOverviewData() {
   // Priority actions
   const actions: Array<{ type: "warning" | "info" | "action"; title: string; description: string; href: string }> = [];
 
-  if (!expert.stripeAccountId || !expert.stripeDetailsSubmitted) {
-    actions.push({ type: "warning", title: "Connect Stripe to get paid", description: "You need a Stripe account to receive payouts.", href: "/expert/settings" });
+  if (isStripeConnectSupported(expert.country)) {
+    if (!expert.stripeAccountId || !expert.stripeDetailsSubmitted) {
+      actions.push({ type: "warning", title: "Connect Stripe to get paid", description: "You need a Stripe account to receive payouts.", href: "/expert/settings" });
+    }
+  } else if (!expert.bankIban) {
+    actions.push({ type: "warning", title: "Add bank details to get paid", description: "Stripe is unavailable in your country. Add your bank details for manual payouts.", href: "/expert/settings#payouts" });
   }
   if (!expert.calendarUrl) {
     actions.push({ type: "info", title: "Add your scheduling link", description: "Let clients book demos directly from your profile.", href: "/expert/settings" });

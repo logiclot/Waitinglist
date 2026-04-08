@@ -235,6 +235,43 @@ export const COUNTRY_NAME_TO_ISO: Record<string, string> = {
 
 
 /**
+ * Countries where Stripe Connect Express accounts are available.
+ * Source: https://docs.stripe.com/connect/express-accounts#supported-countries
+ *
+ * Experts from countries NOT in this set must be paid manually (wire/Wise).
+ */
+export const STRIPE_CONNECT_SUPPORTED_COUNTRIES = new Set([
+  "Australia", "Austria", "Belgium", "Brazil", "Bulgaria", "Canada",
+  "Croatia", "Cyprus", "Czech Republic", "Denmark", "Estonia", "Finland",
+  "France", "Germany", "Greece", "Hong Kong", "Hungary", "Ireland",
+  "Italy", "Japan", "Latvia", "Lithuania", "Luxembourg", "Malta",
+  "Mexico", "Netherlands", "New Zealand", "Norway", "Poland", "Portugal",
+  "Romania", "Singapore", "Slovakia", "Slovenia", "Spain", "Sweden",
+  "Switzerland", "Thailand", "United Kingdom", "United States",
+]);
+
+/**
+ * Returns true if the expert's country supports Stripe Connect Express.
+ * Accepts display name (e.g. "Ukraine") or ISO code (e.g. "UA").
+ */
+export function isStripeConnectSupported(country: string): boolean {
+  if (!country) return false;
+  const trimmed = country.trim();
+
+  // Check display name directly
+  if (STRIPE_CONNECT_SUPPORTED_COUNTRIES.has(trimmed)) return true;
+
+  // If it's an ISO code, reverse-lookup the display name
+  if (/^[A-Z]{2}$/.test(trimmed)) {
+    for (const [name, iso] of Object.entries(COUNTRY_NAME_TO_ISO)) {
+      if (iso === trimmed) return STRIPE_CONNECT_SUPPORTED_COUNTRIES.has(name);
+    }
+  }
+
+  return false;
+}
+
+/**
  * Resolve a country value (display name or ISO code) to an ISO 3166-1 alpha-2 code.
  *
  * Returns `null` if the country cannot be resolved — callers should

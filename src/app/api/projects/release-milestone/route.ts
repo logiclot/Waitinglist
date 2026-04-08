@@ -10,7 +10,9 @@ import { apiWriteLimiter } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
 import { ReleaseMilestoneSchema } from "@/lib/schemas/api";
 import { captureException } from "@/lib/sentry";
+import { isStripeConnectSupported } from "@/lib/stripe-countries";
 import { Prisma } from "@prisma/client";
+import { Milestone, ReferralRewards } from "@/types";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -41,8 +43,8 @@ export async function POST(req: Request) {
     // sets status to "releasing"; the second sees "releasing" and is rejected.
     type ClaimedOrder = Prisma.OrderGetPayload<{ include: { seller: true } }>;
     let claimedOrder: ClaimedOrder | null = null;
-    let claimedMilestones: import("@/types").Milestone[] = [];
-    let claimedMilestone: import("@/types").Milestone | null = null;
+    let claimedMilestones: Milestone[] = [];
+    let claimedMilestone: Milestone | null = null;
 
     try {
       await prisma.$transaction(async (tx) => {
@@ -55,7 +57,7 @@ export async function POST(req: Request) {
           throw new Error("UNAUTHORIZED");
         }
 
-        const milestones = (current.milestones as unknown as import("@/types").Milestone[]) || [];
+        const milestones = (current.milestones as unknown as Milestone[]) || [];
         const milestone = milestones[idx];
 
         if (!milestone || milestone.status !== "in_escrow") {
@@ -92,8 +94,8 @@ export async function POST(req: Request) {
     }
 
     const order = claimedOrder as ClaimedOrder;
-    const milestones = claimedMilestones as import("@/types").Milestone[];
-    const milestone = claimedMilestone as import("@/types").Milestone;
+    const milestones = claimedMilestones as Milestone[];
+    const milestone = claimedMilestone as Milestone;
 
     // ─── STEP 2: Calculate payout (single source of truth: commission.ts) ──────
     const amountCents = typeof milestone.priceCents === "number"
@@ -121,7 +123,7 @@ export async function POST(req: Request) {
     // The 6% floor protects platform margin when buyer-side discounts also apply
     const MIN_COMMISSION_PERCENT = 6;
     let expertDiscountApplied = false;
-    let expertRewards: import("@/types").ReferralRewards = {};
+    let expertRewards: ReferralRewards = {};
     const sellerUser = await prisma.user.findUnique({
       where: { id: order.seller.userId },
       select: { referralRewards: true },
@@ -136,56 +138,70 @@ export async function POST(req: Request) {
     const platformFee = Math.round(amountCents * (feePercent / 100));
     const transferAmount = amountCents - platformFee;
 
-    if (!order.seller.stripeAccountId) {
-      // Revert milestone back to in_escrow so it can be retried once Stripe is connected
-      milestones[idx] = { ...milestone, status: "in_escrow" };
-      await prisma.order.update({ where: { id: orderId }, data: { milestones: milestones as unknown as Prisma.InputJsonValue } });
-      return NextResponse.json({ error: "Seller has no Stripe account" }, { status: 400 });
-    }
+    // ─── STEP 3: Transfer funds — Stripe or manual payout ──────────────────────
+    const isManualPayout = !isStripeConnectSupported(order.seller.country);
 
-    // Verify the expert's Stripe account can actually receive transfers
-    if (!order.seller.stripeChargesEnabled) {
-      milestones[idx] = { ...milestone, status: "in_escrow" };
-      await prisma.order.update({ where: { id: orderId }, data: { milestones: milestones as unknown as Prisma.InputJsonValue } });
-      log.warn("milestone.seller_charges_disabled", { orderId, sellerId: order.sellerId });
-      return NextResponse.json({ error: "Expert's Stripe account cannot receive payments. They have been notified to resolve this." }, { status: 400 });
-    }
+    if (isManualPayout) {
+      // Expert is from a Stripe-unsupported country → record a manual payout
+      log.info("milestone.manual_payout_created", { orderId, milestoneIdx: idx, sellerId: order.sellerId, country: order.seller.country });
 
-    // ─── STEP 3: Execute Stripe transfer ──────────────────────────────────────
-    // This is outside the DB transaction because Stripe is an external call.
-    // If it fails, we revert the milestone to "in_escrow" so it can be retried.
-    // Double-payment is prevented by the Serializable transaction in Step 1
-    // which atomically claims the milestone; only one request can reach here.
-    try {
-      const paymentIntent = await stripe.paymentIntents.retrieve(
-        milestone.stripePaymentIntentId ?? ""
-      );
-
-      const chargeId = typeof paymentIntent.latest_charge === 'string'
-        ? paymentIntent.latest_charge
-        : paymentIntent.latest_charge?.id;
-
-      if (!chargeId) {
-        throw new Error(`No charge found for PaymentIntent ${milestone.stripePaymentIntentId}`);
+      await prisma.manualPayout.create({
+        data: {
+          specialistId: order.sellerId,
+          orderId,
+          milestoneIndex: idx,
+          milestoneTitle: milestone.title,
+          amountCents: transferAmount,
+          platformFeeCents: platformFee,
+          currency: "EUR",
+        },
+      });
+    } else {
+      // Expert has Stripe Connect — proceed with automated transfer
+      if (!order.seller.stripeAccountId) {
+        // Revert milestone back to in_escrow so it can be retried once Stripe is connected
+        milestones[idx] = { ...milestone, status: "in_escrow" };
+        await prisma.order.update({ where: { id: orderId }, data: { milestones: milestones as unknown as Prisma.InputJsonValue } });
+        return NextResponse.json({ error: "Seller has no Stripe account" }, { status: 400 });
       }
 
+      // Verify the expert's Stripe account can actually receive transfers
+      if (!order.seller.stripeChargesEnabled) {
+        milestones[idx] = { ...milestone, status: "in_escrow" };
+        await prisma.order.update({ where: { id: orderId }, data: { milestones: milestones as unknown as Prisma.InputJsonValue } });
+        log.warn("milestone.seller_charges_disabled", { orderId, sellerId: order.sellerId });
+        return NextResponse.json({ error: "Expert's Stripe account cannot receive payments. They have been notified to resolve this." }, { status: 400 });
+      }
 
-      await stripe.transfers.create({
-        amount: transferAmount,
-        currency: "eur",
-        destination: order.seller.stripeAccountId,
-        description: `Release for ${order.id} - ${milestone.title}`,
-        transfer_group: `order_${order.id}`,
-        source_transaction: chargeId,
-      });
-    } catch (stripeErr) {
-      const stripeMessage = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
-      log.error("milestone.stripe_transfer_failed", { orderId, milestoneIdx: idx, error: stripeMessage });
-      // Revert so the buyer can try again
-      milestones[idx] = { ...milestone, status: "in_escrow" };
-      await prisma.order.update({ where: { id: orderId }, data: { milestones: milestones as unknown as Prisma.InputJsonValue } });
-      const detail = process.env.NODE_ENV !== "production" ? ` (${stripeMessage})` : "";
-      return NextResponse.json({ error: `Payment transfer failed.${detail}`, useSimulate: process.env.NODE_ENV !== "production" }, { status: 502 });
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+          milestone.stripePaymentIntentId ?? ""
+        );
+
+        const chargeId = typeof paymentIntent.latest_charge === 'string'
+          ? paymentIntent.latest_charge
+          : paymentIntent.latest_charge?.id;
+
+        if (!chargeId) {
+          throw new Error(`No charge found for PaymentIntent ${milestone.stripePaymentIntentId}`);
+        }
+
+        await stripe.transfers.create({
+          amount: transferAmount,
+          currency: "eur",
+          destination: order.seller.stripeAccountId,
+          description: `Release for ${order.id} - ${milestone.title}`,
+          transfer_group: `order_${order.id}`,
+          source_transaction: chargeId,
+        });
+      } catch (stripeErr) {
+        const stripeMessage = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+        log.error("milestone.stripe_transfer_failed", { orderId, milestoneIdx: idx, error: stripeMessage });
+        milestones[idx] = { ...milestone, status: "in_escrow" };
+        await prisma.order.update({ where: { id: orderId }, data: { milestones: milestones as unknown as Prisma.InputJsonValue } });
+        const detail = process.env.NODE_ENV !== "production" ? ` (${stripeMessage})` : "";
+        return NextResponse.json({ error: `Payment transfer failed.${detail}`, useSimulate: process.env.NODE_ENV !== "production" }, { status: 502 });
+      }
     }
 
     // ─── STEP 4: Finalise DB in a single transaction ───────────────────────────
@@ -293,10 +309,13 @@ export async function POST(req: Request) {
       ? ` (referral discount applied: ${feePercent + 5}% → ${feePercent}% fee)` : "";
 
     // Expert: milestone payment received
+    const transferMsg = isManualPayout
+      ? `${formatCentsToCurrency(transferAmount)} has been approved for manual transfer to your bank account.${discountNote}`
+      : `${formatCentsToCurrency(transferAmount)} transferred to your Stripe account.${discountNote}`;
     await createNotification(
       order.seller.userId,
       "💸 Milestone Released",
-      `Milestone "${milestone.title}" approved! ${formatCentsToCurrency(transferAmount)} transferred to your Stripe account.${discountNote}`,
+      `Milestone "${milestone.title}" approved! ${transferMsg}`,
       "success",
       `/expert/projects/${orderId}`
     );

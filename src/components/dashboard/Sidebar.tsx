@@ -29,6 +29,7 @@ import {
   Globe,
   Lock,
   ClipboardList,
+  CircleDollarSign as Money,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -164,6 +165,7 @@ export function Sidebar({
             icon: Activity,
           },
           { label: "Traffic", href: "/admin/traffic", icon: Globe },
+          { label: "Payouts", href: "/admin/payouts", icon: Money },
         ]
       : [];
 

@@ -1,6 +1,103 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.55 0.22 264);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family:
+      var(--font-geist-sans),
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+  }
+  body::before {
+    display: none;
+  }
+}
 
 /* Hide number input spinners globally */
 input[type="number"]::-webkit-inner-spin-button,
@@ -12,69 +109,10 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Force CSS Rebuild */
-
-:root {
-  /* Background: Warm Off-White / Cream */
-  --background: 40 14% 98%;   /* #FBFAF8 */
-  --foreground: 220 13% 18%;  /* #111827 (Gray 900) */
-
-  /* Surface: Pure White */
-  --card: 0 0% 100%;          /* #FFFFFF */
-  --card-foreground: 220 13% 18%;
-
-  /* Popovers */
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 13% 18%;
-
-  /* Primary Action: Near-Black (#111827) */
-  --primary: 220 13% 18%;     /* #111827 */
-  --primary-foreground: 0 0% 100%; /* White */
-
-  /* Secondary: Subtle Surface (#F3F4F6 equivalent) */
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 220 13% 18%;
-
-  /* Muted: De-emphasized text */
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 14% 46%; /* #6B7280 (Gray 500) */
-
-  /* Accent: Used for links/highlights only, kept as Calm Blue (#2563EB) */
-  --accent: 221 83% 53%;
-  --accent-foreground: 0 0% 100%;
-
-  /* Destructive */
-  --destructive: 0 72% 51%;   /* #DC2626 */
-  --destructive-foreground: 0 0% 98%;
-
-  /* Borders: Subtle Gray */
-  --border: 220 13% 91%;      /* #E5E7EB (Gray 200) */
-  --input: 220 13% 91%;
-  --ring: 220 13% 18%;        /* Matches primary color for focus rings */
-
-  /* Constants */
-  --radius: 0.5rem; /* 8px for cleaner enterprise feel */
-}
-
-body {
-  @apply bg-background text-foreground;
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  
-  /* Subtle texture or plain background */
-  background-color: hsl(var(--background));
-}
-
-/* Remove noise texture for cleaner look */
-body::before {
-  display: none;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-
-  /* Modern button hover — smooth, accessible, no layout shift */
   .btn-hover {
     @apply transition-all duration-200 ease-out;
   }
@@ -91,16 +129,27 @@ body::before {
 
 /* Hero Animations */
 @keyframes word-appear {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse-glow {
-  0% { opacity: 1; transform: translate(-50%, -50%) scale(0); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); }
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.5);
+  }
 }
 
-/* Scoped styles for the new Hero component */
 .hero-light .grid-line {
   stroke: rgba(17, 24, 39, 0.06);
   stroke-width: 1px;
@@ -115,14 +164,12 @@ body::before {
   animation: dot-appear 0.6s ease-out forwards;
 }
 
-/* NEW: Background floating dots */
 .hero-light .bg-floating-dot {
   position: absolute;
-  /* width and height set inline for randomness */
   border-radius: 50%;
   background-color: #111827;
   pointer-events: none;
-  z-index: 1; /* Behind content */
+  z-index: 1;
   opacity: 0;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
@@ -130,60 +177,125 @@ body::before {
 }
 
 @keyframes float-drift-1 {
-  0% { transform: translate(0, 0); opacity: 0.8; }
-  50% { transform: translate(25px, -30px); opacity: 0.5; }
-  100% { transform: translate(-15px, -50px); opacity: 0.3; }
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(25px, -30px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-15px, -50px);
+    opacity: 0.3;
+  }
 }
-
 @keyframes float-drift-2 {
-  0% { transform: translate(0, 0); opacity: 0.7; }
-  50% { transform: translate(-30px, 25px); opacity: 0.4; }
-  100% { transform: translate(20px, 40px); opacity: 0.3; }
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-30px, 25px);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(20px, 40px);
+    opacity: 0.3;
+  }
 }
-
 @keyframes float-drift-3 {
-  0% { transform: translate(0, 0); opacity: 0.8; }
-  50% { transform: translate(30px, 15px); opacity: 0.5; }
-  100% { transform: translate(50px, -20px); opacity: 0.3; }
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(30px, 15px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(50px, -20px);
+    opacity: 0.3;
+  }
 }
-
 @keyframes float-drift-4 {
-  0% { transform: translate(0, 0); opacity: 0.7; }
-  50% { transform: translate(-25px, -30px); opacity: 0.4; }
-  100% { transform: translate(-40px, 20px); opacity: 0.3; }
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-25px, -30px);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(-40px, 20px);
+    opacity: 0.3;
+  }
 }
-
 @keyframes grid-appear {
-  to { opacity: 1; }
+  to {
+    opacity: 1;
+  }
 }
-
-/* Invoice print styles */
-@media print {
-  nav, footer, .print\\:hidden { display: none !important; }
-  main { padding: 0 !important; }
-}
-
 @keyframes dot-appear {
-  to { opacity: 1; }
+  to {
+    opacity: 1;
+  }
 }
-
 @keyframes breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
 
-/* How It Works orbit diagram animations */
+@media print {
+  nav,
+  footer,
+  .print\:hidden {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+}
+
 @keyframes orbit-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes hub-glow-green {
-  0%, 100% { box-shadow: 0 0 12px 2px rgba(141, 198, 63, 0.3), 0 0 24px 4px rgba(141, 198, 63, 0.1); }
-  50% { box-shadow: 0 0 20px 6px rgba(141, 198, 63, 0.5), 0 0 40px 10px rgba(141, 198, 63, 0.2); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 12px 2px rgba(141, 198, 63, 0.3),
+      0 0 24px 4px rgba(141, 198, 63, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 20px 6px rgba(141, 198, 63, 0.5),
+      0 0 40px 10px rgba(141, 198, 63, 0.2);
+  }
 }
 
 @keyframes hub-glow-dark {
-  0%, 100% { box-shadow: 0 0 12px 2px rgba(17, 24, 39, 0.2), 0 0 24px 4px rgba(17, 24, 39, 0.08); }
-  50% { box-shadow: 0 0 20px 6px rgba(17, 24, 39, 0.35), 0 0 40px 10px rgba(17, 24, 39, 0.12); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 12px 2px rgba(17, 24, 39, 0.2),
+      0 0 24px 4px rgba(17, 24, 39, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 20px 6px rgba(17, 24, 39, 0.35),
+      0 0 40px 10px rgba(17, 24, 39, 0.12);
+  }
 }

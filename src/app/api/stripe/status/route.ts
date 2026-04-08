@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { log } from "@/lib/logger";
+import { isStripeConnectSupported } from "@/lib/stripe-countries";
 import * as Sentry from "@sentry/nextjs";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- route handler signature requires req
@@ -57,11 +58,17 @@ export async function GET(req: Request) {
       }
     }
 
+    const isStripeSupported = isStripeConnectSupported(expert.country);
+    const hasBankDetails = !!(expert.bankAccountHolder && expert.bankIban && expert.bankSwiftBic);
+
     return NextResponse.json({
       isConnected,
       chargesEnabled,
       payoutsEnabled,
       accountId: expert.stripeAccountId,
+      country: expert.country,
+      isStripeSupported,
+      hasBankDetails,
     });
   } catch (error) {
     log.error("stripe.status_check_failed", { error: error instanceof Error ? error.message : String(error) });
