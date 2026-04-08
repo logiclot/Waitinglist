@@ -285,7 +285,7 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       // On first sign-in, seed token from the auth result
       if (user) {
         token.id = user.id;
@@ -304,8 +304,10 @@ export const authOptions: NextAuthOptions = {
 
       // On subsequent requests, re-fetch from DB once per TOKEN_REFRESH_AGE_MS.
       // This ensures role and onboarding changes propagate without requiring sign-out.
+      // Force immediate refresh when session.update() is called (e.g. after onboarding).
       const lastRefresh = (token.refreshedAt as number) || 0;
-      if (token.id && Date.now() - lastRefresh > TOKEN_REFRESH_AGE_MS) {
+      const needsRefresh = trigger === "update" || Date.now() - lastRefresh > TOKEN_REFRESH_AGE_MS;
+      if (token.id && needsRefresh) {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
