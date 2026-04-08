@@ -228,41 +228,40 @@ export function SolutionWizard({
   const stripeConnected = !!stripeStatus?.isConnected;
   const isStripeSupported = stripeStatus?.isStripeSupported !== false;
   const hasBankDetails = !!stripeStatus?.hasBankDetails;
-  const [expertFeePercent, setExpertFeePercent] = useState<number>(16);
-  const [expertFeeLabel, setExpertFeeLabel] = useState<string>("Est. 16%");
-  const [expertSuites, setExpertSuites] = useState<
-    { id: string; title: string }[]
-  >([]);
-  const [selectedSuiteId, setSelectedSuiteId] = useState<string>("");
+  const { data: expertSettingsData, isLoading: isExpertSettingsLoading } = useQuery({
+    queryKey: ["expert-settings"],
+    queryFn: async () => {
+      const res = await getExpertSettings();
+      if (!res.success || !res.settings) return null;
+      const s = res.settings as {
+        platformFeePercentage?: number;
+        isFoundingExpert?: boolean;
+        tier?: string;
+      };
+      const fee = s.platformFeePercentage ?? 16;
+      let label: string;
+      if (s.isFoundingExpert && s.tier === "ELITE")
+        label = `${fee}% (Founding Expert · Elite)`;
+      else if (s.isFoundingExpert && s.tier === "PROVEN")
+        label = `${fee}% (Founding Expert · Proven)`;
+      else if (s.isFoundingExpert) label = `${fee}% (Founding Expert)`;
+      else if (s.tier === "ELITE") label = `${fee}% (Elite)`;
+      else if (s.tier === "PROVEN") label = `${fee}% (Proven)`;
+      else label = `${fee}%`;
+      return { fee, label };
+    },
+  });
+  const expertFeePercent = expertSettingsData?.fee ?? 16;
+  const expertFeeLabel = expertSettingsData?.label ?? "Est. 16%";
 
-  useEffect(() => {
-    // Fetch calendar + fee info via expert settings
-    getExpertSettings().then((res) => {
-      if (res.success && res.settings) {
-        const s = res.settings as {
-          platformFeePercentage?: number;
-          isFoundingExpert?: boolean;
-          tier?: string;
-        };
-        const fee = s.platformFeePercentage ?? 16;
-        setExpertFeePercent(fee);
-        let label: string;
-        if (s.isFoundingExpert && s.tier === "ELITE")
-          label = `${fee}% (Founding Expert · Elite)`;
-        else if (s.isFoundingExpert && s.tier === "PROVEN")
-          label = `${fee}% (Founding Expert · Proven)`;
-        else if (s.isFoundingExpert) label = `${fee}% (Founding Expert)`;
-        else if (s.tier === "ELITE") label = `${fee}% (Elite)`;
-        else if (s.tier === "PROVEN") label = `${fee}% (Proven)`;
-        else label = `${fee}%`;
-        setExpertFeeLabel(label);
-      }
-    });
-    // Fetch expert's suites for Step 5 suite assignment
-    getExpertEcosystems().then((suites) => {
-      setExpertSuites(suites.map((s) => ({ id: s.id, title: s.title })));
-    });
-  }, []);
+  const { data: expertSuites = [], isLoading: isExpertSuitesLoading } = useQuery({
+    queryKey: ["expert-ecosystems"],
+    queryFn: async () => {
+      const suites = await getExpertEcosystems();
+      return suites.map((s) => ({ id: s.id, title: s.title }));
+    },
+  });
+  const [selectedSuiteId, setSelectedSuiteId] = useState<string>("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -1312,29 +1311,39 @@ export function SolutionWizard({
           </button>
 
           {/* Earnings summary */}
-          <div className="mt-4 flex items-center justify-between bg-card border border-border rounded-lg px-4 py-3 text-sm">
-            <div className="text-muted-foreground">
-              Total:{" "}
-              <span className="font-bold text-foreground">
-                €{totalPrice.toLocaleString("de-DE")}
-              </span>
-              <span className="mx-2 opacity-30">·</span>
-              Fee {expertFeeLabel}:{" "}
-              <span className="font-medium">
-                -€{platformFee.toLocaleString("de-DE")}
-              </span>
+          {isExpertSettingsLoading ? (
+            <div className="mt-4 bg-card border border-border rounded-lg px-4 py-3 animate-pulse">
+              <div className="h-4 bg-muted rounded w-3/4" />
             </div>
-            <div className="font-bold text-foreground">
-              You earn:{" "}
-              <span className="text-green-600">
-                €{earnings.toLocaleString("de-DE")}
-              </span>
+          ) : (
+            <div className="mt-4 flex items-center justify-between bg-card border border-border rounded-lg px-4 py-3 text-sm">
+              <div className="text-muted-foreground">
+                Total:{" "}
+                <span className="font-bold text-foreground">
+                  €{totalPrice.toLocaleString("de-DE")}
+                </span>
+                <span className="mx-2 opacity-30">·</span>
+                Fee {expertFeeLabel}:{" "}
+                <span className="font-medium">
+                  -€{platformFee.toLocaleString("de-DE")}
+                </span>
+              </div>
+              <div className="font-bold text-foreground">
+                You earn:{" "}
+                <span className="text-green-600">
+                  €{earnings.toLocaleString("de-DE")}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
           <p className="text-xs text-muted-foreground mt-1 text-right">
-            {expertFeePercent < 16
-              ? `Your current rate: ${expertFeePercent}% — `
-              : "Fee drops to 12–14% as you grow. "}
+            {isExpertSettingsLoading ? (
+              <span className="inline-block h-3 w-40 bg-muted rounded animate-pulse" />
+            ) : expertFeePercent < 16 ? (
+              `Your current rate: ${expertFeePercent}% — `
+            ) : (
+              "Fee drops to 12–14% as you grow. "
+            )}
             <a
               href="/pricing"
               target="_blank"
@@ -1614,7 +1623,9 @@ export function SolutionWizard({
           If this solution is part of a larger automation flow, assign it to a
           suite so buyers can discover it in context.
         </p>
-        {expertSuites.length === 0 ? (
+        {isExpertSuitesLoading ? (
+          <div className="h-9 bg-muted rounded-md animate-pulse" />
+        ) : expertSuites.length === 0 ? (
           <p className="text-xs text-muted-foreground italic">
             You have no suites yet.{" "}
             <a
