@@ -190,7 +190,7 @@ export async function makeFoundingSpecialist(id: string, rank: number) {
 
   const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { isFoundingExpert: true, foundingRank: rank },
+    data: { isFoundingExpert: true, foundingRank: rank, platformFeePercentage: 11 },
     select: { userId: true },
   });
 
@@ -209,9 +209,24 @@ export async function makeFoundingSpecialist(id: string, rank: number) {
 export async function removeFoundingExpert(id: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
+  const specialistById = await prisma.specialistProfile.findFirst({
+    where: { id, isFoundingExpert: true },
+    select: { tier: true },
+  });
+
+
+  if (!specialistById) {
+    return {
+      error: "Expert not found"
+    }
+  }
+
+  const tier = specialistById.tier ?? "STANDARD"
+  const feeForTier = TIER_THRESHOLDS[tier]
+
   const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { isFoundingExpert: false },
+    data: { isFoundingExpert: false, platformFeePercentage: feeForTier },
     select: { userId: true },
   });
 
