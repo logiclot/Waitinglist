@@ -14,7 +14,7 @@ import { captureException } from "@/lib/sentry";
 import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
 import { resend, getFromEmail } from "@/lib/resend";
-import { expertInviteEmail, foundingExpertInviteEmail, welcomeEmail } from "@/lib/email-templates";
+import { expertInviteEmail, foundingExpertInviteEmail, businessInviteEmail, welcomeEmail } from "@/lib/email-templates";
 import { fireBusinessOnboardingNotifications } from "@/lib/onboarding-notifications";
 import { foundingExperts } from "@/data/experts";
 
@@ -1608,4 +1608,70 @@ export async function getWaitlistInviteStats() {
   // `;
 
   return { pendingCount, sentCount, usedCount }
+}
+
+export async function sendBusinessInvites() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "ADMIN") return { error: "Not authorized" };
+
+  const pending = await prisma.waitlistSignup.findMany({
+    where: {
+      role: "business",
+      inviteSentAt: null,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (pending.length === 0) return { sent: 0 };
+
+  const FROM_EMAIL = getFromEmail();
+  if (!FROM_EMAIL) return { error: "RESEND_FROM_EMAIL not configured" };
+
+  let sent = 0;
+  const errors: string[] = [];
+
+  for (const entry of pending) {
+    try {
+      const token = randomBytes(32).toString("hex");
+
+      await prisma.waitlistSignup.update({
+        where: { id: entry.id },
+        data: { inviteToken: token, inviteSentAt: new Date() },
+      });
+
+      const inviteUrl = `${APP_URL}/auth/sign-up?invite=${token}`;
+
+      await resend.emails.send({
+        from: FROM_EMAIL,
+        to: entry.email,
+        subject: "You're invited to LogicLot",
+        html: businessInviteEmail({ name: entry.fullName, inviteUrl }),
+        headers: {
+          "X-Entity-Ref-ID": randomUUID(),
+        },
+      });
+
+      sent++;
+    } catch (err) {
+      log.error("admin.business_invite_send_failed", { email: entry.email, error: String(err) });
+      captureException(err instanceof Error ? err : new Error(String(err)));
+      errors.push(entry.email);
+    }
+  }
+
+  revalidatePath("/admin");
+  return { sent, errors: errors.length > 0 ? errors : undefined };
+}
+
+export async function getBusinessWaitlistInviteStats() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "ADMIN") return null;
+
+  const [pendingCount, sentCount, usedCount] = await Promise.all([
+    prisma.waitlistSignup.count({ where: { inviteSentAt: null, inviteToken: null, role: "business" } }),
+    prisma.waitlistSignup.count({ where: { inviteSentAt: { not: null }, usedAt: null, role: "business" } }),
+    prisma.waitlistSignup.count({ where: { usedAt: { not: null }, role: "business" } }),
+  ]);
+
+  return { pendingCount, sentCount, usedCount };
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   Trash2,
@@ -33,6 +33,8 @@ import {
   demoteFromElite,
   sendExpertInvites,
   getWaitlistInviteStats,
+  sendBusinessInvites,
+  getBusinessWaitlistInviteStats,
 } from "@/actions/admin";
 import {
   DisputeManagementTab,
@@ -230,6 +232,107 @@ function InvitePanel({
   );
 }
 
+// ── Business Invite Panel ────────────────────────────────────────────────────
+
+function BusinessInvitePanel({
+  showMessage,
+}: {
+  showMessage: (msg: string, error?: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+
+  const {
+    data: stats,
+    isPending,
+  } = useQuery({
+    queryKey: ["business-waitlist-invite-stats"],
+    queryFn: () => getBusinessWaitlistInviteStats(),
+  });
+
+  const mutation = useMutation({
+    mutationFn: () => sendBusinessInvites(),
+    onSuccess: (result) => {
+      if ("error" in result && result.error) {
+        showMessage(result.error, true);
+      } else if ("sent" in result) {
+        showMessage(
+          `Sent ${result.sent} invite${result.sent === 1 ? "" : "s"} successfully.`,
+        );
+        queryClient.invalidateQueries({ queryKey: ["business-waitlist-invite-stats"] });
+      }
+    },
+    onError: (err) => {
+      showMessage(`Failed to send invites: ${err.message}`, true);
+    },
+  });
+
+  const handleSend = () => {
+    if (
+      !confirm(
+        "This will send invite emails to all business waitlist signups who haven't been invited yet. Continue?",
+      )
+    )
+      return;
+    mutation.mutate();
+  };
+
+  return (
+    <div className="border border-border rounded-xl p-6 space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Business Invites</h2>
+        <p className="text-sm text-muted-foreground">
+          Send invite emails to businesses who signed up on the waitlist. Each
+          invite contains a unique link that pre-fills their email and skips
+          verification.
+        </p>
+      </div>
+
+      {isPending ? (
+        <div className="grid grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-secondary/30 rounded-lg p-4 text-center animate-pulse"
+            >
+              <div className="h-7 w-12 bg-secondary/60 rounded-md mx-auto" />
+              <div className="h-3 w-16 bg-secondary/40 rounded mx-auto mt-2.5" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-secondary/30 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold">{stats?.pendingCount ?? 0}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Not yet invited
+            </div>
+          </div>
+          <div className="bg-secondary/30 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold">{stats?.sentCount ?? 0}</div>
+            <div className="text-xs text-muted-foreground mt-1">Invited</div>
+          </div>
+          <div className="bg-secondary/30 rounded-lg p-4 text-center">
+            <div className="text-2xl font-bold">{stats?.usedCount ?? 0}</div>
+            <div className="text-xs text-muted-foreground mt-1">Signed up</div>
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={handleSend}
+        disabled={mutation.isPending || isPending || !stats?.pendingCount}
+        className="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+      >
+        {mutation.isPending
+          ? "Sending..."
+          : isPending
+            ? "Loading stats..."
+            : `Send Invites (${stats?.pendingCount ?? 0})`}
+      </button>
+    </div>
+  );
+}
+
 export function AdminDashboard({
   initialExperts,
   initialSolutions,
@@ -249,6 +352,7 @@ export function AdminDashboard({
     | "disputes"
     | "audits"
     | "invites"
+    | "business-invites"
   >("experts");
   const [expertList, setExpertList] = useState<AdminExpert[]>(initialExperts);
   const [expandedExpertId, setExpandedExpertId] = useState<string | null>(null);
@@ -577,6 +681,7 @@ export function AdminDashboard({
             "disputes",
             "audits",
             "invites",
+            "business-invites",
           ] as const
         ).map((tab) => {
           const counts: Record<string, number> = {
@@ -587,6 +692,7 @@ export function AdminDashboard({
             disputes: initialDisputes.length,
             audits: initialAuditCompletions.length,
             invites: 0,
+            "business-invites": 0,
           };
           return (
             <button
@@ -598,7 +704,7 @@ export function AdminDashboard({
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)} ({counts[tab]})
+              {tab === "business-invites" ? "Biz Invites" : tab.charAt(0).toUpperCase() + tab.slice(1)} ({counts[tab]})
             </button>
           );
         })}
@@ -716,6 +822,10 @@ export function AdminDashboard({
       )}
 
       {activeTab === "invites" && <InvitePanel showMessage={showMessage} />}
+
+      {activeTab === "business-invites" && (
+        <BusinessInvitePanel showMessage={showMessage} />
+      )}
 
       {activeTab === "businesses" && (
         <div className="border border-border rounded-xl overflow-hidden">

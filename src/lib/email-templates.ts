@@ -667,3 +667,20 @@ export function foundingExpertInviteEmail({ name, inviteUrl }: { name: string; i
     </tr>
   `);
 }
+
+export function businessInviteEmail({ name, inviteUrl }: { name: string; inviteUrl: string }): string {
+  const firstName = name.split(" ")[0] || "there";
+  return shell(`
+    <tr>
+      <td style="padding:36px 28px;">
+        <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#111827;">You&apos;re invited to LogicLot</h1>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">LogicLot is now open for early access, and you&apos;re in.</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#374151;line-height:1.7;">Browse ready-to-implement automation solutions from verified experts. Find the right tool, purchase it, and get it set up &mdash; all in one place.</p>
+        <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.7;">Click below to create your account and start exploring. It takes about 2 minutes.</p>
+        <a href="${inviteUrl}" style="${BTN_STYLE}">Set Up My Account</a>
+        <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">This invite is unique to your email and can only be used once.</p>
+      </td>
+    </tr>
+  `);
+}
