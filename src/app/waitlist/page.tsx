@@ -40,7 +40,9 @@ export default function WaitlistPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"business" | "expert" | "">("");
   const [honeypot, setHoneypot] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -73,7 +75,9 @@ export default function WaitlistPage() {
       }
       setStatus("success");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "An error occurred");
+      setErrorMessage(
+        error instanceof Error ? error.message : "An error occurred",
+      );
       setStatus("error");
     }
   };
@@ -86,14 +90,14 @@ export default function WaitlistPage() {
             <LogoMark size={40} />
           </div>
           <h1 className="text-3xl font-bold mb-4">You&apos;re in.</h1>
-          <p className="text-xl text-muted-foreground mb-4">
-            {successMessage}
-          </p>
+          <p className="text-xl text-muted-foreground mb-4">{successMessage}</p>
 
           {/* Countdown on success */}
           {countdown && !countdown.done && (
             <div className="mb-6">
-              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">Launching in</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-2">
+                Launching in
+              </p>
               <div className="flex items-center justify-center gap-3">
                 {[
                   { v: countdown.days, l: "days" },
@@ -102,8 +106,12 @@ export default function WaitlistPage() {
                   { v: countdown.seconds, l: "sec" },
                 ].map(({ v, l }) => (
                   <div key={l} className="text-center">
-                    <span className="text-2xl font-black text-primary tabular-nums">{String(v).padStart(2, "0")}</span>
-                    <p className="text-[10px] text-muted-foreground uppercase">{l}</p>
+                    <span className="text-2xl font-black text-primary tabular-nums">
+                      {String(v).padStart(2, "0")}
+                    </span>
+                    <p className="text-[10px] text-muted-foreground uppercase">
+                      {l}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -112,9 +120,12 @@ export default function WaitlistPage() {
 
           {/* Free audit nudge */}
           <div className="bg-secondary/40 border border-border rounded-xl p-4 mb-6">
-            <p className="text-sm font-semibold text-foreground mb-1">While you wait...</p>
+            <p className="text-sm font-semibold text-foreground mb-1">
+              While you wait...
+            </p>
             <p className="text-xs text-muted-foreground mb-3">
-              Take a free 2-minute automation audit. Find out exactly where your business is losing time and money.
+              Take a free 2-minute automation audit. Find out exactly where your
+              business is losing time and money.
             </p>
             <Link
               href="/free-audit"
@@ -145,31 +156,21 @@ export default function WaitlistPage() {
           <div className="flex items-center justify-center mb-6">
             <LogoBrand size="lg" />
           </div>
-          <h1 className="text-4xl font-bold mb-4 tracking-tight">Join the {BRAND_NAME} waitlist</h1>
+          <h1 className="text-4xl font-bold mb-4 tracking-tight">
+            Join the {BRAND_NAME} waitlist
+          </h1>
           <p className="text-lg text-muted-foreground mb-2">
-            We launch on <span className="font-semibold text-foreground">April 8th</span>. Leave your email — we&apos;ll notify you first.
+            We launch{" "}
+            <span className="font-semibold text-foreground">Today</span>. Leave
+            your email — we&apos;ll notify you first.
           </p>
-
-          {/* Countdown */}
-          {countdown && !countdown.done && (
-            <div className="flex items-center justify-center gap-4 mt-4 mb-2">
-              {[
-                { v: countdown.days, l: "days" },
-                { v: countdown.hours, l: "hrs" },
-                { v: countdown.minutes, l: "min" },
-                { v: countdown.seconds, l: "sec" },
-              ].map(({ v, l }) => (
-                <div key={l} className="text-center">
-                  <span className="text-3xl font-black text-primary tabular-nums">{String(v).padStart(2, "0")}</span>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{l}</p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 bg-card border border-border p-6 rounded-xl shadow-sm">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 bg-card border border-border p-6 rounded-xl shadow-sm"
+        >
           {errorMessage && (
             <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
@@ -178,7 +179,9 @@ export default function WaitlistPage() {
           )}
 
           <div className="space-y-2">
-            <label htmlFor="fullName" className="text-sm font-medium">Full Name <span className="text-primary">*</span></label>
+            <label htmlFor="fullName" className="text-sm font-medium">
+              Full Name <span className="text-primary">*</span>
+            </label>
             <input
               id="fullName"
               type="text"
@@ -191,7 +194,9 @@ export default function WaitlistPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">Email Address <span className="text-primary">*</span></label>
+            <label htmlFor="email" className="text-sm font-medium">
+              Email Address <span className="text-primary">*</span>
+            </label>
             <input
               id="email"
               type="email"
@@ -204,7 +209,9 @@ export default function WaitlistPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">I am a... <span className="text-primary">*</span></label>
+            <label className="text-sm font-medium">
+              I am a... <span className="text-primary">*</span>
+            </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -263,7 +270,8 @@ export default function WaitlistPage() {
             Not ready to sign up yet?
           </p>
           <p className="text-xs text-muted-foreground mb-3">
-            Take a free 2-minute automation audit. Find out where your business is losing time — no account needed.
+            Take a free 2-minute automation audit. Find out where your business
+            is losing time — no account needed.
           </p>
           <Link
             href="/free-audit"
