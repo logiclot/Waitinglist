@@ -1132,15 +1132,32 @@ export function SolutionWizard({
           Demo Video URL
         </label>
         <p className="text-xs text-purple-700 mb-3">
-          Mandatory for &quot;Demo-First&quot; trust. Must be a loom, youtube,
-          or vimeo link showing the tool in action.
+          Mandatory for &quot;Demo-First&quot; trust. Only YouTube and Loom
+          videos are supported on the platform.
         </p>
         <input
           value={formData.demoVideoUrl || ""}
-          onChange={(e) => handleChange("demoVideoUrl", e.target.value)}
+          onChange={(e) => {
+            const url = e.target.value;
+            handleChange("demoVideoUrl", url);
+          }}
+          onBlur={(e) => {
+            const url = e.target.value.trim();
+            if (
+              url &&
+              !url.match(
+                /^https?:\/\/(www\.)?(youtube\.com|youtu\.be|loom\.com)\//,
+              )
+            ) {
+              toast.error(
+                "Only YouTube and Loom video URLs are supported. Please add a valid link.",
+                { duration: 5000 },
+              );
+            }
+          }}
           disabled={isLocked}
           className="w-full bg-white border border-purple-200 rounded-md px-3 py-2 text-sm focus:border-purple-500 focus:ring-purple-500/20"
-          placeholder="https://..."
+          placeholder="https://www.youtube.com/... or https://www.loom.com/..."
         />
       </div>
 
