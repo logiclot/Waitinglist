@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   Check,
   Trash2,
@@ -142,20 +143,15 @@ function InvitePanel({
   showMessage: (msg: string, error?: boolean) => void;
 }) {
   const [sending, setSending] = useState(false);
-  const [stats, setStats] = useState<{
-    pendingCount: number;
-    sentCount: number;
-    usedCount: number;
-  } | null>(null);
-  const [loaded, setLoaded] = useState(false);
 
-  // Load stats on mount
-  if (!loaded) {
-    setLoaded(true);
-    getWaitlistInviteStats().then((s) => {
-      if (s) setStats(s);
-    });
-  }
+  const {
+    data: stats,
+    isPending,
+    refetch,
+  } = useQuery({
+    queryKey: ["waitlist-invite-stats"],
+    queryFn: () => getWaitlistInviteStats(),
+  });
 
   const handleSend = async () => {
     if (
@@ -173,9 +169,7 @@ function InvitePanel({
       showMessage(
         `Sent ${result.sent} invite${result.sent === 1 ? "" : "s"} successfully.`,
       );
-      getWaitlistInviteStats().then((s) => {
-        if (s) setStats(s);
-      });
+      refetch();
     }
   };
 
@@ -190,29 +184,32 @@ function InvitePanel({
         </p>
       </div>
 
-      {!stats ? (
+      {isPending ? (
         <div className="grid grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-secondary/30 rounded-lg p-4 text-center animate-pulse">
-              <div className="h-8 w-10 bg-secondary/50 rounded mx-auto" />
-              <div className="h-3 w-20 bg-secondary/50 rounded mx-auto mt-2" />
+            <div
+              key={i}
+              className="bg-secondary/30 rounded-lg p-4 text-center animate-pulse"
+            >
+              <div className="h-7 w-12 bg-secondary/60 rounded-md mx-auto" />
+              <div className="h-3 w-16 bg-secondary/40 rounded mx-auto mt-2.5" />
             </div>
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-secondary/30 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold">{stats.pendingCount}</div>
+            <div className="text-2xl font-bold">{stats?.pendingCount ?? 0}</div>
             <div className="text-xs text-muted-foreground mt-1">
               Not yet invited
             </div>
           </div>
           <div className="bg-secondary/30 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold">{stats.sentCount}</div>
+            <div className="text-2xl font-bold">{stats?.sentCount ?? 0}</div>
             <div className="text-xs text-muted-foreground mt-1">Invited</div>
           </div>
           <div className="bg-secondary/30 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold">{stats.usedCount}</div>
+            <div className="text-2xl font-bold">{stats?.usedCount ?? 0}</div>
             <div className="text-xs text-muted-foreground mt-1">Signed up</div>
           </div>
         </div>
@@ -220,14 +217,14 @@ function InvitePanel({
 
       <button
         onClick={handleSend}
-        disabled={sending || !stats || stats.pendingCount === 0}
+        disabled={sending || isPending || !stats?.pendingCount}
         className="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
       >
         {sending
           ? "Sending..."
-          : !stats
+          : isPending
             ? "Loading stats..."
-            : `Send Invites (${stats.pendingCount})`}
+            : `Send Invites (${stats?.pendingCount ?? 0})`}
       </button>
     </div>
   );
