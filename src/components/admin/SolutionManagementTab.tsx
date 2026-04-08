@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { AlertTriangle, ExternalLink, Pencil, Plus, Trash2, Search } from "lucide-react";
-import { getYouTubeEmbedUrl, normalizeYouTubeUrl } from "@/lib/video";
+import { normalizeVideoUrl, getVideoEmbedUrl } from "@/lib/video";
 import { Solution } from "@/types";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationControls } from "@/components/ui/PaginationControls";
@@ -27,12 +27,13 @@ export function SolutionManagementTab({
 
   const getVideoStatus = (s: Solution) => s.demoVideoStatus ?? s.demo_video_status;
   const getVideoUrl = (s: Solution) => s.demoVideoUrl ?? s.demo_video_url;
-  const getVideoId = (s: Solution) => {
+  const getVideoResult = (s: Solution) => {
     const url = getVideoUrl(s);
     if (!url) return null;
-    const result = normalizeYouTubeUrl(url);
-    return result.ok ? result.videoId ?? null : null;
+    const result = normalizeVideoUrl(url);
+    return result.ok ? result : null;
   };
+  const getVideoId = (s: Solution) => getVideoResult(s)?.videoId ?? null;
 
   const pendingSolutions = solutionList.filter((s) => getVideoStatus(s) === "pending");
   const activeSolutions = solutionList.filter((s) => getVideoStatus(s) !== "pending");
@@ -104,7 +105,7 @@ export function SolutionManagementTab({
                   <div className="w-64 bg-black rounded aspect-video overflow-hidden">
                     {getVideoId(solution) ? (
                       <iframe
-                        src={getYouTubeEmbedUrl(getVideoId(solution)!)}
+                        src={getVideoEmbedUrl(getVideoId(solution)!, getVideoResult(solution)?.provider ?? 'youtube')}
                         className="w-full h-full"
                         title="Preview"
                       />

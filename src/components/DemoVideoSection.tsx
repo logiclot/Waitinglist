@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PlayCircle, CheckCircle2, MessageSquare, ExternalLink } from "lucide-react";
-import { getYouTubeEmbedUrl, normalizeYouTubeUrl } from "@/lib/video";
+import { normalizeVideoUrl, getVideoEmbedUrl, getVideoWatchUrl } from "@/lib/video";
 import { Solution } from "@/types";
 
 interface DemoVideoSectionProps {
@@ -10,10 +10,11 @@ interface DemoVideoSectionProps {
 export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
   const videoStatus = solution.demoVideoStatus ?? solution.demo_video_status;
   const videoUrl = solution.demoVideoUrl ?? solution.demo_video_url;
-  const videoResult = videoUrl ? normalizeYouTubeUrl(videoUrl) : null;
+  const videoResult = videoUrl ? normalizeVideoUrl(videoUrl) : null;
   const videoId = videoResult?.ok ? videoResult.videoId : null;
+  const provider = videoResult?.ok ? videoResult.provider! : null;
 
-  if (videoStatus !== 'approved' || !videoId) {
+  if (videoStatus !== 'approved' || !videoId || !provider) {
     // Show a placeholder CTA instead of nothing
     if (solution.expert?.id) {
       return (
@@ -35,7 +36,7 @@ export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
     return null;
   }
 
-  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const watchUrl = getVideoWatchUrl(videoId, provider);
 
   // Default bullets if we can't infer specifics (using the provided copy)
   const bullets = [
@@ -57,7 +58,7 @@ export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
         <div className="lg:col-span-3">
           <div className="relative w-full pb-[56.25%] bg-black rounded-lg overflow-hidden shadow-sm border border-border/50">
             <iframe
-              src={getYouTubeEmbedUrl(videoId)}
+              src={getVideoEmbedUrl(videoId, provider)}
               title={`${solution.title} Demo Video`}
               className="absolute top-0 left-0 w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -71,7 +72,7 @@ export function DemoVideoSection({ solution }: DemoVideoSectionProps) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mt-2 transition-colors"
           >
-            <ExternalLink className="h-3 w-3" /> Watch on YouTube
+            <ExternalLink className="h-3 w-3" /> Watch on {provider === 'loom' ? 'Loom' : 'YouTube'}
           </a>
         </div>
 

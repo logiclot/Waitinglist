@@ -11,7 +11,7 @@ import {
   Play,
   TrendingUp,
 } from "lucide-react";
-import { normalizeYouTubeUrl, getYouTubeEmbedUrl } from "@/lib/video";
+import { normalizeVideoUrl, getVideoEmbedUrl } from "@/lib/video";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface SuiteDetailSolutionCardProps {
@@ -46,9 +46,9 @@ export function SuiteDetailSolutionCard({
     sol.demoVideoStatus === "approved";
   let embedUrl = "";
   if (hasDemoVideo) {
-    const parsed = normalizeYouTubeUrl(sol.demoVideoUrl);
-    if (parsed.ok && parsed.videoId) {
-      embedUrl = getYouTubeEmbedUrl(parsed.videoId, sol.demoVideoStartSeconds);
+    const parsed = normalizeVideoUrl(sol.demoVideoUrl);
+    if (parsed.ok && parsed.videoId && parsed.provider) {
+      embedUrl = getVideoEmbedUrl(parsed.videoId, parsed.provider, sol.demoVideoStartSeconds);
     }
   }
 
