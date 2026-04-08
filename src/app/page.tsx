@@ -9,15 +9,22 @@ import { AuditQuiz } from "@/components/audit/AuditQuiz";
 import { HireVsAutomateCarousel } from "@/components/marketing/HireVsAutomateCarousel";
 import { GlowBorder } from "@/components/ui/glow-border";
 import { ClipboardList, ShieldCheck, Clock } from "lucide-react";
+import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "LogicLot | Verified Automation Solutions for Growing Businesses",
   description:
     "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
   keywords: [
-    "automation solutions", "business automation", "workflow automation",
-    "no-code experts", "automation marketplace", "CRM automation",
-    "Zapier experts", "Make.com experts", "automation consultants",
+    "automation solutions",
+    "business automation",
+    "workflow automation",
+    "no-code experts",
+    "automation marketplace",
+    "CRM automation",
+    "Zapier experts",
+    "Make.com experts",
+    "automation consultants",
   ],
   openGraph: {
     title: "LogicLot | Verified Automation Solutions",
@@ -38,7 +45,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "LogicLot | Verified Automation Solutions",
-    description: "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
+    description:
+      "Browse ready-to-deploy AI automations. Fixed-price, deployed by verified experts.",
     images: ["https://logiclot.io/og-image.png"],
   },
   robots: {
@@ -70,8 +78,8 @@ export default function Home() {
                   Where is your business losing time?
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-relaxed max-w-md mx-auto lg:mx-0">
-                  5 questions. Find out what&apos;s costing you the most and whether
-                  automation is worth it for your stage of growth.
+                  5 questions. Find out what&apos;s costing you the most and
+                  whether automation is worth it for your stage of growth.
                 </p>
                 <div className="flex items-center justify-center lg:justify-start gap-5 flex-wrap mt-4">
                   {[
@@ -79,7 +87,10 @@ export default function Home() {
                     { icon: ShieldCheck, label: "No account needed" },
                     { icon: ClipboardList, label: "Instant report" },
                   ].map(({ icon: Icon, label }) => (
-                    <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div
+                      key={label}
+                      className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                    >
                       <Icon className="h-3.5 w-3.5" />
                       <span>{label}</span>
                     </div>
@@ -105,6 +116,7 @@ export default function Home() {
       <HowItWorks />
       <FeaturedArticles />
       <FounderNote />
+      <Footer />
     </main>
   );
 }
