@@ -717,13 +717,14 @@ export default async function SolutionPage({ params }: PageProps) {
                       </p>
                     </div>
                   )}
-
-                  <Link
-                    href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}`}
-                    className="block w-full text-center text-xs text-muted-foreground hover:text-primary hover:underline py-2"
-                  >
-                    Ask a question
-                  </Link>
+                  {!isOwnSolution && (
+                    <Link
+                      href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}`}
+                      className="block w-full text-center text-xs text-muted-foreground hover:text-primary hover:underline py-2"
+                    >
+                      Ask a question
+                    </Link>
+                  )}
                 </div>
 
                 <div className="pt-6 mt-6 border-t border-border">
@@ -805,12 +806,14 @@ export default async function SolutionPage({ params }: PageProps) {
                   </div>
 
                   <div className="space-y-3">
-                    <Link
-                      href={`/messages/new?expert=${solution.expert.id}&solution=${solution.id}`}
-                      className="w-full text-center border border-border bg-background hover:bg-secondary/50 py-2 rounded-lg font-medium text-xs transition-colors flex items-center justify-center gap-2 text-foreground"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" /> Message Expert
-                    </Link>
+                    {!isOwnSolution && (
+                      <Link
+                        href={`/messages/new?expert=${solution.expert.id}&solution=${solution.id}`}
+                        className="w-full text-center border border-border bg-background hover:bg-secondary/50 py-2 rounded-lg font-medium text-xs transition-colors flex items-center justify-center gap-2 text-foreground"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" /> Message Expert
+                      </Link>
+                    )}
                     <Link
                       href={`/experts/${solution.expert.slug}`}
                       className="text-xs text-primary hover:underline block text-center"
@@ -826,7 +829,7 @@ export default async function SolutionPage({ params }: PageProps) {
       </div>
 
       {/* Similar Solutions */}
-      <SimilarSolutions solutions={similarSolutions} />
+      {!isOwnSolution && <SimilarSolutions solutions={similarSolutions} />}
     </div>
   );
 }
