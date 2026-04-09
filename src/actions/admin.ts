@@ -189,10 +189,12 @@ export async function verifySpecialist(id: string, verified: boolean) {
 export async function makeFoundingSpecialist(id: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  const maxRank = await prisma.specialistProfile.aggregate({
-    _max: { foundingRank: true },
+  const foundingExperts = await prisma.specialistProfile.count({
+    where: {
+      tier: "FOUNDING"
+    }
   });
-  const rank = (maxRank._max.foundingRank ?? 0) + 1;
+  const rank = foundingExperts + 1;
 
   const specialist = await prisma.specialistProfile.update({
     where: { id },
@@ -214,18 +216,6 @@ export async function makeFoundingSpecialist(id: string) {
 
 export async function removeFoundingExpert(id: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
-
-  const specialistById = await prisma.specialistProfile.findFirst({
-    where: { id, isFoundingExpert: true, tier: "FOUNDING" },
-    select: { tier: true },
-  });
-
-
-  if (!specialistById) {
-    return {
-      error: "Expert not found"
-    }
-  }
 
   // tier to demote : ELITE for now
   const tier = "ELITE"
