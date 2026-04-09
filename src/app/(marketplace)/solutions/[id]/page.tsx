@@ -18,6 +18,8 @@ import {
 import { DemoVideoSection } from "@/components/DemoVideoSection";
 import { SimilarSolutions } from "@/components/SimilarSolutions";
 import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Solution } from "@/types";
 import { getEcosystemsForSolution } from "@/actions/ecosystems";
@@ -183,6 +185,13 @@ export default async function SolutionPage({ params }: PageProps) {
 
   const ecosystems = await getEcosystemsForSolution(solution.id);
   const isPartOfStack = ecosystems.length > 0;
+
+  // Hide payment/demo buttons if the logged-in user is the expert who owns this solution
+  const session = await getServerSession(authOptions);
+  const isOwnSolution =
+    !!session?.user?.id &&
+    !!solution.expert?.user_id &&
+    session.user.id === solution.expert.user_id;
 
   // Fetch real similar solutions from DB (same category, exclude current, published only)
   const similarRaw = await prisma.solution.findMany({
@@ -685,13 +694,15 @@ export default async function SolutionPage({ params }: PageProps) {
                 )}
 
                 <div className="space-y-3">
-                  <PaymentButton
-                    solutionId={solution.id}
-                    title="Fund Milestone 1"
-                  />
+                  {!isOwnSolution && (
+                    <PaymentButton
+                      solutionId={solution.id}
+                      title="Fund Milestone 1"
+                    />
+                  )}
 
                   {/* Paid Demo CTA — only shown if expert has a calendar linked */}
-                  {solution.expert?.calendarUrl && (
+                  {!isOwnSolution && solution.expert?.calendarUrl && (
                     <div className="pt-2">
                       <Link
                         href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}&type=demo`}
