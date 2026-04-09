@@ -50,12 +50,12 @@ export default function OnboardingPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-12">
       <div className="text-center max-w-2xl mb-12">
         <h1 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
-          What brings you to {BRAND_NAME}?
+          How do you want to use {BRAND_NAME}?
         </h1>
         <p className="text-muted-foreground text-lg">
           {preSelected
             ? "Please confirm how you'd like to use your account."
-            : "Choose your account type to get started."}
+            : "Pick the option that best describes you."}
         </p>
       </div>
 
@@ -79,12 +79,14 @@ export default function OnboardingPage() {
             <Building2 className="h-10 w-10 text-primary" />
           </div>
           <h2 className="text-2xl font-bold mb-2 text-foreground">
-            I want to buy
+            I&apos;m looking to automate my business
           </h2>
-          <p className="text-sm font-medium text-primary mb-3">Business</p>
+          <p className="text-sm font-medium text-primary mb-3">
+            Business Owner
+          </p>
           <p className="text-muted-foreground leading-relaxed">
-            Find proven automations and have them deployed in your tools by
-            vetted experts.
+            Browse ready-made automations and get them set up in your tools by
+            trusted experts.
           </p>
         </button>
 
@@ -107,12 +109,12 @@ export default function OnboardingPage() {
             <Wrench className="h-10 w-10 text-foreground" />
           </div>
           <h2 className="text-2xl font-bold mb-2 text-foreground">
-            I want to sell
+            I&apos;m looking to sell my automations
           </h2>
           <p className="text-sm font-medium text-primary mb-3">Expert</p>
           <p className="text-muted-foreground leading-relaxed">
-            Package your automation expertise into fixed-scope solutions and
-            sell them repeatedly.
+            List your automation services, find clients, and get paid for
+            delivering solutions.
           </p>
         </button>
       </div>
