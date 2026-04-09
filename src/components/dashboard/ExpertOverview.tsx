@@ -102,7 +102,6 @@ interface ExpertOverviewProps {
   hasStripeConnected?: boolean;
   isFoundingExpert?: boolean;
   tier?: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING";
-  commissionOverridePercent?: number;
   publishedSolutionCount?: number;
   earningsThisMonthCents?: number;
   inEscrowCents?: number;
@@ -122,7 +121,6 @@ export function ExpertOverview({
   hasStripeConnected,
   isFoundingExpert,
   tier = "STANDARD",
-  commissionOverridePercent,
   publishedSolutionCount = 0,
   earningsThisMonthCents = 0,
   inEscrowCents = 0,
@@ -164,12 +162,7 @@ export function ExpertOverview({
         <div className="flex gap-3">
           {(() => {
             // Use admin override → founding rate → DB tier (authoritative)
-            const fee =
-              commissionOverridePercent != null
-                ? commissionOverridePercent
-                : isFoundingExpert
-                  ? TIER_THRESHOLDS.FOUNDING
-                  : TIER_THRESHOLDS[tier];
+            const fee = TIER_THRESHOLDS[tier];
             const tierLabel = isFoundingExpert
               ? "Founder"
               : tier === "ELITE"

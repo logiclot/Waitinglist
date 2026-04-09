@@ -41,12 +41,8 @@ export function getExpertTierLabel(expert: CommissionExpert): ExpertTier {
 
 export function getCommissionPercent(expert: CommissionExpert): number {
   // 1. Admin override
-  if (expert.commission_override_percent !== undefined && expert.commission_override_percent !== null) {
-    return Number(expert.commission_override_percent);
-  }
-
   // 2. Founding expert (check both fields for backward compat)
-  if (expert.isFoundingExpert || expert.founding) {
+  if (expert.tier === "FOUNDING") {
     return TIER_THRESHOLDS.FOUNDING;
   }
 

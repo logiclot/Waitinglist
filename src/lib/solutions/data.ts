@@ -32,7 +32,6 @@ export function mapPrismaExpert(e: PrismaExpertInput): Expert {
     founding: e.isFoundingExpert,
     founding_rank: e.foundingRank ?? null,
     completed_sales_count: e.completedSalesCount,
-    commission_override_percent: e.commissionOverridePercent ? Number(e.commissionOverridePercent) : null,
     tools: e.tools || [],
     calendarUrl: e.calendarUrl ?? undefined,
     tier: e.tier || "STANDARD",
@@ -84,8 +83,8 @@ export async function getPublishedSolutions() {
       // Derive expertTier from expert profile for filter sidebar
       expertTier: s.expert.isFoundingExpert ? "founding"
         : s.expert.tier === "ELITE" ? "elite"
-        : s.expert.tier === "PROVEN" ? "proven"
-        : "standard",
+          : s.expert.tier === "PROVEN" ? "proven"
+            : "standard",
     })) as unknown as Solution[];
 
   } catch (e) {

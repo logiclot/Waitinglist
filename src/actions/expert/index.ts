@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { log } from "@/lib/logger";
 import { isStripeConnectSupported } from "@/lib/stripe-countries";
 import * as Sentry from "@sentry/nextjs";
+import { TIER_THRESHOLDS } from "@/lib/commission";
 
 export async function updateExpertProfile(data: {
   displayName?: string;
@@ -374,9 +375,7 @@ export async function getExpertEarnings() {
     select: {
       id: true,
       tier: true,
-      isFoundingExpert: true,
       completedSalesCount: true,
-      commissionOverridePercent: true,
       platformFeePercentage: true,
       stripeAccountId: true,
       stripeDetailsSubmitted: true,
@@ -417,15 +416,13 @@ export async function getExpertEarnings() {
         m.priceCents || (m.price ? Math.round(m.price * 100) : 0);
       if (m.status === "released" && m.releasedAt) {
         // Calculate fee using commission logic
-        const feePercent = expert.commissionOverridePercent
-          ? Number(expert.commissionOverridePercent)
-          : expert.isFoundingExpert
-            ? 11
-            : expert.completedSalesCount >= 10
-              ? 12
-              : expert.completedSalesCount >= 5
-                ? 13
-                : 15;
+        const feePercent = expert.tier === "FOUNDING"
+          ? TIER_THRESHOLDS["FOUNDING"]
+          : expert.completedSalesCount >= 10
+            ? TIER_THRESHOLDS["ELITE"]
+            : expert.completedSalesCount >= 5
+              ? TIER_THRESHOLDS["PROVEN"]
+              : TIER_THRESHOLDS["STANDARD"];
         const feeCents = Math.round(amount * (feePercent / 100));
         const netCents = amount - feeCents;
         totalEarnedCents += netCents;
@@ -464,15 +461,7 @@ export async function getExpertEarnings() {
     .sort((a, b) => b.month.localeCompare(a.month));
 
   // Determine current commission rate
-  const commissionRate = expert.commissionOverridePercent
-    ? Number(expert.commissionOverridePercent)
-    : expert.isFoundingExpert
-      ? 11
-      : expert.completedSalesCount >= 10
-        ? 12
-        : expert.completedSalesCount >= 5
-          ? 13
-          : 15;
+  const commissionRate = TIER_THRESHOLDS[expert.tier]
 
   return {
     success: true as const,
@@ -480,7 +469,7 @@ export async function getExpertEarnings() {
     inEscrowCents,
     commissionRate,
     tier: expert.tier,
-    isFoundingExpert: expert.isFoundingExpert,
+    isFoundingExpert: !!(expert.tier === "FOUNDING"),
     completedSalesCount: expert.completedSalesCount,
     stripeConnected:
       !!expert.stripeAccountId && !!expert.stripeDetailsSubmitted,

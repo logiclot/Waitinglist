@@ -112,9 +112,6 @@ export async function POST(req: Request) {
       founding: false,
       isFoundingExpert: order.seller.isFoundingExpert,
       completed_sales_count: order.seller.completedSalesCount,
-      commission_override_percent: order.seller.commissionOverridePercent != null
-        ? Number(order.seller.commissionOverridePercent)
-        : undefined,
       tools: [],
     };
 

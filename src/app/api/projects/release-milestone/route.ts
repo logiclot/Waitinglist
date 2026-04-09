@@ -108,11 +108,7 @@ export async function POST(req: Request) {
       name: order.seller.displayName || "",
       verified: true,
       founding: false,
-      isFoundingExpert: order.seller.isFoundingExpert,
       completed_sales_count: order.seller.completedSalesCount,
-      commission_override_percent: order.seller.commissionOverridePercent != null
-        ? Number(order.seller.commissionOverridePercent)
-        : undefined,
       tier: order.seller.tier,
       tools: [],
     };
@@ -251,7 +247,7 @@ export async function POST(req: Request) {
 
         const newCount = updatedSpecialist.completedSalesCount;
         const oldTier = order.seller.tier;
-        const isFoundingExpert = order.seller.isFoundingExpert;
+        const isFoundingExpert = order.seller.tier === "FOUNDING";
 
         // Auto-tier caps at PROVEN — Elite requires application + admin approval
         let newTier: "STANDARD" | "PROVEN" | null = null;
@@ -343,7 +339,7 @@ export async function POST(req: Request) {
     if (isLastMilestone) {
       const refreshed = await prisma.specialistProfile.findUnique({ where: { id: order.sellerId } });
       if (refreshed && refreshed.tier !== order.seller.tier) {
-        const feeMessage = refreshed.isFoundingExpert
+        const feeMessage = refreshed.tier === "FOUNDING"
           ? `Your Founding Expert rate of ${TIER_THRESHOLDS.FOUNDING}% still applies. You now have access to Discovery Scans and Custom Projects in the Find Work feed.`
           : `Your commission rate has dropped to ${refreshed.platformFeePercentage}%. You now have access to Discovery Scans and Custom Projects in the Find Work feed.`;
         await createNotification(

@@ -18,7 +18,6 @@ const getExpertProfile = cache((userId: string) =>
       isFoundingExpert: true,
       completedSalesCount: true,
       tier: true,
-      commissionOverridePercent: true,
       stripeAccountId: true,
       stripeDetailsSubmitted: true,
       eliteApplicationStatus: true,
@@ -30,7 +29,7 @@ const getExpertProfile = cache((userId: string) =>
       newExpertBoostUntil: true,
       _count: { select: { solutions: { where: { status: "published" } } } },
     },
-  })
+  }),
 );
 
 export default async function DashboardPage() {
@@ -76,7 +75,14 @@ async function ExpertDashboardContent({ userId }: { userId: string }) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [referralStats, activeCoupons, earningsOrders, activeOrdersRaw, topSolution, recentJobs] = await Promise.all([
+  const [
+    referralStats,
+    activeCoupons,
+    earningsOrders,
+    activeOrdersRaw,
+    topSolution,
+    recentJobs,
+  ] = await Promise.all([
     getReferralStats(userId),
     getActiveCoupons(),
     prisma.order.findMany({
@@ -88,7 +94,17 @@ async function ExpertDashboardContent({ userId }: { userId: string }) {
       select: { priceCents: true },
     }),
     prisma.order.findMany({
-      where: { sellerId: expert.id, status: { in: ["paid_pending_implementation", "in_progress", "delivered", "revision_requested"] } },
+      where: {
+        sellerId: expert.id,
+        status: {
+          in: [
+            "paid_pending_implementation",
+            "in_progress",
+            "delivered",
+            "revision_requested",
+          ],
+        },
+      },
       select: {
         id: true,
         status: true,
@@ -104,24 +120,33 @@ async function ExpertDashboardContent({ userId }: { userId: string }) {
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),
-    prisma.solution.findMany({
-      where: { expertId: expert.id, status: "published" },
-      select: {
-        id: true,
-        title: true,
-        category: true,
-        _count: {
-          select: {
-            orders: { where: { status: { in: ["delivered", "approved"] } } },
+    prisma.solution
+      .findMany({
+        where: { expertId: expert.id, status: "published" },
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          _count: {
+            select: {
+              orders: { where: { status: { in: ["delivered", "approved"] } } },
+            },
           },
         },
-      },
-      take: 20,
-    }).then((solutions) => {
-      if (!solutions.length) return null;
-      const best = solutions.sort((a, b) => b._count.orders - a._count.orders)[0];
-      return { id: best.id, title: best.title, category: best.category, completedSalesCount: best._count.orders };
-    }),
+        take: 20,
+      })
+      .then((solutions) => {
+        if (!solutions.length) return null;
+        const best = solutions.sort(
+          (a, b) => b._count.orders - a._count.orders,
+        )[0];
+        return {
+          id: best.id,
+          title: best.title,
+          category: best.category,
+          completedSalesCount: best._count.orders,
+        };
+      }),
     prisma.jobPost.findMany({
       where: { status: "open" },
       orderBy: { createdAt: "desc" },
@@ -130,19 +155,28 @@ async function ExpertDashboardContent({ userId }: { userId: string }) {
     }),
   ]);
 
-  const earningsThisMonthCents = earningsOrders.reduce((sum, o) => sum + o.priceCents, 0);
+  const earningsThisMonthCents = earningsOrders.reduce(
+    (sum, o) => sum + o.priceCents,
+    0,
+  );
 
   const inEscrowCents = activeOrdersRaw.reduce((sum, o) => {
     const milestones = (o.milestones as Record<string, unknown>[] | null) || [];
-    return sum + milestones.reduce((mSum, m) => {
-      if ((m as { status?: string }).status === "in_escrow") {
-        const rawCents = (m as { priceCents?: number }).priceCents;
-        const rawPrice = (m as { price?: number }).price;
-        const cents = typeof rawCents === "number" ? rawCents : Math.round((typeof rawPrice === "number" ? rawPrice : 0) * 100);
-        return mSum + cents;
-      }
-      return mSum;
-    }, 0);
+    return (
+      sum +
+      milestones.reduce((mSum, m) => {
+        if ((m as { status?: string }).status === "in_escrow") {
+          const rawCents = (m as { priceCents?: number }).priceCents;
+          const rawPrice = (m as { price?: number }).price;
+          const cents =
+            typeof rawCents === "number"
+              ? rawCents
+              : Math.round((typeof rawPrice === "number" ? rawPrice : 0) * 100);
+          return mSum + cents;
+        }
+        return mSum;
+      }, 0)
+    );
   }, 0);
 
   const activeOrders = activeOrdersRaw.map((o) => ({
@@ -160,10 +194,11 @@ async function ExpertDashboardContent({ userId }: { userId: string }) {
       referralStats={referralStats}
       activeCoupons={activeCoupons}
       hasCalendarUrl={!!expert.calendarUrl}
-      hasStripeConnected={!!expert.stripeAccountId && expert.stripeDetailsSubmitted}
-      isFoundingExpert={expert.isFoundingExpert ?? false}
+      hasStripeConnected={
+        !!expert.stripeAccountId && expert.stripeDetailsSubmitted
+      }
+      isFoundingExpert={!!(expert.tier === "FOUNDING")}
       tier={expert.tier}
-      commissionOverridePercent={expert.commissionOverridePercent ? Number(expert.commissionOverridePercent) : undefined}
       publishedSolutionCount={expert._count.solutions}
       earningsThisMonthCents={earningsThisMonthCents}
       inEscrowCents={inEscrowCents}
@@ -190,7 +225,9 @@ async function FallbackDashboardContent({ userId }: { userId: string }) {
     getReferralStats(userId),
     getActiveCoupons(),
   ]);
-  return <BusinessOverview referralStats={referralStats} activeCoupons={coupons} />;
+  return (
+    <BusinessOverview referralStats={referralStats} activeCoupons={coupons} />
+  );
 }
 
 // ── Skeletons ───────────────────────────────────────────────────────────────
@@ -232,7 +269,10 @@ function ExpertDashboardSkeleton() {
         </div>
         <div className="flex gap-4 overflow-hidden">
           {[1, 2].map((i) => (
-            <div key={i} className="min-w-[300px] flex-shrink-0 bg-muted/20 border border-border p-4 rounded-xl flex items-center gap-4">
+            <div
+              key={i}
+              className="min-w-[300px] flex-shrink-0 bg-muted/20 border border-border p-4 rounded-xl flex items-center gap-4"
+            >
               <SkeletonBlock className="w-5 h-5 shrink-0" />
               <div className="flex-1 space-y-2">
                 <SkeletonBlock className="h-4 w-28" />
@@ -259,7 +299,10 @@ function ExpertDashboardSkeleton() {
             </div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-card border border-border rounded-xl p-4 flex justify-between items-center">
+                <div
+                  key={i}
+                  className="bg-card border border-border rounded-xl p-4 flex justify-between items-center"
+                >
                   <div className="space-y-2">
                     <SkeletonBlock className="h-4 w-48" />
                     <div className="flex gap-2">

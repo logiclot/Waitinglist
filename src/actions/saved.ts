@@ -122,12 +122,9 @@ export async function getSavedSolutionsFull() {
             response_time: expert.responseTime ?? undefined,
             verified: expert.verified,
             business_verified: expert.businessVerified,
-            founding: expert.isFoundingExpert,
+            founding: expert.tier === "FOUNDING",
             founding_rank: expert.foundingRank ?? null,
             completed_sales_count: expert.completedSalesCount,
-            commission_override_percent: expert.commissionOverridePercent
-              ? Number(expert.commissionOverridePercent)
-              : null,
             tools: expert.tools || [],
             calendarUrl: expert.calendarUrl ?? undefined,
             tier: expert.tier || "STANDARD",
@@ -138,10 +135,10 @@ export async function getSavedSolutionsFull() {
           expertTier: expert.isFoundingExpert
             ? "founding"
             : expert.tier === "ELITE"
-            ? "elite"
-            : expert.tier === "PROVEN"
-            ? "proven"
-            : "standard",
+              ? "elite"
+              : expert.tier === "PROVEN"
+                ? "proven"
+                : "standard",
         };
       });
   } catch (error) {

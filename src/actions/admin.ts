@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { stripe } from "@/lib/stripe";
-import { getCommissionPercent, TIER_THRESHOLDS } from "@/lib/commission";
+import { CommissionExpert, getCommissionPercent, TIER_THRESHOLDS } from "@/lib/commission";
 import { createNotification } from "@/lib/notifications";
 import { DISCOVERY_SCAN_PRICE_CENTS, CUSTOM_PROJECT_PRICE_CENTS } from "@/lib/pricing-config";
 import { APP_URL } from "@/lib/app-url";
@@ -215,7 +215,7 @@ export async function removeFoundingExpert(id: string) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
   const specialistById = await prisma.specialistProfile.findFirst({
-    where: { id, isFoundingExpert: true },
+    where: { id, isFoundingExpert: true, tier: "FOUNDING" },
     select: { tier: true },
   });
 
@@ -251,22 +251,26 @@ export async function removeFoundingExpert(id: string) {
 export async function setExpertFee(id: string, fee: number) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
-  const specialist = await prisma.specialistProfile.update({
-    where: { id },
-    data: { commissionOverridePercent: fee, platformFeePercentage: fee },
-    select: { userId: true },
-  });
+  return {
+    success: false
+  }
 
-  await createNotification(
-    specialist.userId,
-    "💰 Platform fee updated",
-    `Your platform fee has been adjusted to ${fee}%.`,
-    "info",
-    "/dashboard",
-  );
+  // const specialist = await prisma.specialistProfile.update({
+  //   where: { id },
+  //   data: { commissionOverridePercent: fee, platformFeePercentage: fee },
+  //   select: { userId: true },
+  // });
 
-  revalidatePath("/admin");
-  return { success: true };
+  // await createNotification(
+  //   specialist.userId,
+  //   "💰 Platform fee updated",
+  //   `Your platform fee has been adjusted to ${fee}%.`,
+  //   "info",
+  //   "/dashboard",
+  // );
+
+  // revalidatePath("/admin");
+  // return { success: true };
 }
 
 export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING") {
@@ -279,7 +283,6 @@ export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "E
     where: { id },
     data: {
       tier,
-      commissionOverridePercent: feeForTier,
       platformFeePercentage: feeForTier,
     },
     select: { userId: true },
@@ -292,13 +295,24 @@ export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "E
     FOUNDING: `Founding (${TIER_THRESHOLDS.FOUNDING}% fee)`,
   };
 
-  await createNotification(
-    specialist.userId,
-    "📊 Expert tier updated",
-    `Your tier has been changed to ${tierLabels[tier] ?? tier}.`,
-    "info",
-    "/dashboard",
-  );
+  if (tier === "FOUNDING") {
+    await createNotification(
+      specialist.userId,
+      "🏅 Founding Expert status granted!",
+      `You are now Founding Expert. You'll enjoy an 11% platform fee for life and a permanent Founding Expert badge on your profile.`,
+      "success",
+      "/dashboard",
+    );
+  } else {
+    await createNotification(
+      specialist.userId,
+      "📊 Expert tier updated",
+      `Your tier has been changed to ${tierLabels[tier] ?? tier}.`,
+      "info",
+      "/dashboard",
+    );
+  }
+
 
   revalidatePath("/admin");
   return { success: true, fee: feeForTier };
@@ -620,7 +634,7 @@ export async function resolveDispute(
           select: {
             userId: true, stripeAccountId: true, stripeChargesEnabled: true, displayName: true,
             isFoundingExpert: true, tier: true, completedSalesCount: true,
-            commissionOverridePercent: true, platformFeePercentage: true,
+            platformFeePercentage: true,
           },
         },
         dispute: true,
@@ -706,16 +720,13 @@ export async function resolveDispute(
           return { error: "Expert's Stripe account cannot receive payments. Ask the expert to resolve their Stripe account issues before releasing funds." };
         }
         // Use the canonical commission calculator
-        const expertForCommission: import("@/lib/commission").CommissionExpert = {
+        const expertForCommission: CommissionExpert = {
           id: order.sellerId,
           name: order.seller.displayName || "",
           verified: true,
           founding: false,
-          isFoundingExpert: order.seller.isFoundingExpert,
+          isFoundingExpert: order.seller.tier === "FOUNDING",
           completed_sales_count: order.seller.completedSalesCount,
-          commission_override_percent: order.seller.commissionOverridePercent != null
-            ? Number(order.seller.commissionOverridePercent)
-            : undefined,
           tools: [],
         };
         const commissionPercent = getCommissionPercent(expertForCommission);
@@ -1506,7 +1517,7 @@ export async function demoteFromElite(expertId: string, reason: string) {
   if (!profile) return { error: "Expert not found" };
   if (profile.tier !== "ELITE") return { error: "Expert is not Elite" };
 
-  const feePercent = profile.isFoundingExpert ? TIER_THRESHOLDS.FOUNDING : TIER_THRESHOLDS.PROVEN;
+  const feePercent = TIER_THRESHOLDS["PROVEN"];
 
   await prisma.specialistProfile.update({
     where: { id: expertId },

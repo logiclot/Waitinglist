@@ -464,9 +464,14 @@ export async function getFoundingExpertStatus(): Promise<boolean> {
 
   const expert = await prisma.specialistProfile.findUnique({
     where: { userId: session.user.id },
-    select: { isFoundingExpert: true },
+    select: { isFoundingExpert: true, tier: true },
   });
-  return expert?.isFoundingExpert ?? false;
+
+  if (!expert) {
+    return false
+  }
+
+  return !!(expert.tier === "FOUNDING");
 }
 
 async function sendVerificationEmail(to: string, token: string) {

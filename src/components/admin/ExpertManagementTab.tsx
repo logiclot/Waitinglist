@@ -40,7 +40,6 @@ export interface AdminExpert {
   foundingRank?: number | null;
   completedSalesCount?: number;
   platformFeePercentage?: number | null;
-  commissionOverridePercent?: number | null;
   tier?: string;
   stripeAccountId?: string | null;
   calendarUrl?: string | null;
@@ -60,10 +59,6 @@ function toCommissionExpert(expert: AdminExpert): CommissionExpert {
     founding: false,
     isFoundingExpert: expert.isFoundingExpert ?? false,
     completed_sales_count: expert.completedSalesCount ?? 0,
-    commission_override_percent:
-      expert.commissionOverridePercent != null
-        ? Number(expert.commissionOverridePercent)
-        : undefined,
     tier:
       (expert.tier as "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING") ??
       "STANDARD",
@@ -92,7 +87,6 @@ interface ExpertManagementTabProps {
   onSuspend: (id: string) => void;
   onMakeFounding: (id: string) => void;
   onRemoveFounding: (id: string) => void;
-  onSetFee: (id: string, fee: number) => void;
   onSetTier: (
     id: string,
     tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING",
@@ -111,56 +105,6 @@ const TIER_COLORS: Record<string, string> = {
   ELITE: "text-purple-500",
 };
 
-function FeeEditor({
-  current,
-  onSave,
-}: {
-  current: number;
-  onSave: (v: number) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState(String(current));
-
-  if (!editing) {
-    return (
-      <button
-        onClick={() => setEditing(true)}
-        className="text-sm font-bold hover:underline tabular-nums"
-      >
-        {current}%
-      </button>
-    );
-  }
-  return (
-    <span className="flex items-center gap-1">
-      <input
-        type="number"
-        value={val}
-        min={0}
-        max={100}
-        onChange={(e) => setVal(e.target.value)}
-        className="w-14 border border-border rounded px-1 py-0.5 text-xs bg-background"
-        autoFocus
-      />
-      <button
-        onClick={() => {
-          onSave(parseInt(val));
-          setEditing(false);
-        }}
-        className="text-xs text-green-500 font-bold hover:underline"
-      >
-        Save
-      </button>
-      <button
-        onClick={() => setEditing(false)}
-        className="text-xs text-muted-foreground hover:underline"
-      >
-        ✕
-      </button>
-    </span>
-  );
-}
-
 export function ExpertManagementTab({
   expertList,
   expandedExpertId,
@@ -169,7 +113,6 @@ export function ExpertManagementTab({
   onSuspend,
   onMakeFounding,
   onRemoveFounding,
-  onSetFee,
   onSetTier,
   onDeleteUser,
   onLiftBidBan,
@@ -249,7 +192,6 @@ export function ExpertManagementTab({
                 | "PROVEN"
                 | "ELITE"
                 | "FOUNDING";
-              const hasOverride = expert.commissionOverridePercent != null;
               const isFounding = expert.isFoundingExpert ?? false;
               const expectedFee = isFounding
                 ? TIER_THRESHOLDS.FOUNDING
@@ -383,29 +325,6 @@ export function ExpertManagementTab({
                           <option value="FOUNDING">Founding</option>
                         </select>
                         {/* Fee — computed from commission system */}
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          Fee:{" "}
-                          <FeeEditor
-                            current={fee}
-                            onSave={(v) => onSetFee(expert.id, v)}
-                          />
-                          {hasOverride && (
-                            <span
-                              className="text-[10px] text-amber-500 ml-1"
-                              title={`Admin override (tier default: ${expectedFee}%)`}
-                            >
-                              ⚙️
-                            </span>
-                          )}
-                          {isFounding && !hasOverride && (
-                            <span
-                              className="text-[10px] text-yellow-500 ml-1"
-                              title="Founding Expert rate"
-                            >
-                              🔒
-                            </span>
-                          )}
-                        </div>
                         <div className="text-xs text-muted-foreground">
                           {expert.completedSalesCount ?? 0} sales
                         </div>

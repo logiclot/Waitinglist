@@ -695,7 +695,7 @@ export default async function SolutionPage({ params }: PageProps) {
                     <div className="pt-2">
                       <Link
                         href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}&type=demo`}
-                        className="block w-full text-center border border-border bg-background hover:bg-secondary/50 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 text-foreground"
+                        className="w-full text-center border border-border bg-background hover:bg-secondary/50 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 text-foreground"
                       >
                         <PlayCircle className="h-4 w-4" /> See this live — €
                         {(solution as { demoPrice?: number }).demoPrice ?? 2}{" "}
@@ -796,7 +796,7 @@ export default async function SolutionPage({ params }: PageProps) {
                   <div className="space-y-3">
                     <Link
                       href={`/messages/new?expert=${solution.expert.id}&solution=${solution.id}`}
-                      className="block w-full text-center border border-border bg-background hover:bg-secondary/50 py-2 rounded-lg font-medium text-xs transition-colors flex items-center justify-center gap-2 text-foreground"
+                      className="w-full text-center border border-border bg-background hover:bg-secondary/50 py-2 rounded-lg font-medium text-xs transition-colors flex items-center justify-center gap-2 text-foreground"
                     >
                       <MessageSquare className="h-3.5 w-3.5" /> Message Expert
                     </Link>

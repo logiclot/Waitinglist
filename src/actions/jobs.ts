@@ -117,7 +117,7 @@ export async function activateJobPost(job: JobPost) {
       where: {
         status: "APPROVED",
         OR: [
-          { isFoundingExpert: true },
+          { isFoundingExpert: true, tier: "FOUNDING" },
           { tier: "ELITE" },
           // PROVEN experts can see Discovery Scans
           ...(isDiscovery ? [{ tier: "PROVEN" as const }] : []),
@@ -291,7 +291,7 @@ export async function submitBid(prevState: unknown, formData: FormData) {
     if (specialist.status !== "APPROVED") {
       return { error: "Your profile is pending approval. You'll be able to submit proposals once approved." };
     }
-    if (specialist.tier !== "ELITE" && !specialist.isFoundingExpert) {
+    if (specialist.tier !== "ELITE" && specialist.tier !== "FOUNDING") {
       return { error: "Only Elite and Founding experts can submit proposals. Deliver great solutions to level up." };
     }
 

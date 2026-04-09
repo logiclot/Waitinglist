@@ -147,7 +147,7 @@ export async function publishSolution(solutionId: string) {
 
   const expert = await prisma.specialistProfile.findUnique({
     where: { userId: session.user.id },
-    select: { id: true, status: true, isFoundingExpert: true, foundingRank: true, slug: true },
+    select: { id: true, status: true, isFoundingExpert: true, foundingRank: true, slug: true, tier: true },
   });
 
   const solution = await prisma.solution.findUnique({
@@ -245,7 +245,7 @@ export async function publishSolution(solutionId: string) {
 
     if (publishedCount >= 3 && !expert.isFoundingExpert && expert.foundingRank === null) {
       const foundingCount = await prisma.specialistProfile.count({
-        where: { isFoundingExpert: true }
+        where: { isFoundingExpert: true, tier: "FOUNDING" }
       });
 
       if (foundingCount < 20) {
@@ -253,6 +253,7 @@ export async function publishSolution(solutionId: string) {
           where: { id: expert.id },
           data: {
             isFoundingExpert: true,
+            tier: "FOUNDING",
             foundingRank: foundingCount + 1
           }
         });

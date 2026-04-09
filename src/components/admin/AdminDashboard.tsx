@@ -429,9 +429,7 @@ export function AdminDashboard({
     await setExpertFee(id, fee);
     setExpertList(
       expertList.map((e) =>
-        e.id === id
-          ? { ...e, commissionOverridePercent: fee, platformFeePercentage: fee }
-          : e,
+        e.id === id ? { ...e, platformFeePercentage: fee } : e,
       ),
     );
     showMessage(`Fee updated to ${fee}%.`);
@@ -455,7 +453,6 @@ export function AdminDashboard({
           ? {
               ...e,
               tier,
-              commissionOverridePercent: fee,
               platformFeePercentage: fee,
             }
           : e,
@@ -736,7 +733,6 @@ export function AdminDashboard({
           onSuspend={handleSuspend}
           onMakeFounding={handleMakeFounding}
           onRemoveFounding={handleRemoveFounding}
-          onSetFee={handleSetFee}
           onSetTier={handleSetTier}
           onDeleteUser={handleDeleteUser}
           onLiftBidBan={async (id) => {
