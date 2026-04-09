@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Zap, CheckCircle2, Clock, Users, Copy, Gift, ArrowRight, BarChart2, Sparkles } from "lucide-react";
 import { ActiveCoupons } from "./ActiveCoupons";
 import { toast } from "sonner";
@@ -39,7 +40,6 @@ interface BusinessOverviewProps {
   referralStats?: ReferralStats;
   activeCoupons?: { code: string; title: string }[];
   activeOrders?: ActiveOrder[];
-  recommendedSolutions?: RecommendedSolution[];
   completedProjectCount?: number;
   freeDiscoveryScans?: number;
 }
@@ -48,11 +48,20 @@ export function BusinessOverview({
   referralStats,
   activeCoupons = [],
   activeOrders = [],
-  recommendedSolutions = [],
   completedProjectCount = 0,
   freeDiscoveryScans = 0,
 }: BusinessOverviewProps) {
   const hasActiveWork = activeOrders.length > 0;
+
+  const { data: recommendedSolutions = [], isPending: isSolutionsPending } = useQuery<RecommendedSolution[]>({
+    queryKey: ["random-solutions"],
+    queryFn: async () => {
+      const res = await fetch("/api/solutions/random");
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 120_000,
+  });
 
   const [referralLink, setReferralLink] = useState("");
   useEffect(() => {
@@ -332,7 +341,27 @@ export function BusinessOverview({
           </Link>
         </div>
 
-        {recommendedSolutions.length === 0 ? (
+        {isSolutionsPending ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-card border border-border rounded-xl p-5 space-y-3"
+              >
+                <div className="h-5 w-20 rounded bg-muted animate-pulse" />
+                <div className="h-5 w-3/4 rounded bg-muted animate-pulse" />
+                <div className="space-y-1.5">
+                  <div className="h-3 w-full rounded bg-muted animate-pulse" />
+                  <div className="h-3 w-2/3 rounded bg-muted animate-pulse" />
+                </div>
+                <div className="pt-3 border-t border-border flex items-center justify-between">
+                  <div className="h-4 w-16 rounded bg-muted animate-pulse" />
+                  <div className="h-4 w-20 rounded bg-muted animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : recommendedSolutions.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-6 text-center text-muted-foreground text-sm">
             <Link href="/solutions" className="text-primary hover:underline font-medium">Browse the solution library →</Link>
           </div>

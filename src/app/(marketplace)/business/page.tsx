@@ -105,7 +105,7 @@ function BusinessDashboardSkeleton() {
 }
 
 async function BusinessDashboardContent({ userId }: { userId: string }) {
-  const [referralStats, activeCoupons, activeOrdersRaw, recommendedSolutionsRaw, completedProjectCount, businessProfile] = await Promise.all([
+  const [referralStats, activeCoupons, activeOrdersRaw, completedProjectCount, businessProfile] = await Promise.all([
     getReferralStats(userId),
     getActiveCoupons(),
     prisma.order.findMany({
@@ -121,28 +121,6 @@ async function BusinessDashboardContent({ userId }: { userId: string }) {
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),
-    prisma.solution.findMany({
-      where: {
-        status: "published",
-        moderationStatus: { in: ["auto_approved", "approved"] },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        shortSummary: true,
-        category: true,
-        implementationPriceCents: true,
-        deliveryDays: true,
-        _count: { select: { orders: { where: { status: { in: ["delivered", "approved"] } } } } },
-      },
-    }).then((solutions) =>
-      solutions
-        .sort((a, b) => b._count.orders - a._count.orders)
-        .slice(0, 3)
-    ),
     prisma.order.count({
       where: { buyerId: userId, status: "approved" },
     }),
@@ -158,25 +136,10 @@ async function BusinessDashboardContent({ userId }: { userId: string }) {
     status: o.status,
   }));
 
-  const recommendedSolutions = recommendedSolutionsRaw.map((soln) => {
-    const { _count, ...s } = soln;
-    void _count;
-    return {
-      id: s.id,
-      slug: s.slug,
-      title: s.title,
-      description: s.shortSummary || "",
-      category: s.category,
-      implementationPrice: s.implementationPriceCents / 100,
-      deliveryDays: s.deliveryDays,
-    };
-  });
-
   return (
     <BusinessOverview
       referralStats={referralStats}
       activeOrders={activeOrders}
-      recommendedSolutions={recommendedSolutions}
       activeCoupons={activeCoupons}
       completedProjectCount={completedProjectCount}
       freeDiscoveryScans={businessProfile?.freeDiscoveryScansRemaining ?? 0}
