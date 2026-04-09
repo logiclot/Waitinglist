@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Linkedin, Eye, EyeOff } from "lucide-react";
+import { getCredentialSignInError } from "@/actions/auth";
 
 interface SignInFormProps {
   hasGoogle: boolean;
@@ -36,7 +37,8 @@ export function SignInForm({ hasGoogle, hasLinkedIn }: SignInFormProps) {
     });
 
     if (res?.error) {
-      setError("Invalid email or password");
+      const oauthError = await getCredentialSignInError(email.trim().toLowerCase());
+      setError(oauthError || "Invalid email or password");
       setPending(false);
     } else {
       router.push(callbackUrl);

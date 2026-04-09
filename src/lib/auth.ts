@@ -76,34 +76,41 @@ export const authOptions: NextAuthOptions = {
   providers: [
     ...(hasGoogle
       ? [
-          GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        GoogleProvider({
+          clientId: process.env.GOOGLE_CLIENT_ID!,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          profile: (profile) => ({
+            id: profile.sub,
+            name: profile.name ? toTitleCase(profile.name) : profile.name,
+            email: profile.email,
+            image: profile.picture,
+            role: "USER",
           }),
-        ]
+        }),
+      ]
       : []),
     ...(hasLinkedIn
       ? [
-          LinkedInProvider({
-            clientId: process.env.LINKEDIN_CLIENT_ID!,
-            clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-      client: { token_endpoint_auth_method: "client_secret_post" },
-      issuer: "https://www.linkedin.com",
-      profile: (profile) => ({
-        id: profile.sub,
-        name: profile.name ? toTitleCase(profile.name) : profile.name,
-        email: profile.email,
-        image: profile.picture,
-        role: "USER",
-      }),
-      wellKnown: "https://www.linkedin.com/oauth/.well-known/openid-configuration",
-      authorization: {
-        params: {
-          scope: "openid profile email",
-        },
-      },
-    }),
-        ]
+        LinkedInProvider({
+          clientId: process.env.LINKEDIN_CLIENT_ID!,
+          clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
+          client: { token_endpoint_auth_method: "client_secret_post" },
+          issuer: "https://www.linkedin.com",
+          profile: (profile) => ({
+            id: profile.sub,
+            name: profile.name ? toTitleCase(profile.name) : profile.name,
+            email: profile.email,
+            image: profile.picture,
+            role: "USER",
+          }),
+          wellKnown: "https://www.linkedin.com/oauth/.well-known/openid-configuration",
+          authorization: {
+            params: {
+              scope: "openid profile email",
+            },
+          },
+        }),
+      ]
       : []),
     CredentialsProvider({
       name: "Credentials",
@@ -194,13 +201,13 @@ export const authOptions: NextAuthOptions = {
           // Update verified status + backfill profile image from OAuth if missing
           const needsUpdate = !existingUser.emailVerifiedAt || (!existingUser.profileImageUrl && user.image);
           if (needsUpdate) {
-             await prisma.user.update({
-               where: { id: existingUser.id },
-               data: {
-                 ...(!existingUser.emailVerifiedAt && { emailVerifiedAt: new Date() }),
-                 ...(!existingUser.profileImageUrl && user.image && { profileImageUrl: user.image }),
-               },
-             });
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: {
+                ...(!existingUser.emailVerifiedAt && { emailVerifiedAt: new Date() }),
+                ...(!existingUser.profileImageUrl && user.image && { profileImageUrl: user.image }),
+              },
+            });
           }
 
           // Inject role and profile into user object for session/jwt callbacks

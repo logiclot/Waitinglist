@@ -231,9 +231,24 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
       orderBy: { createdAt: "asc" },
     });
 
-    // Always return success to prevent email enumeration attacks
-    if (!user || !user.passwordHash) {
+    // No account — return success to prevent email enumeration attacks
+    if (!user) {
       return { success: true };
+    }
+
+    // OAuth-only account — tell the user which provider to use instead
+    if (!user.passwordHash || user.passwordHash.length < 10) {
+      const linkedAccount = await prisma.account.findFirst({
+        where: { userId: user.id },
+        select: { provider: true },
+      });
+      const provider = linkedAccount?.provider;
+      const providerName = provider === "google" ? "Google" : provider === "linkedin" ? "LinkedIn" : null;
+
+      if (providerName) {
+        return { error: `This account uses ${providerName} sign-in and doesn't have a password. Please sign in with ${providerName} instead.` };
+      }
+      return { error: "This account doesn't have a password. Please sign in with your social account." };
     }
 
     // Invalidate any existing reset token for this user
@@ -455,6 +470,41 @@ export async function deleteMyAccount(password: string) {
   } catch (e) {
     log.error("auth.account_delete_failed", { userId, error: String(e) });
     return { error: "Something went wrong. Please try again or contact contact@logiclot.io." };
+  }
+}
+
+/**
+ * When credentials sign-in fails, check if the email belongs to an OAuth-only
+ * account so we can show a helpful "use Google/LinkedIn" message instead of
+ * the generic "invalid email or password" error.
+ */
+export async function getCredentialSignInError(email: string): Promise<string | null> {
+  try {
+    const normalised = email.trim().toLowerCase();
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: normalised, mode: "insensitive" } },
+      select: { id: true, passwordHash: true },
+    });
+
+    if (!user) return null; // generic error is fine
+
+    if (!user.passwordHash || user.passwordHash.length < 10) {
+      const linkedAccount = await prisma.account.findFirst({
+        where: { userId: user.id },
+        select: { provider: true },
+      });
+      const provider = linkedAccount?.provider;
+      const providerName = provider === "google" ? "Google" : provider === "linkedin" ? "LinkedIn" : null;
+
+      if (providerName) {
+        return `This account uses ${providerName} sign-in. Please use the "${providerName}" button above to log in.`;
+      }
+      return "This account doesn't have a password. Please sign in with your social account.";
+    }
+
+    return null; // password exists — generic error is fine (wrong password)
+  } catch {
+    return null;
   }
 }
 
