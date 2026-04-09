@@ -1,6 +1,6 @@
 import { Award, Crown, TrendingUp } from "lucide-react";
 
-type Tier = "STANDARD" | "PROVEN" | "ELITE";
+type Tier = "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING";
 
 interface TierBadgeProps {
   tier: Tier;
@@ -8,15 +8,22 @@ interface TierBadgeProps {
   size?: "sm" | "md";
 }
 
-export function TierBadge({ tier, isFoundingExpert = false, size = "sm" }: TierBadgeProps) {
-  const base = size === "md"
-    ? "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border"
-    : "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border";
+export function TierBadge({
+  tier,
+  isFoundingExpert = false,
+  size = "sm",
+}: TierBadgeProps) {
+  const base =
+    size === "md"
+      ? "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border"
+      : "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border";
 
   const iconSize = size === "md" ? "h-3.5 w-3.5" : "h-3 w-3";
 
   const foundingBadge = isFoundingExpert ? (
-    <span className={`${base} bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-neutral-700`}>
+    <span
+      className={`${base} bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-neutral-700`}
+    >
       <Crown className={`${iconSize} text-amber-400`} />
       Founding Expert
     </span>
@@ -25,7 +32,9 @@ export function TierBadge({ tier, isFoundingExpert = false, size = "sm" }: TierB
   const tierBadge = (() => {
     if (tier === "ELITE") {
       return (
-        <span className={`${base} bg-foreground text-background border-foreground`}>
+        <span
+          className={`${base} bg-foreground text-background border-foreground`}
+        >
           <Award className={iconSize} />
           Elite
         </span>
@@ -33,7 +42,9 @@ export function TierBadge({ tier, isFoundingExpert = false, size = "sm" }: TierB
     }
     if (tier === "PROVEN") {
       return (
-        <span className={`${base} bg-primary/10 text-primary border-primary/20`}>
+        <span
+          className={`${base} bg-primary/10 text-primary border-primary/20`}
+        >
           <TrendingUp className={iconSize} />
           Proven
         </span>

@@ -1,7 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, PlayCircle, ShieldCheck, Heart, TrendingUp, Users, Wrench, Lock, Edit, Trash2, ArrowUpCircle, Sparkles } from "lucide-react";
+import {
+  Clock,
+  PlayCircle,
+  ShieldCheck,
+  Heart,
+  TrendingUp,
+  Users,
+  Wrench,
+  Lock,
+  Edit,
+  Trash2,
+  ArrowUpCircle,
+  Sparkles,
+} from "lucide-react";
 import { Solution } from "@/types";
 import { TierBadge } from "@/components/ui/TierBadge";
 import { CategoryBadge } from "@/components/ui/CategoryBadge";
@@ -19,7 +32,12 @@ interface SolutionCardProps {
   lockReason?: string;
 }
 
-export function SolutionCard({ solution, editHref, isLocked, lockReason }: SolutionCardProps) {
+export function SolutionCard({
+  solution,
+  editHref,
+  isLocked,
+  lockReason,
+}: SolutionCardProps) {
   const { savedIds, toggleSaved } = useSavedSolutionsContext();
   const router = useRouter();
   const isSaved = savedIds.has(solution.id);
@@ -55,14 +73,20 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
     }
 
     setIsCreatingVersion(true);
-    const res = await createSolutionVersion(solution.id, changelog, parseFloat(upgradePrice) * 100);
+    const res = await createSolutionVersion(
+      solution.id,
+      changelog,
+      parseFloat(upgradePrice) * 100,
+    );
     setIsCreatingVersion(false);
 
     if (res.success) {
       setShowUpgradeModal(false);
       setChangelog("");
       setUpgradePrice("");
-      toast.success(`v${(solution.version || 1) + 1}.0 draft created! Find it in your Drafts tab.`);
+      toast.success(
+        `v${(solution.version || 1) + 1}.0 draft created! Find it in your Drafts tab.`,
+      );
       router.refresh();
     } else {
       toast.error(res.error || "Failed to create version");
@@ -74,22 +98,48 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
 
   // Status Badge for Owner View
   if (solution.status === "draft") {
-    badges.push({ label: "Draft", icon: Edit, tooltip: "Not visible to public", className: "text-slate-600 bg-slate-100 border-slate-300" });
+    badges.push({
+      label: "Draft",
+      icon: Edit,
+      tooltip: "Not visible to public",
+      className: "text-slate-600 bg-slate-100 border-slate-300",
+    });
   }
 
-  if (solution.is_vetted) badges.push({ label: "Vetted", icon: ShieldCheck, tooltip: "Verified portfolio and identity; performance tracked on‑platform.", className: "text-blue-700 bg-blue-50 border-blue-200" });
-  if (solution.requires_nda) badges.push({ label: "NDA", icon: LockIcon, tooltip: "Covered by platform NDA; files and chat protected.", className: "text-purple-700 bg-purple-50 border-purple-200" });
-  if (solution.support_days) badges.push({ label: `Support: ${solution.support_days}d`, icon: Wrench, tooltip: "Includes post‑delivery support (bug‑fix scope).", className: "text-slate-600 bg-slate-50 border-slate-200" });
+  if (solution.is_vetted)
+    badges.push({
+      label: "Vetted",
+      icon: ShieldCheck,
+      tooltip:
+        "Verified portfolio and identity; performance tracked on‑platform.",
+      className: "text-blue-700 bg-blue-50 border-blue-200",
+    });
+  if (solution.requires_nda)
+    badges.push({
+      label: "NDA",
+      icon: LockIcon,
+      tooltip: "Covered by platform NDA; files and chat protected.",
+      className: "text-purple-700 bg-purple-50 border-purple-200",
+    });
+  if (solution.support_days)
+    badges.push({
+      label: `Support: ${solution.support_days}d`,
+      icon: Wrench,
+      tooltip: "Includes post‑delivery support (bug‑fix scope).",
+      className: "text-slate-600 bg-slate-50 border-slate-200",
+    });
 
   const displayBadges = badges.slice(0, 3);
 
   // Proof Strip Logic
   const buildProofStrip = () => {
     const parts = [];
-    if (solution.adoption_count) parts.push(`Trusted by ${solution.adoption_count}+ teams`);
+    if (solution.adoption_count)
+      parts.push(`Trusted by ${solution.adoption_count}+ teams`);
     if (solution.avg_roi) parts.push(`Avg ROI ${solution.avg_roi}x`);
-    if (solution.delivery_days) parts.push(`Live in ${solution.delivery_days} days`);
-    
+    if (solution.delivery_days)
+      parts.push(`Live in ${solution.delivery_days} days`);
+
     if (solution.adoption_count && solution.avg_roi && solution.delivery_days) {
       return `Trusted by ${solution.adoption_count}+ teams · Avg ROI ${solution.avg_roi}x · Live in ${solution.delivery_days} days`;
     }
@@ -109,18 +159,16 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
 
   return (
     <div className="group relative rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 flex flex-col h-full overflow-hidden">
-      
       {/* Top Section */}
       <div className="p-6 flex-1 flex flex-col">
-        
         {/* Header Row: Category & Badges */}
         <div className="flex items-start justify-between mb-4 gap-2">
           <CategoryBadge category={solution.category} size="sm" />
-          
+
           <div className="flex items-center gap-1.5 shrink-0">
             {displayBadges.map((badge, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${badge.className} cursor-help`}
                 title={badge.tooltip}
               >
@@ -128,8 +176,12 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
                 <span className="hidden xl:inline">{badge.label}</span>
               </div>
             ))}
-            {(solution.demoVideoStatus === 'approved' || solution.demo_video_status === 'approved') && (
-              <div className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full" title="Verified Demo Video Available">
+            {(solution.demoVideoStatus === "approved" ||
+              solution.demo_video_status === "approved") && (
+              <div
+                className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full"
+                title="Verified Demo Video Available"
+              >
                 <PlayCircle className="h-3 w-3" /> Demo
               </div>
             )}
@@ -148,7 +200,10 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
         {solution.outline && solution.outline.length > 0 && (
           <div className="mb-4 space-y-1">
             {solution.outline.slice(0, 3).map((line, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+              <div
+                key={i}
+                className="flex items-start gap-2 text-xs text-muted-foreground"
+              >
                 <span className="mt-1 w-1 h-1 rounded-full bg-primary shrink-0" />
                 <span className="line-clamp-1">{line}</span>
               </div>
@@ -167,7 +222,10 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
         {/* Tech Stack */}
         <div className="flex flex-wrap gap-2 mb-4">
           {solution.integrations.slice(0, 3).map((tool) => (
-            <span key={tool} className="text-xs font-medium border border-border/60 bg-secondary/50 px-2 py-1 rounded-md text-muted-foreground">
+            <span
+              key={tool}
+              className="text-xs font-medium border border-border/60 bg-secondary/50 px-2 py-1 rounded-md text-muted-foreground"
+            >
               {tool}
             </span>
           ))}
@@ -183,7 +241,8 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
           <div className="flex items-center gap-1.5 mb-3">
             <Sparkles className="h-3 w-3 text-primary" />
             <span className="text-xs font-medium text-primary">
-              {solution.skills.length} skill{solution.skills.length !== 1 ? "s" : ""} included
+              {solution.skills.length} skill
+              {solution.skills.length !== 1 ? "s" : ""} included
             </span>
           </div>
         )}
@@ -207,15 +266,30 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15 overflow-hidden relative">
               {solution.expert.profile_image_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={solution.expert.profile_image_url} alt={solution.expert.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src={solution.expert.profile_image_url}
+                  alt={solution.expert.name}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               ) : (
                 (solution.expert.name || "?").slice(0, 2).toUpperCase()
               )}
             </div>
-            <span className="text-xs font-medium text-muted-foreground truncate flex-1">{solution.expert.name}</span>
-            {(solution.expert.founding || (solution.expert.tier && solution.expert.tier !== "STANDARD")) && (
+            <span className="text-xs font-medium text-muted-foreground truncate flex-1">
+              {solution.expert.name}
+            </span>
+            {(solution.expert.founding ||
+              (solution.expert.tier &&
+                solution.expert.tier !== "STANDARD")) && (
               <TierBadge
-                tier={(solution.expert.tier || "STANDARD") as "STANDARD" | "PROVEN" | "ELITE"}
+                tier={
+                  (solution.expert.tier || "STANDARD") as
+                    | "STANDARD"
+                    | "PROVEN"
+                    | "ELITE"
+                    | "FOUNDING"
+                }
                 isFoundingExpert={solution.expert.founding}
                 size="sm"
               />
@@ -224,15 +298,22 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
         )}
         <div className="flex items-end justify-between py-4 border-t border-border">
           <div>
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Implementation</p>
-            <p className="font-bold text-xl text-foreground tracking-tight">€{solution.implementation_price.toLocaleString("de-DE")}</p>
-            
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+              Implementation
+            </p>
+            <p className="font-bold text-xl text-foreground tracking-tight">
+              €{solution.implementation_price.toLocaleString("de-DE")}
+            </p>
+
             {/* Delivery & ROI Lines & Support */}
             <div className="flex flex-col gap-0.5 mt-1.5">
               {(solution.delivery_days_range || solution.delivery_days) && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> 
-                  Delivery: {solution.delivery_days_range ? `${solution.delivery_days_range} days` : `~${solution.delivery_days} days`}
+                  <Clock className="h-3 w-3" />
+                  Delivery:{" "}
+                  {solution.delivery_days_range
+                    ? `${solution.delivery_days_range} days`
+                    : `~${solution.delivery_days} days`}
                 </p>
               )}
               {(solution.support_days ?? 0) > 0 && (
@@ -249,20 +330,25 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               )}
             </div>
           </div>
-          
+
           <div className="text-right pl-4">
-            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Est. Monthly AI</p>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">
+              Est. Monthly AI
+            </p>
             <p className="font-medium text-sm text-foreground">
-              €{solution.monthly_cost_min || 0}–€{solution.monthly_cost_max || 0}
+              €{solution.monthly_cost_min || 0}–€
+              {solution.monthly_cost_max || 0}
             </p>
             {(solution.version || 1) > 1 && (
-              <p className="text-[10px] text-muted-foreground mt-1.5">v{solution.version}.0</p>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                v{solution.version}.0
+              </p>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {editHref && solution.status === 'draft' ? (
+          {editHref && solution.status === "draft" ? (
             <Link
               href={`${editHref}?step=${solution.lastStep || 1}`}
               className="flex-1 text-center bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm"
@@ -277,12 +363,12 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               View Solution
             </Link>
           )}
-          
+
           {/* Owner Actions (Moved to Footer) */}
           {editHref && (
             <>
               {/* Upgrade Button (if published) */}
-              {solution.status === 'published' && (
+              {solution.status === "published" && (
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -296,7 +382,7 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               )}
 
               {/* Edit Button (if not draft) */}
-              {solution.status !== 'draft' && (
+              {solution.status !== "draft" && (
                 <Link
                   href={isLocked ? "#" : editHref}
                   onClick={(e) => isLocked && e.preventDefault()}
@@ -307,12 +393,16 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
                   }`}
                   title={isLocked ? `Locked: ${lockReason}` : "Edit Solution"}
                 >
-                  {isLocked ? <Lock className="h-5 w-5" /> : <Edit className="h-5 w-5" />}
+                  {isLocked ? (
+                    <Lock className="h-5 w-5" />
+                  ) : (
+                    <Edit className="h-5 w-5" />
+                  )}
                 </Link>
               )}
 
               {/* Remove Button */}
-              {solution.status !== 'draft' && (
+              {solution.status !== "draft" && (
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -340,8 +430,8 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
               onClick={handleSave}
               disabled={isSaving}
               className={`p-2.5 rounded-lg border transition-all ${
-                isSaved 
-                  ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100" 
+                isSaved
+                  ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
                   : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
               }`}
               title={isSaved ? "Saved" : "Save Solution"}
@@ -353,101 +443,119 @@ export function SolutionCard({ solution, editHref, isLocked, lockReason }: Solut
       </div>
 
       {/* Confirmation Modal — rendered via portal to escape card transforms */}
-      {showRemoveConfirm && createPortal(
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in" onClick={() => setShowRemoveConfirm(false)}>
-          <div className="bg-card border border-border rounded-xl p-6 shadow-xl max-w-xs text-center" onClick={e => e.stopPropagation()}>
-            <h4 className="font-bold text-lg mb-2">Remove Solution?</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              This will hide the solution from Browse Solutions. You can re-publish later.
-            </p>
-            <div className="flex gap-2 justify-center">
-              <button
-                onClick={() => setShowRemoveConfirm(false)}
-                className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRemove}
-                className="px-4 py-2 text-sm font-bold bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* Upgrade Modal — rendered via portal to escape card transforms */}
-      {showUpgradeModal && createPortal(
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in"
-          onClick={() => setShowUpgradeModal(false)}
-        >
+      {showRemoveConfirm &&
+        createPortal(
           <div
-            className="bg-card border border-border rounded-2xl p-8 shadow-2xl max-w-lg w-full text-left"
-            onClick={e => e.stopPropagation()}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in"
+            onClick={() => setShowRemoveConfirm(false)}
           >
-            <h4 className="font-bold text-xl mb-1 flex items-center gap-2">
-              <ArrowUpCircle className="w-5 h-5 text-primary" /> Create Version {(solution.version || 1) + 1}.0
-            </h4>
-            <p className="text-sm text-muted-foreground mb-6">
-              Describe what&apos;s improved and set an optional upgrade fee for existing buyers.
-            </p>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-foreground mb-2">
-                  What&apos;s New? <span className="text-destructive">*</span>
-                </label>
-                <textarea
-                  value={changelog}
-                  onChange={e => setChangelog(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg p-3 text-sm h-40 resize-none focus:outline-none focus:border-primary transition-colors"
-                  placeholder="Describe the improvements, bug fixes, and new features in this version..."
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-foreground mb-2">
-                  Upgrade Fee (€) <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={upgradePrice}
-                  onChange={e => setUpgradePrice(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
-                  placeholder="e.g. 99"
-                />
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  Buyers of v{solution.version || 1}.0 pay this to upgrade. New buyers always pay the full price.
-                </p>
-              </div>
-
-              <div className="flex gap-3 pt-2">
+            <div
+              className="bg-card border border-border rounded-xl p-6 shadow-xl max-w-xs text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h4 className="font-bold text-lg mb-2">Remove Solution?</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                This will hide the solution from Browse Solutions. You can
+                re-publish later.
+              </p>
+              <div className="flex gap-2 justify-center">
                 <button
-                  onClick={(e) => { e.preventDefault(); setShowUpgradeModal(false); }}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary rounded-lg border border-border transition-colors"
+                  onClick={() => setShowRemoveConfirm(false)}
+                  className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-lg"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={(e) => { e.preventDefault(); handleCreateVersion(); }}
-                  disabled={isCreatingVersion}
-                  className="flex-1 px-4 py-2.5 text-sm font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                  onClick={handleRemove}
+                  className="px-4 py-2 text-sm font-bold bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
-                  {isCreatingVersion ? "Creating…" : "Create Draft"}
+                  Remove
                 </button>
               </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body,
+        )}
+
+      {/* Upgrade Modal — rendered via portal to escape card transforms */}
+      {showUpgradeModal &&
+        createPortal(
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in"
+            onClick={() => setShowUpgradeModal(false)}
+          >
+            <div
+              className="bg-card border border-border rounded-2xl p-8 shadow-2xl max-w-lg w-full text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h4 className="font-bold text-xl mb-1 flex items-center gap-2">
+                <ArrowUpCircle className="w-5 h-5 text-primary" /> Create
+                Version {(solution.version || 1) + 1}.0
+              </h4>
+              <p className="text-sm text-muted-foreground mb-6">
+                Describe what&apos;s improved and set an optional upgrade fee
+                for existing buyers.
+              </p>
+
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-bold text-foreground mb-2">
+                    What&apos;s New? <span className="text-destructive">*</span>
+                  </label>
+                  <textarea
+                    value={changelog}
+                    onChange={(e) => setChangelog(e.target.value)}
+                    className="w-full bg-background border border-border rounded-lg p-3 text-sm h-40 resize-none focus:outline-none focus:border-primary transition-colors"
+                    placeholder="Describe the improvements, bug fixes, and new features in this version..."
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-foreground mb-2">
+                    Upgrade Fee (€) <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={upgradePrice}
+                    onChange={(e) => setUpgradePrice(e.target.value)}
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
+                    placeholder="e.g. 99"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    Buyers of v{solution.version || 1}.0 pay this to upgrade.
+                    New buyers always pay the full price.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowUpgradeModal(false);
+                    }}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary rounded-lg border border-border transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleCreateVersion();
+                    }}
+                    disabled={isCreatingVersion}
+                    className="flex-1 px-4 py-2.5 text-sm font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                  >
+                    {isCreatingVersion ? "Creating…" : "Create Draft"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

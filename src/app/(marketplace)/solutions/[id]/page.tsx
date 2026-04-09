@@ -1,6 +1,20 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CheckCircle, Zap, Euro, ShieldCheck, Award, Info, PlayCircle, Star, ChevronDown, MessageSquare, Layers, ArrowRight, Sparkles } from "lucide-react";
+import {
+  CheckCircle,
+  Zap,
+  Euro,
+  ShieldCheck,
+  Award,
+  Info,
+  PlayCircle,
+  Star,
+  ChevronDown,
+  MessageSquare,
+  Layers,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
 import { DemoVideoSection } from "@/components/DemoVideoSection";
 import { SimilarSolutions } from "@/components/SimilarSolutions";
 import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
@@ -31,7 +45,8 @@ async function getVersionChain(
       select: { version: true, changelog: true, parentId: true },
     });
     if (!parent) break;
-    if (parent.changelog) chain.unshift({ version: parent.version, changelog: parent.changelog });
+    if (parent.changelog)
+      chain.unshift({ version: parent.version, changelog: parent.changelog });
     pid = parent.parentId;
   }
   if (changelog) chain.push({ version, changelog });
@@ -54,13 +69,17 @@ async function getSolution(idOrSlug: string) {
   try {
     let s = await prisma.solution.findUnique({
       where: { id: idOrSlug },
-      include: { expert: { include: { user: { select: { profileImageUrl: true } } } } }
+      include: {
+        expert: { include: { user: { select: { profileImageUrl: true } } } },
+      },
     });
 
     if (!s) {
       s = await prisma.solution.findUnique({
         where: { slug: idOrSlug },
-        include: { expert: { include: { user: { select: { profileImageUrl: true } } } } }
+        include: {
+          expert: { include: { user: { select: { profileImageUrl: true } } } },
+        },
       });
     }
 
@@ -81,7 +100,8 @@ async function getSolution(idOrSlug: string) {
       expert: mapPrismaExpert(s.expert),
       // Ensure businessGoals is mapped if it exists
       businessGoals: s.businessGoals || [],
-      skills: (s.skills as unknown as { name: string; description: string }[]) || [],
+      skills:
+        (s.skills as unknown as { name: string; description: string }[]) || [],
     } as unknown as Solution & { milestones: Milestone[] };
   } catch (e) {
     log.error("Error fetching solution", { error: e });
@@ -93,7 +113,10 @@ export async function generateMetadata({ params }: PageProps) {
   const solution = await getSolution(params.id);
   if (!solution) return { title: "Solution Not Found" };
   const url = `https://${BRAND_DOMAIN}/solutions/${params.id}`;
-  const description = solution.short_summary || solution.description || `${solution.title} on ${BRAND_NAME}`;
+  const description =
+    solution.short_summary ||
+    solution.description ||
+    `${solution.title} on ${BRAND_NAME}`;
   return {
     title: `${solution.title} | ${BRAND_NAME}`,
     description,
@@ -138,11 +161,11 @@ export default async function SolutionPage({ params }: PageProps) {
       status: "published",
       OR: [
         { moderationStatus: "auto_approved" },
-        { moderationStatus: "approved" }
-      ]
+        { moderationStatus: "approved" },
+      ],
     },
     select: { id: true },
-    orderBy: { version: "desc" }
+    orderBy: { version: "desc" },
   });
 
   if (newerVersion) {
@@ -173,18 +196,19 @@ export default async function SolutionPage({ params }: PageProps) {
     include: { expert: true },
   });
   // If not enough in same category, fill up with any other published solutions
-  const similarFromOther = similarRaw.length < 3
-    ? await prisma.solution.findMany({
-        where: {
-          status: "published",
-          id: { notIn: [solution.id, ...similarRaw.map(s => s.id)] },
-        },
-        orderBy: { publishedAt: "desc" },
-        take: 3 - similarRaw.length,
-        include: { expert: true },
-      })
-    : [];
-  const similarSolutions = [...similarRaw, ...similarFromOther].map(s => ({
+  const similarFromOther =
+    similarRaw.length < 3
+      ? await prisma.solution.findMany({
+          where: {
+            status: "published",
+            id: { notIn: [solution.id, ...similarRaw.map((s) => s.id)] },
+          },
+          orderBy: { publishedAt: "desc" },
+          take: 3 - similarRaw.length,
+          include: { expert: true },
+        })
+      : [];
+  const similarSolutions = [...similarRaw, ...similarFromOther].map((s) => ({
     id: s.id,
     slug: s.slug,
     title: s.title,
@@ -216,24 +240,30 @@ export default async function SolutionPage({ params }: PageProps) {
               price: solution.implementation_price,
               priceCurrency: "EUR",
               availability: "https://schema.org/InStock",
-              seller: solution.expert ? {
-                "@type": "Person",
-                name: solution.expert.name,
-              } : undefined,
+              seller: solution.expert
+                ? {
+                    "@type": "Person",
+                    name: solution.expert.name,
+                  }
+                : undefined,
             },
-            ...(solution.faq && solution.faq.length > 0 ? {
-              subjectOf: {
-                "@type": "FAQPage",
-                mainEntity: solution.faq.map((item: { question: string; answer: string }) => ({
-                  "@type": "Question",
-                  name: item.question,
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: item.answer,
+            ...(solution.faq && solution.faq.length > 0
+              ? {
+                  subjectOf: {
+                    "@type": "FAQPage",
+                    mainEntity: solution.faq.map(
+                      (item: { question: string; answer: string }) => ({
+                        "@type": "Question",
+                        name: item.question,
+                        acceptedAnswer: {
+                          "@type": "Answer",
+                          text: item.answer,
+                        },
+                      }),
+                    ),
                   },
-                })),
-              },
-            } : {}),
+                }
+              : {}),
           }),
         }}
       />
@@ -267,15 +297,12 @@ export default async function SolutionPage({ params }: PageProps) {
         }}
       />
       <div className="container mx-auto px-4 py-8">
-
         {/* Back to Browse */}
         <BackToBrowse />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-
           {/* Main Content (Left Column) */}
           <div className="lg:col-span-8 space-y-10">
-
             {/* 1. Title + Meta */}
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -302,24 +329,36 @@ export default async function SolutionPage({ params }: PageProps) {
               {/* Quick-glance stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
                 <div className="p-3 bg-secondary/10 rounded-lg border border-border/50">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Business Goal</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                    Business Goal
+                  </p>
                   <p className="font-medium text-sm text-foreground leading-snug">
                     {solution.businessGoals?.[0] || "Operational efficiency"}
                   </p>
                 </div>
                 <div className="p-3 bg-secondary/10 rounded-lg border border-border/50">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Est. Impact</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                    Est. Impact
+                  </p>
                   <p className="font-medium text-sm text-foreground line-clamp-2 leading-snug">
                     {solution.outcome || "Reduces manual work"}
                   </p>
                 </div>
                 <div className="p-3 bg-secondary/10 rounded-lg border border-border/50">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Delivery</p>
-                  <p className="font-medium text-sm text-foreground">{solution.delivery_days} days</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                    Delivery
+                  </p>
+                  <p className="font-medium text-sm text-foreground">
+                    {solution.delivery_days} days
+                  </p>
                 </div>
                 <div className="p-3 bg-secondary/10 rounded-lg border border-border/50">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Support</p>
-                  <p className="font-medium text-sm text-foreground">{solution.support_days || 30} days</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">
+                    Support
+                  </p>
+                  <p className="font-medium text-sm text-foreground">
+                    {solution.support_days || 30} days
+                  </p>
                 </div>
               </div>
 
@@ -327,7 +366,10 @@ export default async function SolutionPage({ params }: PageProps) {
               {solution.integrations.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   {solution.integrations.map((tool) => (
-                    <div key={tool} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-background text-xs font-medium text-muted-foreground">
+                    <div
+                      key={tool}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-background text-xs font-medium text-muted-foreground"
+                    >
                       <Zap className="h-3 w-3 text-yellow-500" /> {tool}
                     </div>
                   ))}
@@ -338,11 +380,16 @@ export default async function SolutionPage({ params }: PageProps) {
               {versionHistory.length > 0 && (
                 <div className="space-y-3">
                   {versionHistory.map(({ version: v, changelog: log }) => (
-                    <div key={v} className="p-4 bg-primary/5 border border-primary/15 rounded-lg text-sm">
+                    <div
+                      key={v}
+                      className="p-4 bg-primary/5 border border-primary/15 rounded-lg text-sm"
+                    >
                       <p className="font-bold mb-1 flex items-center gap-2 text-foreground">
                         <Info className="w-4 h-4 text-primary" /> v{v}.0 Updates
                       </p>
-                      <p className="whitespace-pre-line leading-relaxed text-muted-foreground">{log}</p>
+                      <p className="whitespace-pre-line leading-relaxed text-muted-foreground">
+                        {log}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -364,18 +411,27 @@ export default async function SolutionPage({ params }: PageProps) {
                   <Sparkles className="w-5 h-5 text-primary" /> Skills
                 </h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  The AI behind this solution is trained with these specific skills so it performs better and more reliably for your use case.
+                  The AI behind this solution is trained with these specific
+                  skills so it performs better and more reliably for your use
+                  case.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {solution.skills.map((skill, i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/20 transition-colors">
+                    <div
+                      key={i}
+                      className="flex items-start gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/20 transition-colors"
+                    >
                       <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                         <Sparkles className="h-4 w-4 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm text-foreground">{skill.name}</p>
+                        <p className="font-semibold text-sm text-foreground">
+                          {skill.name}
+                        </p>
                         {skill.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{skill.description}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                            {skill.description}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -385,19 +441,26 @@ export default async function SolutionPage({ params }: PageProps) {
             )}
 
             {/* 4. Key Outcomes */}
-            {solution.outline && solution.outline.filter(l => l.trim()).length > 0 && (
-              <div>
-                <h2 className="text-xl font-bold mb-4">Key Outcomes</h2>
-                <ul className="space-y-3">
-                  {solution.outline.filter(l => l.trim()).slice(0, 3).map((line, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-foreground/80">
-                      <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {solution.outline &&
+              solution.outline.filter((l) => l.trim()).length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold mb-4">Key Outcomes</h2>
+                  <ul className="space-y-3">
+                    {solution.outline
+                      .filter((l) => l.trim())
+                      .slice(0, 3)
+                      .map((line, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-3 text-sm text-foreground/80"
+                        >
+                          <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                          <span>{line}</span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
 
             {/* 5. Part of a Suite */}
             {isPartOfStack && (
@@ -422,16 +485,24 @@ export default async function SolutionPage({ params }: PageProps) {
                       <div className="flex-1 pb-2">
                         <div className="flex justify-between items-start mb-1">
                           <h4 className="font-semibold text-base">{m.title}</h4>
-                          <span className="font-semibold text-sm text-foreground ml-4 shrink-0">€{m.price.toLocaleString("de-DE")}</span>
+                          <span className="font-semibold text-sm text-foreground ml-4 shrink-0">
+                            €{m.price.toLocaleString("de-DE")}
+                          </span>
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{m.description}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {m.description}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Total project value</span>
-                  <span className="font-bold text-lg">€{solution.implementation_price.toLocaleString("de-DE")}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Total project value
+                  </span>
+                  <span className="font-bold text-lg">
+                    €{solution.implementation_price.toLocaleString("de-DE")}
+                  </span>
                 </div>
               </section>
             )}
@@ -439,16 +510,23 @@ export default async function SolutionPage({ params }: PageProps) {
             {/* 7. Scope — What's included + What we'll need from you (merged) */}
             <section className="border border-border rounded-xl overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
-
                 {/* What's included */}
                 <div className="p-6">
-                  <h3 className="font-semibold text-base mb-4">What&apos;s included</h3>
+                  <h3 className="font-semibold text-base mb-4">
+                    What&apos;s included
+                  </h3>
                   <ul className="space-y-2.5">
                     {(solution.included && solution.included.length > 0
                       ? solution.included
-                      : ["Fully configured automation workflow", "Video walkthrough & documentation"]
+                      : [
+                          "Fully configured automation workflow",
+                          "Video walkthrough & documentation",
+                        ]
                     ).map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                      <li
+                        key={i}
+                        className="flex items-start gap-2 text-sm text-foreground/80"
+                      >
                         <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                         {item}
                       </li>
@@ -467,21 +545,28 @@ export default async function SolutionPage({ params }: PageProps) {
 
                 {/* What we'll need from you */}
                 <div className="p-6 bg-secondary/5">
-                  <h3 className="font-semibold text-base mb-4">What we&apos;ll need from you</h3>
-                  {solution.requiredInputs && solution.requiredInputs.length > 0 ? (
+                  <h3 className="font-semibold text-base mb-4">
+                    What we&apos;ll need from you
+                  </h3>
+                  {solution.requiredInputs &&
+                  solution.requiredInputs.length > 0 ? (
                     <ul className="space-y-2.5">
                       {solution.requiredInputs.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-sm text-foreground/80"
+                        >
                           <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-muted-foreground shrink-0" />
                           {item}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Details confirmed after purchase or demo call.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Details confirmed after purchase or demo call.
+                    </p>
                   )}
                 </div>
-
               </div>
             </section>
 
@@ -491,11 +576,18 @@ export default async function SolutionPage({ params }: PageProps) {
               <div className="bg-card border border-border rounded-xl p-8 text-center">
                 <div className="flex justify-center gap-1 mb-3">
                   {[1, 2, 3, 4, 5].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-muted-foreground/25" />
+                    <Star
+                      key={i}
+                      className="h-5 w-5 text-muted-foreground/25"
+                    />
                   ))}
                 </div>
-                <p className="font-medium text-foreground mb-1">No reviews yet</p>
-                <p className="text-sm text-muted-foreground mb-5">Reviews appear after project delivery.</p>
+                <p className="font-medium text-foreground mb-1">
+                  No reviews yet
+                </p>
+                <p className="text-sm text-muted-foreground mb-5">
+                  Reviews appear after project delivery.
+                </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Link
                     href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}`}
@@ -516,59 +608,87 @@ export default async function SolutionPage({ params }: PageProps) {
             {/* 9. FAQ */}
             {solution.faq && solution.faq.length > 0 && (
               <section>
-                <h2 className="text-xl font-bold mb-4">Frequently Asked Questions</h2>
+                <h2 className="text-xl font-bold mb-4">
+                  Frequently Asked Questions
+                </h2>
                 <div className="space-y-3">
                   {solution.faq.map((item, i) => (
-                    <details key={i} className="group border border-border rounded-lg">
+                    <details
+                      key={i}
+                      className="group border border-border rounded-lg"
+                    >
                       <summary className="flex items-center justify-between p-4 font-medium cursor-pointer list-none text-sm">
                         {item.question}
                         <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180 text-muted-foreground" />
                       </summary>
-                      <p className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">{item.answer}</p>
+                      <p className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">
+                        {item.answer}
+                      </p>
                     </details>
                   ))}
                 </div>
               </section>
             )}
-
           </div>
 
           {/* Sidebar (Right Column) */}
           <div className="lg:col-span-4 relative">
             <div className="sticky top-24 space-y-6">
-
               {/* Action Card */}
-              <div id="action-card" className="bg-card border border-border rounded-xl p-6 shadow-lg">
+              <div
+                id="action-card"
+                className="bg-card border border-border rounded-xl p-6 shadow-lg"
+              >
                 <div className="mb-6">
-                  <p className="text-sm text-muted-foreground mb-1">Total Project Price</p>
-                  <div className="text-4xl font-bold text-foreground">€{solution.implementation_price.toLocaleString("de-DE")}</div>
-                  
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Total Project Price
+                  </p>
+                  <div className="text-4xl font-bold text-foreground">
+                    €{solution.implementation_price.toLocaleString("de-DE")}
+                  </div>
+
                   {solution.milestones && solution.milestones.length > 0 && (
                     <div className="mt-4 p-3 bg-primary/5 border border-primary/10 rounded-lg">
-                      <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">To Start Now</p>
+                      <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">
+                        To Start Now
+                      </p>
                       <div className="flex justify-between items-baseline">
                         <span className="text-sm font-medium">Milestone 1</span>
-                        <span className="text-xl font-bold text-foreground">€{solution.milestones[0].price.toLocaleString("de-DE")}</span>
+                        <span className="text-xl font-bold text-foreground">
+                          €
+                          {solution.milestones[0].price.toLocaleString("de-DE")}
+                        </span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">Funds held in escrow until approved.</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Funds held in escrow until approved.
+                      </p>
                     </div>
                   )}
                 </div>
 
-                {(solution.monthly_cost_min > 0 || solution.monthly_cost_max > 0) && (
+                {(solution.monthly_cost_min > 0 ||
+                  solution.monthly_cost_max > 0) && (
                   <div className="mb-6 p-3 bg-secondary/30 rounded-lg border border-border/50">
                     <div className="flex items-start gap-2">
                       <Euro className="h-4 w-4 text-muted-foreground mt-0.5" />
                       <div>
-                        <p className="text-xs font-medium text-foreground">Est. Monthly Tool Costs</p>
-                        <p className="text-sm font-semibold text-foreground/80">€{solution.monthly_cost_min} – €{solution.monthly_cost_max} / mo</p>
+                        <p className="text-xs font-medium text-foreground">
+                          Est. Monthly Tool Costs
+                        </p>
+                        <p className="text-sm font-semibold text-foreground/80">
+                          €{solution.monthly_cost_min} – €
+                          {solution.monthly_cost_max} / mo
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 <div className="space-y-3">
-                  <PaymentButton solutionId={solution.id} title="Fund Milestone 1" />
+                  <PaymentButton
+                    solutionId={solution.id}
+                    title="Fund Milestone 1"
+                  />
 
                   {/* Paid Demo CTA — only shown if expert has a calendar linked */}
                   {solution.expert?.calendarUrl && (
@@ -577,7 +697,9 @@ export default async function SolutionPage({ params }: PageProps) {
                         href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}&type=demo`}
                         className="block w-full text-center border border-border bg-background hover:bg-secondary/50 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 text-foreground"
                       >
-                        <PlayCircle className="h-4 w-4" /> See this live — €{(solution as { demoPrice?: number }).demoPrice ?? 2} demo
+                        <PlayCircle className="h-4 w-4" /> See this live — €
+                        {(solution as { demoPrice?: number }).demoPrice ?? 2}{" "}
+                        demo
                       </Link>
                       <p className="text-[10px] text-muted-foreground text-center mt-2 px-2 leading-tight">
                         15&ndash;20 min walkthrough. No access required.
@@ -594,21 +716,29 @@ export default async function SolutionPage({ params }: PageProps) {
                 </div>
 
                 <div className="pt-6 mt-6 border-t border-border">
-                  <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-4">Escrow Protected</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-4">
+                    Escrow Protected
+                  </h4>
                   <ol className="space-y-4 relative border-l border-border/50 ml-1.5 pl-4">
                     <li className="text-xs text-muted-foreground relative">
                       <span className="absolute -left-[21px] top-0.5 h-2.5 w-2.5 rounded-full bg-secondary border border-border" />
-                      <span className="font-medium text-foreground block mb-0.5">Secure Checkout</span>
+                      <span className="font-medium text-foreground block mb-0.5">
+                        Secure Checkout
+                      </span>
                       You fund only the first milestone.
                     </li>
                     <li className="text-xs text-muted-foreground relative">
                       <span className="absolute -left-[21px] top-0.5 h-2.5 w-2.5 rounded-full bg-secondary border border-border" />
-                      <span className="font-medium text-foreground block mb-0.5">Expert Delivers</span>
+                      <span className="font-medium text-foreground block mb-0.5">
+                        Expert Delivers
+                      </span>
                       Work is submitted for your review.
                     </li>
                     <li className="text-xs text-muted-foreground relative">
                       <span className="absolute -left-[21px] top-0.5 h-2.5 w-2.5 rounded-full bg-secondary border border-border" />
-                      <span className="font-medium text-foreground block mb-0.5">You Approve</span>
+                      <span className="font-medium text-foreground block mb-0.5">
+                        You Approve
+                      </span>
                       Funds are released. Next milestone starts.
                     </li>
                   </ol>
@@ -622,7 +752,12 @@ export default async function SolutionPage({ params }: PageProps) {
                     <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center font-bold text-lg relative shrink-0 overflow-hidden">
                       {solution.expert.profile_image_url ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={solution.expert.profile_image_url} alt={solution.expert.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                        <img
+                          src={solution.expert.profile_image_url}
+                          alt={solution.expert.name}
+                          loading="lazy"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
                       ) : (
                         solution.expert.name.substring(0, 2).toUpperCase()
                       )}
@@ -639,10 +774,18 @@ export default async function SolutionPage({ params }: PageProps) {
                       <div className="text-xs text-muted-foreground truncate">
                         {solution.expert.completed_sales_count} implementations
                       </div>
-                      {(solution.expert.founding || (solution.expert.tier && solution.expert.tier !== "STANDARD")) && (
+                      {(solution.expert.founding ||
+                        (solution.expert.tier &&
+                          solution.expert.tier !== "STANDARD")) && (
                         <div className="mt-1.5">
                           <TierBadge
-                            tier={(solution.expert.tier || "STANDARD") as "STANDARD" | "PROVEN" | "ELITE"}
+                            tier={
+                              (solution.expert.tier || "STANDARD") as
+                                | "STANDARD"
+                                | "PROVEN"
+                                | "ELITE"
+                                | "FOUNDING"
+                            }
                             isFoundingExpert={solution.expert.founding}
                           />
                         </div>
@@ -657,7 +800,10 @@ export default async function SolutionPage({ params }: PageProps) {
                     >
                       <MessageSquare className="h-3.5 w-3.5" /> Message Expert
                     </Link>
-                    <Link href={`/experts/${solution.expert.slug}`} className="text-xs text-primary hover:underline block text-center">
+                    <Link
+                      href={`/experts/${solution.expert.slug}`}
+                      className="text-xs text-primary hover:underline block text-center"
+                    >
                       View Full Profile
                     </Link>
                   </div>
@@ -665,7 +811,6 @@ export default async function SolutionPage({ params }: PageProps) {
               )}
             </div>
           </div>
-
         </div>
       </div>
 

@@ -64,7 +64,9 @@ function toCommissionExpert(expert: AdminExpert): CommissionExpert {
       expert.commissionOverridePercent != null
         ? Number(expert.commissionOverridePercent)
         : undefined,
-    tier: (expert.tier as "STANDARD" | "PROVEN" | "ELITE") ?? "STANDARD",
+    tier:
+      (expert.tier as "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING") ??
+      "STANDARD",
     tools: expert.tools ?? [],
   };
 }

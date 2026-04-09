@@ -52,7 +52,7 @@ export async function getExpertPortfolio(slug: string) {
     bio: expert.bio,
     tools: expert.tools,
     specialties: expert.specialties,
-    tier: expert.tier as "STANDARD" | "PROVEN" | "ELITE",
+    tier: expert.tier as "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING",
     isFoundingExpert: expert.isFoundingExpert,
     profileImageUrl: expert.user?.profileImageUrl ?? null,
     solutions: sortedSolutions,
