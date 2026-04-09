@@ -25,6 +25,7 @@ import {
   TIER_THRESHOLDS,
   type CommissionExpert,
 } from "@/lib/commission";
+import { SpecialistTier } from "@prisma/client";
 
 export interface AdminExpert {
   id: string;
@@ -40,7 +41,7 @@ export interface AdminExpert {
   foundingRank?: number | null;
   completedSalesCount?: number;
   platformFeePercentage?: number | null;
-  tier?: string;
+  tier?: SpecialistTier;
   stripeAccountId?: string | null;
   calendarUrl?: string | null;
   portfolioLinks?: string[] | unknown;
@@ -288,7 +289,7 @@ export function ExpertManagementTab({
                           Suspended
                         </span>
                       )}
-                      {expert.isFoundingExpert && (
+                      {expert.tier === "FOUNDING" && (
                         <span className="inline-flex items-center gap-1 text-xs text-yellow-500">
                           <Award className="h-3 w-3" /> Founding #
                           {expert.foundingRank}
@@ -325,6 +326,9 @@ export function ExpertManagementTab({
                           <option value="FOUNDING">Founding</option>
                         </select>
                         {/* Fee — computed from commission system */}
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          Fee: {expectedFee}%
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {expert.completedSalesCount ?? 0} sales
                         </div>
