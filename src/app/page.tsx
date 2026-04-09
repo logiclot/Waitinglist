@@ -4,6 +4,7 @@ import { TrustCarousel } from "@/components/marketing/TrustCarousel";
 import { HowItWorks } from "@/components/marketing/HowItWorks";
 import { FeaturedArticles } from "@/components/marketing/FeaturedArticles";
 import { CategoryGrid } from "@/components/marketing/CategoryGrid";
+import { RandomSolutions } from "@/components/marketing/RandomSolutions";
 import { FounderNote } from "@/components/marketing/FounderNote";
 import { AuditQuiz } from "@/components/audit/AuditQuiz";
 import { HireVsAutomateCarousel } from "@/components/marketing/HireVsAutomateCarousel";
@@ -62,6 +63,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col">
       <Hero />
       <TrustCarousel />
+      <RandomSolutions />
       <CategoryGrid />
 
       {/* Inline Audit + Hire vs. Automate Section */}
