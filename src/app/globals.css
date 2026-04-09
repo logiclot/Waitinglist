@@ -39,6 +39,33 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-slide-in: slide-in 0.35s ease-out;
+  --animate-orbit-spin: orbit-spin 20s linear infinite;
+  --animate-hub-glow-green: hub-glow-green 3s ease-in-out infinite;
+  --animate-hub-glow-dark: hub-glow-dark 3s ease-in-out infinite;
+  --animate-breathe: breathe 4s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 2s ease-out infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 :root {
