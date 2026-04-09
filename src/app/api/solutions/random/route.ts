@@ -17,34 +17,55 @@ function getRedis(): Redis {
   return redis;
 }
 
-interface CachedSolution {
-  id: string;
-  slug: string;
-  title: string;
-  shortSummary: string | null;
-  category: string;
-  implementationPriceCents: number;
-  deliveryDays: number;
-}
+async function fetchRandomSolutions() {
+  const count = await prisma.solution.count({
+    where: {
+      status: "published",
+      moderationStatus: { in: ["auto_approved", "approved"] },
+    },
+  });
 
-async function fetchRandomSolutions(): Promise<CachedSolution[]> {
-  // Use raw SQL for true random ordering
-  const solutions = await prisma.$queryRaw<CachedSolution[]>`
-    SELECT id, slug, title, "shortSummary", category, "implementationPriceCents", "deliveryDays"
-    FROM "Solution"
-    WHERE status = 'published'
-      AND "moderationStatus" IN ('auto_approved', 'approved')
-    ORDER BY RANDOM()
-    LIMIT 3
-  `;
+  const skip = Math.max(0, Math.floor(Math.random() * (count - 3)));
+
+  const solutions = await prisma.solution.findMany({
+    where: {
+      status: "published",
+      moderationStatus: { in: ["auto_approved", "approved"] },
+    },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      shortSummary: true,
+      category: true,
+      implementationPriceCents: true,
+      deliveryDays: true,
+      expert: {
+        select: {
+          displayName: true,
+          tier: true,
+          user: {
+            select: {
+              profileImageUrl: true,
+            },
+          },
+        },
+      },
+    },
+    skip,
+    take: 3,
+  });
+
   return solutions;
 }
+
+type RandomSolution = Awaited<ReturnType<typeof fetchRandomSolutions>>[number];
 
 export async function GET() {
   try {
     // Try cache first
     if (useRedis) {
-      const cached = await getRedis().get<CachedSolution[]>(CACHE_KEY);
+      const cached = await getRedis().get<RandomSolution[]>(CACHE_KEY);
       if (cached) {
         return NextResponse.json(formatSolutions(cached));
       }
@@ -64,7 +85,7 @@ export async function GET() {
   }
 }
 
-function formatSolutions(solutions: CachedSolution[]) {
+function formatSolutions(solutions: RandomSolution[]) {
   return solutions.map((s) => ({
     id: s.id,
     slug: s.slug,
@@ -73,5 +94,10 @@ function formatSolutions(solutions: CachedSolution[]) {
     category: s.category,
     implementationPrice: s.implementationPriceCents / 100,
     deliveryDays: s.deliveryDays,
+    expert: {
+      name: s.expert.displayName,
+      profileImageUrl: s.expert.user.profileImageUrl,
+      tier: s.expert.tier,
+    },
   }));
 }

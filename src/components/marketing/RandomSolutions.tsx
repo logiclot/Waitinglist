@@ -3,15 +3,23 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Zap, Clock, ArrowRight } from "lucide-react";
+import { CategoryBadge } from "@/components/ui/CategoryBadge";
+import { TierBadge } from "@/components/ui/TierBadge";
+import { SpecialistTier } from "@prisma/client";
 
 interface Solution {
-  id: string;
+  id: number;
   slug: string;
   title: string;
   description: string;
   category: string;
   implementationPrice: number;
   deliveryDays: number;
+  expert: {
+    name: string;
+    profileImageUrl: string | null;
+    tier: SpecialistTier;
+  };
 }
 
 function SolutionsSkeleton() {
@@ -90,9 +98,7 @@ export function RandomSolutions() {
                 className="block bg-white border border-border rounded-xl p-5 hover:border-primary/50 transition-colors group cursor-pointer"
               >
                 <div className="mb-3">
-                  <span className="text-[10px] uppercase font-bold bg-primary/10 text-primary px-2 py-1 rounded">
-                    {solution.category}
-                  </span>
+                  <CategoryBadge category={solution.category} size="sm" />
                 </div>
                 <h3 className="font-bold text-base mb-1.5 group-hover:text-primary transition-colors line-clamp-2">
                   {solution.title}
@@ -100,6 +106,35 @@ export function RandomSolutions() {
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                   {solution.description}
                 </p>
+
+                {/* Expert Attribution */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15 overflow-hidden relative">
+                    {solution.expert.profileImageUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={solution.expert.profileImageUrl}
+                        alt={solution.expert.name}
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      (solution.expert.name || "?").slice(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground truncate flex-1">
+                    {solution.expert.name}
+                  </span>
+                  {solution.expert.tier &&
+                    solution.expert.tier !== "STANDARD" && (
+                      <TierBadge
+                        tier={solution.expert.tier}
+                        isFoundingExpert={solution.expert.tier === "FOUNDING"}
+                        size="sm"
+                      />
+                    )}
+                </div>
+
                 <div className="pt-3 border-t border-border flex items-center justify-between text-sm">
                   <span className="font-bold">
                     €{solution.implementationPrice.toLocaleString()}
