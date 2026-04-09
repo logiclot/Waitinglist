@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Zap, CheckCircle2, Clock, Users, Copy, Gift, ArrowRight, BarChart2, Sparkles } from "lucide-react";
+import {
+  Zap,
+  CheckCircle2,
+  Clock,
+  Users,
+  Copy,
+  Gift,
+  ArrowRight,
+  BarChart2,
+  Sparkles,
+} from "lucide-react";
 import { ActiveCoupons } from "./ActiveCoupons";
 import { toast } from "sonner";
 
@@ -53,19 +63,22 @@ export function BusinessOverview({
 }: BusinessOverviewProps) {
   const hasActiveWork = activeOrders.length > 0;
 
-  const { data: recommendedSolutions = [], isPending: isSolutionsPending } = useQuery<RecommendedSolution[]>({
-    queryKey: ["random-solutions"],
-    queryFn: async () => {
-      const res = await fetch("/api/solutions/random");
-      if (!res.ok) return [];
-      return res.json();
-    },
-    staleTime: 120_000,
-  });
+  const { data: recommendedSolutions = [], isPending: isSolutionsPending } =
+    useQuery<RecommendedSolution[]>({
+      queryKey: ["random-solutions"],
+      queryFn: async () => {
+        const res = await fetch("/api/solutions/random");
+        if (!res.ok) return [];
+        return res.json();
+      },
+      staleTime: 120_000,
+    });
 
   const [referralLink, setReferralLink] = useState("");
   useEffect(() => {
-    setReferralLink(`${window.location.origin}/auth/signup?ref=${referralStats?.referralCode || ""}`);
+    setReferralLink(
+      `${window.location.origin}/auth/signup?ref=${referralStats?.referralCode || ""}`,
+    );
   }, [referralStats?.referralCode]);
 
   const copyToClipboard = () => {
@@ -75,15 +88,26 @@ export function BusinessOverview({
 
   const statusLabel = (status: string) => {
     switch (status) {
-      case "in_progress": return { label: "In Progress", className: "bg-blue-500/10 text-blue-500" };
-      case "delivered": return { label: "Awaiting Approval", className: "bg-yellow-500/10 text-yellow-600" };
-      default: return { label: status, className: "bg-secondary text-muted-foreground" };
+      case "in_progress":
+        return {
+          label: "In Progress",
+          className: "bg-blue-500/10 text-blue-500",
+        };
+      case "delivered":
+        return {
+          label: "Awaiting Approval",
+          className: "bg-yellow-500/10 text-yellow-600",
+        };
+      default:
+        return {
+          label: status,
+          className: "bg-secondary text-muted-foreground",
+        };
     }
   };
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
-
       {/* Active Coupons */}
       {activeCoupons.length > 0 && (
         <section className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -93,9 +117,12 @@ export function BusinessOverview({
             </div>
             <div>
               <p className="text-sm font-bold text-foreground">
-                {activeCoupons.length} Discount Coupon{activeCoupons.length !== 1 ? "s" : ""} Available
+                {activeCoupons.length} Discount Coupon
+                {activeCoupons.length !== 1 ? "s" : ""} Available
               </p>
-              <p className="text-xs text-muted-foreground">Applied automatically at checkout</p>
+              <p className="text-xs text-muted-foreground">
+                Applied automatically at checkout
+              </p>
             </div>
           </div>
           <div className="flex-1 flex flex-wrap gap-2 sm:justify-end">
@@ -114,10 +141,13 @@ export function BusinessOverview({
               </div>
               <div>
                 <p className="text-sm font-bold text-foreground">
-                  You have {freeDiscoveryScans} free Discovery Scan{freeDiscoveryScans !== 1 ? "s" : ""}
+                  You have {freeDiscoveryScans} free Discovery Scan
+                  {freeDiscoveryScans !== 1 ? "s" : ""}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Tell us what&apos;s slowing your business down. Up to 5 verified automation experts will review your challenge and send tailored proposals, no cost, no commitment.
+                  Tell us what&apos;s slowing your business down. Up to 5
+                  verified automation experts will review your challenge and
+                  send tailored proposals, no cost, no commitment.
                 </p>
               </div>
             </div>
@@ -138,7 +168,8 @@ export function BusinessOverview({
             Automate your operations, without the complexity.
           </h1>
           <p className="text-base text-muted-foreground mb-5">
-            Work with vetted experts to automate your exact workflow — or explore the solution library.
+            Work with vetted experts to automate your exact workflow — or
+            explore the solution library.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
             <Link
@@ -162,7 +193,10 @@ export function BusinessOverview({
           </div>
           <p className="text-xs text-muted-foreground mt-3">
             Not sure where to start?{" "}
-            <Link href="/how-it-works" className="underline hover:text-foreground transition-colors">
+            <Link
+              href="/how-it-works"
+              className="underline hover:text-foreground transition-colors"
+            >
               See how each option works.
             </Link>
           </p>
@@ -174,161 +208,6 @@ export function BusinessOverview({
         </div>
       </section>
 
-      {/* Referral Section */}
-      <section className="bg-card border border-border rounded-xl p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h3 className="font-bold text-lg mb-1.5 flex items-center gap-2">
-              <Users className="w-5 h-5 text-foreground" /> Referral Program
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
-              Share your link. When a referred business buys a solution, you receive{" "}
-              <span className="font-bold text-foreground">5% off your next purchase</span> — automatically applied at checkout.
-            </p>
-            <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
-              <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
-                {referralLink}
-              </code>
-              <button onClick={copyToClipboard} className="p-1 hover:bg-secondary rounded-md transition-colors" title="Copy link">
-                <Copy className="w-4 h-4 text-foreground" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex gap-8 text-right">
-            {(referralStats?.referralRewards?.businessDiscountCount || 0) > 0 && (
-              <div className="flex flex-col items-end">
-                <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
-                  <Gift className="w-4 h-4 text-green-500 shrink-0" />
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                      {referralStats?.referralRewards?.businessDiscountCount} discount credit
-                      {referralStats?.referralRewards?.businessDiscountCount !== 1 ? "s" : ""} available
-                    </p>
-                    <p className="text-xs text-green-600/70 dark:text-green-400/70">
-                      5% off next purchase · auto-applied at checkout
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="flex flex-col items-end">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Referrals</p>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-foreground">{referralStats?.referralCount || 0}</span>
-                <span className="text-sm font-medium text-muted-foreground">joined</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Businesses</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Active Projects or How It Works */}
-      {hasActiveWork ? (
-        <section>
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <h2 className="text-lg font-bold">Your Active Projects</h2>
-            </div>
-            <Link href="/business/projects" className="text-sm text-primary hover:underline flex items-center gap-1">
-              View all <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
-                <tr>
-                  <th className="px-4 py-3">Project</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {activeOrders.map((order) => {
-                  const { label, className } = statusLabel(order.status);
-                  return (
-                    <tr key={order.id}>
-                      <td className="px-4 py-3 font-medium truncate max-w-[240px]">{order.solutionTitle}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded-full font-bold ${className}`}>{label}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Link href="/business/projects" className="text-xs font-bold text-primary hover:underline">
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : (
-        <section className="bg-secondary/20 rounded-2xl p-6 border border-border">
-          <div className="flex items-center gap-2 mb-6">
-            <Zap className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold">How it works</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex gap-4">
-              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 text-sm">1</div>
-              <div>
-                <h3 className="font-bold mb-1 text-sm">Choose or request</h3>
-                <p className="text-sm text-muted-foreground">Browse vetted solutions or describe your unique problem.</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 text-sm">2</div>
-              <div>
-                <h3 className="font-bold mb-1 text-sm">Expert builds &amp; deploys</h3>
-                <p className="text-sm text-muted-foreground">A vetted expert implements the automation inside your existing tools.</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 text-sm">3</div>
-              <div>
-                <h3 className="font-bold mb-1 text-sm">Review &amp; go live</h3>
-                <p className="text-sm text-muted-foreground">Approve the work before funds are released. No lock-in.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Re-engagement — shown after completing at least one project with no active work */}
-      {completedProjectCount > 0 && !hasActiveWork && (
-        <section className="bg-primary/5 border border-primary/15 rounded-2xl p-6 md:p-8">
-          <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <BarChart2 className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-base text-foreground mb-1">What to automate next?</h3>
-              <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                You&apos;ve completed {completedProjectCount} project{completedProjectCount !== 1 ? "s" : ""}. Take our free audit to find your next highest-ROI automation opportunity.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/audit"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
-                >
-                  Take the Free Audit <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/solutions"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border bg-background hover:bg-secondary/50 transition-colors text-sm font-medium"
-                >
-                  Browse Solutions
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Recommended Solutions */}
       <section>
         <div className="flex items-center justify-between mb-5">
@@ -336,7 +215,10 @@ export function BusinessOverview({
             <Zap className="w-5 h-5 text-yellow-500" />
             <h2 className="text-lg font-bold">Recommended for you</h2>
           </div>
-          <Link href="/solutions" className="text-sm text-primary hover:underline flex items-center gap-1">
+          <Link
+            href="/solutions"
+            className="text-sm text-primary hover:underline flex items-center gap-1"
+          >
             Browse all <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
@@ -363,7 +245,12 @@ export function BusinessOverview({
           </div>
         ) : recommendedSolutions.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-6 text-center text-muted-foreground text-sm">
-            <Link href="/solutions" className="text-primary hover:underline font-medium">Browse the solution library →</Link>
+            <Link
+              href="/solutions"
+              className="text-primary hover:underline font-medium"
+            >
+              Browse the solution library →
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -381,9 +268,13 @@ export function BusinessOverview({
                 <h3 className="font-bold text-base mb-1.5 group-hover:text-primary transition-colors line-clamp-2">
                   {solution.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{solution.description}</p>
+                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                  {solution.description}
+                </p>
                 <div className="pt-3 border-t border-border flex items-center justify-between text-sm">
-                  <span className="font-bold">€{solution.implementationPrice.toLocaleString()}</span>
+                  <span className="font-bold">
+                    €{solution.implementationPrice.toLocaleString()}
+                  </span>
                   <span className="text-muted-foreground flex items-center gap-1">
                     <Clock className="w-3 h-3" /> {solution.deliveryDays} days
                   </span>
@@ -394,6 +285,211 @@ export function BusinessOverview({
         )}
       </section>
 
+      {/* Referral Section */}
+      <section className="bg-card border border-border rounded-xl p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="font-bold text-lg mb-1.5 flex items-center gap-2">
+              <Users className="w-5 h-5 text-foreground" /> Referral Program
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+              Share your link. When a referred business buys a solution, you
+              receive{" "}
+              <span className="font-bold text-foreground">
+                5% off your next purchase
+              </span>{" "}
+              — automatically applied at checkout.
+            </p>
+            <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
+              <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
+                {referralLink}
+              </code>
+              <button
+                onClick={copyToClipboard}
+                className="p-1 hover:bg-secondary rounded-md transition-colors"
+                title="Copy link"
+              >
+                <Copy className="w-4 h-4 text-foreground" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-8 text-right">
+            {(referralStats?.referralRewards?.businessDiscountCount || 0) >
+              0 && (
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                  <Gift className="w-4 h-4 text-green-500 shrink-0" />
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                      {referralStats?.referralRewards?.businessDiscountCount}{" "}
+                      discount credit
+                      {referralStats?.referralRewards?.businessDiscountCount !==
+                      1
+                        ? "s"
+                        : ""}{" "}
+                      available
+                    </p>
+                    <p className="text-xs text-green-600/70 dark:text-green-400/70">
+                      5% off next purchase · auto-applied at checkout
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col items-end">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                Referrals
+              </p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold text-foreground">
+                  {referralStats?.referralCount || 0}
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  joined
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Businesses</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Active Projects or How It Works */}
+      {hasActiveWork ? (
+        <section>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <h2 className="text-lg font-bold">Your Active Projects</h2>
+            </div>
+            <Link
+              href="/business/projects"
+              className="text-sm text-primary hover:underline flex items-center gap-1"
+            >
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
+                <tr>
+                  <th className="px-4 py-3">Project</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {activeOrders.map((order) => {
+                  const { label, className } = statusLabel(order.status);
+                  return (
+                    <tr key={order.id}>
+                      <td className="px-4 py-3 font-medium truncate max-w-[240px]">
+                        {order.solutionTitle}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full font-bold ${className}`}
+                        >
+                          {label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          href="/business/projects"
+                          className="text-xs font-bold text-primary hover:underline"
+                        >
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : (
+        <section className="bg-secondary/20 rounded-2xl p-6 border border-border">
+          <div className="flex items-center gap-2 mb-6">
+            <Zap className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold">How it works</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex gap-4">
+              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 text-sm">
+                1
+              </div>
+              <div>
+                <h3 className="font-bold mb-1 text-sm">Choose or request</h3>
+                <p className="text-sm text-muted-foreground">
+                  Browse vetted solutions or describe your unique problem.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 text-sm">
+                2
+              </div>
+              <div>
+                <h3 className="font-bold mb-1 text-sm">
+                  Expert builds &amp; deploys
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  A vetted expert implements the automation inside your existing
+                  tools.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0 text-sm">
+                3
+              </div>
+              <div>
+                <h3 className="font-bold mb-1 text-sm">Review &amp; go live</h3>
+                <p className="text-sm text-muted-foreground">
+                  Approve the work before funds are released. No lock-in.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Re-engagement — shown after completing at least one project with no active work */}
+      {completedProjectCount > 0 && !hasActiveWork && (
+        <section className="bg-primary/5 border border-primary/15 rounded-2xl p-6 md:p-8">
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <BarChart2 className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-base text-foreground mb-1">
+                What to automate next?
+              </h3>
+              <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                You&apos;ve completed {completedProjectCount} project
+                {completedProjectCount !== 1 ? "s" : ""}. Take our free audit to
+                find your next highest-ROI automation opportunity.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/audit"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
+                >
+                  Take the Free Audit <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/solutions"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border bg-background hover:bg-secondary/50 transition-colors text-sm font-medium"
+                >
+                  Browse Solutions
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
