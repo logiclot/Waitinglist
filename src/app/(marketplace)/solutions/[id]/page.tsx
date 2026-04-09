@@ -597,20 +597,16 @@ export default async function SolutionPage({ params }: PageProps) {
                 <p className="text-sm text-muted-foreground mb-5">
                   Reviews appear after project delivery.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Link
-                    href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}`}
-                    className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-                  >
-                    <MessageSquare className="h-4 w-4" /> Ask a question
-                  </Link>
-                  <a
-                    href="#action-card"
-                    className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:text-primary transition-colors"
-                  >
-                    Start your project <ArrowRight className="h-3.5 w-3.5" />
-                  </a>
-                </div>
+                {!isOwnSolution && (
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <Link
+                      href={`/messages/new?expert=${solution.expert?.id}&solution=${solution.id}`}
+                      className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                    >
+                      <MessageSquare className="h-4 w-4" /> Ask a question
+                    </Link>
+                  </div>
+                )}
               </div>
             </section>
 
