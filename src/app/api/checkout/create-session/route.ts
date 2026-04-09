@@ -29,6 +29,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!session.user.onboardingCompletedAt) {
+    return NextResponse.json({ error: "Please complete onboarding to continue" }, { status: 401 });
+  }
+
   // Rate limit by user ID (20 checkout attempts per minute)
   const rl = await checkoutLimiter.check(session.user.id);
   if (!rl.success) {
@@ -55,7 +59,7 @@ export async function POST(req: Request) {
     }
 
     const milestones = (solution.milestones as unknown as SolutionMilestone[]) || [];
-    
+
     // Handle Pricing Logic
     let priceCents = 0;
     let productName = "";
@@ -63,10 +67,10 @@ export async function POST(req: Request) {
     let metadataType = "";
 
     if (type === "demo_booking") {
-        priceCents = solution.demoPriceCents || 200; // Default 200 (2 EUR)
-        productName = `${solution.title} - Expert Demo & Consultation`;
-        productDesc = "Book a paid demo session with the expert.";
-        metadataType = "demo_booking";
+      priceCents = solution.demoPriceCents || 200; // Default 200 (2 EUR)
+      productName = `${solution.title} - Expert Demo & Consultation`;
+      productDesc = "Book a paid demo session with the expert.";
+      metadataType = "demo_booking";
     } else if (isUpgrade) {
       if (!solution.upgradePriceCents) {
         return NextResponse.json({ error: "No upgrade price defined" }, { status: 400 });
@@ -91,7 +95,7 @@ export async function POST(req: Request) {
     }
 
     if (priceCents < 50) { // Stripe minimum is 50 cents
-       return NextResponse.json({ error: `Price too low (€${(priceCents/100).toFixed(2)}). Minimum €0.50 required.` }, { status: 400 });
+      return NextResponse.json({ error: `Price too low (€${(priceCents / 100).toFixed(2)}). Minimum €0.50 required.` }, { status: 400 });
     }
 
     // For milestone orders, expert must have Stripe connected or payout will silently fail
@@ -121,25 +125,25 @@ export async function POST(req: Request) {
     });
 
     if (!business) {
-        // Auto-create a dummy business profile for the user to allow checkout
-        log.info("checkout.business_auto_create", { userId: session.user.id });
-        business = await prisma.businessProfile.create({
-            data: {
-                userId: session.user.id,
-                firstName: session.user.name?.split(" ")[0] || "Guest",
-                lastName: session.user.name?.split(" ")[1] || "User",
-                companyName: "Self-Employed",
-                jobRole: "Individual",
-                howHeard: "Internal",
-                interests: [],
-                tools: [],
-            }
-        });
+      // Auto-create a dummy business profile for the user to allow checkout
+      log.info("checkout.business_auto_create", { userId: session.user.id });
+      business = await prisma.businessProfile.create({
+        data: {
+          userId: session.user.id,
+          firstName: session.user.name?.split(" ")[0] || "Guest",
+          lastName: session.user.name?.split(" ")[1] || "User",
+          companyName: "Self-Employed",
+          jobRole: "Individual",
+          howHeard: "Internal",
+          interests: [],
+          tools: [],
+        }
+      });
     }
 
     // Ensure Stripe Customer ID exists
     let stripeCustomerId = business.stripeCustomerId;
-    
+
     if (stripeCustomerId) {
       try {
         const existingCustomer = await stripe.customers.retrieve(stripeCustomerId);
@@ -153,20 +157,20 @@ export async function POST(req: Request) {
     }
 
     if (!stripeCustomerId) {
-        const customer = await stripe.customers.create({
-            email: session.user.email || undefined,
-            name: `${business.firstName} ${business.lastName}`,
-            metadata: {
-                userId: session.user.id,
-                businessId: business.id
-            }
-        });
-        stripeCustomerId = customer.id;
-        
-        await prisma.businessProfile.update({
-            where: { id: business.id },
-            data: { stripeCustomerId }
-        });
+      const customer = await stripe.customers.create({
+        email: session.user.email || undefined,
+        name: `${business.firstName} ${business.lastName}`,
+        metadata: {
+          userId: session.user.id,
+          businessId: business.id
+        }
+      });
+      stripeCustomerId = customer.id;
+
+      await prisma.businessProfile.update({
+        where: { id: business.id },
+        data: { stripeCustomerId }
+      });
     }
 
     // Order Creation (Only for Milestones & Upgrades, Demo is ephemeral but we can track it as an order for simplicity and records)
@@ -179,14 +183,14 @@ export async function POST(req: Request) {
         priceCents: priceCents,
         status: "draft", // Will be updated to paid/approved via webhook
         deliveryNote: type === "demo_booking" ? "Paid Demo Session" : undefined,
-        milestones: type === "demo_booking" 
-            ? [{ title: "Demo Session", description: productDesc, price: priceCents / 100, status: "pending_payment" }]
-            : isUpgrade 
-                ? [{ title: "Version Upgrade", description: productDesc, price: priceCents / 100, status: "pending_payment" }]
-                : milestones.map((m, index) => ({
-                    ...m,
-                    status: index === 0 ? "pending_payment" : "waiting",
-                })),
+        milestones: type === "demo_booking"
+          ? [{ title: "Demo Session", description: productDesc, price: priceCents / 100, status: "pending_payment" }]
+          : isUpgrade
+            ? [{ title: "Version Upgrade", description: productDesc, price: priceCents / 100, status: "pending_payment" }]
+            : milestones.map((m, index) => ({
+              ...m,
+              status: index === 0 ? "pending_payment" : "waiting",
+            })),
       },
     });
 
@@ -230,36 +234,36 @@ export async function POST(req: Request) {
 
     // Application Fee Logic for Demo
     if (metadataType === "demo_booking") {
-        // Transfer to expert minus platform fee (2 EUR = 200 cents)
-        const platformFeeCents = 200;
-        const transferAmount = Math.max(0, priceCents - platformFeeCents);
+      // Transfer to expert minus platform fee (2 EUR = 200 cents)
+      const platformFeeCents = 200;
+      const transferAmount = Math.max(0, priceCents - platformFeeCents);
 
-        if (transferAmount > 0 && solution.expert.stripeAccountId) {
-            // Verify the expert's Stripe account can still receive payments
-            try {
-              const account = await stripe.accounts.retrieve(solution.expert.stripeAccountId);
-              if (!account.charges_enabled || !account.payouts_enabled) {
-                return NextResponse.json(
-                  { error: "This expert's payment account is not currently active. Please contact support." },
-                  { status: 400 }
-                );
-              }
-            } catch {
-              return NextResponse.json(
-                { error: "Unable to verify expert payment account. Please try again later." },
-                { status: 400 }
-              );
-            }
-
-            sessionConfig.payment_intent_data = {
-                application_fee_amount: platformFeeCents,
-                transfer_data: {
-                    destination: solution.expert.stripeAccountId,
-                },
-            };
-        } else {
-            // If no connected account or price <= fee, platform keeps it all
+      if (transferAmount > 0 && solution.expert.stripeAccountId) {
+        // Verify the expert's Stripe account can still receive payments
+        try {
+          const account = await stripe.accounts.retrieve(solution.expert.stripeAccountId);
+          if (!account.charges_enabled || !account.payouts_enabled) {
+            return NextResponse.json(
+              { error: "This expert's payment account is not currently active. Please contact support." },
+              { status: 400 }
+            );
+          }
+        } catch {
+          return NextResponse.json(
+            { error: "Unable to verify expert payment account. Please try again later." },
+            { status: 400 }
+          );
         }
+
+        sessionConfig.payment_intent_data = {
+          application_fee_amount: platformFeeCents,
+          transfer_data: {
+            destination: solution.expert.stripeAccountId,
+          },
+        };
+      } else {
+        // If no connected account or price <= fee, platform keeps it all
+      }
     }
 
     const sessionStripe = await stripe.checkout.sessions.create(sessionConfig);
