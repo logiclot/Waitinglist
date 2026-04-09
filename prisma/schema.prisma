@@ -72,6 +72,7 @@ enum SpecialistTier {
   STANDARD
   PROVEN
   ELITE
+  FOUNDING
 }
 
 // User & Auth

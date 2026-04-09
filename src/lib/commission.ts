@@ -8,7 +8,7 @@ export interface CommissionExpert {
   founding_rank?: number | null;
   completed_sales_count: number;
   commission_override_percent?: number | null;
-  tier?: 'STANDARD' | 'PROVEN' | 'ELITE'; // DB tier — authoritative for Elite (application-based)
+  tier?: 'STANDARD' | 'PROVEN' | 'ELITE' | "FOUNDING"; // DB tier — authoritative for Elite (application-based)
   tools: string[];
   created_at?: string;
 }
