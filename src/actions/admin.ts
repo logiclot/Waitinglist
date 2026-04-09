@@ -195,7 +195,7 @@ export async function makeFoundingSpecialist(id: string) {
 
   const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { isFoundingExpert: true, foundingRank: rank, platformFeePercentage: 11 },
+    data: { isFoundingExpert: true, foundingRank: rank, platformFeePercentage: 11, tier: "FOUNDING" },
     select: { userId: true },
   });
 
@@ -226,12 +226,13 @@ export async function removeFoundingExpert(id: string) {
     }
   }
 
-  const tier = specialistById.tier ?? "STANDARD"
+  // tier to demote : ELITE for now
+  const tier = "ELITE"
   const feeForTier = TIER_THRESHOLDS[tier]
 
   const specialist = await prisma.specialistProfile.update({
     where: { id },
-    data: { isFoundingExpert: false, platformFeePercentage: feeForTier },
+    data: { isFoundingExpert: false, platformFeePercentage: feeForTier, tier },
     select: { userId: true },
   });
 
@@ -268,7 +269,7 @@ export async function setExpertFee(id: string, fee: number) {
   return { success: true };
 }
 
-export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "ELITE") {
+export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING") {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
   // Map tier → its commission rate so the change actually takes effect
@@ -288,6 +289,7 @@ export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "E
     STANDARD: `Standard (${TIER_THRESHOLDS.STANDARD}% fee)`,
     PROVEN: `Proven (${TIER_THRESHOLDS.PROVEN}% fee)`,
     ELITE: `Elite (${TIER_THRESHOLDS.ELITE}% fee)`,
+    FOUNDING: `Founding (${TIER_THRESHOLDS.FOUNDING}% fee)`,
   };
 
   await createNotification(

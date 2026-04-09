@@ -56,7 +56,7 @@ export interface AdminExpert {
   isFoundingExpert: boolean;
   foundingRank: number | null;
   platformFeePercentage: number | null;
-  tier: "STANDARD" | "PROVEN" | "ELITE" | string;
+  tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING";
   completedSalesCount: number;
   displayName: string | null;
   bidBannedUntil?: Date | string | null;
@@ -241,10 +241,7 @@ function BusinessInvitePanel({
 }) {
   const queryClient = useQueryClient();
 
-  const {
-    data: stats,
-    isPending,
-  } = useQuery({
+  const { data: stats, isPending } = useQuery({
     queryKey: ["business-waitlist-invite-stats"],
     queryFn: () => getBusinessWaitlistInviteStats(),
   });
@@ -258,7 +255,9 @@ function BusinessInvitePanel({
         showMessage(
           `Sent ${result.sent} invite${result.sent === 1 ? "" : "s"} successfully.`,
         );
-        queryClient.invalidateQueries({ queryKey: ["business-waitlist-invite-stats"] });
+        queryClient.invalidateQueries({
+          queryKey: ["business-waitlist-invite-stats"],
+        });
       }
     },
     onError: (err) => {
@@ -440,12 +439,13 @@ export function AdminDashboard({
 
   const handleSetTier = async (
     id: string,
-    tier: "STANDARD" | "PROVEN" | "ELITE",
+    tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING",
   ) => {
     const tierFeeMap: Record<string, number> = {
       STANDARD: TIER_THRESHOLDS.STANDARD,
       PROVEN: TIER_THRESHOLDS.PROVEN,
       ELITE: TIER_THRESHOLDS.ELITE,
+      FOUNDING: TIER_THRESHOLDS.FOUNDING,
     };
     const fee = tierFeeMap[tier];
     await setExpertTier(id, tier);
@@ -704,7 +704,10 @@ export function AdminDashboard({
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab === "business-invites" ? "Biz Invites" : tab.charAt(0).toUpperCase() + tab.slice(1)} ({counts[tab]})
+              {tab === "business-invites"
+                ? "Biz Invites"
+                : tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
+              ({counts[tab]})
             </button>
           );
         })}
