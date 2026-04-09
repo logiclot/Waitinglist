@@ -246,7 +246,7 @@ export async function requestPasswordReset(prevState: unknown, formData: FormDat
       const providerName = provider === "google" ? "Google" : provider === "linkedin" ? "LinkedIn" : null;
 
       if (providerName) {
-        return { error: `This account uses ${providerName} sign-in and doesn't have a password. Please sign in with ${providerName} instead.` };
+        return { error: `This account uses ${providerName} sign-in. Please sign in with ${providerName} instead.` };
       }
       return { error: "This account doesn't have a password. Please sign in with your social account." };
     }
