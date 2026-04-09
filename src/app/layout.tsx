@@ -11,6 +11,7 @@ import { SavedSolutionsProvider } from "@/hooks/SavedSolutionsContext";
 import { SavedSuitesProvider } from "@/hooks/SavedSuitesContext";
 import { Analytics } from "@vercel/analytics/react";
 
+
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -148,6 +149,11 @@ export default async function RootLayout({
           </PostHogProvider>
         </Providers>
         <Script src="/chat.js" async />
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18073927573"
+        />
+        <Script src="/gtag.js" async />
       </body>
     </html>
   );
