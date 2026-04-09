@@ -11,7 +11,7 @@ import { log } from "@/lib/logger";
 import { ReleaseMilestoneSchema } from "@/lib/schemas/api";
 import { captureException } from "@/lib/sentry";
 import { isStripeConnectSupported } from "@/lib/stripe-countries";
-import { Prisma } from "@prisma/client";
+import { Prisma, SpecialistTier } from "@prisma/client";
 import { Milestone, ReferralRewards } from "@/types";
 
 export async function POST(req: Request) {
@@ -250,7 +250,7 @@ export async function POST(req: Request) {
         const isFoundingExpert = order.seller.tier === "FOUNDING";
 
         // Auto-tier caps at PROVEN — Elite requires application + admin approval
-        let newTier: "STANDARD" | "PROVEN" | null = null;
+        let newTier: SpecialistTier | null = null;
         if (newCount >= SALES_THRESHOLDS.PROVEN && oldTier === "STANDARD") {
           newTier = "PROVEN";
         }

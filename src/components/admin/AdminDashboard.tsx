@@ -46,6 +46,7 @@ import {
 } from "@/components/admin/AuditResultsTab";
 import { BRAND_NAME } from "@/lib/branding";
 import { TIER_THRESHOLDS } from "@/lib/commission";
+import { SpecialistTier } from "@prisma/client";
 
 // ── Admin-specific types (shaped by getAdminData in actions/admin.ts) ─────────
 
@@ -56,7 +57,7 @@ export interface AdminExpert {
   isFoundingExpert: boolean;
   foundingRank: number | null;
   platformFeePercentage: number | null;
-  tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING";
+  tier: SpecialistTier;
   completedSalesCount: number;
   displayName: string | null;
   bidBannedUntil?: Date | string | null;
@@ -425,17 +426,8 @@ export function AdminDashboard({
     showMessage("Founding Expert status removed.");
   };
 
-  const handleSetTier = async (
-    id: string,
-    tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING",
-  ) => {
-    const tierFeeMap: Record<string, number> = {
-      STANDARD: TIER_THRESHOLDS.STANDARD,
-      PROVEN: TIER_THRESHOLDS.PROVEN,
-      ELITE: TIER_THRESHOLDS.ELITE,
-      FOUNDING: TIER_THRESHOLDS.FOUNDING,
-    };
-    const fee = tierFeeMap[tier];
+  const handleSetTier = async (id: string, tier: SpecialistTier) => {
+    const fee = TIER_THRESHOLDS[tier];
     await setExpertTier(id, tier);
     setExpertList(
       expertList.map((e) =>

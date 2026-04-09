@@ -290,6 +290,7 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         displayName,
         country,
         isAgency,
+        tier: foundingExperts.includes(session.user.email) ? "FOUNDING" : "STANDARD",
         isFoundingExpert: foundingExperts.includes(session.user.email),
         platformFeePercentage: foundingExperts.includes(session.user.email) ? TIER_THRESHOLDS.FOUNDING : TIER_THRESHOLDS.STANDARD,
         agencyName: isAgency ? agencyName : null,

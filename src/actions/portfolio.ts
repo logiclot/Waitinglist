@@ -8,6 +8,7 @@ import { isValidBackground, isValidBorderColor, isValidFont, isValidCoverUrl, is
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
+import { SpecialistTier } from "@prisma/client";
 
 export async function getExpertPortfolio(slug: string) {
   const expert = await prisma.specialistProfile.findUnique({
@@ -52,7 +53,7 @@ export async function getExpertPortfolio(slug: string) {
     bio: expert.bio,
     tools: expert.tools,
     specialties: expert.specialties,
-    tier: expert.tier as "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING",
+    tier: expert.tier as SpecialistTier,
     isFoundingExpert: expert.isFoundingExpert,
     profileImageUrl: expert.user?.profileImageUrl ?? null,
     solutions: sortedSolutions,

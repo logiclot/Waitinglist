@@ -5,10 +5,11 @@ import { awardBid, unawardBid } from "@/actions/jobs";
 import { useState } from "react";
 import { Loader2, CheckCircle, MessageCircle, Undo2 } from "lucide-react";
 import { TierBadge } from "@/components/ui/TierBadge";
+import { SpecialistTier } from "@prisma/client";
 
 interface BidSpecialist {
   displayName?: string | null;
-  tier?: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING" | null;
+  tier?: SpecialistTier | null;
   isFoundingExpert?: boolean | null;
   completedSalesCount?: number | null;
 }

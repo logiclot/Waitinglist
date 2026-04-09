@@ -20,7 +20,7 @@ import { SALES_THRESHOLDS, TIER_THRESHOLDS, formatCentsToCurrency, getCommission
 import type { CommissionExpert } from "@/lib/commission";
 import { log } from "@/lib/logger";
 import { ReleaseMilestoneSchema } from "@/lib/schemas/api";
-import { Prisma } from "@prisma/client";
+import { Prisma, SpecialistTier } from "@prisma/client";
 
 export async function POST(req: Request) {
   // ── Block in production ─────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ export async function POST(req: Request) {
         const oldTier = order.seller.tier;
         const isFoundingExpert = order.seller.isFoundingExpert;
 
-        let newTier: "STANDARD" | "PROVEN" | "ELITE" | null = null;
+        let newTier: SpecialistTier | null = null;
         if (newCount >= SALES_THRESHOLDS.ELITE && oldTier !== "ELITE") {
           newTier = "ELITE";
         } else if (newCount >= SALES_THRESHOLDS.PROVEN && oldTier === "STANDARD") {

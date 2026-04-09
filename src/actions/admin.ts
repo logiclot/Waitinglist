@@ -17,6 +17,7 @@ import { resend, getFromEmail } from "@/lib/resend";
 import { expertInviteEmail, foundingExpertInviteEmail, businessInviteEmail, welcomeEmail } from "@/lib/email-templates";
 import { fireBusinessOnboardingNotifications } from "@/lib/onboarding-notifications";
 import { foundingExperts } from "@/data/experts";
+import { SpecialistTier } from "@prisma/client";
 
 const FROM_EMAIL = getFromEmail();
 
@@ -273,7 +274,7 @@ export async function setExpertFee(id: string, fee: number) {
   // return { success: true };
 }
 
-export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING") {
+export async function setExpertTier(id: string, tier: SpecialistTier) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };
 
   // Map tier → its commission rate so the change actually takes effect

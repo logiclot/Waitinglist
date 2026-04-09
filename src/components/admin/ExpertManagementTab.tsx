@@ -60,9 +60,7 @@ function toCommissionExpert(expert: AdminExpert): CommissionExpert {
     founding: false,
     isFoundingExpert: expert.isFoundingExpert ?? false,
     completed_sales_count: expert.completedSalesCount ?? 0,
-    tier:
-      (expert.tier as "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING") ??
-      "STANDARD",
+    tier: (expert.tier as SpecialistTier) ?? "STANDARD",
     tools: expert.tools ?? [],
   };
 }
@@ -88,10 +86,7 @@ interface ExpertManagementTabProps {
   onSuspend: (id: string) => void;
   onMakeFounding: (id: string) => void;
   onRemoveFounding: (id: string) => void;
-  onSetTier: (
-    id: string,
-    tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING",
-  ) => void;
+  onSetTier: (id: string, tier: SpecialistTier) => void;
   onDeleteUser: (userId: string) => void;
   onLiftBidBan: (id: string) => void;
   eliteApplications?: EliteApplication[];

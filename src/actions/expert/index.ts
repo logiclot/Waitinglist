@@ -146,7 +146,7 @@ export async function getExpertSettings() {
         displayName: expert.displayName || expert.legalFullName,
         title: expert.title || "",
         bio: expert.bio || "",
-        platformFeePercentage: expert.platformFeePercentage ?? 16,
+        platformFeePercentage: TIER_THRESHOLDS[expert.tier],
         isFoundingExpert: !!(expert.isFoundingExpert),
         tier: expert.tier,
         invoiceCompanyName: expert.invoiceCompanyName,

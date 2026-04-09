@@ -1,6 +1,7 @@
+import { SpecialistTier } from "@prisma/client";
 import { Award, Crown, TrendingUp } from "lucide-react";
 
-type Tier = "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING";
+type Tier = SpecialistTier;
 
 interface TierBadgeProps {
   tier: Tier;

@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
 import Link from "next/link";
+import { toCapitalized } from "@/lib/utils";
+import { TIER_THRESHOLDS } from "@/lib/commission";
 
 // --- Constants ---
 
@@ -228,27 +230,17 @@ export function SolutionWizard({
   const stripeConnected = !!stripeStatus?.isConnected;
   const isStripeSupported = stripeStatus?.isStripeSupported !== false;
   const hasBankDetails = !!stripeStatus?.hasBankDetails;
+
   const { data: expertSettingsData, isLoading: isExpertSettingsLoading } =
     useQuery({
       queryKey: ["expert-settings"],
       queryFn: async () => {
         const res = await getExpertSettings();
         if (!res.success || !res.settings) return null;
-        const s = res.settings as {
-          platformFeePercentage?: number;
-          isFoundingExpert?: boolean;
-          tier?: string;
-        };
-        const fee = s.platformFeePercentage ?? 16;
-        let label: string;
-        if (s.isFoundingExpert && s.tier === "ELITE")
-          label = `${fee}% (Founding Expert · Elite)`;
-        else if (s.isFoundingExpert && s.tier === "PROVEN")
-          label = `${fee}% (Founding Expert · Proven)`;
-        else if (s.isFoundingExpert) label = `${fee}% (Founding Expert)`;
-        else if (s.tier === "ELITE") label = `${fee}% (Elite)`;
-        else if (s.tier === "PROVEN") label = `${fee}% (Proven)`;
-        else label = `${fee}%`;
+        const s = res.settings;
+        const fee = s.tier ? TIER_THRESHOLDS[s.tier] : 16;
+        const label = `${fee} - ${s.tier ? toCapitalized(s.tier) : "Standard"}`;
+
         return { fee, label };
       },
     });
@@ -1547,7 +1539,9 @@ export function SolutionWizard({
                   const res = await fetch("/api/stripe/onboard", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ returnTo: window.location.pathname }),
+                    body: JSON.stringify({
+                      returnTo: window.location.pathname,
+                    }),
                   });
                   const d = await res.json();
                   if (d.url) window.location.href = d.url;

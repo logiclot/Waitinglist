@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCentsToCurrency, TIER_THRESHOLDS } from "@/lib/commission";
+import { SpecialistTier } from "@prisma/client";
 
 interface ActiveOrder {
   id: string;
@@ -101,7 +102,7 @@ interface ExpertOverviewProps {
   hasCalendarUrl?: boolean;
   hasStripeConnected?: boolean;
   isFoundingExpert?: boolean;
-  tier?: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING";
+  tier?: SpecialistTier;
   publishedSolutionCount?: number;
   earningsThisMonthCents?: number;
   inEscrowCents?: number;
