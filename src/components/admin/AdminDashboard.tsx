@@ -425,16 +425,6 @@ export function AdminDashboard({
     showMessage("Founding Expert status removed.");
   };
 
-  const handleSetFee = async (id: string, fee: number) => {
-    await setExpertFee(id, fee);
-    setExpertList(
-      expertList.map((e) =>
-        e.id === id ? { ...e, platformFeePercentage: fee } : e,
-      ),
-    );
-    showMessage(`Fee updated to ${fee}%.`);
-  };
-
   const handleSetTier = async (
     id: string,
     tier: "STANDARD" | "PROVEN" | "ELITE" | "FOUNDING",

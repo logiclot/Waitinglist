@@ -284,6 +284,7 @@ export async function setExpertTier(id: string, tier: "STANDARD" | "PROVEN" | "E
     data: {
       tier,
       platformFeePercentage: feeForTier,
+      isFoundingExpert: tier === "FOUNDING" ? true : false
     },
     select: { userId: true },
   });

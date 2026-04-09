@@ -184,23 +184,8 @@ export function ExpertManagementTab({
           >
             {experts.map((expert) => {
               const isExpanded = expandedExpertId === expert.id;
-              const fee =
-                expert.platformFeePercentage != null
-                  ? expert.platformFeePercentage
-                  : getCommissionPercent(toCommissionExpert(expert));
-              const tier = (expert.tier ?? "STANDARD") as
-                | "STANDARD"
-                | "PROVEN"
-                | "ELITE"
-                | "FOUNDING";
-              const isFounding = expert.isFoundingExpert ?? false;
-              const expectedFee = isFounding
-                ? TIER_THRESHOLDS.FOUNDING
-                : tier === "ELITE"
-                  ? TIER_THRESHOLDS.ELITE
-                  : tier === "PROVEN"
-                    ? TIER_THRESHOLDS.PROVEN
-                    : TIER_THRESHOLDS.STANDARD;
+              const tier = expert.tier ?? "STANDARD";
+              const fee = TIER_THRESHOLDS[tier];
 
               return [
                 <tr
@@ -327,7 +312,7 @@ export function ExpertManagementTab({
                         </select>
                         {/* Fee — computed from commission system */}
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          Fee: {expectedFee}%
+                          Fee: {fee}%
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {expert.completedSalesCount ?? 0} sales
