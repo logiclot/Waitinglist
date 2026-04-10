@@ -2,7 +2,7 @@
 
 import { selectRole } from "@/actions/onboarding";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, Wrench, Check } from "lucide-react";
 import { BRAND_NAME } from "@/lib/branding";
 import { signOut, useSession } from "next-auth/react";
@@ -14,24 +14,21 @@ export default function OnboardingPage() {
   const { data: session, update: refreshSession } = useSession();
 
   const existingRole = session?.user?.role;
-  const preSelected: AccountRole | null =
-    existingRole === "EXPERT" || existingRole === "BUSINESS"
-      ? existingRole
-      : null;
 
-  const [selected, setSelected] = useState<AccountRole | null>(preSelected);
+  useEffect(() => {
+    if (existingRole === "BUSINESS") {
+      router.replace("/onboarding/business");
+    } else if (existingRole === "EXPERT") {
+      router.replace("/onboarding/expert");
+    }
+  }, [existingRole, router]);
+
+  const [selected, setSelected] = useState<AccountRole | null>(null);
   const [pending, setPending] = useState(false);
 
   const handleConfirm = async () => {
     if (!selected) return;
     setPending(true);
-
-    if (selected === existingRole) {
-      router.push(
-        selected === "BUSINESS" ? "/onboarding/business" : "/onboarding/expert",
-      );
-      return;
-    }
 
     const result = await selectRole(selected);
     if (result.success) {
@@ -53,9 +50,7 @@ export default function OnboardingPage() {
           How do you want to use {BRAND_NAME}?
         </h1>
         <p className="text-muted-foreground text-lg">
-          {preSelected
-            ? "Please confirm how you'd like to use your account."
-            : "Pick the option that best describes you."}
+          Pick the option that best describes you.
         </p>
       </div>
 
