@@ -63,6 +63,7 @@ export async function createJobPost(prevState: unknown, formData: FormData) {
 
 export async function createDiscoveryJobPost(formData: FormData) {
   const session = await getServerSession(authOptions);
+
   if (!session?.user?.id || session.user.role !== "BUSINESS") {
     return { success: false, error: "Unauthorized. Only businesses can post jobs." };
   }
@@ -85,6 +86,17 @@ export async function createDiscoveryJobPost(formData: FormData) {
 
   const tools = toolsRaw ? toolsRaw.split(",").map(t => t.trim()).filter(Boolean) : [];
 
+  const businessProfile = await prisma.businessProfile.findFirst({
+    where: {
+      userId: session.user.id
+    },
+    select: {
+      freeDiscoveryScansRemaining: true
+    }
+  })
+
+  const scans = businessProfile?.freeDiscoveryScansRemaining ?? 0
+
   try {
     const job = await prisma.jobPost.create({
       data: {
@@ -95,11 +107,36 @@ export async function createDiscoveryJobPost(formData: FormData) {
         budgetRange: "€50 (Discovery)",
         timeline: "Discovery Phase",
         tools,
-        status: "pending_payment", // Payment handled by Stripe checkout
+        status: scans > 0 ? "open" : "pending_payment",
+        paymentProvider: scans > 0 ? "free_waitlist_credit" : null,
       },
     });
 
-    revalidatePath("/jobs");
+    if (scans > 0) {
+      await prisma.businessProfile.update({
+        where: {
+          userId: session.user.id
+        },
+        data: {
+          freeDiscoveryScansRemaining: {
+            decrement: 1
+          }
+        }
+      })
+
+      // fire and forget (should be added to queue)
+      createNotification(
+        session.user.id,
+        "🎉 Free Discovery Scan activated!",
+        `"${job.title}" is now live. Your free waitlist credit has been used.`,
+        "success",
+        `/jobs/${job.id}`
+      ).catch((e) =>
+        log.error("notification.email_fire_and_forget_failed", { userId: session.user.id, error: String(e) })
+      );
+    }
+
+
     return { success: true, jobId: job.id };
   } catch (e) {
     log.error("jobs.create_discovery_failed", { error: e instanceof Error ? e.message : String(e) });

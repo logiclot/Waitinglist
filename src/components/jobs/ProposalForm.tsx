@@ -436,7 +436,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
                     value={p.scope}
                     onChange={e => setPhases(prev => prev.map((x, j) => j === i ? { ...x, scope: e.target.value } : x))}
                   />
-                  <div className="grid grid-cols-2 gap-3 pt-1 border-t border-border/60">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-border/60">
                     <div className="space-y-1.5">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phase price (€)</p>
                       <div className="relative">
@@ -453,9 +453,9 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
                     </div>
                     <div className="space-y-1.5">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Duration</p>
-                      <div className="flex gap-1.5">
+                      <div className="grid grid-cols-2 gap-2">
                         <input
-                          className={`${input} flex-1`}
+                          className={input}
                           placeholder="e.g. 2"
                           type="number"
                           min="1"
@@ -463,7 +463,7 @@ export function ProposalForm({ jobId, jobCategory }: { jobId: string; jobCategor
                           onChange={e => setPhases(prev => prev.map((x, j) => j === i ? { ...x, duration: e.target.value } : x))}
                         />
                         <select
-                          className={`${input} w-24 shrink-0`}
+                          className={input}
                           value={p.durationUnit}
                           onChange={e => setPhases(prev => prev.map((x, j) => j === i ? { ...x, durationUnit: e.target.value } : x))}
                         >
