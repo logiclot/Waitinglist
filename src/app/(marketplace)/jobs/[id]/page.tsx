@@ -247,11 +247,11 @@ function SectionC({ s }: { s?: BriefSectionData }) {
 // ── Section D – Pain Signals ──────────────────────────────────────────────────
 function SectionD({ s }: { s?: BriefSectionData }) {
   const pains: [string, Answer][] = [
-    ["Human judgment required", qa(s, 0)],
-    ["Manual time drains", qa(s, 1)],
-    ["Where mistakes happen", qa(s, 2)],
-    ["Where things are slow", qa(s, 3)],
-    ["Operations visibility", qa(s, 4)],
+    ["How much human judgment does this process require?", qa(s, 0)],
+    ["Which activities consume the most manual time each week?", qa(s, 1)],
+    ["Which tasks often lead to mistakes or need redoing?", qa(s, 2)],
+    ["Where do delays most often occur?", qa(s, 3)],
+    ["How visible are your operations right now?", qa(s, 4)],
   ];
   const visible = pains.filter(([, a]) => !blank(a));
   return (
@@ -283,7 +283,7 @@ function SectionD({ s }: { s?: BriefSectionData }) {
 function SectionE({ s }: { s?: BriefSectionData }) {
   const rows: [string, Answer][] = [
     ["Compliance requirements", qa(s, 0)],
-    ["Environments", qa(s, 1)],
+    ["What environments do you operate in?", qa(s, 1)],
     ["Vendor lock-ins", qa(s, 2)],
   ];
   const visible = rows.filter(([, a]) => !blank(a));
@@ -337,13 +337,16 @@ function SectionF({ s }: { s?: BriefSectionData }) {
         )}
         {!blank(metrics) && (
           <div className="pt-4">
-            <Row label="Success in 3–6 months" a={metrics} />
+            <Row
+              label="What would success look like in 3–6 months?"
+              a={metrics}
+            />
           </div>
         )}
         {!blank(inaction) && (
           <div className="pt-4 space-y-1.5">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              If nothing changes
+              If nothing changes, what happens?
             </p>
             <p className="text-sm text-foreground leading-relaxed">
               {asStr(inaction)}
