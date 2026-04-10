@@ -5,7 +5,7 @@ import {
   getAuditAnalyticsScoreDistribution,
   getAuditAnalyticsStepCounts,
   getAuditAnalyticsSummary,
-} from "@/actions/admin";
+} from "@/actions/admin/analytics";
 import {
   Select,
   SelectContent,
@@ -41,6 +41,18 @@ type AuditAnalyticsCompletionCount = NonNullable<
 >;
 type AuditAnalyticsPeriod = "7d" | "30d" | "all";
 
+function getAuditAnalyticsPeriodDescription(period: AuditAnalyticsPeriod) {
+  switch (period) {
+    case "7d":
+      return "Last 7 days";
+    case "all":
+      return "All time";
+    case "30d":
+    default:
+      return "Last 30 days";
+  }
+}
+
 const AUDIT_ANALYTICS_PERIOD_OPTIONS = [
   { value: "30d", label: "30 days" },
   { value: "7d", label: "Last 7 days" },
@@ -72,18 +84,6 @@ const CATEGORY_SKELETON_KEYS = [
   "category-b",
   "category-c",
 ] as const;
-
-function getAuditAnalyticsPeriodDescription(period: AuditAnalyticsPeriod) {
-  switch (period) {
-    case "7d":
-      return "Last 7 days";
-    case "all":
-      return "All time";
-    case "30d":
-    default:
-      return "Last 30 days";
-  }
-}
 
 function SkeletonBlock({ className }: { className: string }) {
   return <div className={`animate-pulse rounded bg-muted ${className}`} />;
