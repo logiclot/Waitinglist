@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { 
-  ArrowRight, 
-  ArrowLeft, 
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  ArrowLeft,
   Briefcase,
   Layers,
   AlertTriangle,
@@ -12,7 +13,8 @@ import {
   Target,
   CheckCircle2,
   Clock,
-  Sparkles
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { createDiscoveryJobPost } from "@/actions/jobs";
 import { CheckoutModal } from "@/components/jobs/discovery/CheckoutModal";
@@ -27,6 +29,13 @@ import * as C from "./constants";
 import { DISCOVERY_SCAN_COPY, DISCOVERY_SCAN_BULLETS } from "@/lib/copy/requestCards";
 
 export default function DiscoveryWizardPage() {
+  const { data: freeScansData, isLoading: isFreeScansLoading } = useQuery<{ remaining: number }>({
+    queryKey: ["free-discovery-scans"],
+    queryFn: () => fetch("/api/business/free-scans").then((r) => r.json()),
+  });
+
+  const hasFreeScans = (freeScansData?.remaining ?? 0) > 0;
+
   const [step, setStep] = useState(0); // 0 = Intro
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [pendingJobId, setPendingJobId] = useState<string | null>(null);
@@ -251,7 +260,14 @@ export default function DiscoveryWizardPage() {
             <div>
               <h1 className="text-xl font-bold">{DISCOVERY_SCAN_COPY.headline.replace("\n", " ")}</h1>
               <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                {DISCOVERY_SCAN_COPY.proposalNote} &middot; {DISCOVERY_SCAN_COPY.price} one-time
+                {DISCOVERY_SCAN_COPY.proposalNote} &middot;{" "}
+                {isFreeScansLoading ? (
+                  <Loader2 className="inline h-3 w-3 animate-spin" />
+                ) : hasFreeScans ? (
+                  <span className="text-emerald-500 font-bold">FREE</span>
+                ) : (
+                  <>{DISCOVERY_SCAN_COPY.price} one-time</>
+                )}
               </p>
             </div>
           </div>
@@ -279,8 +295,22 @@ export default function DiscoveryWizardPage() {
           {/* Right: Pricing + CTA */}
           <div className="flex flex-col gap-4">
             <div className="bg-secondary/40 rounded-xl p-5 border border-border">
-              <div className="text-2xl font-bold text-foreground mb-0.5">{DISCOVERY_SCAN_COPY.price}</div>
-              <div className="text-xs text-muted-foreground mb-3">One-time posting fee</div>
+              {isFreeScansLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground mb-0.5">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Checking price…</span>
+                </div>
+              ) : hasFreeScans ? (
+                <>
+                  <div className="text-2xl font-bold text-emerald-500 mb-0.5">FREE</div>
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-3">Your first scan is free</div>
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-foreground mb-0.5">{DISCOVERY_SCAN_COPY.price}</div>
+                  <div className="text-xs text-muted-foreground mb-3">One-time posting fee</div>
+                </>
+              )}
               <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />

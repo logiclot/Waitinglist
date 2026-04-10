@@ -1,8 +1,18 @@
+"use client";
+
 import Link from "next/link";
-import { Crown, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
+import { Crown, Sparkles, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { DISCOVERY_SCAN_COPY, DISCOVERY_SCAN_BULLETS, CUSTOM_PROJECT_COPY, CUSTOM_PROJECT_BULLETS } from "@/lib/copy/requestCards";
 
 export default function AddRequestPage() {
+  const { data, isLoading } = useQuery<{ remaining: number }>({
+    queryKey: ["free-discovery-scans"],
+    queryFn: () => fetch("/api/business/free-scans").then((r) => r.json()),
+  });
+
+  const hasFreeScans = (data?.remaining ?? 0) > 0;
+
   return (
     <div className="p-8 max-w-5xl mx-auto">
 
@@ -30,8 +40,22 @@ export default function AddRequestPage() {
                 <Sparkles className="h-6 w-6" />
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-white">{DISCOVERY_SCAN_COPY.price}</div>
-                <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
+                {isLoading ? (
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm">Checking price…</span>
+                  </div>
+                ) : hasFreeScans ? (
+                  <>
+                    <div className="text-3xl font-bold text-emerald-400">FREE</div>
+                    <div className="text-[10px] text-emerald-300/70 uppercase tracking-wide font-medium">Your first scan is free</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold text-white">{DISCOVERY_SCAN_COPY.price}</div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
+                  </>
+                )}
               </div>
             </div>
             <h2 className="text-2xl font-bold text-white mb-1">{DISCOVERY_SCAN_COPY.headline.split("\n").map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}</h2>
