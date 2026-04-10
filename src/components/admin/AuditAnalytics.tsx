@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   BarChart2,
+  Gauge,
   Hash,
   Mail,
   TrendingDown,
@@ -66,7 +67,11 @@ const KPI_CONFIG = [
 ] as const;
 
 const SCORE_BUCKET_KEYS = ["0-24", "25-44", "45-64", "65-100"] as const;
-const CATEGORY_SKELETON_KEYS = ["category-a", "category-b", "category-c"] as const;
+const CATEGORY_SKELETON_KEYS = [
+  "category-a",
+  "category-b",
+  "category-c",
+] as const;
 
 function getAuditAnalyticsPeriodDescription(period: AuditAnalyticsPeriod) {
   switch (period) {
@@ -112,10 +117,7 @@ function KpiSkeleton() {
   return (
     <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-5">
       {KPI_CONFIG.map(({ key }) => (
-        <div
-          key={key}
-          className="rounded-xl border border-border bg-card p-4"
-        >
+        <div key={key} className="rounded-xl border border-border bg-card p-4">
           <SkeletonBlock className="h-4 w-20" />
           <SkeletonBlock className="mt-4 h-8 w-16" />
         </div>
@@ -235,11 +237,12 @@ export function AuditAnalytics() {
     retry: false,
   });
 
-  const scoreDistributionQuery = useQuery<AuditAnalyticsScoreDistribution | null>({
-    queryKey: ["admin", "audit-analytics", "scores", period],
-    queryFn: () => getAuditAnalyticsScoreDistribution(period),
-    retry: false,
-  });
+  const scoreDistributionQuery =
+    useQuery<AuditAnalyticsScoreDistribution | null>({
+      queryKey: ["admin", "audit-analytics", "scores", period],
+      queryFn: () => getAuditAnalyticsScoreDistribution(period),
+      retry: false,
+    });
 
   const completionCountQuery = useQuery<AuditAnalyticsCompletionCount | null>({
     queryKey: ["admin", "audit-analytics", "completion-count", period],
@@ -269,23 +272,29 @@ export function AuditAnalytics() {
   const completionCount = completionCountQuery.data;
 
   const maxStepCount =
-    summary && stepCounts
-      ? Math.max(summary.totalStarts, 1)
-      : 1;
+    summary && stepCounts ? Math.max(summary.totalStarts, 1) : 1;
   const maxScoreBucket = scoreDistribution
-    ? Math.max(...scoreDistribution.scoreBuckets.map((bucket) => bucket.count), 1)
+    ? Math.max(
+        ...scoreDistribution.scoreBuckets.map((bucket) => bucket.count),
+        1,
+      )
     : 1;
 
   const kpis = summary
     ? [
         { label: "Starts", value: summary.totalStarts, icon: Activity },
-        { label: "Completions", value: summary.totalCompletes, icon: BarChart2 },
+        {
+          label: "Completions",
+          value: summary.totalCompletes,
+          icon: BarChart2,
+        },
         {
           label: "Completion Rate",
           value: `${summary.completionRate}%`,
           icon: TrendingDown,
         },
         { label: "Emails Captured", value: summary.totalEmails, icon: Mail },
+        { label: "Average Score", value: summary.avgScore, icon: Gauge },
         {
           label: "Email Rate",
           value: `${summary.emailCaptureRate}%`,
@@ -308,7 +317,10 @@ export function AuditAnalytics() {
           <p className="mb-2 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
             Time period
           </p>
-          <Select value={period} onValueChange={(value) => setPeriod(value as AuditAnalyticsPeriod)}>
+          <Select
+            value={period}
+            onValueChange={(value) => setPeriod(value as AuditAnalyticsPeriod)}
+          >
             <SelectTrigger className="w-full sm:min-w-36">
               <SelectValue />
             </SelectTrigger>
@@ -452,15 +464,19 @@ export function AuditAnalytics() {
             </h2>
             <div className="space-y-2">
               {Object.entries(scoreDistribution.scoreLabelCounts).length > 0 ? (
-                Object.entries(scoreDistribution.scoreLabelCounts).map(([label, count]) => (
-                  <div
-                    key={label}
-                    className="flex items-center justify-between border-b border-border py-1.5 text-sm last:border-0"
-                  >
-                    <span className="text-foreground">{label}</span>
-                    <span className="tabular-nums font-semibold">{count}</span>
-                  </div>
-                ))
+                Object.entries(scoreDistribution.scoreLabelCounts).map(
+                  ([label, count]) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between border-b border-border py-1.5 text-sm last:border-0"
+                    >
+                      <span className="text-foreground">{label}</span>
+                      <span className="tabular-nums font-semibold">
+                        {count}
+                      </span>
+                    </div>
+                  ),
+                )
               ) : (
                 <p className="text-sm text-muted-foreground">
                   No completions yet.

@@ -1141,7 +1141,7 @@ export async function getAuditAnalyticsSummary(
         event: "quiz_complete",
       },
       distinct: ["sessionId"],
-      select: { sessionId: true },
+      select: { sessionId: true, score: true },
     }),
     prisma.auditEvent.count({
       where: {
@@ -1162,12 +1162,17 @@ export async function getAuditAnalyticsSummary(
     ? Math.round((totalEmails / totalCompletes) * 100)
     : 0;
 
+  const avgScore = completions.length > 0
+    ? Math.round(completions.reduce((s, c) => s + (c.score ?? 0), 0) / completions.length)
+    : 0;
+
   return {
     totalStarts,
     totalCompletes,
     totalEmails,
     completionRate,
     emailCaptureRate,
+    avgScore,
     periodDays:
       normalizedPeriod === "all" ? null : AUDIT_ANALYTICS_PERIOD_DAYS[normalizedPeriod],
   };
