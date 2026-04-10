@@ -11,7 +11,6 @@ import { SavedSolutionsProvider } from "@/hooks/SavedSolutionsContext";
 import { SavedSuitesProvider } from "@/hooks/SavedSuitesContext";
 import { Analytics } from "@vercel/analytics/react";
 
-
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -27,6 +26,8 @@ const geistMono = localFont({
 
 import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
 import Script from "next/script";
+import { MicrosoftAnalytics } from "@/components/analytics/microsoft";
+// import { CookieConsent } from "@/components/privacy/CookieConsent";
 
 const BASE_URL = `https://${BRAND_DOMAIN}`;
 
@@ -154,6 +155,8 @@ export default async function RootLayout({
           src="https://www.googletagmanager.com/gtag/js?id=AW-18073927573"
         />
         <Script src="/gtag.js" async />
+        <MicrosoftAnalytics />
+        {/* <CookieConsent /> */}
       </body>
     </html>
   );

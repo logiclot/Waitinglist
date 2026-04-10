@@ -3,6 +3,12 @@
 import { useState, useEffect } from "react";
 import { CONSENT_CHANGED_EVENT } from "@/lib/consent";
 
+declare global {
+  interface Window {
+    uetq: unknown[];
+  }
+}
+
 export function CookieConsent() {
   const [isOpen, setIsOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
@@ -35,6 +41,11 @@ export function CookieConsent() {
     }));
     setShowBanner(false);
     setIsOpen(false);
+    // Update Microsoft UET consent based on marketing preference
+    if (prefsToSave.marketing) {
+      window.uetq = window.uetq || [];
+      window.uetq.push('consent', 'update', { 'ad_storage': 'granted' });
+    }
     // Notify analytics providers that consent state changed
     window.dispatchEvent(new CustomEvent(CONSENT_CHANGED_EVENT, { detail: prefsToSave }));
   };
