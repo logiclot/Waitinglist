@@ -1075,25 +1075,61 @@ export async function getAdminPostedJobs() {
 
 // ── Audit Quiz Analytics ─────────────────────────────────────────────────────
 
-const AUDIT_ANALYTICS_PERIOD_DAYS = 30;
+type AuditAnalyticsPeriod = "7d" | "30d" | "all";
+
+const AUDIT_ANALYTICS_DEFAULT_PERIOD: AuditAnalyticsPeriod = "30d";
+const AUDIT_ANALYTICS_PERIOD_DAYS: Record<Exclude<AuditAnalyticsPeriod, "all">, number> = {
+  "7d": 7,
+  "30d": 30,
+};
 const AUDIT_ANALYTICS_STEPS = [0, 1, 2, 3, 4] as const;
 
-function getAuditAnalyticsPeriodStart() {
+function normalizeAuditAnalyticsPeriod(
+  period: AuditAnalyticsPeriod = AUDIT_ANALYTICS_DEFAULT_PERIOD,
+) {
+  if (period === "7d" || period === "30d" || period === "all") {
+    return period;
+  }
+
+  return AUDIT_ANALYTICS_DEFAULT_PERIOD;
+}
+
+function getAuditAnalyticsPeriodStart(period: AuditAnalyticsPeriod) {
+  if (period === "all") {
+    return null;
+  }
+
+  const days = AUDIT_ANALYTICS_PERIOD_DAYS[period];
   const now = new Date();
   return new Date(
-    now.getTime() - AUDIT_ANALYTICS_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+    now.getTime() - days * 24 * 60 * 60 * 1000,
   );
 }
 
-export async function getAuditAnalyticsSummary() {
+function getAuditAnalyticsDateFilter(period: AuditAnalyticsPeriod) {
+  const periodStart = getAuditAnalyticsPeriodStart(period);
+
+  if (!periodStart) {
+    return {};
+  }
+
+  return {
+    createdAt: { gte: periodStart },
+  };
+}
+
+export async function getAuditAnalyticsSummary(
+  period: AuditAnalyticsPeriod = AUDIT_ANALYTICS_DEFAULT_PERIOD,
+) {
   if (!(await checkAdmin())) return null;
 
-  const periodStart = getAuditAnalyticsPeriodStart();
+  const normalizedPeriod = normalizeAuditAnalyticsPeriod(period);
+  const dateFilter = getAuditAnalyticsDateFilter(normalizedPeriod);
 
   const [starts, completions, totalEmails] = await Promise.all([
     prisma.auditEvent.findMany({
       where: {
-        createdAt: { gte: periodStart },
+        ...dateFilter,
         event: "quiz_start",
       },
       distinct: ["sessionId"],
@@ -1101,7 +1137,7 @@ export async function getAuditAnalyticsSummary() {
     }),
     prisma.auditEvent.findMany({
       where: {
-        createdAt: { gte: periodStart },
+        ...dateFilter,
         event: "quiz_complete",
       },
       distinct: ["sessionId"],
@@ -1109,7 +1145,7 @@ export async function getAuditAnalyticsSummary() {
     }),
     prisma.auditEvent.count({
       where: {
-        createdAt: { gte: periodStart },
+        ...dateFilter,
         event: "email_sent",
       },
     }),
@@ -1132,20 +1168,24 @@ export async function getAuditAnalyticsSummary() {
     totalEmails,
     completionRate,
     emailCaptureRate,
-    periodDays: AUDIT_ANALYTICS_PERIOD_DAYS,
+    periodDays:
+      normalizedPeriod === "all" ? null : AUDIT_ANALYTICS_PERIOD_DAYS[normalizedPeriod],
   };
 }
 
-export async function getAuditAnalyticsStepCounts() {
+export async function getAuditAnalyticsStepCounts(
+  period: AuditAnalyticsPeriod = AUDIT_ANALYTICS_DEFAULT_PERIOD,
+) {
   if (!(await checkAdmin())) return null;
 
-  const periodStart = getAuditAnalyticsPeriodStart();
+  const normalizedPeriod = normalizeAuditAnalyticsPeriod(period);
+  const dateFilter = getAuditAnalyticsDateFilter(normalizedPeriod);
 
   const stepSessions = await Promise.all(
     AUDIT_ANALYTICS_STEPS.map((step) =>
       prisma.auditEvent.findMany({
         where: {
-          createdAt: { gte: periodStart },
+          ...dateFilter,
           event: "step_complete",
           step,
         },
@@ -1161,14 +1201,17 @@ export async function getAuditAnalyticsStepCounts() {
   }));
 }
 
-export async function getAuditAnalyticsScoreDistribution() {
+export async function getAuditAnalyticsScoreDistribution(
+  period: AuditAnalyticsPeriod = AUDIT_ANALYTICS_DEFAULT_PERIOD,
+) {
   if (!(await checkAdmin())) return null;
 
-  const periodStart = getAuditAnalyticsPeriodStart();
+  const normalizedPeriod = normalizeAuditAnalyticsPeriod(period);
+  const dateFilter = getAuditAnalyticsDateFilter(normalizedPeriod);
 
   const completionEvents = await prisma.auditEvent.findMany({
     where: {
-      createdAt: { gte: periodStart },
+      ...dateFilter,
       event: "quiz_complete",
       score: { not: null },
     },
@@ -1208,14 +1251,22 @@ export async function getAuditAnalyticsScoreDistribution() {
   };
 }
 
-export async function getAuditAnalyticsAllTimeCompletions() {
+export async function getAuditAnalyticsCompletionCount(
+  period: AuditAnalyticsPeriod = AUDIT_ANALYTICS_DEFAULT_PERIOD,
+) {
   if (!(await checkAdmin())) return null;
 
-  const allTimeCompletions = await prisma.auditEvent.count({
-    where: { event: "quiz_complete" },
+  const normalizedPeriod = normalizeAuditAnalyticsPeriod(period);
+  const dateFilter = getAuditAnalyticsDateFilter(normalizedPeriod);
+
+  const completions = await prisma.auditEvent.count({
+    where: {
+      ...dateFilter,
+      event: "quiz_complete",
+    },
   });
 
-  return { allTimeCompletions };
+  return { completions };
 }
 
 export async function getAuditCompletions() {

@@ -1,11 +1,19 @@
 "use client";
 
 import {
-  getAuditAnalyticsAllTimeCompletions,
+  getAuditAnalyticsCompletionCount,
   getAuditAnalyticsScoreDistribution,
   getAuditAnalyticsStepCounts,
   getAuditAnalyticsSummary,
 } from "@/actions/admin";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -16,7 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type AuditAnalyticsSummary = NonNullable<
   Awaited<ReturnType<typeof getAuditAnalyticsSummary>>
@@ -27,9 +35,19 @@ type AuditAnalyticsStepCounts = NonNullable<
 type AuditAnalyticsScoreDistribution = NonNullable<
   Awaited<ReturnType<typeof getAuditAnalyticsScoreDistribution>>
 >;
-type AuditAnalyticsAllTimeCompletions = NonNullable<
-  Awaited<ReturnType<typeof getAuditAnalyticsAllTimeCompletions>>
+type AuditAnalyticsCompletionCount = NonNullable<
+  Awaited<ReturnType<typeof getAuditAnalyticsCompletionCount>>
 >;
+type AuditAnalyticsPeriod = "7d" | "30d" | "all";
+
+const AUDIT_ANALYTICS_PERIOD_OPTIONS = [
+  { value: "30d", label: "30 days" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "all", label: "All time" },
+] as const satisfies ReadonlyArray<{
+  value: AuditAnalyticsPeriod;
+  label: string;
+}>;
 
 const STEP_LABELS = [
   "Team Size",
@@ -49,6 +67,18 @@ const KPI_CONFIG = [
 
 const SCORE_BUCKET_KEYS = ["0-24", "25-44", "45-64", "65-100"] as const;
 const CATEGORY_SKELETON_KEYS = ["category-a", "category-b", "category-c"] as const;
+
+function getAuditAnalyticsPeriodDescription(period: AuditAnalyticsPeriod) {
+  switch (period) {
+    case "7d":
+      return "Last 7 days";
+    case "all":
+      return "All time";
+    case "30d":
+    default:
+      return "Last 30 days";
+  }
+}
 
 function SkeletonBlock({ className }: { className: string }) {
   return <div className={`animate-pulse rounded bg-muted ${className}`} />;
@@ -190,28 +220,30 @@ function AuditAnalyticsSkeleton() {
 
 export function AuditAnalytics() {
   const router = useRouter();
+  const [period, setPeriod] = useState<AuditAnalyticsPeriod>("30d");
+  const periodDescription = getAuditAnalyticsPeriodDescription(period);
 
   const summaryQuery = useQuery<AuditAnalyticsSummary | null>({
-    queryKey: ["admin", "audit-analytics", "summary"],
-    queryFn: () => getAuditAnalyticsSummary(),
+    queryKey: ["admin", "audit-analytics", "summary", period],
+    queryFn: () => getAuditAnalyticsSummary(period),
     retry: false,
   });
 
   const stepCountsQuery = useQuery<AuditAnalyticsStepCounts | null>({
-    queryKey: ["admin", "audit-analytics", "steps"],
-    queryFn: () => getAuditAnalyticsStepCounts(),
+    queryKey: ["admin", "audit-analytics", "steps", period],
+    queryFn: () => getAuditAnalyticsStepCounts(period),
     retry: false,
   });
 
   const scoreDistributionQuery = useQuery<AuditAnalyticsScoreDistribution | null>({
-    queryKey: ["admin", "audit-analytics", "scores"],
-    queryFn: () => getAuditAnalyticsScoreDistribution(),
+    queryKey: ["admin", "audit-analytics", "scores", period],
+    queryFn: () => getAuditAnalyticsScoreDistribution(period),
     retry: false,
   });
 
-  const allTimeCompletionsQuery = useQuery<AuditAnalyticsAllTimeCompletions | null>({
-    queryKey: ["admin", "audit-analytics", "all-time-completions"],
-    queryFn: () => getAuditAnalyticsAllTimeCompletions(),
+  const completionCountQuery = useQuery<AuditAnalyticsCompletionCount | null>({
+    queryKey: ["admin", "audit-analytics", "completion-count", period],
+    queryFn: () => getAuditAnalyticsCompletionCount(period),
     retry: false,
   });
 
@@ -219,7 +251,7 @@ export function AuditAnalytics() {
     summaryQuery.data === null ||
     stepCountsQuery.data === null ||
     scoreDistributionQuery.data === null ||
-    allTimeCompletionsQuery.data === null;
+    completionCountQuery.data === null;
 
   useEffect(() => {
     if (isUnauthorized) {
@@ -234,7 +266,7 @@ export function AuditAnalytics() {
   const summary = summaryQuery.data;
   const stepCounts = stepCountsQuery.data;
   const scoreDistribution = scoreDistributionQuery.data;
-  const allTimeCompletions = allTimeCompletionsQuery.data;
+  const completionCount = completionCountQuery.data;
 
   const maxStepCount =
     summary && stepCounts
@@ -264,13 +296,33 @@ export function AuditAnalytics() {
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-1 text-2xl font-bold text-foreground">
-          Audit Quiz Analytics
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Last {summary?.periodDays ?? 30} days
-        </p>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="mb-1 text-2xl font-bold text-foreground">
+            Audit Quiz Analytics
+          </h1>
+          <p className="text-sm text-muted-foreground">{periodDescription}</p>
+        </div>
+
+        <div className="w-full sm:w-auto">
+          <p className="mb-2 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            Time period
+          </p>
+          <Select value={period} onValueChange={(value) => setPeriod(value as AuditAnalyticsPeriod)}>
+            <SelectTrigger className="w-full sm:min-w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {AUDIT_ANALYTICS_PERIOD_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {summaryQuery.error ? (
@@ -419,12 +471,12 @@ export function AuditAnalytics() {
         </div>
       )}
 
-      {allTimeCompletionsQuery.error ? (
+      {completionCountQuery.error ? (
         <AnalyticsSectionError
           title="Social proof data"
-          onRetry={() => void allTimeCompletionsQuery.refetch()}
+          onRetry={() => void completionCountQuery.refetch()}
         />
-      ) : !allTimeCompletions ? (
+      ) : !completionCount ? (
         <SocialProofSkeleton />
       ) : (
         <div className="rounded-xl border border-border bg-card p-6">
@@ -433,14 +485,16 @@ export function AuditAnalytics() {
             Social Proof Data
           </h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            Real completion count. Use this to replace the fabricated social proof
-            percentages once it reaches a meaningful number.
+            Real completion count for the selected period. Use the all-time view
+            when you need the full social proof total.
           </p>
           <p className="text-3xl font-bold text-foreground">
-            {allTimeCompletions.allTimeCompletions}
+            {completionCount.completions}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            all-time audit completions
+            {period === "all"
+              ? "all-time audit completions"
+              : `${periodDescription.toLowerCase()} audit completions`}
           </p>
         </div>
       )}
