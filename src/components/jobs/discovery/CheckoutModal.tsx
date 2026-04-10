@@ -156,7 +156,7 @@ export function CheckoutModal({
             href={`/jobs/${jobId}`}
             className="w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
           >
-            <Sparkles className="w-5 h-5" /> View Solution
+            <Sparkles className="w-5 h-5" /> View Job
           </Link>
         ) : (
           <button
