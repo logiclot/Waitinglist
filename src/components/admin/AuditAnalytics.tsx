@@ -27,6 +27,7 @@ import {
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -584,6 +585,9 @@ export function AuditAnalytics() {
             <p className="text-sm text-muted-foreground">No audits found.</p>
           ) : (
             <Table>
+              <TableCaption>
+                {auditsByEmail.length} total audits by email
+              </TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Email</TableHead>

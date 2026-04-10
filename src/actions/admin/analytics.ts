@@ -223,7 +223,7 @@ export async function getAuditsByEmail() {
 
     return Array.from(sessionMap.values()).sort(
         (a, b) => (b.score ?? -1) - (a.score ?? -1),
-    );
+    ).filter((a) => a.emails.length > 0);
 }
 
 export async function getAuditAnalyticsSummary(
