@@ -5,7 +5,17 @@ import {
   getAuditAnalyticsScoreDistribution,
   getAuditAnalyticsStepCounts,
   getAuditAnalyticsSummary,
+  getAuditsByEmail,
 } from "@/actions/admin/analytics";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -14,10 +24,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   BarChart2,
+  Eye,
   Gauge,
   Hash,
   Mail,
@@ -39,6 +58,7 @@ type AuditAnalyticsScoreDistribution = NonNullable<
 type AuditAnalyticsCompletionCount = NonNullable<
   Awaited<ReturnType<typeof getAuditAnalyticsCompletionCount>>
 >;
+type AuditsByEmail = NonNullable<Awaited<ReturnType<typeof getAuditsByEmail>>>;
 type AuditAnalyticsPeriod = "7d" | "30d" | "all";
 
 function getAuditAnalyticsPeriodDescription(period: AuditAnalyticsPeriod) {
@@ -205,6 +225,28 @@ function SocialProofSkeleton() {
   );
 }
 
+function AuditTableSkeleton() {
+  return (
+    <div className="mt-8 rounded-xl border border-border bg-card p-6">
+      <div className="mb-4 flex items-center gap-2">
+        <SkeletonBlock className="h-4 w-4 rounded-full" />
+        <SkeletonBlock className="h-4 w-40" />
+      </div>
+      <div className="space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4">
+            <SkeletonBlock className="h-4 w-40" />
+            <SkeletonBlock className="h-4 w-16" />
+            <SkeletonBlock className="h-4 w-24" />
+            <SkeletonBlock className="h-4 w-28" />
+            <SkeletonBlock className="h-4 w-16" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AuditAnalyticsSkeleton() {
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -249,6 +291,14 @@ export function AuditAnalytics() {
     queryFn: () => getAuditAnalyticsCompletionCount(period),
     retry: false,
   });
+
+  const auditsByEmailQuery = useQuery<AuditsByEmail | null>({
+    queryKey: ["admin", "audit-analytics", "audits-by-email"],
+    queryFn: () => getAuditsByEmail(),
+    retry: false,
+  });
+
+  const auditsByEmail = auditsByEmailQuery.data ?? [];
 
   const isUnauthorized =
     summaryQuery.data === null ||
@@ -512,6 +562,169 @@ export function AuditAnalytics() {
               ? "all-time audit completions"
               : `${periodDescription.toLowerCase()} audit completions`}
           </p>
+        </div>
+      )}
+
+      {auditsByEmailQuery.error ? (
+        <div className="mt-8">
+          <AnalyticsSectionError
+            title="Audits by Email"
+            onRetry={() => void auditsByEmailQuery.refetch()}
+          />
+        </div>
+      ) : auditsByEmailQuery.isPending ? (
+        <AuditTableSkeleton />
+      ) : (
+        <div className="mt-8 rounded-xl border border-border bg-card p-6">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Mail className="h-4 w-4 text-primary" />
+            Audits by Email
+          </h2>
+          {auditsByEmail.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No audits found.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Score Label</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {auditsByEmail.map((audit) => (
+                  <TableRow key={audit.sessionId}>
+                    <TableCell className="font-medium">
+                      {audit.emails.length > 0 ? audit.emails.join(", ") : "—"}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {audit.score ?? "—"}
+                    </TableCell>
+                    <TableCell>{audit.scoreLabel ?? "—"}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {new Date(audit.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            View
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Audit Details</DialogTitle>
+                            <DialogDescription>
+                              Session: {audit.sessionId.slice(0, 8)}...
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex justify-between border-b border-border pb-2">
+                              <span className="text-muted-foreground">
+                                Email
+                              </span>
+                              <span className="font-medium">
+                                {audit.emails.length > 0
+                                  ? audit.emails.join(", ")
+                                  : "—"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between border-b border-border pb-2">
+                              <span className="text-muted-foreground">
+                                Score
+                              </span>
+                              <span className="font-medium">
+                                {audit.score ?? "—"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between border-b border-border pb-2">
+                              <span className="text-muted-foreground">
+                                Score Label
+                              </span>
+                              <span className="font-medium">
+                                {audit.scoreLabel ?? "—"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between border-b border-border pb-2">
+                              <span className="text-muted-foreground">
+                                Date
+                              </span>
+                              <span className="font-medium">
+                                {new Date(audit.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                            {audit.answers.length > 0 && (
+                              <div className="space-y-2 pt-1">
+                                <p className="font-medium text-foreground">
+                                  Answers
+                                </p>
+                                {audit.answers.map((answer, i) => (
+                                  <div
+                                    key={i}
+                                    className="space-y-1.5 rounded-lg border border-border p-3 text-xs"
+                                  >
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">
+                                        Team Size
+                                      </span>
+                                      <span>{answer.teamSize}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">
+                                        Hours/Week
+                                      </span>
+                                      <span>{answer.hours}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">
+                                        Data Org
+                                      </span>
+                                      <span>{answer.dataOrg}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        Tasks
+                                      </span>
+                                      <p className="mt-0.5">
+                                        {answer.tasks.join(", ")}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        Strengths
+                                      </span>
+                                      <p className="mt-0.5">
+                                        {answer.strengths}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">
+                                        Frustration
+                                      </span>
+                                      <p className="mt-0.5">
+                                        {answer.frustration}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <DialogFooter showCloseButton />
+                        </DialogContent>
+                      </Dialog>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       )}
     </div>

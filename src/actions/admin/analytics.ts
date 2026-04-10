@@ -71,7 +71,6 @@ export async function getAuditAnalyticsStepCounts(
                     event: "step_complete",
                     step,
                 },
-                distinct: ["sessionId"],
                 select: { sessionId: true },
             }),
         ),
@@ -91,7 +90,7 @@ export async function getAuditAnalyticsCompletionCount(
     const normalizedPeriod = normalizeAuditAnalyticsPeriod(period);
     const dateFilter = getAuditAnalyticsDateFilter(normalizedPeriod);
 
-    const completions = await prisma.auditEvent.count({
+    const completions = await prisma.auditEvent.findMany({
         where: {
             ...dateFilter,
             event: "quiz_complete",
@@ -99,9 +98,10 @@ export async function getAuditAnalyticsCompletionCount(
                 not: null
             }
         },
+        distinct: "sessionId"
     });
 
-    return { completions };
+    return { completions: completions.length };
 }
 
 export async function getAuditAnalyticsScoreDistribution(
@@ -118,7 +118,7 @@ export async function getAuditAnalyticsScoreDistribution(
             event: "quiz_complete",
             score: { not: null },
         },
-        distinct: ["sessionId"],
+        distinct: "sessionId",
         select: {
             score: true,
             scoreLabel: true,
@@ -155,6 +155,77 @@ export async function getAuditAnalyticsScoreDistribution(
     };
 }
 
+type AuditAnswers = {
+    hours: string,
+    tasks: Array<string>,
+    dataOrg: string,
+    teamSize: string,
+    strengths: string,
+    frustration: string
+}
+
+export async function getAuditsByEmail() {
+    if (!(await checkAdmin())) return null;
+
+    const events = await prisma.auditEvent.findMany({
+        where: {
+            event: { in: ["quiz_complete", "email_sent"] },
+        },
+        select: {
+            sessionId: true,
+            event: true,
+            email: true,
+            answers: true,
+            score: true,
+            scoreLabel: true,
+            createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+    });
+
+    // Group events by sessionId
+    const sessionMap = new Map<string, {
+        sessionId: string;
+        emails: string[];
+        answers: AuditAnswers[];
+        score: number | null;
+        scoreLabel: string | null;
+        createdAt: Date;
+    }>();
+
+    for (const e of events) {
+        let session = sessionMap.get(e.sessionId);
+
+        if (!session) {
+            session = {
+                sessionId: e.sessionId,
+                emails: [],
+                answers: [],
+                score: null,
+                scoreLabel: null,
+                createdAt: e.createdAt,
+            };
+            sessionMap.set(e.sessionId, session);
+        }
+
+        if (e.event === "email_sent" && e.email && !session.emails.includes(e.email)) {
+            session.emails.push(e.email);
+        }
+
+        if (e.event === "quiz_complete") {
+            session.score = e.score;
+            session.scoreLabel = e.scoreLabel;
+            if (e.answers) {
+                session.answers.push(e.answers as AuditAnswers);
+            }
+        }
+    }
+
+    return Array.from(sessionMap.values()).sort(
+        (a, b) => (b.score ?? -1) - (a.score ?? -1),
+    );
+}
+
 export async function getAuditAnalyticsSummary(
     period: AuditAnalyticsPeriod = AUDIT_ANALYTICS_DEFAULT_PERIOD,
 ) {
@@ -169,7 +240,7 @@ export async function getAuditAnalyticsSummary(
                 ...dateFilter,
                 event: "quiz_start",
             },
-            distinct: ["sessionId"],
+            distinct: "sessionId",
             select: { sessionId: true },
         }),
         prisma.auditEvent.findMany({
@@ -178,6 +249,7 @@ export async function getAuditAnalyticsSummary(
                 event: "quiz_complete",
                 score: { not: null }
             },
+            distinct: "sessionId",
             select: { score: true },
         }),
         prisma.auditEvent.count({
