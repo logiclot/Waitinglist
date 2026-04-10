@@ -2,6 +2,8 @@
 
 import Script from "next/script";
 
+const MICROSOFT_UET_TAG_ID = "187245640";
+
 export function MicrosoftAnalytics() {
   return (
     <>
@@ -14,7 +16,7 @@ export function MicrosoftAnalytics() {
                 w[u] = w[u] || [];
                 o.ts = (new Date).getTime();
                 var n = d.createElement(t);
-                n.src = "https://bat.bing.net/bat.js?ti=" + o.ti + ("uetq" != u ? "&q=" + u : "");
+                n.src = "/metrics/ms-loader?ti=" + o.ti + ("uetq" != u ? "&q=" + u : "");
                 n.async = 1;
                 n.onload = n.onreadystatechange = function() {
                   var s = this.readyState;
@@ -22,7 +24,7 @@ export function MicrosoftAnalytics() {
                 };
                 var i = d.getElementsByTagName(t)[0];
                 i.parentNode.insertBefore(n, i);
-              })(window, document, "script", "uetq", { ti: "187245640", enableAutoSpaTracking: true });
+              })(window, document, "script", "uetq", { ti: "${MICROSOFT_UET_TAG_ID}", enableAutoSpaTracking: true });
             `,
         }}
       />

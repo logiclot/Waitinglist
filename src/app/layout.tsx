@@ -30,6 +30,7 @@ import { MicrosoftAnalytics } from "@/components/analytics/microsoft";
 // import { CookieConsent } from "@/components/privacy/CookieConsent";
 
 const BASE_URL = `https://${BRAND_DOMAIN}`;
+const GOOGLE_ADS_ID = "AW-18073927573";
 
 export const metadata: Metadata = {
   title: {
@@ -150,10 +151,7 @@ export default async function RootLayout({
           </PostHogProvider>
         </Providers>
         <Script src="/chat.js" async />
-        <Script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=AW-18073927573"
-        />
+        <Script async src={`/metrics/ads-loader?id=${GOOGLE_ADS_ID}`} />
         <Script src="/gtag.js" async />
         <MicrosoftAnalytics />
         {/* <CookieConsent /> */}

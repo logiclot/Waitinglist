@@ -19,6 +19,14 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: "/metrics/ads-loader",
+        destination: "https://www.googletagmanager.com/gtag/js",
+      },
+      {
+        source: "/metrics/ms-loader",
+        destination: "https://bat.bing.net/bat.js",
+      },
+      {
         source: "/ingest/static/:path*",
         destination: "https://eu-assets.i.posthog.com/static/:path*",
       },
