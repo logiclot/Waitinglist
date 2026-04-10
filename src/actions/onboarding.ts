@@ -155,6 +155,7 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
+        role: "BUSINESS",
         onboardingCompletedAt: new Date(),
         ...(profileImageUrl && { profileImageUrl }),
       },
@@ -352,6 +353,7 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
+        role: "EXPERT",
         onboardingCompletedAt: new Date(),
         ...(profileImageUrl && { profileImageUrl }),
       },
