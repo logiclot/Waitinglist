@@ -3,12 +3,6 @@
 import { useState, useEffect } from "react";
 import { CONSENT_CHANGED_EVENT } from "@/lib/consent";
 
-declare global {
-  interface Window {
-    uetq: unknown[];
-  }
-}
-
 export function CookieConsent() {
   const [isOpen, setIsOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
@@ -34,20 +28,25 @@ export function CookieConsent() {
 
   const savePreferences = (newPrefs?: typeof preferences) => {
     const prefsToSave = newPrefs || preferences;
-    localStorage.setItem("cookie-consent", JSON.stringify({
-      necessary: true,
-      ...prefsToSave,
-      timestamp: new Date().toISOString(),
-    }));
+    localStorage.setItem(
+      "cookie-consent",
+      JSON.stringify({
+        necessary: true,
+        ...prefsToSave,
+        timestamp: new Date().toISOString(),
+      }),
+    );
     setShowBanner(false);
     setIsOpen(false);
     // Update Microsoft UET consent based on marketing preference
     if (prefsToSave.marketing) {
       window.uetq = window.uetq || [];
-      window.uetq.push('consent', 'update', { 'ad_storage': 'granted' });
+      window.uetq.push("consent", "update", { ad_storage: "granted" });
     }
     // Notify analytics providers that consent state changed
-    window.dispatchEvent(new CustomEvent(CONSENT_CHANGED_EVENT, { detail: prefsToSave }));
+    window.dispatchEvent(
+      new CustomEvent(CONSENT_CHANGED_EVENT, { detail: prefsToSave }),
+    );
   };
 
   const acceptAll = () => {
@@ -67,17 +66,32 @@ export function CookieConsent() {
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-50 shadow-lg">
           <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-muted-foreground">
-              <h3 className="font-bold text-foreground mb-1">Cookies & Privacy</h3>
-              <p>We use cookies to improve your experience and to understand site usage. You can accept all, reject non-essential, or manage your preferences.</p>
+              <h3 className="font-bold text-foreground mb-1">
+                Cookies & Privacy
+              </h3>
+              <p>
+                We use cookies to improve your experience and to understand site
+                usage. You can accept all, reject non-essential, or manage your
+                preferences.
+              </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <button onClick={() => setIsOpen(true)} className="text-sm underline hover:text-primary">
+              <button
+                onClick={() => setIsOpen(true)}
+                className="text-sm underline hover:text-primary"
+              >
                 Manage preferences
               </button>
-              <button onClick={rejectNonEssential} className="px-4 py-2 rounded-md border border-border bg-background hover:bg-secondary/50 text-sm font-medium transition-colors">
+              <button
+                onClick={rejectNonEssential}
+                className="px-4 py-2 rounded-md border border-border bg-background hover:bg-secondary/50 text-sm font-medium transition-colors"
+              >
                 Reject non-essential
               </button>
-              <button onClick={acceptAll} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium transition-colors">
+              <button
+                onClick={acceptAll}
+                className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium transition-colors"
+              >
                 Accept all
               </button>
             </div>
@@ -91,42 +105,58 @@ export function CookieConsent() {
           <div className="bg-card border border-border rounded-xl p-6 max-w-md w-full shadow-xl">
             <h3 className="text-xl font-bold mb-2">Cookie preferences</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Choose which cookies you allow. Necessary cookies are required for the site to function.
+              Choose which cookies you allow. Necessary cookies are required for
+              the site to function.
             </p>
-            
+
             <div className="space-y-4 mb-8">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Necessary (always on)</span>
-                <input type="checkbox" checked disabled className="accent-primary" />
+                <input
+                  type="checkbox"
+                  checked
+                  disabled
+                  className="accent-primary"
+                />
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Analytics</span>
-                <input 
-                  type="checkbox" 
-                  checked={preferences.analytics} 
-                  onChange={(e) => setPreferences({ ...preferences, analytics: e.target.checked })}
-                  className="accent-primary" 
+                <input
+                  type="checkbox"
+                  checked={preferences.analytics}
+                  onChange={(e) =>
+                    setPreferences({
+                      ...preferences,
+                      analytics: e.target.checked,
+                    })
+                  }
+                  className="accent-primary"
                 />
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Marketing</span>
-                <input 
-                  type="checkbox" 
-                  checked={preferences.marketing} 
-                  onChange={(e) => setPreferences({ ...preferences, marketing: e.target.checked })}
-                  className="accent-primary" 
+                <input
+                  type="checkbox"
+                  checked={preferences.marketing}
+                  onChange={(e) =>
+                    setPreferences({
+                      ...preferences,
+                      marketing: e.target.checked,
+                    })
+                  }
+                  className="accent-primary"
                 />
               </div>
             </div>
 
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="px-4 py-2 rounded-md border border-border hover:bg-secondary/50 text-sm font-medium"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => savePreferences()}
                 className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
               >
