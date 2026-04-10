@@ -247,10 +247,11 @@ function SectionC({ s }: { s?: BriefSectionData }) {
 // ── Section D – Pain Signals ──────────────────────────────────────────────────
 function SectionD({ s }: { s?: BriefSectionData }) {
   const pains: [string, Answer][] = [
-    ["Manual time drains", qa(s, 0)],
-    ["Where mistakes happen", qa(s, 1)],
-    ["Where things are slow", qa(s, 2)],
-    ["Operations visibility", qa(s, 3)],
+    ["Human judgment required", qa(s, 0)],
+    ["Manual time drains", qa(s, 1)],
+    ["Where mistakes happen", qa(s, 2)],
+    ["Where things are slow", qa(s, 3)],
+    ["Operations visibility", qa(s, 4)],
   ];
   const visible = pains.filter(([, a]) => !blank(a));
   return (
@@ -281,10 +282,9 @@ function SectionD({ s }: { s?: BriefSectionData }) {
 // ── Section E – Constraints ───────────────────────────────────────────────────
 function SectionE({ s }: { s?: BriefSectionData }) {
   const rows: [string, Answer][] = [
-    ["System access", qa(s, 0)],
-    ["Compliance requirements", qa(s, 1)],
-    ["Environments", qa(s, 2)],
-    ["Vendor lock-ins", qa(s, 3)],
+    ["Compliance requirements", qa(s, 0)],
+    ["Environments", qa(s, 1)],
+    ["Vendor lock-ins", qa(s, 2)],
   ];
   const visible = rows.filter(([, a]) => !blank(a));
   if (visible.length === 0) return null;
@@ -308,10 +308,11 @@ function SectionE({ s }: { s?: BriefSectionData }) {
 
 // ── Section F – Outcome ───────────────────────────────────────────────────────
 function SectionF({ s }: { s?: BriefSectionData }) {
-  const topPri = qa(s, 1);
-  const metrics = qa(s, 0);
-  const inaction = qa(s, 2);
-  const criteria = qa(s, 3);
+  const timeline = qa(s, 0);
+  const metrics = qa(s, 1);
+  const topPri = qa(s, 2);
+  const inaction = qa(s, 3);
+  const criteria = qa(s, 4);
   return (
     <BCard accent="outcome">
       <BCardHeader
@@ -321,8 +322,11 @@ function SectionF({ s }: { s?: BriefSectionData }) {
         accent="outcome"
       />
       <div className="p-5 space-y-4 divide-y divide-border">
+        {!blank(timeline) && (
+          <Row label="Implementation timeline" a={timeline} />
+        )}
         {!blank(topPri) && (
-          <div className="bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+          <div className="pt-4 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
             <p className="text-xs font-bold text-primary uppercase tracking-wide mb-1">
               Top priority
             </p>
