@@ -1075,47 +1075,48 @@ export async function getAdminPostedJobs() {
 
 // ── Audit Quiz Analytics ─────────────────────────────────────────────────────
 
-export async function getAuditAnalytics() {
+const AUDIT_ANALYTICS_PERIOD_DAYS = 30;
+const AUDIT_ANALYTICS_STEPS = [0, 1, 2, 3, 4] as const;
+
+function getAuditAnalyticsPeriodStart() {
+  const now = new Date();
+  return new Date(
+    now.getTime() - AUDIT_ANALYTICS_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+  );
+}
+
+export async function getAuditAnalyticsSummary() {
   if (!(await checkAdmin())) return null;
 
-  const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const periodStart = getAuditAnalyticsPeriodStart();
 
-  // Fetch 30-day events and all-time completions in parallel
-  const [events, allTimeCompletions] = await Promise.all([
+  const [starts, completions, totalEmails] = await Promise.all([
     prisma.auditEvent.findMany({
-      where: { createdAt: { gte: thirtyDaysAgo } },
-      select: {
-        sessionId: true,
-        event: true,
-        step: true,
-        score: true,
-        scoreLabel: true,
-        createdAt: true,
+      where: {
+        createdAt: { gte: periodStart },
+        event: "quiz_start",
       },
+      distinct: ["sessionId"],
+      select: { sessionId: true },
+    }),
+    prisma.auditEvent.findMany({
+      where: {
+        createdAt: { gte: periodStart },
+        event: "quiz_complete",
+      },
+      distinct: ["sessionId"],
+      select: { sessionId: true },
     }),
     prisma.auditEvent.count({
-      where: { event: "quiz_complete" },
+      where: {
+        createdAt: { gte: periodStart },
+        event: "email_sent",
+      },
     }),
   ]);
 
-  // Group by session
-  const sessions = new Map<string, typeof events>();
-  for (const e of events) {
-    const arr = sessions.get(e.sessionId) ?? [];
-    arr.push(e);
-    sessions.set(e.sessionId, arr);
-  }
-
-  const totalStarts = [...sessions.values()].filter(evts =>
-    evts.some(e => e.event === "quiz_start")
-  ).length;
-
-  const totalCompletes = [...sessions.values()].filter(evts =>
-    evts.some(e => e.event === "quiz_complete")
-  ).length;
-
-  const totalEmails = events.filter(e => e.event === "email_sent").length;
+  const totalStarts = starts.length;
+  const totalCompletes = completions.length;
 
   const completionRate = totalStarts > 0
     ? Math.round((totalCompletes / totalStarts) * 100)
@@ -1125,16 +1126,58 @@ export async function getAuditAnalytics() {
     ? Math.round((totalEmails / totalCompletes) * 100)
     : 0;
 
-  // Step drop-off
-  const stepCounts = [0, 1, 2, 3, 4].map(stepNum => ({
-    step: stepNum,
-    count: [...sessions.values()].filter(evts =>
-      evts.some(e => e.event === "step_complete" && e.step === stepNum)
-    ).length,
-  }));
+  return {
+    totalStarts,
+    totalCompletes,
+    totalEmails,
+    completionRate,
+    emailCaptureRate,
+    periodDays: AUDIT_ANALYTICS_PERIOD_DAYS,
+  };
+}
 
-  // Score distribution
-  const completionEvents = events.filter(e => e.event === "quiz_complete" && e.score !== null);
+export async function getAuditAnalyticsStepCounts() {
+  if (!(await checkAdmin())) return null;
+
+  const periodStart = getAuditAnalyticsPeriodStart();
+
+  const stepSessions = await Promise.all(
+    AUDIT_ANALYTICS_STEPS.map((step) =>
+      prisma.auditEvent.findMany({
+        where: {
+          createdAt: { gte: periodStart },
+          event: "step_complete",
+          step,
+        },
+        distinct: ["sessionId"],
+        select: { sessionId: true },
+      }),
+    ),
+  );
+
+  return AUDIT_ANALYTICS_STEPS.map((step, index) => ({
+    step,
+    count: stepSessions[index].length,
+  }));
+}
+
+export async function getAuditAnalyticsScoreDistribution() {
+  if (!(await checkAdmin())) return null;
+
+  const periodStart = getAuditAnalyticsPeriodStart();
+
+  const completionEvents = await prisma.auditEvent.findMany({
+    where: {
+      createdAt: { gte: periodStart },
+      event: "quiz_complete",
+      score: { not: null },
+    },
+    select: {
+      score: true,
+      scoreLabel: true,
+    },
+  });
+
   const scoreBuckets = [
     { label: "0-24", min: 0, max: 24, count: 0 },
     { label: "25-44", min: 25, max: 44, count: 0 },
@@ -1154,25 +1197,25 @@ export async function getAuditAnalytics() {
     }
   }
 
-  // Average score
   const avgScore = completionEvents.length > 0
     ? Math.round(completionEvents.reduce((sum, e) => sum + (e.score ?? 0), 0) / completionEvents.length)
     : 0;
 
-
   return {
-    totalStarts,
-    totalCompletes,
-    totalEmails,
-    completionRate,
-    emailCaptureRate,
-    stepCounts,
     scoreBuckets,
     scoreLabelCounts,
     avgScore,
-    allTimeCompletions,
-    periodDays: 30,
   };
+}
+
+export async function getAuditAnalyticsAllTimeCompletions() {
+  if (!(await checkAdmin())) return null;
+
+  const allTimeCompletions = await prisma.auditEvent.count({
+    where: { event: "quiz_complete" },
+  });
+
+  return { allTimeCompletions };
 }
 
 export async function getAuditCompletions() {
