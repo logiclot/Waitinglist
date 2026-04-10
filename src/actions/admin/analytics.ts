@@ -178,8 +178,7 @@ export async function getAuditAnalyticsSummary(
                 event: "quiz_complete",
                 score: { not: null }
             },
-            distinct: ["sessionId"],
-            select: { sessionId: true, score: true },
+            select: { score: true },
         }),
         prisma.auditEvent.count({
             where: {
