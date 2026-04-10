@@ -1,49 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Check,
-  Trash2,
-  Users,
-  Briefcase,
-  ShoppingBag,
-  TrendingUp,
-  LayoutGrid,
-} from "lucide-react";
-import { Solution } from "@/types";
-import { ListingEditor } from "@/components/admin/ListingEditor";
-import { ExpertManagementTab } from "@/components/admin/ExpertManagementTab";
-import { SolutionManagementTab } from "@/components/admin/SolutionManagementTab";
-import {
-  approveSpecialist,
-  suspendSpecialist,
-  makeFoundingSpecialist,
-  removeFoundingExpert,
-  setExpertFee,
-  setExpertTier,
-  adminDeleteUser,
   adminDeleteOrder,
   adminDeleteSolution,
-  updateSolutionVideoStatus,
-  liftBidBan,
+  adminDeleteUser,
   approveEliteApplication,
-  denyEliteApplication,
+  approveSpecialist,
   demoteFromElite,
-  sendExpertInvites,
-  getWaitlistInviteStats,
-  sendBusinessInvites,
+  denyEliteApplication,
   getBusinessWaitlistInviteStats,
+  getWaitlistInviteStats,
+  liftBidBan,
+  makeFoundingSpecialist,
+  removeFoundingExpert,
+  sendBusinessInvites,
+  sendExpertInvites,
+  setExpertTier,
+  suspendSpecialist,
+  updateSolutionVideoStatus,
 } from "@/actions/admin";
 import {
   DisputeManagementTab,
   type AdminDispute,
 } from "@/components/admin/DisputeManagementTab";
+import { ExpertManagementTab } from "@/components/admin/ExpertManagementTab";
+import { ListingEditor } from "@/components/admin/ListingEditor";
+import { SolutionManagementTab } from "@/components/admin/SolutionManagementTab";
+import { Solution } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AuditResultsTab,
-  type AuditCompletion,
-} from "@/components/admin/AuditResultsTab";
+  Briefcase,
+  Check,
+  LayoutGrid,
+  ShoppingBag,
+  Trash2,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import { BRAND_NAME } from "@/lib/branding";
 import { TIER_THRESHOLDS } from "@/lib/commission";
 import { SpecialistTier } from "@prisma/client";
@@ -125,7 +121,7 @@ interface AdminDashboardProps {
   initialOrders: AdminOrder[];
   initialBusinesses: AdminBusiness[];
   initialDisputes: AdminDispute[];
-  initialAuditCompletions: AuditCompletion[];
+  // initialAuditCompletions: AuditCompletion[];
   initialEliteApplications?: EliteApplication[];
   stats: {
     totalUsers: number;
@@ -339,7 +335,7 @@ export function AdminDashboard({
   initialOrders,
   initialBusinesses,
   initialDisputes,
-  initialAuditCompletions,
+  // initialAuditCompletions,
   initialEliteApplications = [],
   stats,
 }: AdminDashboardProps) {
@@ -350,7 +346,6 @@ export function AdminDashboard({
     | "orders"
     | "businesses"
     | "disputes"
-    | "audits"
     | "invites"
     | "business-invites"
   >("experts");
@@ -658,7 +653,6 @@ export function AdminDashboard({
             "orders",
             "businesses",
             "disputes",
-            "audits",
             "invites",
             "business-invites",
           ] as const
@@ -669,7 +663,7 @@ export function AdminDashboard({
             orders: orderList.length,
             businesses: initialBusinesses.length,
             disputes: initialDisputes.length,
-            audits: initialAuditCompletions.length,
+            // audits: initialAuditCompletions.length,
             invites: 0,
             "business-invites": 0,
           };
@@ -797,10 +791,10 @@ export function AdminDashboard({
           showMessage={showMessage}
         />
       )}
-
+      {/* 
       {activeTab === "audits" && (
         <AuditResultsTab completions={initialAuditCompletions} />
-      )}
+      )} */}
 
       {activeTab === "invites" && <InvitePanel showMessage={showMessage} />}
 
