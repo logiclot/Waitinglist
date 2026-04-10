@@ -95,6 +95,9 @@ export async function getAuditAnalyticsCompletionCount(
         where: {
             ...dateFilter,
             event: "quiz_complete",
+            score: {
+                not: null
+            }
         },
     });
 
