@@ -30,6 +30,7 @@ import {
   Lock,
   ClipboardList,
   CircleDollarSign as Money,
+  Gift,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -149,6 +150,7 @@ export function Sidebar({
     role === "ADMIN"
       ? [
           { label: "Admin", href: "/admin", icon: ShieldCheck },
+          { label: "Gift Scan", href: "/admin/gift-scans", icon: Gift },
           {
             label: "Post on Behalf",
             href: "/admin/post-on-behalf",
