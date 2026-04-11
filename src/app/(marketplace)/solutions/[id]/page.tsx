@@ -119,6 +119,24 @@ export async function generateMetadata({ params }: PageProps) {
     solution.short_summary ||
     solution.description ||
     `${solution.title} on ${BRAND_NAME}`;
+
+  const ogParams = new URLSearchParams({
+    title: solution.title,
+    category: solution.category || "",
+    summary: solution.short_summary || "",
+    outcome: solution.outcome || "",
+    price: String(solution.implementation_price),
+    deliveryDays: String(solution.delivery_days || ""),
+    supportDays: String(solution.support_days || 30),
+    monthlyCostMin: String(solution.monthly_cost_min || ""),
+    monthlyCostMax: String(solution.monthly_cost_max || ""),
+    expertName: solution.expert?.name || "",
+    expertImage: solution.expert?.profile_image_url || "",
+    tier: solution.expert?.tier || "",
+    tools: (solution.integrations || []).join(","),
+  });
+  const ogImageUrl = `https://${BRAND_DOMAIN}/api/og?${ogParams.toString()}`;
+
   return {
     title: `${solution.title} | ${BRAND_NAME}`,
     description,
@@ -128,11 +146,20 @@ export async function generateMetadata({ params }: PageProps) {
       url,
       siteName: BRAND_NAME,
       type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: solution.title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${solution.title} | ${BRAND_NAME}`,
       description,
+      images: [ogImageUrl],
     },
     alternates: { canonical: url },
     keywords: [
