@@ -84,7 +84,7 @@ export default function AdminDashboard() {
       )}
 
 
-      <Tabs defaultValue="experts">
+      <Tabs defaultValue="experts" className="flex-col" orientation="horizontal">
         <TabsList
           variant="line"
           className="gap-4 border-b border-border mb-6 w-full"
@@ -133,7 +133,6 @@ export default function AdminDashboard() {
           <BizInviteManagement />
         </TabsContent>
       </Tabs>
-
     </div>
   );
 }
