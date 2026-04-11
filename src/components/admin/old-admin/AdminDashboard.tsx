@@ -307,17 +307,14 @@ export function AdminDashboard({
   initialDisputes,
   initialEliteApplications = [],
 }: AdminDashboardProps) {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    | "experts"
     | "solutions"
     | "orders"
     | "businesses"
     | "disputes"
     | "invites"
     | "business-invites"
-  >("experts");
-  const [expandedExpertId, setExpandedExpertId] = useState<string | null>(null);
+  >("solutions");
   const [solutionList, setSolutionList] =
     useState<Solution[]>(initialSolutions);
   const [orderList, setOrderList] = useState<AdminOrder[]>(initialOrders);
@@ -468,7 +465,7 @@ export function AdminDashboard({
               {tab === "business-invites"
                 ? "Biz Invites"
                 : tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
-              ({counts[tab]})
+              ({counts[tab] > 0 ? counts[tab] : null})
             </button>
           );
         })}
