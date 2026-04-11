@@ -2,10 +2,11 @@ import { initTRPC } from "@trpc/server";
 import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
 import superjson from "superjson";
+import { authOptions } from "../auth";
 
 
 export async function createContext(req: NextRequest) {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     return {
         session,
     };
