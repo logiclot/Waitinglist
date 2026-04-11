@@ -44,12 +44,22 @@ export const adminExpertRouter = createRouter({
         .input(z.object({ id: z.string(), tier: z.enum(SpecialistTier) }))
         .mutation(async ({ input }) => {
             const feeForTier = TIER_THRESHOLDS[input.tier];
+
+            let count: number | null = null;
+
+            if (input.tier === "FOUNDING") {
+                count = await prisma.specialistProfile.count({
+                    where: { tier: "FOUNDING" }
+                })
+            }
+
             const specialist = await prisma.specialistProfile.update({
                 where: { id: input.id },
                 data: {
                     tier: input.tier,
                     platformFeePercentage: feeForTier,
                     isFoundingExpert: input.tier === "FOUNDING",
+                    foundingRank: count,
                 },
                 select: { userId: true },
             });

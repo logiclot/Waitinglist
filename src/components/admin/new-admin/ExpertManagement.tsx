@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useExperts,
   useSuspendExpert,
@@ -33,7 +33,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Eye, Pause, Trash2 } from "lucide-react";
+import { Eye, Pause, Search, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Expert = NonNullable<ReturnType<typeof useExperts>["data"]>[number];
@@ -168,6 +168,23 @@ export function ExpertManagement() {
   const deleteMutation = useDeleteExpert();
   const tierMutation = useSetExpertTier();
   const [changingTierId, setChangingTierId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [tierFilter, setTierFilter] = useState<string>("ALL");
+
+  const filteredExperts = useMemo(() => {
+    if (!experts) return [];
+    return experts.filter((expert) => {
+      const q = search.toLowerCase();
+      const matchesSearch =
+        !q ||
+        expert.displayName.toLowerCase().includes(q) ||
+        expert.legalFullName.toLowerCase().includes(q) ||
+        expert.user.email.toLowerCase().includes(q) ||
+        expert.tools.includes(q)
+      const matchesTier = tierFilter === "ALL" || expert.tier === tierFilter;
+      return matchesSearch && matchesTier;
+    });
+  }, [experts, search, tierFilter]);
 
   const handleSuspend = (expert: Expert) => {
     if (!confirm(`Suspend ${expert.displayName}?`)) return;
@@ -214,98 +231,125 @@ export function ExpertManagement() {
   }
 
   return (
-    <div className="border border-border rounded-xl overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-secondary/50">
-            <TableHead className="px-4">Expert</TableHead>
-            <TableHead className="px-4">Tools</TableHead>
-            <TableHead className="px-4">Status</TableHead>
-            <TableHead className="px-4">Tier &amp; Fee</TableHead>
-            <TableHead className="px-4 text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {experts.map((expert) => (
-            <TableRow key={expert.id}>
-              {/* Expert info */}
-              <TableCell className="px-4">
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-semibold">{expert.legalFullName}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {expert.displayName}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {expert.user.email}
-                  </span>
-                  {expert.country && (
-                    <span className="text-xs text-muted-foreground">
-                      {expert.country}
-                    </span>
-                  )}
-                </div>
-              </TableCell>
-
-              {/* Tools & experience */}
-              <TableCell className="px-4">
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs text-muted-foreground">
-                    {expert.yearsExperience} yrs exp.
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {expert.tools.map((tool) => (
-                      <span
-                        key={tool}
-                        className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
-                      >
-                        {tool}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </TableCell>
-
-              {/* Status */}
-              <TableCell className="px-4">
-                <StatusBadge expert={expert} />
-              </TableCell>
-
-              {/* Tier & Fee */}
-              <TableCell className="px-4">
-                <TierFeeCell
-                  expert={expert}
-                  onTierChange={(tier) => handleTierChange(expert, tier)}
-                  isPending={changingTierId === expert.id}
-                />
-              </TableCell>
-
-              {/* Actions */}
-              <TableCell className="px-4 text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <ExpertDetailDialog expert={expert} />
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    title="Suspend"
-                    disabled={expert.status === "SUSPENDED"}
-                    onClick={() => handleSuspend(expert)}
-                  >
-                    <Pause className="size-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon-sm"
-                    title="Delete user"
-                    onClick={() => handleDelete(expert)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </TableCell>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="relative w-full max-w-xs">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search by name or email…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-9 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <Select value={tierFilter} onValueChange={setTierFilter}>
+          <SelectTrigger className="w-36" size="sm">
+            <SelectValue placeholder="Filter by tier" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Tiers</SelectItem>
+            {(Object.keys(TIER_THRESHOLDS) as SpecialistTier[]).map((tier) => (
+              <SelectItem key={tier} value={tier}>
+                {tier}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="border border-border rounded-xl overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-secondary/50">
+              <TableHead className="px-4">Expert</TableHead>
+              <TableHead className="px-4">Tools</TableHead>
+              <TableHead className="px-4">Status</TableHead>
+              <TableHead className="px-4">Tier &amp; Fee</TableHead>
+              <TableHead className="px-4 text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredExperts.map((expert) => (
+              <TableRow key={expert.id}>
+                {/* Expert info */}
+                <TableCell className="px-4">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-semibold">{expert.legalFullName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {expert.displayName}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {expert.user.email}
+                    </span>
+                    {expert.country && (
+                      <span className="text-xs text-muted-foreground">
+                        {expert.country}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+
+                {/* Tools & experience */}
+                <TableCell className="px-4">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">
+                      {expert.yearsExperience} yrs exp.
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {expert.tools.map((tool) => (
+                        <span
+                          key={tool}
+                          className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {tool}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </TableCell>
+
+                {/* Status */}
+                <TableCell className="px-4">
+                  <StatusBadge expert={expert} />
+                </TableCell>
+
+                {/* Tier & Fee */}
+                <TableCell className="px-4">
+                  <TierFeeCell
+                    expert={expert}
+                    onTierChange={(tier) => handleTierChange(expert, tier)}
+                    isPending={changingTierId === expert.id}
+                  />
+                </TableCell>
+
+                {/* Actions */}
+                <TableCell className="px-4 text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <ExpertDetailDialog expert={expert} />
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      title="Suspend"
+                      disabled={expert.status === "SUSPENDED"}
+                      onClick={() => handleSuspend(expert)}
+                    >
+                      <Pause className="size-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon-sm"
+                      title="Delete user"
+                      onClick={() => handleDelete(expert)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
