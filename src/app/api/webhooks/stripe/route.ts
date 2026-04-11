@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import { createNotification } from "@/lib/notifications";
+import { createNotification, sendJobNotificationToExperts } from "@/lib/notifications";
 import { activateJobPost } from "@/actions/jobs";
 import { checkBusinessReferralCondition } from "@/actions/referral";
 import { log } from "@/lib/logger";
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const { orderId, milestoneIndex, type, expertId, buyerId, jobId } = session.metadata || {};
+    const { orderId, milestoneIndex, type, expertId, buyerId, jobId, category } = session.metadata || {};
 
     // ─── Job posting payment ───────────────────────────────────────────────────
     if (type === "job_posting" && jobId) {
@@ -198,6 +198,11 @@ export async function POST(req: Request) {
             `/invoice/job/${jobId}`
           );
         }
+
+        // Notify experts about the new job posting (fire-and-forget)
+        sendJobNotificationToExperts(jobId, category === "Discovery Scan" ? "DISCOVERY" : "JOB_POSTING").catch((err) =>
+          log.error("webhook.job_expert_notification_failed", { err: String(err), jobId })
+        );
       } catch (err) {
         log.error("webhook.job_posting_failed", { err: String(err), jobId });
         captureException(err, { context: "webhook.job_posting" });

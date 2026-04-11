@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { createNotification } from "@/lib/notifications";
+import { createNotification, sendJobNotificationToExperts } from "@/lib/notifications";
 import { maxProposalsForCategory } from "@/lib/job-config";
 import { log } from "@/lib/logger";
 import * as Sentry from "@sentry/nextjs";
@@ -39,6 +39,8 @@ export async function createJobPost(prevState: unknown, formData: FormData) {
 
   const tools = toolsRaw ? toolsRaw.split(",").map((t) => t.trim()).filter(Boolean) : [];
 
+
+  // for notifiying buyer we should fire even here , for notifying sellers we should do in the webhook
   try {
     const job = await prisma.jobPost.create({
       data: {
@@ -124,6 +126,9 @@ export async function createDiscoveryJobPost(formData: FormData) {
         }
       })
 
+      // migrate emails to inngest for reliability
+      sendJobNotificationToExperts(job.id, "DISCOVERY").catch((e) => log.error("notification.email_fire_and_forget_failed", { userId: session.user.id, error: String(e) }))
+
       // fire and forget (should be added to queue)
       createNotification(
         session.user.id,
@@ -149,16 +154,11 @@ export async function createDiscoveryJobPost(formData: FormData) {
 export async function activateJobPost(job: JobPost) {
   try {
     // Notify eligible experts
-    const isDiscovery = job.category === "Discovery" || job.category === "Discovery Scan";
+    const isDiscovery = job.category === "Discovery Scan";
     const experts = await prisma.specialistProfile.findMany({
       where: {
         status: "APPROVED",
-        OR: [
-          { isFoundingExpert: true, tier: "FOUNDING" },
-          { tier: "ELITE" },
-          // PROVEN experts can see Discovery Scans
-          ...(isDiscovery ? [{ tier: "PROVEN" as const }] : []),
-        ],
+        tier: { not: "STANDARD" }
       },
       select: { userId: true },
     });
@@ -169,7 +169,8 @@ export async function activateJobPost(job: JobPost) {
         isDiscovery ? "🔔 New Discovery Scan posted" : "🔔 New Custom Project posted",
         `${job.title} — ${isDiscovery ? "Up to 5 proposals accepted" : "Up to 3 proposals accepted"}`,
         "info",
-        `/jobs/${job.id}`
+        `/jobs/${job.id}`,
+        false
       )
     )).catch(err => {
       log.error("jobs.expert_notifications_failed", { error: err instanceof Error ? err.message : String(err) });

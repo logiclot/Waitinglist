@@ -153,6 +153,53 @@ export function notificationEmail({
   `);
 }
 
+// ── Job notification emails ─────────────────────────────────────────────────
+
+const TIER_LABELS: Record<string, string> = {
+  PROVEN: "Proven",
+  ELITE: "Elite",
+  FOUNDING: "Founding",
+};
+
+export function jobPostNotificationEmail({
+  jobTitle,
+  category,
+  budgetRange,
+  timeline,
+  tier,
+  jobUrl,
+}: {
+  jobTitle: string;
+  category: string;
+  budgetRange: string;
+  timeline: string;
+  tier: string;
+  jobUrl: string;
+}): string {
+  const tierLabel = TIER_LABELS[tier] ?? tier;
+
+  return shell(`
+    <tr>
+      <td style="padding:36px 28px;">
+        <h1 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#0f172a;">New ${category === "Discovery Scan" ? "Discovery Scan" : "Job Posting"}</h1>
+        <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.7;">
+          A business just posted a Discovery Scan that you can bid on. Get in early to increase your chances of landing the project.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+          <tr><td style="padding:12px 16px;background:#f8fafc;font-size:13px;color:#64748b;font-weight:600;">Project</td><td style="padding:12px 16px;background:#f8fafc;font-size:14px;color:#0f172a;font-weight:600;">${jobTitle}</td></tr>
+          <tr><td style="padding:12px 16px;font-size:13px;color:#64748b;">Category</td><td style="padding:12px 16px;font-size:14px;color:#0f172a;">${category}</td></tr>
+          <tr><td style="padding:12px 16px;font-size:13px;color:#64748b;">Budget</td><td style="padding:12px 16px;font-size:14px;color:#0f172a;">${budgetRange}</td></tr>
+          <tr><td style="padding:12px 16px;font-size:13px;color:#64748b;">Timeline</td><td style="padding:12px 16px;font-size:14px;color:#0f172a;">${timeline}</td></tr>
+        </table>
+        <a href="${jobUrl}" style="${BTN_STYLE}">View &amp; place your bid &rarr;</a>
+        <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">
+          You&apos;re receiving this because you are a <strong>${tierLabel}</strong> expert on LogicLot.
+        </p>
+      </td>
+    </tr>
+  `);
+}
+
 // ── Post-delivery nurture emails ─────────────────────────────────────────────
 
 export function deliveryReadyEmail({
@@ -363,17 +410,17 @@ export function auditReportEmail({ data }: { data: AuditReportData }): string {
         <p style="margin:16px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:600;">Automation-Ready Processes</p>
         <p style="margin:0 0 12px;font-size:13px;color:#64748b;line-height:1.7;">These processes are already working well. Automation locks in the result so your team never runs them manually again.</p>
         <table width="100%" cellpadding="0" cellspacing="0">${data.strengths
-          .map(
-            (s, i) =>
-              `<tr><td style="padding:12px 0;border-bottom:1px solid #e5e7eb;">
+        .map(
+          (s, i) =>
+            `<tr><td style="padding:12px 0;border-bottom:1px solid #e5e7eb;">
                 <p style="margin:0 0 4px;font-size:14px;font-weight:700;color:#0f172a;">${i + 1}. ${s.headline}</p>
                 <p style="margin:0 0 6px;font-size:13px;color:#64748b;line-height:1.6;">${s.detail}</p>
                 <p style="margin:0 0 2px;font-size:12px;color:#64748b;"><strong style="color:#16a34a;">Status:</strong> ${s.status}</p>
                 <p style="margin:0 0 6px;font-size:12px;color:#64748b;"><strong style="color:#2563EB;">Next:</strong> ${s.next}</p>
                 <p style="margin:0;font-size:13px;color:#0f172a;background:#f0fdf4;padding:8px 12px;border-radius:6px;">&rarr; ${s.outcome}</p>
               </td></tr>`
-          )
-          .join("")}</table>
+        )
+        .join("")}</table>
         ` : ""}
 
         ${barrierSection}

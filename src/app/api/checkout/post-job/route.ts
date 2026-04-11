@@ -22,7 +22,6 @@ import { NextResponse } from "next/server";
 
 const JOB_PRICES: Record<string, { cents: number; label: string }> = {
   "Discovery Scan": { cents: DISCOVERY_SCAN_PRICE_CENTS, label: "Discovery Scan — Expert Proposals" },
-  "Discovery": { cents: DISCOVERY_SCAN_PRICE_CENTS, label: "Discovery Scan — Expert Proposals" },
   "Custom Project": { cents: CUSTOM_PROJECT_PRICE_CENTS, label: "Custom Project — Expert Proposals" },
 };
 
@@ -118,6 +117,7 @@ export async function POST(req: Request) {
         type: "job_posting",
         jobId,
         buyerId: session.user.id,
+        category: job.category
       },
     });
 
