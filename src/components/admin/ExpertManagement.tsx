@@ -227,7 +227,7 @@ export function ExpertManagement() {
         onSettled: () => setChangingTierId(null),
         onSuccess: () => {
           refetch()
-          queryClient.invalidateQueries({ queryKey: [trpc.admin.analytics.getStats.queryKey] })
+          queryClient.invalidateQueries({ queryKey: trpc.admin.analytics.getStats.queryOptions().queryKey })
         },
         onError(error) {
           toast.error(error.message)
