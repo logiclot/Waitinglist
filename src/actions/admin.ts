@@ -30,20 +30,7 @@ export async function getAdminData() {
   const isAdmin = await checkAdmin();
   if (!isAdmin) return { error: "Unauthorized" };
 
-  const [experts, solutions, orders, businesses, userCount, bidFeedbackRaw, openDisputeCount] = await Promise.all([
-    prisma.specialistProfile.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { id: true, email: true } },
-        _count: {
-          select: {
-            bids: true,
-            // Count thumbs-down bids specifically (Prisma doesn't support filtered _count natively,
-            // so we fetch and compute below)
-          },
-        },
-      },
-    }),
+  const [solutions, orders, bidFeedbackRaw] = await Promise.all([
     prisma.solution.findMany({ orderBy: { createdAt: "desc" }, include: { expert: true } }),
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
@@ -53,54 +40,95 @@ export async function getAdminData() {
         seller: { select: { displayName: true } },
       },
     }),
-    prisma.businessProfile.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { user: { select: { id: true, email: true, createdAt: true } } },
-    }),
-    prisma.user.count(),
     prisma.bid.groupBy({
       by: ["specialistId", "feedback"],
       where: { feedback: { not: null } },
       _count: { feedback: true },
     }),
-    prisma.dispute.count({
-      where: { status: { not: "resolved" } },
-    }),
   ]);
-  const bidQualityMap: Record<string, { up: number; down: number }> = {};
-  for (const row of bidFeedbackRaw) {
-    if (!bidQualityMap[row.specialistId]) bidQualityMap[row.specialistId] = { up: 0, down: 0 };
-    if (row.feedback === "up") bidQualityMap[row.specialistId].up += row._count.feedback;
-    if (row.feedback === "down") bidQualityMap[row.specialistId].down += row._count.feedback;
-  }
-
-  // Attach quality stats to each expert object
-  const expertsWithStats = experts.map(e => ({
-    ...e,
-    bidQuality: bidQualityMap[e.id] ?? { up: 0, down: 0 },
-  }));
-
-  const totalRevenueCents = orders
-    .filter((o) => ["delivered", "approved"].includes(o.status))
-    .reduce((sum, o) => sum + o.priceCents, 0);
-
 
   return {
-    experts: expertsWithStats,
     solutions,
     orders,
-    businesses,
-    stats: {
-      totalUsers: userCount,
-      totalExperts: experts.length,
-      totalBusinesses: businesses.length,
-      totalSolutions: solutions.length,
-      totalOrders: orders.length,
-      totalRevenueCents,
-      openDisputeCount,
-    },
   };
 }
+
+// would require logic for feedback , bids.
+// export async function getAdminData() {
+//   const isAdmin = await checkAdmin();
+//   if (!isAdmin) return { error: "Unauthorized" };
+
+//   const [experts, solutions, orders, businesses, userCount, bidFeedbackRaw, openDisputeCount] = await Promise.all([
+//     prisma.specialistProfile.findMany({
+//       orderBy: { createdAt: "desc" },
+//       include: {
+//         user: { select: { id: true, email: true } },
+//         _count: {
+//           select: {
+//             bids: true,
+//             // Count thumbs-down bids specifically (Prisma doesn't support filtered _count natively,
+//             // so we fetch and compute below)
+//           },
+//         },
+//       },
+//     }),
+//     prisma.solution.findMany({ orderBy: { createdAt: "desc" }, include: { expert: true } }),
+//     prisma.order.findMany({
+//       orderBy: { createdAt: "desc" },
+//       include: {
+//         solution: { select: { title: true } },
+//         buyer: { select: { email: true, businessProfile: { select: { firstName: true, companyName: true } } } },
+//         seller: { select: { displayName: true } },
+//       },
+//     }),
+//     prisma.businessProfile.findMany({
+//       orderBy: { createdAt: "desc" },
+//       include: { user: { select: { id: true, email: true, createdAt: true } } },
+//     }),
+//     prisma.user.count(),
+//     prisma.bid.groupBy({
+//       by: ["specialistId", "feedback"],
+//       where: { feedback: { not: null } },
+//       _count: { feedback: true },
+//     }),
+//     prisma.dispute.count({
+//       where: { status: { not: "resolved" } },
+//     }),
+//   ]);
+//   const bidQualityMap: Record<string, { up: number; down: number }> = {};
+//   for (const row of bidFeedbackRaw) {
+//     if (!bidQualityMap[row.specialistId]) bidQualityMap[row.specialistId] = { up: 0, down: 0 };
+//     if (row.feedback === "up") bidQualityMap[row.specialistId].up += row._count.feedback;
+//     if (row.feedback === "down") bidQualityMap[row.specialistId].down += row._count.feedback;
+//   }
+
+//   // Attach quality stats to each expert object
+//   const expertsWithStats = experts.map(e => ({
+//     ...e,
+//     bidQuality: bidQualityMap[e.id] ?? { up: 0, down: 0 },
+//   }));
+
+//   const totalRevenueCents = orders
+//     .filter((o) => ["delivered", "approved"].includes(o.status))
+//     .reduce((sum, o) => sum + o.priceCents, 0);
+
+
+//   return {
+//     experts: expertsWithStats,
+//     solutions,
+//     orders,
+//     businesses,
+//     stats: {
+//       totalUsers: userCount,
+//       totalExperts: experts.length,
+//       totalBusinesses: businesses.length,
+//       totalSolutions: solutions.length,
+//       totalOrders: orders.length,
+//       totalRevenueCents,
+//       openDisputeCount,
+//     },
+//   };
+// }
 
 export async function approveSpecialist(id: string, grantProven = true) {
   if (!(await checkAdmin())) return { error: "Unauthorized" };

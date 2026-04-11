@@ -31,6 +31,7 @@ import {
   ClipboardList,
   CircleDollarSign as Money,
   Gift,
+  PanelTop,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -149,26 +150,31 @@ export function Sidebar({
   const adminLinks =
     role === "ADMIN"
       ? [
-          { label: "Admin", href: "/admin", icon: ShieldCheck },
-          { label: "Gift Scan", href: "/admin/gift-scans", icon: Gift },
-          {
-            label: "Post on Behalf",
-            href: "/admin/post-on-behalf",
-            icon: Users,
-          },
-          {
-            label: "Audit Analytics",
-            href: "/admin/audit-analytics",
-            icon: BarChart2,
-          },
-          {
-            label: "Job Analytics",
-            href: "/admin/job-analytics",
-            icon: Activity,
-          },
-          { label: "Traffic", href: "/admin/traffic", icon: Globe },
-          { label: "Payouts", href: "/admin/payouts", icon: Money },
-        ]
+        { label: "Admin", href: "/admin", icon: ShieldCheck },
+        {
+          label: "Old Admin Panel",
+          href: "/admin/old-admin",
+          icon: PanelTop,
+        },
+        { label: "Gift Scan", href: "/admin/gift-scans", icon: Gift },
+        {
+          label: "Post on Behalf",
+          href: "/admin/post-on-behalf",
+          icon: Users,
+        },
+        {
+          label: "Audit Analytics",
+          href: "/admin/audit-analytics",
+          icon: BarChart2,
+        },
+        {
+          label: "Job Analytics",
+          href: "/admin/job-analytics",
+          icon: Activity,
+        },
+        { label: "Traffic", href: "/admin/traffic", icon: Globe },
+        { label: "Payouts", href: "/admin/payouts", icon: Money },
+      ]
       : [];
 
   return (
@@ -194,13 +200,12 @@ export function Sidebar({
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                active
-                  ? "bg-primary/10 text-primary"
-                  : isLockedSuites
-                    ? "text-muted-foreground/50 hover:bg-secondary hover:text-muted-foreground"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${active
+                ? "bg-primary/10 text-primary"
+                : isLockedSuites
+                  ? "text-muted-foreground/50 hover:bg-secondary hover:text-muted-foreground"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
             >
               <span className="relative">
                 <Icon className="h-4 w-4" />
@@ -245,11 +250,10 @@ export function Sidebar({
           <Link
             key={link.href}
             href={link.href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-              isActive(link.href)
-                ? "bg-primary/10 text-primary"
-                : "text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
-            }`}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${isActive(link.href)
+              ? "bg-primary/10 text-primary"
+              : "text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
+              }`}
           >
             <link.icon className="h-4 w-4" />
             {link.label}
@@ -266,11 +270,10 @@ export function Sidebar({
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                active
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${active
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
             >
               <span className="relative">
                 <Icon className="h-4 w-4" />

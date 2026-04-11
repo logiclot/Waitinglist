@@ -3,45 +3,29 @@
 import {
   adminDeleteOrder,
   adminDeleteSolution,
-  adminDeleteUser,
-  approveEliteApplication,
-  approveSpecialist,
-  demoteFromElite,
   denyEliteApplication,
   getBusinessWaitlistInviteStats,
   getWaitlistInviteStats,
-  liftBidBan,
-  makeFoundingSpecialist,
-  removeFoundingExpert,
   sendBusinessInvites,
   sendExpertInvites,
-  setExpertTier,
-  suspendSpecialist,
-  updateSolutionVideoStatus,
+  updateSolutionVideoStatus
 } from "@/actions/admin";
 import {
   DisputeManagementTab,
   type AdminDispute,
-} from "@/components/admin/DisputeManagementTab";
-import { ExpertManagementTab } from "@/components/admin/ExpertManagementTab";
+} from "@/components/admin/old-admin/DisputeManagementTab";
 import { ListingEditor } from "@/components/admin/ListingEditor";
-import { SolutionManagementTab } from "@/components/admin/SolutionManagementTab";
+import { SolutionManagementTab } from "@/components/admin/old-admin/SolutionManagementTab";
 import { Solution } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Briefcase,
   Check,
-  LayoutGrid,
-  ShoppingBag,
-  Trash2,
-  TrendingUp,
-  Users,
+  Trash2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { BRAND_NAME } from "@/lib/branding";
-import { TIER_THRESHOLDS } from "@/lib/commission";
 import { SpecialistTier } from "@prisma/client";
 
 // ── Admin-specific types (shaped by getAdminData in actions/admin.ts) ─────────
@@ -116,22 +100,10 @@ export interface EliteApplication {
 }
 
 interface AdminDashboardProps {
-  initialExperts: AdminExpert[];
   initialSolutions: Solution[];
   initialOrders: AdminOrder[];
-  initialBusinesses: AdminBusiness[];
   initialDisputes: AdminDispute[];
-  // initialAuditCompletions: AuditCompletion[];
   initialEliteApplications?: EliteApplication[];
-  stats: {
-    totalUsers: number;
-    totalExperts: number;
-    totalBusinesses: number;
-    totalSolutions: number;
-    totalOrders: number;
-    totalRevenueCents: number;
-    openDisputeCount: number;
-  };
 }
 
 // ── Invite Panel ──────────────────────────────────────────────────────────────
@@ -330,14 +302,10 @@ function BusinessInvitePanel({
 }
 
 export function AdminDashboard({
-  initialExperts,
   initialSolutions,
   initialOrders,
-  initialBusinesses,
   initialDisputes,
-  // initialAuditCompletions,
   initialEliteApplications = [],
-  stats,
 }: AdminDashboardProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
@@ -349,7 +317,6 @@ export function AdminDashboard({
     | "invites"
     | "business-invites"
   >("experts");
-  const [expertList, setExpertList] = useState<AdminExpert[]>(initialExperts);
   const [expandedExpertId, setExpandedExpertId] = useState<string | null>(null);
   const [solutionList, setSolutionList] =
     useState<Solution[]>(initialSolutions);
@@ -369,105 +336,6 @@ export function AdminDashboard({
     setTimeout(() => setMessage(null), 4000);
   };
 
-  // ── Expert actions ──────────────────────────────────────────────────────────
-  const handleApprove = async (id: string) => {
-    await approveSpecialist(id);
-    setExpertList(
-      expertList.map((e) => (e.id === id ? { ...e, status: "APPROVED" } : e)),
-    );
-    showMessage("Expert approved.");
-  };
-
-  const handleSuspend = async (id: string) => {
-    await suspendSpecialist(id);
-    setExpertList(
-      expertList.map((e) => (e.id === id ? { ...e, status: "SUSPENDED" } : e)),
-    );
-    showMessage("Expert suspended.");
-  };
-
-  const handleMakeFounding = async (id: string) => {
-    const currentFounders = expertList.filter((e) => e.isFoundingExpert).length;
-    if (currentFounders >= 20) {
-      showMessage("Maximum of 20 Founding Experts reached.", true);
-      return;
-    }
-    await makeFoundingSpecialist(id);
-    setExpertList(
-      expertList.map((e) =>
-        e.id === id
-          ? {
-              ...e,
-              isFoundingExpert: true,
-              platformFeePercentage: 11,
-            }
-          : e,
-      ),
-    );
-    showMessage("Expert granted Founding status (fee locked at 11%).");
-  };
-
-  const handleRemoveFounding = async (id: string) => {
-    if (
-      !confirm("Remove Founding Expert status? Their fee lock will be removed.")
-    )
-      return;
-    await removeFoundingExpert(id);
-    setExpertList(
-      expertList.map((e) =>
-        e.id === id ? { ...e, isFoundingExpert: false, foundingRank: null } : e,
-      ),
-    );
-    showMessage("Founding Expert status removed.");
-  };
-
-  const handleSetTier = async (id: string, tier: SpecialistTier) => {
-    const fee = TIER_THRESHOLDS[tier];
-    await setExpertTier(id, tier);
-    setExpertList(
-      expertList.map((e) =>
-        e.id === id
-          ? {
-              ...e,
-              tier,
-              platformFeePercentage: fee,
-            }
-          : e,
-      ),
-    );
-    showMessage(`Tier set to ${tier} (${fee}% fee).`);
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    if (
-      !confirm(
-        "Permanently delete this user and all their data? This cannot be undone.",
-      )
-    )
-      return;
-    const result = await adminDeleteUser(userId);
-    if (result.error) {
-      showMessage(`Error: ${result.error}`, true);
-      return;
-    }
-    setExpertList(expertList.filter((e) => e.user?.id !== userId));
-    showMessage("User deleted.");
-  };
-
-  // ── Elite application actions ─────────────────────────────────────────────
-  const handleApproveElite = async (expertId: string) => {
-    const result = await approveEliteApplication(expertId);
-    if (result.error) {
-      showMessage(`Error: ${result.error}`, true);
-      return;
-    }
-    setEliteApplications(eliteApplications.filter((a) => a.id !== expertId));
-    setExpertList(
-      expertList.map((e) => (e.id === expertId ? { ...e, tier: "ELITE" } : e)),
-    );
-    showMessage("Elite application approved.");
-  };
-
   const handleDenyElite = async (expertId: string, reason: string) => {
     const result = await denyEliteApplication(expertId, reason);
     if (result.error) {
@@ -476,18 +344,6 @@ export function AdminDashboard({
     }
     setEliteApplications(eliteApplications.filter((a) => a.id !== expertId));
     showMessage("Elite application denied.");
-  };
-
-  const handleDemoteElite = async (expertId: string, reason: string) => {
-    const result = await demoteFromElite(expertId, reason);
-    if (result.error) {
-      showMessage(`Error: ${result.error}`, true);
-      return;
-    }
-    setExpertList(
-      expertList.map((e) => (e.id === expertId ? { ...e, tier: "PROVEN" } : e)),
-    );
-    showMessage("Expert demoted from Elite to Proven.");
   };
 
   // ── Solution actions ────────────────────────────────────────────────────────
@@ -575,93 +431,27 @@ export function AdminDashboard({
     );
   }
 
-  const foundingCount = expertList.filter((e) => e.isFoundingExpert).length;
-  const provenCount = expertList.filter((e) => e.tier === "PROVEN").length;
-  const eliteCount = expertList.filter((e) => e.tier === "ELITE").length;
-  const standardCount = expertList.filter(
-    (e) => e.tier === "STANDARD" || !e.tier,
-  ).length;
-
   return (
     <div className="container mx-auto px-4 py-10">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">{BRAND_NAME} Admin</h1>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span>
-            Founding:{" "}
-            <span className="font-bold text-foreground">{foundingCount}</span>
-            /20
-          </span>
-          <span className="text-border">|</span>
-          <span>
-            Elite:{" "}
-            <span className="font-bold text-foreground">{eliteCount}</span>
-          </span>
-          <span className="text-border">|</span>
-          <span>
-            Proven:{" "}
-            <span className="font-bold text-foreground">{provenCount}</span>
-          </span>
-          <span className="text-border">|</span>
-          <span>
-            Standard:{" "}
-            <span className="font-bold text-foreground">{standardCount}</span>
-          </span>
-        </div>
-      </div>
-
-      {/* Stats overview */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-        {[
-          { label: "Total Users", value: stats.totalUsers, icon: Users },
-          { label: "Experts", value: stats.totalExperts, icon: Briefcase },
-          {
-            label: "Businesses",
-            value: stats.totalBusinesses,
-            icon: LayoutGrid,
-          },
-          {
-            label: "Solutions",
-            value: stats.totalSolutions,
-            icon: ShoppingBag,
-          },
-          {
-            label: "GMV",
-            value: `€${(stats.totalRevenueCents / 100).toLocaleString()}`,
-            icon: TrendingUp,
-          },
-        ].map(({ label, value, icon: Icon }) => (
-          <div
-            key={label}
-            className="bg-card border border-border rounded-xl p-4 flex flex-col gap-1"
-          >
-            <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
-              <Icon className="w-3.5 h-3.5" /> {label}
-            </div>
-            <p className="text-2xl font-bold">{value}</p>
-          </div>
-        ))}
       </div>
 
       {/* Tabs */}
       <div className="flex gap-4 mb-6 border-b border-border overflow-x-auto">
         {(
           [
-            "experts",
             "solutions",
             "orders",
-            "businesses",
             "disputes",
             "invites",
             "business-invites",
           ] as const
         ).map((tab) => {
           const counts: Record<string, number> = {
-            experts: expertList.length,
             solutions: solutionList.length,
             orders: orderList.length,
-            businesses: initialBusinesses.length,
             disputes: initialDisputes.length,
             invites: 0,
             "business-invites": 0,
@@ -670,11 +460,10 @@ export function AdminDashboard({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 border-b-2 transition-colors font-medium capitalize ${
-                activeTab === tab
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
+              className={`px-4 py-2 border-b-2 transition-colors font-medium capitalize ${activeTab === tab
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
             >
               {tab === "business-invites"
                 ? "Biz Invites"
@@ -688,37 +477,13 @@ export function AdminDashboard({
       {/* Toast */}
       {message && (
         <div
-          className={`px-4 py-2 rounded-md mb-6 flex items-center gap-2 animate-in fade-in text-sm ${
-            isError
-              ? "bg-red-500/10 border border-red-500/20 text-red-500"
-              : "bg-green-500/10 border border-green-500/20 text-green-500"
-          }`}
+          className={`px-4 py-2 rounded-md mb-6 flex items-center gap-2 animate-in fade-in text-sm ${isError
+            ? "bg-red-500/10 border border-red-500/20 text-red-500"
+            : "bg-green-500/10 border border-green-500/20 text-green-500"
+            }`}
         >
           <Check className="h-4 w-4 shrink-0" /> {message}
         </div>
-      )}
-
-      {/* Tab content */}
-      {activeTab === "experts" && (
-        <ExpertManagementTab
-          expertList={expertList}
-          expandedExpertId={expandedExpertId}
-          setExpandedExpertId={setExpandedExpertId}
-          onApprove={handleApprove}
-          onSuspend={handleSuspend}
-          onMakeFounding={handleMakeFounding}
-          onRemoveFounding={handleRemoveFounding}
-          onSetTier={handleSetTier}
-          onDeleteUser={handleDeleteUser}
-          onLiftBidBan={async (id) => {
-            await liftBidBan(id);
-            router.refresh();
-          }}
-          eliteApplications={eliteApplications}
-          onApproveElite={handleApproveElite}
-          onDenyElite={handleDenyElite}
-          onDemoteElite={handleDemoteElite}
-        />
       )}
 
       {activeTab === "solutions" && (
@@ -757,17 +522,16 @@ export function AdminDashboard({
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide ${
-                    order.status === "in_progress"
-                      ? "bg-blue-100 text-blue-700"
-                      : order.status === "draft"
-                        ? "bg-muted text-muted-foreground"
-                        : order.status === "disputed"
-                          ? "bg-red-100 text-red-700"
-                          : order.status === "delivered"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-muted text-muted-foreground"
-                  }`}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide ${order.status === "in_progress"
+                    ? "bg-blue-100 text-blue-700"
+                    : order.status === "draft"
+                      ? "bg-muted text-muted-foreground"
+                      : order.status === "disputed"
+                        ? "bg-red-100 text-red-700"
+                        : order.status === "delivered"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-muted text-muted-foreground"
+                    }`}
                 >
                   {order.status.replace(/_/g, " ")}
                 </span>
@@ -790,101 +554,11 @@ export function AdminDashboard({
           showMessage={showMessage}
         />
       )}
-      {/* 
-      {activeTab === "audits" && (
-        <AuditResultsTab completions={initialAuditCompletions} />
-      )} */}
 
       {activeTab === "invites" && <InvitePanel showMessage={showMessage} />}
 
       {activeTab === "business-invites" && (
         <BusinessInvitePanel showMessage={showMessage} />
-      )}
-
-      {activeTab === "businesses" && (
-        <div className="border border-border rounded-xl overflow-hidden">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-secondary/50 border-b border-border">
-              <tr>
-                <th className="px-6 py-3 font-medium text-muted-foreground">
-                  Business
-                </th>
-                <th className="px-6 py-3 font-medium text-muted-foreground">
-                  Email
-                </th>
-                <th className="px-6 py-3 font-medium text-muted-foreground">
-                  Company
-                </th>
-                <th className="px-6 py-3 font-medium text-muted-foreground">
-                  Country
-                </th>
-                <th className="px-6 py-3 font-medium text-muted-foreground">
-                  Joined
-                </th>
-                <th className="px-6 py-3 text-right font-medium text-muted-foreground">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {initialBusinesses.map((b) => (
-                <tr
-                  key={b.id}
-                  className="hover:bg-secondary/20 transition-colors"
-                >
-                  <td className="px-6 py-4 font-medium">{b.firstName}</td>
-                  <td className="px-6 py-4 text-muted-foreground">
-                    {b.user?.email || "—"}
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">
-                    {b.companyName || "—"}
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground">
-                    {b.country || "—"}
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground text-xs">
-                    {b.user?.createdAt
-                      ? new Date(b.user.createdAt).toLocaleDateString()
-                      : "—"}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => {
-                        if (
-                          !confirm(
-                            `Delete user ${b.user?.email}? This removes all their data permanently.`,
-                          )
-                        )
-                          return;
-                        adminDeleteUser(b.user.id).then((r) => {
-                          if (r.error) showMessage(`Error: ${r.error}`, true);
-                          else {
-                            showMessage("User deleted.");
-                            router.refresh();
-                          }
-                        });
-                      }}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded"
-                      title="Delete user"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {initialBusinesses.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-8 text-center text-muted-foreground text-sm"
-                  >
-                    No businesses yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
       )}
     </div>
   );

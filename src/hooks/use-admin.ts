@@ -16,6 +16,10 @@ export function useExperts() {
     return useQuery(trpc.admin.expert.getExperts.queryOptions())
 }
 
+export function useSolutions() {
+    return useQuery(trpc.admin.expert.getSolutions.queryOptions())
+}
+
 export function useBusinessDelete() {
     return useMutation(trpc.admin.business.deleteBusinessById.mutationOptions())
 }
@@ -30,5 +34,13 @@ export function useDeleteExpert() {
 
 export function useSetExpertTier() {
     return useMutation(trpc.admin.expert.setTier.mutationOptions())
+}
+
+export function useDeleteSolution() {
+    return useMutation(trpc.admin.expert.deleteSolution.mutationOptions())
+}
+
+export function useUpdateVideoStatus() {
+    return useMutation(trpc.admin.expert.updateVideoStatus.mutationOptions())
 }
 

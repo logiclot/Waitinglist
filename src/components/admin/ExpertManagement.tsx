@@ -36,6 +36,8 @@ import { Button } from "@/components/ui/button";
 import { Eye, Pause, Search, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
 
 type Expert = NonNullable<ReturnType<typeof useExperts>["data"]>[number];
 
@@ -165,6 +167,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export function ExpertManagement() {
   const { data: experts, isPending, refetch } = useExperts();
+  const queryClient = useQueryClient()
   const suspendMutation = useSuspendExpert();
   const deleteMutation = useDeleteExpert();
   const tierMutation = useSetExpertTier();
@@ -222,7 +225,10 @@ export function ExpertManagement() {
       { id: expert.id, tier },
       {
         onSettled: () => setChangingTierId(null),
-        onSuccess: () => refetch(),
+        onSuccess: () => {
+          refetch()
+          queryClient.invalidateQueries({ queryKey: [trpc.admin.analytics.getStats.queryKey] })
+        },
         onError(error) {
           toast.error(error.message)
         },

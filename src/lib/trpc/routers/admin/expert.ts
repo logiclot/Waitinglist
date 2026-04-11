@@ -23,6 +23,12 @@ export const adminExpertRouter = createRouter({
         return profiles
     }),
 
+    getSolutions: adminProcedure.query(async () => {
+        const solutions = await prisma.solution.findMany({ orderBy: { createdAt: "desc" }, include: { expert: true } })
+
+        return solutions
+    }),
+
     suspendExpert: adminProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ input }) => {
@@ -37,6 +43,66 @@ export const adminExpertRouter = createRouter({
         .input(z.object({ userId: z.string() }))
         .mutation(async ({ input }) => {
             await prisma.user.delete({ where: { id: input.userId } });
+            return { success: true };
+        }),
+
+    deleteSolution: adminProcedure
+        .input(z.object({ id: z.string() }))
+        .mutation(async ({ input }) => {
+            const solution = await prisma.solution.findUnique({
+                where: { id: input.id },
+                select: { title: true, expert: { select: { userId: true } } },
+            });
+
+            await prisma.solution.delete({ where: { id: input.id } });
+
+            if (solution) {
+                await createNotification(
+                    solution.expert.userId,
+                    "🗑️ Solution removed",
+                    `Your solution "${solution.title}" has been removed by an administrator. Contact support if you have questions.`,
+                    "alert",
+                    "/expert/my-solutions",
+                );
+            }
+
+            return { success: true };
+        }),
+
+    updateVideoStatus: adminProcedure
+        .input(z.object({
+            id: z.string(),
+            status: z.enum(["approved", "rejected"]),
+            rejectionReason: z.string().optional(),
+        }))
+        .mutation(async ({ input }) => {
+            const solution = await prisma.solution.findUnique({
+                where: { id: input.id },
+                select: { title: true, expert: { select: { userId: true } } },
+            });
+            if (!solution) throw new Error("Solution not found");
+
+            await prisma.solution.update({
+                where: { id: input.id },
+                data: {
+                    demoVideoStatus: input.status,
+                    demoVideoReviewedAt: input.status === "approved" ? new Date() : null,
+                },
+            });
+
+            const approved = input.status === "approved";
+            const message = approved
+                ? `Your demo video for "${solution.title}" has been approved and is now live on your listing.`
+                : `Your demo video for "${solution.title}" was not approved.${input.rejectionReason ? ` Reason: ${input.rejectionReason}` : " Please review our guidelines and resubmit via the solution editor."}`;
+
+            await createNotification(
+                solution.expert.userId,
+                approved ? "🎬 Demo video approved!" : "🎬 Demo video needs revision",
+                message,
+                approved ? "success" : "alert",
+                `/expert/solutions/${input.id}/edit`,
+            );
+
             return { success: true };
         }),
 
