@@ -55,7 +55,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     if (!KEY || posthog.__loaded) return;
 
     posthog.init(KEY, {
-      api_host: "/ingest",
+      api_host: "/a",
       ui_host: "https://eu.posthog.com",
       person_profiles: "identified_only",
       capture_pageview: false,

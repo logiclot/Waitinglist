@@ -27,15 +27,15 @@ const nextConfig = {
         destination: "https://bat.bing.net/bat.js",
       },
       {
-        source: "/ingest/static/:path*",
+        source: "/a/static/:path*",
         destination: "https://eu-assets.i.posthog.com/static/:path*",
       },
       {
-        source: "/ingest/decide",
+        source: "/a/decide",
         destination: "https://eu.i.posthog.com/decide",
       },
       {
-        source: "/ingest/:path*",
+        source: "/a/:path*",
         destination: "https://eu.i.posthog.com/:path*",
       },
     ];
