@@ -25,7 +25,7 @@ export default function AdminDashboard() {
             <span>
               Founding:{" "}
               <span className="font-bold text-foreground">
-                {data.expertsByTier.FOUNDING ?? 0}/2o
+                {data.expertsByTier.FOUNDING ?? 0}/20
               </span>
             </span>
             <span>
@@ -84,14 +84,31 @@ export default function AdminDashboard() {
       )}
 
       <Tabs defaultValue="experts">
-        <TabsList>
-          <TabsTrigger value="experts">Experts</TabsTrigger>
-          <TabsTrigger value="businesses">Businesses</TabsTrigger>
-          <TabsTrigger value="solutions">Solutions</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="disputes">Disputes</TabsTrigger>
-          <TabsTrigger value="invites">Invites</TabsTrigger>
-          <TabsTrigger value="biz-invites">Biz Invites</TabsTrigger>
+        <TabsList
+          variant="line"
+          className="gap-4 border-b border-border mb-6 overflow-x-auto"
+        >
+          <TabsTrigger value="experts" className="px-4 py-2 capitalize">
+            Experts
+          </TabsTrigger>
+          <TabsTrigger value="businesses" className="px-4 py-2 capitalize">
+            Businesses
+          </TabsTrigger>
+          <TabsTrigger value="solutions" className="px-4 py-2 capitalize">
+            Solutions
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="px-4 py-2 capitalize">
+            Orders
+          </TabsTrigger>
+          <TabsTrigger value="disputes" className="px-4 py-2 capitalize">
+            Disputes
+          </TabsTrigger>
+          <TabsTrigger value="invites" className="px-4 py-2 capitalize">
+            Invites
+          </TabsTrigger>
+          <TabsTrigger value="biz-invites" className="px-4 py-2 capitalize">
+            Biz Invites
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="experts">
           <ExpertManagement />
