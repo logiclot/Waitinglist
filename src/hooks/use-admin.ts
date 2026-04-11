@@ -12,6 +12,23 @@ export function useBusinesses() {
     return useQuery(trpc.admin.business.getBusinesses.queryOptions())
 }
 
+export function useExperts() {
+    return useQuery(trpc.admin.expert.getExperts.queryOptions())
+}
+
 export function useBusinessDelete() {
     return useMutation(trpc.admin.business.deleteBusinessById.mutationOptions())
 }
+
+export function useSuspendExpert() {
+    return useMutation(trpc.admin.expert.suspendExpert.mutationOptions())
+}
+
+export function useDeleteExpert() {
+    return useMutation(trpc.admin.expert.deleteExpert.mutationOptions())
+}
+
+export function useSetExpertTier() {
+    return useMutation(trpc.admin.expert.setTier.mutationOptions())
+}
+
