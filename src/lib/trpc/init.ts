@@ -1,7 +1,6 @@
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
-import { useState } from "react";
 import { toast } from "sonner";
 import { AppRouter } from "./routers/_app";
 import { getServerSession } from "next-auth";
@@ -12,28 +11,25 @@ import superjson from "superjson";
 /**
  * Init query client
  */
-export const [queryClient] = useState(
-    () =>
-        new QueryClient({
-            queryCache: new QueryCache({
-                onError: (error) => {
-                    toast.error(error.message, {
-                        action: {
-                            label: "retry",
-                            onClick: () => {
-                                queryClient.invalidateQueries();
-                            },
-                        },
-                    });
-                }
-            }),
-            defaultOptions: {
-                queries: {
-                    staleTime: 60 * 1000,
+export const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+        onError: (error) => {
+            toast.error(error.message, {
+                action: {
+                    label: "retry",
+                    onClick: () => {
+                        queryClient.invalidateQueries();
+                    },
                 },
-            },
-        })
-);
+            });
+        }
+    }),
+    defaultOptions: {
+        queries: {
+            staleTime: 60 * 1000,
+        },
+    },
+})
 
 
 const trpcClient = createTRPCClient<AppRouter>({
