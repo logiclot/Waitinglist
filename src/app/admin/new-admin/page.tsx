@@ -3,6 +3,14 @@
 import { useStats } from "@/hooks/use-admin";
 import { BRAND_NAME } from "@/lib/branding";
 import { Briefcase, LayoutGrid, ShoppingBag, Users } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ExpertManagement } from "@/components/admin/new-admin/ExpertManagement";
+import { BusinessManagement } from "@/components/admin/new-admin/BusinessManagement";
+import { SolutionManagement } from "@/components/admin/new-admin/SolutionManagement";
+import { OrderManagement } from "@/components/admin/new-admin/OrderManagement";
+import { DisputeManagement } from "@/components/admin/new-admin/DisputeManagement";
+import { InviteManagement } from "@/components/admin/new-admin/InviteManagement";
+import { BizInviteManagement } from "@/components/admin/new-admin/BizInviteManagement";
 
 export default function AdminDashboard() {
   const { data, isPending } = useStats();
@@ -74,6 +82,39 @@ export default function AdminDashboard() {
           ))}
         </div>
       )}
+
+      <Tabs defaultValue="experts">
+        <TabsList>
+          <TabsTrigger value="experts">Experts</TabsTrigger>
+          <TabsTrigger value="businesses">Businesses</TabsTrigger>
+          <TabsTrigger value="solutions">Solutions</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="disputes">Disputes</TabsTrigger>
+          <TabsTrigger value="invites">Invites</TabsTrigger>
+          <TabsTrigger value="biz-invites">Biz Invites</TabsTrigger>
+        </TabsList>
+        <TabsContent value="experts">
+          <ExpertManagement />
+        </TabsContent>
+        <TabsContent value="businesses">
+          <BusinessManagement />
+        </TabsContent>
+        <TabsContent value="solutions">
+          <SolutionManagement />
+        </TabsContent>
+        <TabsContent value="orders">
+          <OrderManagement />
+        </TabsContent>
+        <TabsContent value="disputes">
+          <DisputeManagement />
+        </TabsContent>
+        <TabsContent value="invites">
+          <InviteManagement />
+        </TabsContent>
+        <TabsContent value="biz-invites">
+          <BizInviteManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
