@@ -663,7 +663,6 @@ export function AdminDashboard({
             orders: orderList.length,
             businesses: initialBusinesses.length,
             disputes: initialDisputes.length,
-            // audits: initialAuditCompletions.length,
             invites: 0,
             "business-invites": 0,
           };

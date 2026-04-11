@@ -46,7 +46,6 @@ async function AdminContent() {
   }
 
   const disputeData = await getDisputedOrders();
-  const auditCompletions = await getAuditCompletions();
   const eliteAppsData = await getEliteApplications();
 
   // Map Prisma camelCase fields to the snake_case fields expected by Solution type
