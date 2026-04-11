@@ -83,55 +83,57 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <Tabs defaultValue="experts">
-        <TabsList
-          variant="line"
-          className="gap-4 border-b border-border mb-6 overflow-x-auto overflow-y-visible w-full"
-        >
-          <TabsTrigger value="experts" className="px-4 py-2 capitalize">
-            Experts
-          </TabsTrigger>
-          <TabsTrigger value="businesses" className="px-4 py-2 capitalize">
-            Businesses
-          </TabsTrigger>
-          <TabsTrigger value="solutions" className="px-4 py-2 capitalize">
-            Solutions
-          </TabsTrigger>
-          <TabsTrigger value="orders" className="px-4 py-2 capitalize">
-            Orders
-          </TabsTrigger>
-          <TabsTrigger value="disputes" className="px-4 py-2 capitalize">
-            Disputes
-          </TabsTrigger>
-          <TabsTrigger value="invites" className="px-4 py-2 capitalize">
-            Invites
-          </TabsTrigger>
-          <TabsTrigger value="biz-invites" className="px-4 py-2 capitalize">
-            Biz Invites
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="experts">
-          <ExpertManagement />
-        </TabsContent>
-        <TabsContent value="businesses">
-          <BusinessManagement />
-        </TabsContent>
-        <TabsContent value="solutions">
-          <SolutionManagement />
-        </TabsContent>
-        <TabsContent value="orders">
-          <OrderManagement />
-        </TabsContent>
-        <TabsContent value="disputes">
-          <DisputeManagement />
-        </TabsContent>
-        <TabsContent value="invites">
-          <InviteManagement />
-        </TabsContent>
-        <TabsContent value="biz-invites">
-          <BizInviteManagement />
-        </TabsContent>
-      </Tabs>
+      <div className="flex w-full flex-col gap-6">
+        <Tabs defaultValue="experts">
+          <TabsList
+            variant="line"
+            className="gap-4 border-b border-border mb-6 max-w-lg w-full"
+          >
+            <TabsTrigger value="experts" className="px-4 py-2 capitalize">
+              Experts
+            </TabsTrigger>
+            <TabsTrigger value="businesses" className="px-4 py-2 capitalize">
+              Businesses
+            </TabsTrigger>
+            <TabsTrigger value="solutions" className="px-4 py-2 capitalize">
+              Solutions
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="px-4 py-2 capitalize">
+              Orders
+            </TabsTrigger>
+            <TabsTrigger value="disputes" className="px-4 py-2 capitalize">
+              Disputes
+            </TabsTrigger>
+            <TabsTrigger value="invites" className="px-4 py-2 capitalize">
+              Invites
+            </TabsTrigger>
+            <TabsTrigger value="biz-invites" className="px-4 py-2 capitalize">
+              Biz Invites
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="experts">
+            <ExpertManagement />
+          </TabsContent>
+          <TabsContent value="businesses">
+            <BusinessManagement />
+          </TabsContent>
+          <TabsContent value="solutions">
+            <SolutionManagement />
+          </TabsContent>
+          <TabsContent value="orders">
+            <OrderManagement />
+          </TabsContent>
+          <TabsContent value="disputes">
+            <DisputeManagement />
+          </TabsContent>
+          <TabsContent value="invites">
+            <InviteManagement />
+          </TabsContent>
+          <TabsContent value="biz-invites">
+            <BizInviteManagement />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
