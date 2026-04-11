@@ -86,7 +86,7 @@ export default function AdminDashboard() {
       <Tabs defaultValue="experts">
         <TabsList
           variant="line"
-          className="gap-4 border-b border-border mb-6 overflow-x-auto"
+          className="gap-4 border-b border-border mb-6 overflow-x-auto overflow-y-visible w-full"
         >
           <TabsTrigger value="experts" className="px-4 py-2 capitalize">
             Experts
