@@ -14,6 +14,8 @@ import {
   Trash2,
   ArrowUpCircle,
   Sparkles,
+  Share2,
+  Check,
 } from "lucide-react";
 import { Solution } from "@/types";
 import { TierBadge } from "@/components/ui/TierBadge";
@@ -24,6 +26,7 @@ import { useState, MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { archiveSolution, createSolutionVersion } from "@/actions/solutions";
 import { toast } from "sonner";
+import { useCopyToClipboard } from "@uidotdev/usehooks";
 
 interface SolutionCardProps {
   solution: Solution;
@@ -47,7 +50,8 @@ export function SolutionCard({
   const [upgradePrice, setUpgradePrice] = useState("");
   const [changelog, setChangelog] = useState("");
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
-
+  const [_, copyToClipboard] = useCopyToClipboard();
+  const [hasCopied, setHasCopied] = useState(false);
   const handleSave = async (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -424,6 +428,31 @@ export function SolutionCard({
               )}
             </>
           )}
+
+          <button
+            key={solution.id}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const url = `${window.location.origin}/solutions/${solution.id}`;
+              copyToClipboard(url);
+              toast.success("Link copied to clipboard");
+              setHasCopied(true);
+              setTimeout(() => setHasCopied(false), 2000);
+            }}
+            className={`p-2.5 rounded-lg border transition-all ${
+              hasCopied
+                ? "border-emerald-300 bg-emerald-50 text-emerald-600"
+                : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/50"
+            }`}
+            title="Share Solution"
+          >
+            {hasCopied ? (
+              <Check className="h-5 w-5" />
+            ) : (
+              <Share2 className="h-5 w-5" />
+            )}
+          </button>
 
           {!editHref && (
             <button
