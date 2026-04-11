@@ -35,6 +35,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Eye, Pause, Search, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 type Expert = NonNullable<ReturnType<typeof useExperts>["data"]>[number];
 
@@ -180,7 +181,7 @@ export function ExpertManagement() {
         expert.displayName.toLowerCase().includes(q) ||
         expert.legalFullName.toLowerCase().includes(q) ||
         expert.user.email.toLowerCase().includes(q) ||
-        expert.tools.includes(q)
+        expert.tools.some((tool) => tool.toLowerCase().includes(q))
       const matchesTier = tierFilter === "ALL" || expert.tier === tierFilter;
       return matchesSearch && matchesTier;
     });
@@ -190,7 +191,11 @@ export function ExpertManagement() {
     if (!confirm(`Suspend ${expert.displayName}?`)) return;
     suspendMutation.mutate(
       { id: expert.id },
-      { onSuccess: () => refetch() },
+      {
+        onSuccess: () => refetch(), onError(error) {
+          toast.error(error.message)
+        },
+      },
     );
   };
 
@@ -203,7 +208,11 @@ export function ExpertManagement() {
       return;
     deleteMutation.mutate(
       { userId: expert.user.id },
-      { onSuccess: () => refetch() },
+      {
+        onSuccess: () => refetch(), onError(error) {
+          toast.error(error.message)
+        },
+      },
     );
   };
 
@@ -214,6 +223,9 @@ export function ExpertManagement() {
       {
         onSettled: () => setChangingTierId(null),
         onSuccess: () => refetch(),
+        onError(error) {
+          toast.error(error.message)
+        },
       },
     );
   };

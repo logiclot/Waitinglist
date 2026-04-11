@@ -51,6 +51,8 @@ export const adminExpertRouter = createRouter({
                 count = await prisma.specialistProfile.count({
                     where: { tier: "FOUNDING" }
                 })
+
+                count = count + 1
             }
 
             const specialist = await prisma.specialistProfile.update({
