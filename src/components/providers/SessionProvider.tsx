@@ -1,6 +1,6 @@
 "use client";
 
-import { queryClient } from "@/lib/trpc/init";
+import { queryClient } from "@/lib/trpc/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
 
