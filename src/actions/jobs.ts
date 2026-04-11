@@ -329,8 +329,8 @@ export async function submitBid(prevState: unknown, formData: FormData) {
     if (specialist.status !== "APPROVED") {
       return { error: "Your profile is pending approval. You'll be able to submit proposals once approved." };
     }
-    if (specialist.tier !== "ELITE" && specialist.tier !== "FOUNDING") {
-      return { error: "Only Elite and Founding experts can submit proposals. Deliver great solutions to level up." };
+    if (specialist.tier === "STANDARD") {
+      return { error: "Standard experts cannot submit proposals. Deliver great solutions to level up." };
     }
 
     // ── 2b. Check quality ban ────────────────────────────────────────────────
