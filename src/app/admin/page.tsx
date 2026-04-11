@@ -13,6 +13,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="mx-auto px-4 py-10">
+      {/* Work-in-progress banner */}
+      <div className="mb-6 flex items-center justify-between rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400">
+        <span>This admin panel is under active development. Some features may be incomplete.</span>
+        <Link href="/admin/old-admin" className="ml-4 shrink-0 font-medium underline hover:no-underline">
+          Use Old Admin
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">{BRAND_NAME} Admin</h1>
