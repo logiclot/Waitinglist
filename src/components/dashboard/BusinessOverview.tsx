@@ -15,7 +15,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { ActiveCoupons } from "./ActiveCoupons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useCoupons, useReferals } from "@/hooks/use-awards";
 
 interface ActiveOrder {
   id: string;
@@ -38,25 +40,13 @@ interface ReferralRewards {
   businessDiscountCount: number;
 }
 
-interface ReferralStats {
-  referralCode?: string | null;
-  referralRewards?: ReferralRewards | null;
-  referralCount?: number;
-  pendingCount?: number;
-  error?: string;
-}
-
 interface BusinessOverviewProps {
-  referralStats?: ReferralStats;
-  activeCoupons?: { code: string; title: string }[];
   activeOrders?: ActiveOrder[];
   completedProjectCount?: number;
   freeDiscoveryScans?: number;
 }
 
 export function BusinessOverview({
-  referralStats,
-  activeCoupons = [],
   activeOrders = [],
   completedProjectCount = 0,
   freeDiscoveryScans = 0,
@@ -74,12 +64,15 @@ export function BusinessOverview({
       staleTime: 120_000,
     });
 
+  const { data: coupons, isPending: isCouponsPending } = useCoupons()
+  const { data: referrals, isPending: isReferralsPending } = useReferals()
+
   const [referralLink, setReferralLink] = useState("");
   useEffect(() => {
     setReferralLink(
-      `${window.location.origin}/auth/signup?ref=${referralStats?.referralCode || ""}`,
+      `${window.location.origin}/auth/signup?ref=${referrals?.referralCode || ""}`,
     );
-  }, [referralStats?.referralCode]);
+  }, [referrals?.referralCode]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -109,7 +102,21 @@ export function BusinessOverview({
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       {/* Active Coupons */}
-      {activeCoupons.length > 0 && (
+      {isCouponsPending ? (
+        <section className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <Skeleton className="h-9 w-9 rounded-full" />
+            <div>
+              <Skeleton className="h-4 w-40 mb-1" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
+          <div className="flex-1 flex flex-wrap gap-2 sm:justify-end">
+            <Skeleton className="h-7 w-24 rounded" />
+            <Skeleton className="h-7 w-24 rounded" />
+          </div>
+        </section>
+      ) : coupons && coupons.length > 0 ? (
         <section className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex items-center gap-3 shrink-0">
             <div className="h-9 w-9 rounded-full bg-amber-500/10 flex items-center justify-center">
@@ -117,8 +124,8 @@ export function BusinessOverview({
             </div>
             <div>
               <p className="text-sm font-bold text-foreground">
-                {activeCoupons.length} Discount Coupon
-                {activeCoupons.length !== 1 ? "s" : ""} Available
+                {coupons?.length} Discount Coupon
+                {coupons?.length !== 1 ? "s" : ""} Available
               </p>
               <p className="text-xs text-muted-foreground">
                 Applied automatically at checkout
@@ -126,10 +133,10 @@ export function BusinessOverview({
             </div>
           </div>
           <div className="flex-1 flex flex-wrap gap-2 sm:justify-end">
-            <ActiveCoupons coupons={activeCoupons} />
+            <ActiveCoupons coupons={coupons} />
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* Free Discovery Scan Banner */}
       {freeDiscoveryScans > 0 && (
@@ -286,74 +293,91 @@ export function BusinessOverview({
       </section>
 
       {/* Referral Section */}
-      <section className="bg-card border border-border rounded-xl p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h3 className="font-bold text-lg mb-1.5 flex items-center gap-2">
-              <Users className="w-5 h-5 text-foreground" /> Referral Program
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
-              Share your link. When a referred business buys a solution, you
-              receive{" "}
-              <span className="font-bold text-foreground">
-                5% off your next purchase
-              </span>{" "}
-              — automatically applied at checkout.
-            </p>
-            <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
-              <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
-                {referralLink}
-              </code>
-              <button
-                onClick={copyToClipboard}
-                className="p-1 hover:bg-secondary rounded-md transition-colors"
-                title="Copy link"
-              >
-                <Copy className="w-4 h-4 text-foreground" />
-              </button>
+      {isReferralsPending ? (
+        <section className="bg-card border border-border rounded-xl p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <Skeleton className="h-5 w-40 mb-2" />
+              <Skeleton className="h-4 w-72 max-w-full mb-4" />
+              <Skeleton className="h-10 w-64 max-w-full rounded-md" />
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-8 w-10" />
+              <Skeleton className="h-3 w-20" />
             </div>
           </div>
-
-          <div className="flex gap-8 text-right">
-            {(referralStats?.referralRewards?.businessDiscountCount || 0) >
-              0 && (
-              <div className="flex flex-col items-end">
-                <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
-                  <Gift className="w-4 h-4 text-green-500 shrink-0" />
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                      {referralStats?.referralRewards?.businessDiscountCount}{" "}
-                      discount credit
-                      {referralStats?.referralRewards?.businessDiscountCount !==
-                      1
-                        ? "s"
-                        : ""}{" "}
-                      available
-                    </p>
-                    <p className="text-xs text-green-600/70 dark:text-green-400/70">
-                      5% off next purchase · auto-applied at checkout
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="flex flex-col items-end">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
-                Referrals
+        </section>
+      ) : (
+        <section className="bg-card border border-border rounded-xl p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h3 className="font-bold text-lg mb-1.5 flex items-center gap-2">
+                <Users className="w-5 h-5 text-foreground" /> Referral Program
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+                Share your link. When a referred business buys a solution, you
+                receive{" "}
+                <span className="font-bold text-foreground">
+                  5% off your next purchase
+                </span>{" "}
+                — automatically applied at checkout.
               </p>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-foreground">
-                  {referralStats?.referralCount || 0}
-                </span>
-                <span className="text-sm font-medium text-muted-foreground">
-                  joined
-                </span>
+              <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
+                <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
+                  {referralLink}
+                </code>
+                <button
+                  onClick={copyToClipboard}
+                  className="p-1 hover:bg-secondary rounded-md transition-colors"
+                  title="Copy link"
+                >
+                  <Copy className="w-4 h-4 text-foreground" />
+                </button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Businesses</p>
+            </div>
+
+            <div className="flex gap-8 text-right">
+              {(referrals?.referralRewards?.businessDiscountCount || 0) >
+                0 && (
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                      <Gift className="w-4 h-4 text-green-500 shrink-0" />
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                          {referrals?.referralRewards?.businessDiscountCount}{" "}
+                          discount credit
+                          {referrals?.referralRewards?.businessDiscountCount !==
+                            1
+                            ? "s"
+                            : ""}{" "}
+                          available
+                        </p>
+                        <p className="text-xs text-green-600/70 dark:text-green-400/70">
+                          5% off next purchase · auto-applied at checkout
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              <div className="flex flex-col items-end">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                  Referrals
+                </p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold text-foreground">
+                    {referrals?.referralCount || 0}
+                  </span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    joined
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Businesses</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Active Projects or How It Works */}
       {hasActiveWork ? (

@@ -33,15 +33,15 @@ export async function getReferralStats(userId: string) {
 
     // Count successful referrals (where reward was granted)
     const referralCount = await prisma.user.count({
-      where: { 
+      where: {
         referredBy: user.referralCode,
         referralCompletedAt: { not: null }
       },
     });
-    
+
     // Count pending referrals
-     const pendingCount = await prisma.user.count({
-      where: { 
+    const pendingCount = await prisma.user.count({
+      where: {
         referredBy: user.referralCode,
         referralCompletedAt: null
       },
@@ -75,7 +75,7 @@ export async function trackUserLogin(userId: string) {
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     let shouldUpdate = false;
     let newLoginDaysCount = user.loginDaysCount;
 
@@ -85,7 +85,7 @@ export async function trackUserLogin(userId: string) {
     } else {
       const lastLogin = new Date(user.lastLoginAt);
       const lastLoginDate = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
-      
+
       if (today.getTime() > lastLoginDate.getTime()) {
         shouldUpdate = true;
         newLoginDaysCount += 1;
@@ -100,7 +100,7 @@ export async function trackUserLogin(userId: string) {
           loginDaysCount: newLoginDaysCount
         }
       });
-      
+
       // Check expert referral condition after login update
       await checkExpertReferralCondition(userId);
     }
@@ -136,7 +136,7 @@ export async function checkExpertReferralCondition(userId: string) {
     // Grant Reward: Expert gets 5% off margin for next 2 sales.
     // We store this as "expertDiscountCount: 2"
     const currentRewards = (referrer.referralRewards as unknown as ReferralRewards) || { expertDiscountCount: 0, businessDiscountCount: 0 };
-    
+
     // Increment expert discount count by 2
     const newRewards = {
       ...currentRewards,
@@ -193,7 +193,7 @@ export async function checkBusinessReferralCondition(userId: string) {
     // Grant Reward: Business owner gets 5% on next buy.
     // We store this as "businessDiscountCount: 1" (or increment)
     const currentRewards = (referrer.referralRewards as unknown as ReferralRewards) || { expertDiscountCount: 0, businessDiscountCount: 0 };
-    
+
     // Increment business discount count by 1
     const newRewards = {
       ...currentRewards,

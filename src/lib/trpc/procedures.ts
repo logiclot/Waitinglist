@@ -7,6 +7,32 @@ import { TRPCError } from "@trpc/server";
 
 export const publicProcedure = t.procedure;
 
+export const commonProcedure = t.procedure.use(async ({ ctx, next }) => {
+    if (!ctx.session && !ctx.userId) {
+        throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Authentication required",
+            cause: "No session",
+        });
+    }
+
+    if (ctx.session && ctx.session.user.role == "USER") {
+        throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You are not authorized to access this resource",
+            cause: "User does not have a role",
+        });
+    }
+
+    return await next({
+        ctx: {
+            ...ctx,
+            session: ctx.session,
+        },
+    });
+});
+
+
 export const adminProcedure = t.procedure.use(async ({ ctx, next }) => {
     if (!ctx.session) {
         throw new TRPCError({

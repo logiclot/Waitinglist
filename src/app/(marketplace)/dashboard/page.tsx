@@ -1,12 +1,10 @@
-import { Suspense, cache } from "react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { BusinessOverview } from "@/components/dashboard/BusinessOverview";
 import { ExpertOverview } from "@/components/dashboard/ExpertOverview";
-import { getReferralStats } from "@/actions/referral";
-import { getActiveCoupons } from "@/actions/notifications";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { Suspense, cache } from "react";
 
 const getExpertProfile = cache((userId: string) =>
   prisma.specialistProfile.findUnique({
@@ -76,15 +74,11 @@ async function ExpertDashboardContent({ userId }: { userId: string }) {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const [
-    referralStats,
-    activeCoupons,
     earningsOrders,
     activeOrdersRaw,
     topSolution,
     recentJobs,
   ] = await Promise.all([
-    getReferralStats(userId),
-    getActiveCoupons(),
     prisma.order.findMany({
       where: {
         sellerId: expert.id,
@@ -191,8 +185,6 @@ async function ExpertDashboardContent({ userId }: { userId: string }) {
 
   return (
     <ExpertOverview
-      referralStats={referralStats}
-      activeCoupons={activeCoupons}
       hasCalendarUrl={!!expert.calendarUrl}
       hasStripeConnected={
         !!expert.stripeAccountId && expert.stripeDetailsSubmitted
@@ -221,12 +213,8 @@ async function ExpertDashboardContent({ userId }: { userId: string }) {
 }
 
 async function FallbackDashboardContent({ userId }: { userId: string }) {
-  const [referralStats, coupons] = await Promise.all([
-    getReferralStats(userId),
-    getActiveCoupons(),
-  ]);
   return (
-    <BusinessOverview referralStats={referralStats} activeCoupons={coupons} />
+    <BusinessOverview />
   );
 }
 
@@ -239,28 +227,6 @@ function SkeletonBlock({ className }: { className?: string }) {
 function ExpertDashboardSkeleton() {
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 animate-pulse">
-      {/* Header + Earnings */}
-      <section className="flex flex-col md:flex-row justify-between gap-6">
-        <div>
-          <SkeletonBlock className="h-7 w-80 mb-2" />
-          <SkeletonBlock className="h-4 w-64" />
-        </div>
-        <div className="flex gap-3">
-          <div className="bg-card border border-border rounded-xl p-4 min-w-[130px]">
-            <SkeletonBlock className="h-3 w-16 mb-2" />
-            <SkeletonBlock className="h-5 w-14" />
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 min-w-[130px]">
-            <SkeletonBlock className="h-3 w-16 mb-2" />
-            <SkeletonBlock className="h-7 w-16" />
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 min-w-[130px]">
-            <SkeletonBlock className="h-3 w-16 mb-2" />
-            <SkeletonBlock className="h-7 w-16" />
-          </div>
-        </div>
-      </section>
-
       {/* Priority Actions */}
       <section>
         <div className="flex items-center gap-2 mb-4">

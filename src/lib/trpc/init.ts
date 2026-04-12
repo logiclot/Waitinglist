@@ -8,6 +8,7 @@ import { authOptions } from "../auth";
 export async function createContext(req: NextRequest) {
     const session = await getServerSession(authOptions)
     return {
+        userId: session?.user.id,
         session,
     };
 }

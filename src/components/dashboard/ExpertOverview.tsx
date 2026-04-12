@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { formatCentsToCurrency, TIER_THRESHOLDS } from "@/lib/commission";
 import { SpecialistTier } from "@prisma/client";
+import { useCoupons, useReferals } from "@/hooks/use-awards";
 
 interface ActiveOrder {
   id: string;
@@ -116,8 +117,6 @@ interface ExpertOverviewProps {
 }
 
 export function ExpertOverview({
-  referralStats,
-  activeCoupons = [],
   hasCalendarUrl,
   hasStripeConnected,
   isFoundingExpert,
@@ -134,11 +133,16 @@ export function ExpertOverview({
   newExpertBoostUntil,
 }: ExpertOverviewProps) {
   const [referralLink, setReferralLink] = useState("");
+  const { data: referrals, isPending: isReferalsLoading } = useReferals()
+  const { data: coupons, isPending: isCouponsPending } = useCoupons()
+
+
+
   useEffect(() => {
     setReferralLink(
-      `${window.location.origin}/auth/signup?ref=${referralStats?.referralCode || ""}`,
+      `${window.location.origin}/auth/signup?ref=${referrals?.referralCode || ""}`,
     );
-  }, [referralStats?.referralCode]);
+  }, [referrals?.referralCode]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink);
@@ -179,16 +183,14 @@ export function ExpertOverview({
             const isFounder = isFoundingExpert;
             return (
               <div
-                className={`rounded-xl p-4 min-w-[130px] flex flex-col justify-center ${
-                  isFounder
-                    ? "bg-gradient-to-br from-neutral-900 to-neutral-800 border border-neutral-700"
-                    : "bg-card border border-border"
-                }`}
+                className={`rounded-xl p-4 min-w-[130px] flex flex-col justify-center ${isFounder
+                  ? "bg-gradient-to-br from-neutral-900 to-neutral-800 border border-neutral-700"
+                  : "bg-card border border-border"
+                  }`}
               >
                 <p
-                  className={`text-xs uppercase tracking-wider font-bold mb-1 flex items-center gap-1 ${
-                    isFounder ? "text-neutral-300" : "text-muted-foreground"
-                  }`}
+                  className={`text-xs uppercase tracking-wider font-bold mb-1 flex items-center gap-1 ${isFounder ? "text-neutral-300" : "text-muted-foreground"
+                    }`}
                 >
                   <TierIcon
                     className={`w-3 h-3 ${isFounder ? "text-amber-400" : "text-foreground"}`}
@@ -227,6 +229,23 @@ export function ExpertOverview({
       {/* Referral Section — shown only after first sale */}
       {totalCompletedSales >= 1 && (
         <section className="bg-card border border-border rounded-xl p-6">
+          {isReferalsLoading ? (
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-pulse">
+              <div>
+                <div className="h-5 w-40 bg-muted rounded mb-3" />
+                <div className="h-4 w-72 bg-muted rounded mb-2" />
+                <div className="h-4 w-56 bg-muted rounded mb-4" />
+                <div className="h-10 w-64 bg-muted rounded-md" />
+              </div>
+              <div className="flex gap-8">
+                <div className="flex flex-col items-end gap-1">
+                  <div className="h-3 w-16 bg-muted rounded" />
+                  <div className="h-8 w-10 bg-muted rounded" />
+                  <div className="h-3 w-14 bg-muted rounded" />
+                </div>
+              </div>
+            </div>
+          ) : (
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h3 className="font-bold text-base mb-1.5 flex items-center gap-2">
@@ -255,35 +274,35 @@ export function ExpertOverview({
             </div>
 
             <div className="flex gap-8 text-right">
-              {(referralStats?.referralRewards?.expertDiscountCount || 0) >
+              {(referrals?.referralRewards?.expertDiscountCount || 0) >
                 0 && (
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
-                    <Gift className="w-4 h-4 text-green-500 shrink-0" />
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                        {referralStats?.referralRewards?.expertDiscountCount}{" "}
-                        discount credit
-                        {referralStats?.referralRewards?.expertDiscountCount !==
-                        1
-                          ? "s"
-                          : ""}{" "}
-                        available
-                      </p>
-                      <p className="text-xs text-green-600/70 dark:text-green-400/70">
-                        5% off platform fee · auto-applied on next sale
-                      </p>
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                      <Gift className="w-4 h-4 text-green-500 shrink-0" />
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                          {referrals?.referralRewards?.expertDiscountCount}{" "}
+                          discount credit
+                          {referrals?.referralRewards?.expertDiscountCount !==
+                            1
+                            ? "s"
+                            : ""}{" "}
+                          available
+                        </p>
+                        <p className="text-xs text-green-600/70 dark:text-green-400/70">
+                          5% off platform fee · auto-applied on next sale
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
               <div className="flex flex-col items-end">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
                   Referrals
                 </p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-bold text-foreground">
-                    {referralStats?.referralCount || 0}
+                    {referrals?.referralCount || 0}
                   </span>
                   <span className="text-sm font-medium text-muted-foreground">
                     joined
@@ -293,6 +312,7 @@ export function ExpertOverview({
               </div>
             </div>
           </div>
+          )}
         </section>
       )}
 
@@ -308,12 +328,12 @@ export function ExpertOverview({
               Your solutions get extra visibility for{" "}
               {Math.ceil(
                 (new Date(newExpertBoostUntil).getTime() - Date.now()) /
-                  (1000 * 60 * 60 * 24),
+                (1000 * 60 * 60 * 24),
               )}{" "}
               more day
               {Math.ceil(
                 (new Date(newExpertBoostUntil).getTime() - Date.now()) /
-                  (1000 * 60 * 60 * 24),
+                (1000 * 60 * 60 * 24),
               ) !== 1
                 ? "s"
                 : ""}
@@ -378,95 +398,95 @@ export function ExpertOverview({
         !hasCalendarUrl ||
         (!isFoundingExpert && publishedSolutionCount < 3) ||
         publishedSolutionCount < 3) && (
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold">Priority Actions</h2>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
-            {!hasStripeConnected && (
-              <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
-                <CreditCard className="w-5 h-5 text-primary shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm">Connect Stripe</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Required to receive payouts
-                  </p>
-                </div>
-                <Link
-                  href="/expert/settings"
-                  className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors"
-                >
-                  Connect
-                </Link>
-              </div>
-            )}
-            {!hasCalendarUrl && (
-              <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
-                <Calendar className="w-5 h-5 text-primary shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm">Link Work Calendar</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Let clients book demos and calls
-                  </p>
-                </div>
-                <Link
-                  href="/expert/settings"
-                  className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors"
-                >
-                  Link
-                </Link>
-              </div>
-            )}
-            {!isFoundingExpert && publishedSolutionCount < 3 && (
-              <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
-                <Award className="w-5 h-5 text-primary shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm">Founding Expert Badge</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Publish {3 - publishedSolutionCount} more solution
-                    {3 - publishedSolutionCount !== 1 ? "s" : ""} to unlock 11%
-                    fee
-                  </p>
-                </div>
-                <Link
-                  href="/expert/my-solutions/new"
-                  className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors"
-                >
-                  Create
-                </Link>
-              </div>
-            )}
-            {publishedSolutionCount < 3 && (
-              <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
-                <Paintbrush className="w-5 h-5 text-primary shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm">Customize Portfolio</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Publish {3 - publishedSolutionCount} more solution
-                    {3 - publishedSolutionCount !== 1 ? "s" : ""} to unlock
-                  </p>
-                </div>
-                {portfolioSlug ? (
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold">Priority Actions</h2>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
+              {!hasStripeConnected && (
+                <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
+                  <CreditCard className="w-5 h-5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">Connect Stripe</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Required to receive payouts
+                    </p>
+                  </div>
                   <Link
-                    href={`/p/${portfolioSlug}`}
+                    href="/expert/settings"
                     className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors"
                   >
-                    View
+                    Connect
                   </Link>
-                ) : (
+                </div>
+              )}
+              {!hasCalendarUrl && (
+                <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
+                  <Calendar className="w-5 h-5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">Link Work Calendar</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Let clients book demos and calls
+                    </p>
+                  </div>
                   <Link
-                    href="/expert/add-solution"
+                    href="/expert/settings"
+                    className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors"
+                  >
+                    Link
+                  </Link>
+                </div>
+              )}
+              {!isFoundingExpert && publishedSolutionCount < 3 && (
+                <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
+                  <Award className="w-5 h-5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">Founding Expert Badge</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Publish {3 - publishedSolutionCount} more solution
+                      {3 - publishedSolutionCount !== 1 ? "s" : ""} to unlock 11%
+                      fee
+                    </p>
+                  </div>
+                  <Link
+                    href="/expert/my-solutions/new"
                     className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors"
                   >
                     Create
                   </Link>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+                </div>
+              )}
+              {publishedSolutionCount < 3 && (
+                <div className="min-w-[300px] flex-shrink-0 snap-start bg-primary/5 border border-primary/15 p-4 rounded-xl flex items-center gap-4">
+                  <Paintbrush className="w-5 h-5 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm">Customize Portfolio</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      Publish {3 - publishedSolutionCount} more solution
+                      {3 - publishedSolutionCount !== 1 ? "s" : ""} to unlock
+                    </p>
+                  </div>
+                  {portfolioSlug ? (
+                    <Link
+                      href={`/p/${portfolioSlug}`}
+                      className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors"
+                    >
+                      View
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/expert/add-solution"
+                      className="shrink-0 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-bold hover:bg-primary/90 transition-colors"
+                    >
+                      Create
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Col (2/3) */}
@@ -591,19 +611,24 @@ export function ExpertOverview({
                     ))}
                   </tbody>
                 </table>
-                {activeCoupons.length > 0 && (
+                {isCouponsPending ? (
+                  <div className="flex items-center gap-2 px-4 py-2.5 border-t border-border animate-pulse">
+                    <div className="h-3.5 w-3.5 bg-muted rounded shrink-0" />
+                    <div className="h-3 w-64 bg-muted rounded" />
+                  </div>
+                ) : coupons && coupons.length > 0 ? (
                   <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border-t border-emerald-100 text-xs text-emerald-700">
                     <Gift className="h-3.5 w-3.5 shrink-0" />
                     <span>
                       5% referral discount applied automatically on your
                       platform fee for the next{" "}
-                      {activeCoupons.length === 1
+                      {coupons?.length === 1
                         ? "sale"
-                        : `${activeCoupons.length} sales`}
+                        : `${coupons?.length} sales`}
                       .
                     </span>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
           </section>
@@ -723,11 +748,11 @@ function EliteApplicationCard({
       : true;
     const daysLeft = deniedAt
       ? Math.max(
-          0,
-          Math.ceil(
-            14 - (Date.now() - deniedAt.getTime()) / (1000 * 60 * 60 * 24),
-          ),
-        )
+        0,
+        Math.ceil(
+          14 - (Date.now() - deniedAt.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      )
       : 0;
 
     return (
@@ -795,11 +820,11 @@ function EliteApplicationCard({
       : true;
     const daysLeft = demotedAt
       ? Math.max(
-          0,
-          Math.ceil(
-            14 - (Date.now() - demotedAt.getTime()) / (1000 * 60 * 60 * 24),
-          ),
-        )
+        0,
+        Math.ceil(
+          14 - (Date.now() - demotedAt.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      )
       : 0;
 
     return (
