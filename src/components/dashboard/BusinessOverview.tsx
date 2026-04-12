@@ -18,12 +18,9 @@ import { ActiveCoupons } from "./ActiveCoupons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useCoupons, useReferals } from "@/hooks/use-awards";
+import { useActiveOrders, useCompletedProjectCount, useFreeDiscoveryScans } from "@/hooks/use-business";
 
-interface ActiveOrder {
-  id: string;
-  solutionTitle: string;
-  status: string;
-}
+
 
 interface RecommendedSolution {
   id: string;
@@ -35,23 +32,16 @@ interface RecommendedSolution {
   deliveryDays: number;
 }
 
-interface ReferralRewards {
-  expertDiscountCount: number;
-  businessDiscountCount: number;
-}
 
-interface BusinessOverviewProps {
-  activeOrders?: ActiveOrder[];
-  completedProjectCount?: number;
-  freeDiscoveryScans?: number;
-}
+export function BusinessOverview() {
+  const activeOrders = useActiveOrders()
+  const completedProjectCount = useCompletedProjectCount()
+  const freeDiscoveryScans = useFreeDiscoveryScans()
 
-export function BusinessOverview({
-  activeOrders = [],
-  completedProjectCount = 0,
-  freeDiscoveryScans = 0,
-}: BusinessOverviewProps) {
-  const hasActiveWork = activeOrders.length > 0;
+  const hasActiveWork = activeOrders.data && activeOrders.data.length > 0;
+  const isActiveOrdersPending = activeOrders.isPending;
+  const isCompletedProjectsPending = completedProjectCount.isPending;
+  const isFreeDiscoveryScansPending = freeDiscoveryScans.isPending;
 
   const { data: recommendedSolutions = [], isPending: isSolutionsPending } =
     useQuery<RecommendedSolution[]>({
@@ -139,7 +129,20 @@ export function BusinessOverview({
       ) : null}
 
       {/* Free Discovery Scan Banner */}
-      {freeDiscoveryScans > 0 && (
+      {isFreeDiscoveryScansPending ? (
+        <section className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 md:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+              <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-4 w-56" />
+                <Skeleton className="h-3 w-full max-w-md" />
+              </div>
+            </div>
+            <Skeleton className="h-10 w-56 rounded-lg shrink-0" />
+          </div>
+        </section>
+      ) : freeDiscoveryScans.data && freeDiscoveryScans.data > 0 ? (
         <section className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 md:p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -148,8 +151,8 @@ export function BusinessOverview({
               </div>
               <div>
                 <p className="text-sm font-bold text-foreground">
-                  You have {freeDiscoveryScans} free Discovery Scan
-                  {freeDiscoveryScans !== 1 ? "s" : ""}
+                  You have {freeDiscoveryScans.data} free Discovery Scan
+                  {freeDiscoveryScans.data !== 1 ? "s" : ""}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Tell us what&apos;s slowing your business down. Up to 5
@@ -166,7 +169,7 @@ export function BusinessOverview({
             </Link>
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* Hero */}
       <section className="bg-card border border-border rounded-2xl p-8 md:p-10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
@@ -237,15 +240,15 @@ export function BusinessOverview({
                 key={i}
                 className="bg-card border border-border rounded-xl p-5 space-y-3"
               >
-                <div className="h-5 w-20 rounded bg-muted animate-pulse" />
-                <div className="h-5 w-3/4 rounded bg-muted animate-pulse" />
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-5 w-3/4" />
                 <div className="space-y-1.5">
-                  <div className="h-3 w-full rounded bg-muted animate-pulse" />
-                  <div className="h-3 w-2/3 rounded bg-muted animate-pulse" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-2/3" />
                 </div>
                 <div className="pt-3 border-t border-border flex items-center justify-between">
-                  <div className="h-4 w-16 rounded bg-muted animate-pulse" />
-                  <div className="h-4 w-20 rounded bg-muted animate-pulse" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
                 </div>
               </div>
             ))}
@@ -380,7 +383,26 @@ export function BusinessOverview({
       )}
 
       {/* Active Projects or How It Works */}
-      {hasActiveWork ? (
+      {isActiveOrdersPending ? (
+        <section className="bg-secondary/20 rounded-2xl p-6 border border-border">
+          <div className="flex items-center gap-2 mb-6">
+            <Skeleton className="w-5 h-5 rounded" />
+            <Skeleton className="h-5 w-32" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex gap-4">
+                <Skeleton className="w-7 h-7 rounded-full shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : hasActiveWork ? (
         <section>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
@@ -404,7 +426,7 @@ export function BusinessOverview({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {activeOrders.map((order) => {
+                {activeOrders.data.map((order) => {
                   const { label, className } = statusLabel(order.status);
                   return (
                     <tr key={order.id}>
@@ -481,39 +503,40 @@ export function BusinessOverview({
       )}
 
       {/* Re-engagement — shown after completing at least one project with no active work */}
-      {completedProjectCount > 0 && !hasActiveWork && (
-        <section className="bg-primary/5 border border-primary/15 rounded-2xl p-6 md:p-8">
-          <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <BarChart2 className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-base text-foreground mb-1">
-                What to automate next?
-              </h3>
-              <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                You&apos;ve completed {completedProjectCount} project
-                {completedProjectCount !== 1 ? "s" : ""}. Take our free audit to
-                find your next highest-ROI automation opportunity.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/audit"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
-                >
-                  Take the Free Audit <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/solutions"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border bg-background hover:bg-secondary/50 transition-colors text-sm font-medium"
-                >
-                  Browse Solutions
-                </Link>
+      {!isActiveOrdersPending && !isCompletedProjectsPending &&
+        completedProjectCount.data && completedProjectCount.data > 0 && !hasActiveWork && (
+          <section className="bg-primary/5 border border-primary/15 rounded-2xl p-6 md:p-8">
+            <div className="flex items-start gap-4">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <BarChart2 className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-base text-foreground mb-1">
+                  What to automate next?
+                </h3>
+                <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                  You&apos;ve completed {completedProjectCount.data} project
+                  {completedProjectCount.data !== 1 ? "s" : ""}. Take our free audit to
+                  find your next highest-ROI automation opportunity.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/audit"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
+                  >
+                    Take the Free Audit <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/solutions"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border bg-background hover:bg-secondary/50 transition-colors text-sm font-medium"
+                  >
+                    Browse Solutions
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
     </div>
   );
 }
