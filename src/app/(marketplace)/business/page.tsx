@@ -105,9 +105,7 @@ function BusinessDashboardSkeleton() {
 }
 
 async function BusinessDashboardContent({ userId }: { userId: string }) {
-  const [referralStats, activeCoupons, activeOrdersRaw, completedProjectCount, businessProfile] = await Promise.all([
-    getReferralStats(userId),
-    getActiveCoupons(),
+  const [activeOrdersRaw, completedProjectCount, businessProfile] = await Promise.all([
     prisma.order.findMany({
       where: {
         buyerId: userId,
@@ -138,9 +136,7 @@ async function BusinessDashboardContent({ userId }: { userId: string }) {
 
   return (
     <BusinessOverview
-      referralStats={referralStats}
       activeOrders={activeOrders}
-      activeCoupons={activeCoupons}
       completedProjectCount={completedProjectCount}
       freeDiscoveryScans={businessProfile?.freeDiscoveryScansRemaining ?? 0}
     />
