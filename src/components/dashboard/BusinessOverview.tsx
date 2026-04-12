@@ -504,7 +504,7 @@ export function BusinessOverview() {
 
       {/* Re-engagement — shown after completing at least one project with no active work */}
       {!isActiveOrdersPending && !isCompletedProjectsPending &&
-        completedProjectCount.data && completedProjectCount.data > 0 && !hasActiveWork && (
+        completedProjectCount.data != null && completedProjectCount.data > 0 && !hasActiveWork && (
           <section className="bg-primary/5 border border-primary/15 rounded-2xl p-6 md:p-8">
             <div className="flex items-start gap-4">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
