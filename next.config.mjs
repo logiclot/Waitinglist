@@ -1,4 +1,6 @@
 import { withSentryConfig } from "@sentry/nextjs";
+import { withBotId } from 'botid/next/config';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -63,7 +65,7 @@ const nextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+export default withSentryConfig(withBotId(nextConfig), {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 

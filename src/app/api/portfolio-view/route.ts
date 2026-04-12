@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { pageViewLimiter } from "@/lib/rate-limit";
 import { log } from "@/lib/logger";
+import { botGuard } from "@/lib/botid-guard";
 
 export async function POST(request: Request) {
   try {
     const ip = request.headers.get("x-forwarded-for") ?? "unknown";
     const rl = await pageViewLimiter.check(ip);
     if (!rl.success) return NextResponse.json({ ok: true });
+
+    const blocked = await botGuard();
+    if (blocked) return blocked;
 
     const { slug } = await request.json();
     if (!slug || typeof slug !== "string" || slug.length > 100) {

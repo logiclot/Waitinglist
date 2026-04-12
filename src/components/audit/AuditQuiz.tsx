@@ -550,7 +550,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
         headers: { "Content-Type": "application/json" },
         body: payload,
         keepalive: true,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }
 
@@ -690,13 +690,12 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
             {QUESTIONS.map((_, i) => (
               <div
                 key={i}
-                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                  i < step
+                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i < step
                     ? "bg-primary"
                     : i === step
-                    ? "bg-primary/50"
-                    : "bg-border"
-                }`}
+                      ? "bg-primary/50"
+                      : "bg-border"
+                  }`}
               />
             ))}
           </div>
@@ -727,28 +726,25 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                       onClick={() =>
                         handleSingleSelect(currentQuestion.id, opt.id)
                       }
-                      className={`w-full text-left px-5 py-4 rounded-xl border transition-all duration-200 ${
-                        isSelected
+                      className={`w-full text-left px-5 py-4 rounded-xl border transition-all duration-200 ${isSelected
                           ? "border-primary bg-primary/5"
                           : "border-border bg-background hover:border-primary/40 hover:bg-secondary/30"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
                           <p
-                            className={`font-medium text-sm ${
-                              isSelected ? "text-primary" : "text-foreground"
-                            }`}
+                            className={`font-medium text-sm ${isSelected ? "text-primary" : "text-foreground"
+                              }`}
                           >
                             {opt.label}
                           </p>
                           {opt.sub && (
                             <p
-                              className={`text-xs mt-0.5 ${
-                                isSelected
+                              className={`text-xs mt-0.5 ${isSelected
                                   ? "text-primary/70"
                                   : "text-muted-foreground"
-                              }`}
+                                }`}
                             >
                               {opt.sub}
                             </p>
@@ -791,18 +787,16 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                       <button
                         key={opt.id}
                         onClick={() => handleMultiToggle(currentQuestion.id, opt.id)}
-                        className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${
-                          isSelected
+                        className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${isSelected
                             ? "border-primary bg-primary/5"
                             : "border-border bg-background hover:border-primary/40 hover:bg-secondary/30"
-                        }`}
+                          }`}
                       >
                         <div
-                          className={`w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${
-                            isSelected
+                          className={`w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${isSelected
                               ? "border-primary bg-primary"
                               : "border-border"
-                          }`}
+                            }`}
                         >
                           {isSelected && (
                             <svg viewBox="0 0 12 12" className="w-3 h-3" fill="none">
@@ -817,9 +811,8 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           )}
                         </div>
                         <span
-                          className={`text-sm font-medium ${
-                            isSelected ? "text-primary" : "text-foreground"
-                          }`}
+                          className={`text-sm font-medium ${isSelected ? "text-primary" : "text-foreground"
+                            }`}
                         >
                           {opt.label}
                         </span>
@@ -861,474 +854,461 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
           {/* Score, financial, bottlenecks — keep narrow and centered */}
           <div className="max-w-2xl mx-auto space-y-5">
 
-          {/* Score card */}
-          <div className="bg-white border border-border rounded-2xl shadow-sm p-8 md:p-10">
-            <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-6 text-center">
-              Your Automation Opportunity Score
-            </p>
-
-            {/* Big score + label */}
-            <div className="flex items-end justify-center gap-1 mb-1">
-              <span className="text-8xl font-black text-primary leading-none">
-                {animatedScore}
-              </span>
-              <span className="text-3xl font-bold text-muted-foreground mb-3">
-                /100
-              </span>
-            </div>
-            <p className="text-center font-semibold text-foreground mb-1">
-              {results.scoreLabel}
-            </p>
-            <p className="text-sm text-muted-foreground text-center mb-3">
-              Businesses like yours average{" "}
-              <span className="font-semibold text-foreground">
-                {results.benchmark}/100
-              </span>
-            </p>
-            <p className="text-xs text-muted-foreground text-center bg-secondary/30 rounded-lg px-4 py-2 mb-4">
-              {results.scoreExplanation}
-            </p>
-
-            {/* Social proof */}
-            <div className="flex items-center justify-center gap-2 mb-8 text-sm">
-              <Users className="h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">
-                <span className="font-semibold text-foreground">{results.socialProofPct}%</span> of companies your size have already automated this
-              </span>
-            </div>
-
-            {/* Sub-scores */}
-            <div className="space-y-5 border-t border-border pt-6">
-              {[
-                {
-                  label: "ROI Potential",
-                  value: results.roiPotential,
-                  icon: TrendingUp,
-                  hint: "Based on team size and time spent",
-                },
-                {
-                  label: "Process Bottleneck",
-                  value: results.processBottleneck,
-                  icon: BarChart2,
-                  hint: "Volume of manual work in your business",
-                },
-                {
-                  label: "Technical Readiness",
-                  value: results.technicalReadiness,
-                  icon: Zap,
-                  hint: "How prepared your setup is for automation",
-                },
-                {
-                  label: "Process Maturity",
-                  value: results.processMaturity,
-                  icon: CheckCircle2,
-                  hint: "How well your current processes are working",
-                },
-              ].map(({ label, value, icon: Icon, hint }) => (
-                <div key={label}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-3.5 w-3.5 text-primary" />
-                      <span className="text-sm font-semibold text-foreground">
-                        {label}
-                      </span>
-                      <span className="text-xs text-muted-foreground hidden sm:inline">
-                        {hint}
-                      </span>
-                    </div>
-                    <span className="text-sm font-bold text-foreground tabular-nums">
-                      {value}/100
-                    </span>
-                  </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
-                      style={{ width: subScoresVisible ? `${value}%` : "0%" }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Financial estimate */}
-          <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
-            <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-1">
-              What Manual Work Is Costing You
-            </p>
-            <p className="text-xs text-muted-foreground mb-4">Per month, in lost productivity</p>
-            <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-4xl font-black text-foreground">
-                ~&euro;{results.financialEstimate.toLocaleString()}
-              </span>
-              <span className="text-base font-medium text-muted-foreground">
-                /month
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-              This is not how much automation costs. It&apos;s how much you&apos;re
-              already spending on work that automation handles automatically, based
-              on your team&apos;s manual hours at a blended &euro;25/hr productivity rate.
-            </p>
-            <div className="border-t border-border pt-4 mb-4">
-              <p className="text-sm font-semibold text-foreground">
-                Automation typically recovers 60–80% of this:
+            {/* Score card */}
+            <div className="bg-white border border-border rounded-2xl shadow-sm p-8 md:p-10">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-6 text-center">
+                Your Automation Opportunity Score
               </p>
-              <p className="text-lg font-bold text-primary mt-0.5">
-                ~&euro;{results.recoveryLow.toLocaleString()} – &euro;{results.recoveryHigh.toLocaleString()}/month back into your business
-              </p>
-            </div>
 
-            {/* Annual ROI comparison */}
-            <div className="border-t border-border pt-4">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
-                Annual Comparison
-              </p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex-1 min-w-[120px] bg-secondary/50 border border-border rounded-xl px-4 py-3 text-center">
-                  <p className="text-xs text-muted-foreground font-medium mb-1">Lost per year</p>
-                  <p className="text-lg font-black text-foreground">&euro;{results.annualWaste.toLocaleString()}</p>
-                </div>
-                <span className="text-muted-foreground font-bold text-lg">vs</span>
-                <div className="flex-1 min-w-[120px] bg-secondary/50 border border-border rounded-xl px-4 py-3 text-center">
-                  <p className="text-xs text-muted-foreground font-medium mb-1">Typical one-time fix</p>
-                  <p className="text-lg font-black text-foreground">&euro;{results.typicalFixCost.toLocaleString()}</p>
-                </div>
-                <span className="text-muted-foreground font-bold text-lg">=</span>
-                <div className="flex-1 min-w-[80px] bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-center">
-                  <p className="text-xs text-primary font-medium mb-1">ROI</p>
-                  <p className="text-lg font-black text-primary">{results.roiMultiplier}x</p>
-                </div>
+              {/* Big score + label */}
+              <div className="flex items-end justify-center gap-1 mb-1">
+                <span className="text-8xl font-black text-primary leading-none">
+                  {animatedScore}
+                </span>
+                <span className="text-3xl font-bold text-muted-foreground mb-3">
+                  /100
+                </span>
               </div>
-            </div>
-
-            {/* Urgency note */}
-            <div className="flex items-center gap-2 border-t border-border pt-4 mt-4">
-              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-              <p className="text-xs text-muted-foreground">
-                Every month you wait = <span className="font-semibold text-foreground">&euro;{results.urgencyMonthly.toLocaleString()}</span> more spent on work a machine should do
+              <p className="text-center font-semibold text-foreground mb-1">
+                {results.scoreLabel}
               </p>
-            </div>
-          </div>
-
-          {/* Top bottlenecks */}
-          {results.bottlenecks.length > 0 && (
-            <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-6">
-                Your Top Bottlenecks and What Changes
+              <p className="text-sm text-muted-foreground text-center mb-3">
+                Businesses like yours average{" "}
+                <span className="font-semibold text-foreground">
+                  {results.benchmark}/100
+                </span>
               </p>
-              <div className="space-y-6">
-                {results.bottlenecks.map((b, i) => (
-                  <div key={i} className="flex gap-4">
-                    <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                      {i + 1}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-foreground mb-1">
-                        {b.headline}
-                      </p>
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-2">
-                        {b.detail}
-                      </p>
+              <p className="text-xs text-muted-foreground text-center bg-secondary/30 rounded-lg px-4 py-2 mb-4">
+                {results.scoreExplanation}
+              </p>
 
-                      {/* Before / After */}
-                      <div className="text-xs text-muted-foreground mb-2 space-y-1">
-                        <p><span className="font-semibold text-foreground">Today:</span> {b.before}</p>
-                        <p><span className="font-semibold text-primary">After:</span> {b.after}</p>
+              {/* Social proof */}
+              <div className="flex items-center justify-center gap-2 mb-8 text-sm">
+                <Users className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">
+                  <span className="font-semibold text-foreground">{results.socialProofPct}%</span> of companies your size have already automated this
+                </span>
+              </div>
+
+              {/* Sub-scores */}
+              <div className="space-y-5 border-t border-border pt-6">
+                {[
+                  {
+                    label: "ROI Potential",
+                    value: results.roiPotential,
+                    icon: TrendingUp,
+                    hint: "Based on team size and time spent",
+                  },
+                  {
+                    label: "Process Bottleneck",
+                    value: results.processBottleneck,
+                    icon: BarChart2,
+                    hint: "Volume of manual work in your business",
+                  },
+                  {
+                    label: "Technical Readiness",
+                    value: results.technicalReadiness,
+                    icon: Zap,
+                    hint: "How prepared your setup is for automation",
+                  },
+                  {
+                    label: "Process Maturity",
+                    value: results.processMaturity,
+                    icon: CheckCircle2,
+                    hint: "How well your current processes are working",
+                  },
+                ].map(({ label, value, icon: Icon, hint }) => (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-sm font-semibold text-foreground">
+                          {label}
+                        </span>
+                        <span className="text-xs text-muted-foreground hidden sm:inline">
+                          {hint}
+                        </span>
                       </div>
-
-                      <p className="text-sm text-primary font-medium leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
-                        → {b.outcome}
-                      </p>
+                      <span className="text-sm font-bold text-foreground tabular-nums">
+                        {value}/100
+                      </span>
+                    </div>
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
+                        style={{ width: subScoresVisible ? `${value}%` : "0%" }}
+                      />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Automation-ready processes — strengths */}
-          {results.strengths.length > 0 && (
+            {/* Financial estimate */}
             <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-2">
-                Automation-Ready Processes
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-1">
+                What Manual Work Is Costing You
               </p>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                These processes are already working well. The requirements are clear, the waste has been
-                cut, and the flow is optimised. When something is repetitive because it works,
-                not because it&apos;s broken, a human should not be the one running it.
-                Automation locks in the result and frees your team for work that genuinely needs them.
-              </p>
-              <div className="space-y-6">
-                {results.strengths.map((s, i) => (
-                  <div key={i} className="flex gap-4">
-                    <div className="w-7 h-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-foreground mb-1">
-                        {s.headline}
-                      </p>
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-2">
-                        {s.detail}
-                      </p>
-
-                      {/* Status / Next */}
-                      <div className="text-xs text-muted-foreground mb-2 space-y-1">
-                        <p><span className="font-semibold text-green-700">Status:</span> {s.status}</p>
-                        <p><span className="font-semibold text-primary">Next:</span> {s.next}</p>
-                      </div>
-
-                      <p className="text-sm text-green-800 font-medium leading-relaxed bg-green-50 rounded-lg px-3 py-2">
-                        &rarr; {s.outcome}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <p className="text-xs text-muted-foreground mb-4">Per month, in lost productivity</p>
+              <div className="flex items-baseline gap-1 mb-4">
+                <span className="text-4xl font-black text-foreground">
+                  ~&euro;{results.financialEstimate.toLocaleString()}
+                </span>
+                <span className="text-base font-medium text-muted-foreground">
+                  /month
+                </span>
               </div>
-            </div>
-          )}
-
-          {/* Readiness barrier — only shown for scores >= 25 */}
-          {results.barrier && (
-            <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
-              <div className="flex gap-3 mb-3">
-                <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest">
-                  Your Main Barrier
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                This is not how much automation costs. It&apos;s how much you&apos;re
+                already spending on work that automation handles automatically, based
+                on your team&apos;s manual hours at a blended &euro;25/hr productivity rate.
+              </p>
+              <div className="border-t border-border pt-4 mb-4">
+                <p className="text-sm font-semibold text-foreground">
+                  Automation typically recovers 60–80% of this:
+                </p>
+                <p className="text-lg font-bold text-primary mt-0.5">
+                  ~&euro;{results.recoveryLow.toLocaleString()} – &euro;{results.recoveryHigh.toLocaleString()}/month back into your business
                 </p>
               </div>
-              <p className="font-bold text-foreground mb-3 text-base">
-                {results.barrier.label}
-              </p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {results.barrier.message}
-              </p>
-            </div>
-          )}
 
-          {/* Email capture — send report */}
-          <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
-            <div className="flex items-start gap-3 mb-4">
-              <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold text-foreground text-sm">Send my report</p>
+              {/* Annual ROI comparison */}
+              <div className="border-t border-border pt-4">
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
+                  Annual Comparison
+                </p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex-1 min-w-[120px] bg-secondary/50 border border-border rounded-xl px-4 py-3 text-center">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Lost per year</p>
+                    <p className="text-lg font-black text-foreground">&euro;{results.annualWaste.toLocaleString()}</p>
+                  </div>
+                  <span className="text-muted-foreground font-bold text-lg">vs</span>
+                  <div className="flex-1 min-w-[120px] bg-secondary/50 border border-border rounded-xl px-4 py-3 text-center">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Typical one-time fix</p>
+                    <p className="text-lg font-black text-foreground">&euro;{results.typicalFixCost.toLocaleString()}</p>
+                  </div>
+                  <span className="text-muted-foreground font-bold text-lg">=</span>
+                  <div className="flex-1 min-w-[80px] bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 text-center">
+                    <p className="text-xs text-primary font-medium mb-1">ROI</p>
+                    <p className="text-lg font-black text-primary">{results.roiMultiplier}x</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Urgency note */}
+              <div className="flex items-center gap-2 border-t border-border pt-4 mt-4">
+                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                 <p className="text-xs text-muted-foreground">
-                  Get these results in your inbox so you can share them with your team or come back later.
+                  Every month you wait = <span className="font-semibold text-foreground">&euro;{results.urgencyMonthly.toLocaleString()}</span> more spent on work a machine should do
                 </p>
               </div>
             </div>
-            {emailSent ? (
-              <div>
-                <div className="flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-lg px-4 py-3 text-sm text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                  <span>Report sent to <span className="font-semibold">{email}</span>. Check your inbox (and spam folder).</span>
+
+            {/* Top bottlenecks */}
+            {results.bottlenecks.length > 0 && (
+              <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-6">
+                  Your Top Bottlenecks and What Changes
+                </p>
+                <div className="space-y-6">
+                  {results.bottlenecks.map((b, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm text-foreground mb-1">
+                          {b.headline}
+                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                          {b.detail}
+                        </p>
+
+                        {/* Before / After */}
+                        <div className="text-xs text-muted-foreground mb-2 space-y-1">
+                          <p><span className="font-semibold text-foreground">Today:</span> {b.before}</p>
+                          <p><span className="font-semibold text-primary">After:</span> {b.after}</p>
+                        </div>
+
+                        <p className="text-sm text-primary font-medium leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
+                          → {b.outcome}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex gap-4 mt-2">
-                  <button
-                    onClick={() => { setEmailSent(false); setEmailError(""); }}
-                    className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
-                  >
-                    Resend
-                  </button>
-                  <button
-                    onClick={() => { setEmailSent(false); setEmail(""); setEmailError(""); }}
-                    className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
-                  >
-                    Use a different email
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendReport()}
-                  className="flex-1 px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <button
-                  onClick={handleSendReport}
-                  disabled={!email || emailSending}
-                  className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {emailSending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Mail className="h-4 w-4" />
-                  )}
-                  Send
-                </button>
               </div>
             )}
-            {emailError && (
-              <p className="text-xs text-red-600 mt-2">{emailError}</p>
-            )}
-          </div>
 
-          {/* Account creation nudge — only for anonymous visitors (hidden in prelaunch) */}
-          {!prelaunch && !session?.user && (
-            <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8 flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <UserPlus className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-foreground text-sm mb-1">Save your results</p>
-                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                  Create a free account to save your audit results and get matched with experts who specialise in your bottlenecks.
+            {/* Automation-ready processes — strengths */}
+            {results.strengths.length > 0 && (
+              <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-2">
+                  Automation-Ready Processes
                 </p>
-                <Link
-                  href="/auth/sign-up"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
-                >
-                  Create Free Account <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          )}
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  These processes are already working well. The requirements are clear, the waste has been
+                  cut, and the flow is optimised. When something is repetitive because it works,
+                  not because it&apos;s broken, a human should not be the one running it.
+                  Automation locks in the result and frees your team for work that genuinely needs them.
+                </p>
+                <div className="space-y-6">
+                  {results.strengths.map((s, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="w-7 h-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm text-foreground mb-1">
+                          {s.headline}
+                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                          {s.detail}
+                        </p>
 
-          {/* Pre-launch waitlist CTA — replaces solutions & account nudge */}
-          {prelaunch && (
-            <div className="bg-white border border-primary/20 rounded-2xl shadow-sm p-6 md:p-8">
-              <div className="text-center mb-6">
-                <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
-                  Launching April 8th
-                </p>
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  Ready to fix these bottlenecks?
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                  Join the waitlist now and get a <strong className="text-foreground">free Discovery Scan</strong> — a
-                  personalised deep-dive with a verified automation expert to map out exactly
-                  what to automate first, how much it would save you, and a step-by-step
-                  plan to get there.
-                </p>
-              </div>
+                        {/* Status / Next */}
+                        <div className="text-xs text-muted-foreground mb-2 space-y-1">
+                          <p><span className="font-semibold text-green-700">Status:</span> {s.status}</p>
+                          <p><span className="font-semibold text-primary">Next:</span> {s.next}</p>
+                        </div>
 
-              {/* What is a Discovery Scan? */}
-              <div className="bg-primary/5 border border-primary/10 rounded-xl p-5 mb-6">
-                <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  What is a Discovery Scan?
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-                  <div>
-                    <p className="text-xs font-semibold text-foreground mb-1">1. Post your challenge</p>
-                    <p className="text-xs text-muted-foreground">
-                      Describe what&apos;s slowing you down — the repetitive tasks, the manual processes, the bottlenecks.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground mb-1">2. Experts propose solutions</p>
-                    <p className="text-xs text-muted-foreground">
-                      Up to 5 verified automation experts review your challenge and submit tailored proposals.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground mb-1">3. Pick the best fit</p>
-                    <p className="text-xs text-muted-foreground">
-                      Compare approaches, timelines and pricing. Choose the expert you trust to deliver results.
-                    </p>
-                  </div>
+                        <p className="text-sm text-green-800 font-medium leading-relaxed bg-green-50 rounded-lg px-3 py-2">
+                          &rarr; {s.outcome}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-xs text-muted-foreground mt-3 text-center italic">
-                  Normally costs €50 — <strong className="text-primary not-italic">free for waitlist members</strong>.
-                </p>
               </div>
+            )}
 
-              {/* What's available at launch */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <Zap className="h-4 w-4 text-primary" />
-                  </div>
-                  <p className="text-sm font-semibold text-foreground mb-1">Browse Solutions</p>
-                  <p className="text-xs text-muted-foreground">
-                    Pre-built automations matched to your bottlenecks, ready to implement.
+            {/* Readiness barrier — only shown for scores >= 25 */}
+            {results.barrier && (
+              <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
+                <div className="flex gap-3 mb-3">
+                  <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest">
+                    Your Main Barrier
                   </p>
                 </div>
-                <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                <p className="font-bold text-foreground mb-3 text-base">
+                  {results.barrier.label}
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {results.barrier.message}
+                </p>
+              </div>
+            )}
+
+            {/* Email capture — send report */}
+            <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
+              <div className="flex items-start gap-3 mb-4">
+                <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-foreground text-sm">Send my report</p>
+                  <p className="text-xs text-muted-foreground">
+                    Get these results in your inbox so you can share them with your team or come back later.
+                  </p>
+                </div>
+              </div>
+              {emailSent ? (
+                <div>
+                  <div className="flex items-center gap-2 bg-primary/5 border border-primary/15 rounded-lg px-4 py-3 text-sm text-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    <span>Report sent to <span className="font-semibold">{email}</span>. Check your inbox (and spam folder).</span>
+                  </div>
+                  <div className="flex gap-4 mt-2">
+                    <button
+                      onClick={() => { setEmailSent(false); setEmailError(""); }}
+                      className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+                    >
+                      Resend
+                    </button>
+                    <button
+                      onClick={() => { setEmailSent(false); setEmail(""); setEmailError(""); }}
+                      className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+                    >
+                      Use a different email
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendReport()}
+                    className="flex-1 px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    onClick={handleSendReport}
+                    disabled={!email || emailSending}
+                    className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {emailSending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Mail className="h-4 w-4" />
+                    )}
+                    Send
+                  </button>
+                </div>
+              )}
+              {emailError && (
+                <p className="text-xs text-red-600 mt-2">{emailError}</p>
+              )}
+            </div>
+
+            {/* Account creation nudge — only for anonymous visitors (hidden in prelaunch) */}
+            {!prelaunch && !session?.user && (
+              <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8 flex items-start gap-4">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <UserPlus className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-foreground text-sm mb-1">Save your results</p>
+                  <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                    Create a free account to save your audit results and get matched with experts who specialise in your bottlenecks.
+                  </p>
+                  <Link
+                    href="/auth/sign-up"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
+                  >
+                    Create Free Account <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Pre-launch waitlist CTA — replaces solutions & account nudge */}
+            {prelaunch && (
+              <div className="bg-white border border-primary/20 rounded-2xl shadow-sm p-6 md:p-8">
+                <div className="text-center mb-6">
+                  <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
+                    Launching April 8th
+                  </p>
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    Ready to fix these bottlenecks?
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                    Join the waitlist now and get a <strong className="text-foreground">free Discovery Scan</strong> — a
+                    personalised deep-dive with a verified automation expert to map out exactly
+                    what to automate first, how much it would save you, and a step-by-step
+                    plan to get there.
+                  </p>
+                </div>
+
+                {/* What is a Discovery Scan? */}
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-5 mb-6">
+                  <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />
+                    What is a Discovery Scan?
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-1">1. Post your challenge</p>
+                      <p className="text-xs text-muted-foreground">
+                        Describe what&apos;s slowing you down — the repetitive tasks, the manual processes, the bottlenecks.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-1">2. Experts propose solutions</p>
+                      <p className="text-xs text-muted-foreground">
+                        Up to 5 verified automation experts review your challenge and submit tailored proposals.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground mb-1">3. Pick the best fit</p>
+                      <p className="text-xs text-muted-foreground">
+                        Compare approaches, timelines and pricing. Choose the expert you trust to deliver results.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm font-semibold text-foreground mb-1">Free Discovery Scan</p>
-                  <p className="text-xs text-muted-foreground">
-                    A 1-on-1 deep-dive with an expert to map your full automation roadmap — <strong>on us</strong>.
+                  <p className="text-xs text-muted-foreground mt-3 text-center italic">
+                    Normally costs €50 — <strong className="text-primary not-italic">free for waitlist members</strong>.
                   </p>
                 </div>
-                <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                  </div>
-                  <p className="text-sm font-semibold text-foreground mb-1">Custom Projects</p>
-                  <p className="text-xs text-muted-foreground">
-                    Bespoke automation built for your exact workflow by verified experts.
-                  </p>
-                </div>
-              </div>
 
-              {/* Waitlist CTA */}
-              <div className="text-center">
-                <Link
-                  href="/waitlist"
-                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
-                >
-                  Join the Waitlist — Get a Free Discovery Scan <ArrowRight className="h-4 w-4" />
-                </Link>
-                <p className="text-xs text-muted-foreground mt-3">
-                  No spam. We&apos;ll email you when early access opens.
-                </p>
+                {/* What's available at launch */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                  <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                      <Zap className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground mb-1">Browse Solutions</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pre-built automations matched to your bottlenecks, ready to implement.
+                    </p>
+                  </div>
+                  <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                      <Users className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground mb-1">Free Discovery Scan</p>
+                    <p className="text-xs text-muted-foreground">
+                      A 1-on-1 deep-dive with an expert to map your full automation roadmap — <strong>on us</strong>.
+                    </p>
+                  </div>
+                  <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground mb-1">Custom Projects</p>
+                    <p className="text-xs text-muted-foreground">
+                      Bespoke automation built for your exact workflow by verified experts.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           </div>{/* end narrow wrapper */}
 
           {/* CTA — Personalized recommendations based on audit answers (hidden in prelaunch) */}
           {!prelaunch && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
-                What&apos;s Next
-              </p>
-              {results.overall >= 45 ? (
-                <>
-                  <h3 className="text-xl font-bold text-foreground mb-2">
-                    You know where the gaps are.
-                    <br />
-                    Now get expert opinions on how to close them.
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                    We matched these solutions to the specific bottlenecks you described.
-                    Each one is built for the kind of work you said you&apos;re still doing manually.
-                  </p>
-                </>
-              ) : results.overall >= 25 ? (
-                <>
-                  <h3 className="text-xl font-bold text-foreground mb-2">
-                    Start with one focused win.
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                    You don&apos;t need to automate everything at once. Pick the bottleneck
-                    that costs the most time and fix that first — the rest follows.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-xl font-bold text-foreground mb-2">
-                    Explore what&apos;s possible.
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                    Even at an early stage, knowing what automation looks like for your
-                    type of work helps you plan the right next steps.
-                  </p>
-                </>
-              )}
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
+                  What&apos;s Next
+                </p>
+                {results.overall >= 45 ? (
+                  <>
+                    <h3 className="text-xl font-bold text-foreground mb-2">
+                      You know where the gaps are.
+                      <br />
+                      Now get expert opinions on how to close them.
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                      We matched these solutions to the specific bottlenecks you described.
+                      Each one is built for the kind of work you said you&apos;re still doing manually.
+                    </p>
+                  </>
+                ) : results.overall >= 25 ? (
+                  <>
+                    <h3 className="text-xl font-bold text-foreground mb-2">
+                      Start with one focused win.
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                      You don&apos;t need to automate everything at once. Pick the bottleneck
+                      that costs the most time and fix that first — the rest follows.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-xl font-bold text-foreground mb-2">
+                      Explore what&apos;s possible.
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                      Even at an early stage, knowing what automation looks like for your
+                      type of work helps you plan the right next steps.
+                    </p>
+                  </>
+                )}
+              </div>
+              <SmartEmptyState relatedSolutions={recommendedSolutions} matchLabels={matchLabels} />
             </div>
-            <SmartEmptyState relatedSolutions={recommendedSolutions} matchLabels={matchLabels} />
-          </div>
           )}
 
           {/* Retake */}

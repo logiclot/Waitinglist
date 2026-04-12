@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { log } from "@/lib/logger";
 import { auditTrackLimiter } from "@/lib/rate-limit";
+import { botGuard } from "@/lib/botid-guard";
 
 const VALID_EVENTS = ["quiz_start", "step_complete", "quiz_complete", "email_sent"] as const;
 
@@ -12,6 +13,10 @@ export async function POST(request: Request) {
     if (!rl.success) {
       return NextResponse.json({ ok: true }); // silently drop, don't error for tracking
     }
+
+
+    const blocked = await botGuard();
+    if (blocked) return blocked;
 
     const body = await request.json();
     const { sessionId, event, step, score, scoreLabel, answers, email } = body;

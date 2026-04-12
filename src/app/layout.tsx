@@ -10,6 +10,7 @@ import { Toaster } from "sonner";
 import { SavedSolutionsProvider } from "@/hooks/SavedSolutionsContext";
 import { SavedSuitesProvider } from "@/hooks/SavedSuitesContext";
 import { Analytics } from "@vercel/analytics/react";
+import { BotIdClient } from 'botid/client';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -73,6 +74,21 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
+const protectedRoutes = [
+  {
+    path: '/api/waitlist',
+    method: 'POST',
+  },
+  {
+    path: '/api/portfolio-view',
+    method: 'POST',
+  },
+  {
+    path: '/api/audit/track',
+    method: 'POST',
+  },
+];
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -83,6 +99,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <head>
+        <BotIdClient protect={protectedRoutes} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

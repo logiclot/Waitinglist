@@ -7,6 +7,7 @@ import fs from "fs";
 import path from "path";
 import { waitlistSchema } from "@/lib/validation";
 import { randomUUID } from 'node:crypto';
+import { botGuard } from "@/lib/botid-guard";
 
 
 export async function POST(request: Request) {
@@ -17,6 +18,9 @@ export async function POST(request: Request) {
     if (!rl.success) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
+
+    const blocked = await botGuard();
+    if (blocked) return blocked;
 
     const body = await request.json();
 
