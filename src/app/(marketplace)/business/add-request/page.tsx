@@ -2,16 +2,13 @@
 
 import Link from "next/link";
 import { Crown, Sparkles, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { DISCOVERY_SCAN_COPY, DISCOVERY_SCAN_BULLETS, CUSTOM_PROJECT_COPY, CUSTOM_PROJECT_BULLETS } from "@/lib/copy/requestCards";
+import { useFreeDiscoveryScans } from "@/hooks/use-business";
 
 export default function AddRequestPage() {
-  const { data, isLoading } = useQuery<{ remaining: number }>({
-    queryKey: ["free-discovery-scans"],
-    queryFn: () => fetch("/api/business/free-scans").then((r) => r.json()),
-  });
+  const freeDiscoveryScans = useFreeDiscoveryScans()
 
-  const hasFreeScans = (data?.remaining ?? 0) > 0;
+  const hasFreeScans = freeDiscoveryScans?.data != null && freeDiscoveryScans.data > 0
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -40,7 +37,7 @@ export default function AddRequestPage() {
                 <Sparkles className="h-6 w-6" />
               </div>
               <div className="text-right">
-                {isLoading ? (
+                {freeDiscoveryScans.isPending ? (
                   <div className="flex items-center gap-2 text-slate-400">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     <span className="text-sm">Checking price…</span>

@@ -142,7 +142,7 @@ export function BusinessOverview() {
             <Skeleton className="h-10 w-56 rounded-lg shrink-0" />
           </div>
         </section>
-      ) : freeDiscoveryScans.data && freeDiscoveryScans.data > 0 ? (
+      ) : freeDiscoveryScans.data != null && freeDiscoveryScans.data > 0 ? (
         <section className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 md:p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">

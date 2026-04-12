@@ -31,17 +31,12 @@ import {
   DISCOVERY_SCAN_BULLETS,
 } from "@/lib/copy/requestCards";
 import { useRouter } from "next/navigation";
+import { useFreeDiscoveryScans } from "@/hooks/use-business";
 
 export default function DiscoveryWizardPage() {
-  const { data: freeScansData, isLoading: isFreeScansLoading } = useQuery<{
-    remaining: number;
-  }>({
-    queryKey: ["free-discovery-scans"],
-    queryFn: () => fetch("/api/business/free-scans").then((r) => r.json()),
-  });
-  const router = useRouter();
+  const freeDiscoveryScans = useFreeDiscoveryScans()
 
-  const hasFreeScans = (freeScansData?.remaining ?? 0) > 0;
+  const hasFreeScans = freeDiscoveryScans.data != null && freeDiscoveryScans.data > 0
   const [isFinishing, setIsFinishing] = useState(false);
   const [step, setStep] = useState(0); // 0 = Intro
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -320,7 +315,7 @@ export default function DiscoveryWizardPage() {
               </h1>
               <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
                 {DISCOVERY_SCAN_COPY.proposalNote} &middot;{" "}
-                {isFreeScansLoading ? (
+                {freeDiscoveryScans.isPending ? (
                   <Loader2 className="inline h-3 w-3 animate-spin" />
                 ) : hasFreeScans ? (
                   <span className="text-emerald-500 font-bold">FREE</span>
@@ -355,7 +350,7 @@ export default function DiscoveryWizardPage() {
           {/* Right: Pricing + CTA */}
           <div className="flex flex-col gap-4">
             <div className="bg-secondary/40 rounded-xl p-5 border border-border">
-              {isFreeScansLoading ? (
+              {freeDiscoveryScans.isPending ? (
                 <div className="flex items-center gap-2 text-muted-foreground mb-0.5">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   <span className="text-sm">Checking price…</span>
