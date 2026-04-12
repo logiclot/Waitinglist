@@ -2,6 +2,9 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { HoverBorderGradient } from "./hover-border-gradient";
+import Link from "next/link";
+import { ShimmerButton } from "./shimmer-button";
 
 const colors = {
   50: "#FBFAF8",
@@ -268,13 +271,20 @@ export function Hero() {
 
             {/* CTA */}
             <div className="mt-4 flex items-center justify-center">
-              <a
+              {/* <a
                 href="/solutions"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm border transition-all duration-200 hover:bg-white/60 hover:scale-[1.02] active:scale-[0.98]"
                 style={{ borderColor: "rgba(17,24,39,0.14)", color: colors[600] }}
               >
                 Browse Solutions
-              </a>
+              </a> */}
+              <Link href={"/solutions"}>
+                <ShimmerButton className="shadow-2xl">
+                  <span className="text-center text-sm leading-none font-medium tracking-tight whitespace-pre-wrap text-white lg:text-sm dark:from-white dark:to-slate-900/10">
+                    Browse Solutions
+                  </span>
+                </ShimmerButton>
+              </Link>
             </div>
           </div>
 
