@@ -146,6 +146,10 @@ export function RandomSolutions() {
                     <Clock className="w-3 h-3" /> {solution.deliveryDays} days
                   </span>
                 </div>
+                <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary transition-colors">
+                  See more
+                  <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                </div>
               </Link>
             ))}
           </div>
