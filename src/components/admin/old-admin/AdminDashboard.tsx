@@ -22,7 +22,6 @@ import {
   Check,
   Trash2
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { BRAND_NAME } from "@/lib/branding";
@@ -465,7 +464,7 @@ export function AdminDashboard({
               {tab === "business-invites"
                 ? "Biz Invites"
                 : tab.charAt(0).toUpperCase() + tab.slice(1)}{" "}
-              ({counts[tab] > 0 ? counts[tab] : null})
+              {counts[tab] > 0 ? counts[tab] : null}
             </button>
           );
         })}
