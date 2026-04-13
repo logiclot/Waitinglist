@@ -182,18 +182,18 @@ export function SolutionCard({
             ))}
             {(solution.demoVideoStatus === "approved" ||
               solution.demo_video_status === "approved") && (
-              <div
-                className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full"
-                title="Verified Demo Video Available"
-              >
-                <PlayCircle className="h-3 w-3" /> Demo
-              </div>
-            )}
+                <div
+                  className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full"
+                  title="Verified Demo Video Available"
+                >
+                  <PlayCircle className="h-3 w-3" /> Demo
+                </div>
+              )}
           </div>
         </div>
 
         {/* Title & Description */}
-        <h3 className="font-bold text-lg leading-tight mb-2 text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[3.5rem] tracking-tight">
+        <h3 className="font-bold text-lg leading-tight mb-2 text-foreground group-hover:text-primary transition-colors line-clamp-2 tracking-tight">
           {solution.title}
         </h3>
         <p className="text-sm text-muted-foreground mb-4 line-clamp-2 min-h-[2.5rem] leading-relaxed">
@@ -286,18 +286,18 @@ export function SolutionCard({
             {(solution.expert.founding ||
               (solution.expert.tier &&
                 solution.expert.tier !== "STANDARD")) && (
-              <TierBadge
-                tier={
-                  (solution.expert.tier || "STANDARD") as
+                <TierBadge
+                  tier={
+                    (solution.expert.tier || "STANDARD") as
                     | "STANDARD"
                     | "PROVEN"
                     | "ELITE"
                     | "FOUNDING"
-                }
-                isFoundingExpert={solution.expert.founding}
-                size="sm"
-              />
-            )}
+                  }
+                  isFoundingExpert={solution.expert.founding}
+                  size="sm"
+                />
+              )}
           </div>
         )}
         <div className="flex items-end justify-between py-4 border-t border-border">
@@ -390,11 +390,10 @@ export function SolutionCard({
                 <Link
                   href={isLocked ? "#" : editHref}
                   onClick={(e) => isLocked && e.preventDefault()}
-                  className={`p-2.5 rounded-lg border transition-all flex items-center justify-center ${
-                    isLocked
-                      ? "bg-secondary text-muted-foreground cursor-not-allowed border-transparent"
-                      : "bg-background border-border text-muted-foreground hover:text-primary hover:border-primary/50"
-                  }`}
+                  className={`p-2.5 rounded-lg border transition-all flex items-center justify-center ${isLocked
+                    ? "bg-secondary text-muted-foreground cursor-not-allowed border-transparent"
+                    : "bg-background border-border text-muted-foreground hover:text-primary hover:border-primary/50"
+                    }`}
                   title={isLocked ? `Locked: ${lockReason}` : "Edit Solution"}
                 >
                   {isLocked ? (
@@ -416,11 +415,10 @@ export function SolutionCard({
                     }
                     setShowRemoveConfirm(true);
                   }}
-                  className={`p-2.5 rounded-lg border transition-all flex items-center justify-center ${
-                    isLocked
-                      ? "bg-secondary text-muted-foreground cursor-not-allowed border-transparent"
-                      : "bg-background border-border text-muted-foreground hover:text-red-600 hover:border-red-200 hover:bg-red-50"
-                  }`}
+                  className={`p-2.5 rounded-lg border transition-all flex items-center justify-center ${isLocked
+                    ? "bg-secondary text-muted-foreground cursor-not-allowed border-transparent"
+                    : "bg-background border-border text-muted-foreground hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+                    }`}
                   title="Remove Solution"
                 >
                   <Trash2 className="h-5 w-5" />
@@ -440,11 +438,10 @@ export function SolutionCard({
               setHasCopied(true);
               setTimeout(() => setHasCopied(false), 2000);
             }}
-            className={`p-2.5 rounded-lg border transition-all ${
-              hasCopied
-                ? "border-emerald-300 bg-emerald-50 text-emerald-600"
-                : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/50"
-            }`}
+            className={`p-2.5 rounded-lg border transition-all ${hasCopied
+              ? "border-emerald-300 bg-emerald-50 text-emerald-600"
+              : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/50"
+              }`}
             title="Share Solution"
           >
             {hasCopied ? (
@@ -458,11 +455,10 @@ export function SolutionCard({
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className={`p-2.5 rounded-lg border transition-all ${
-                isSaved
-                  ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
-                  : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-              }`}
+              className={`p-2.5 rounded-lg border transition-all ${isSaved
+                ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+                }`}
               title={isSaved ? "Saved" : "Save Solution"}
             >
               <Heart className={`h-5 w-5 ${isSaved ? "fill-current" : ""}`} />
