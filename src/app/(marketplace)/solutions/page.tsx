@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN, DEFAULT_OG_IMAGE } from "@/lib/branding";
 const BASE_URL = `https://${BRAND_DOMAIN}`;
 import { SolutionsPageClient } from "@/components/solutions/SolutionsPageClient";
 import { getPublishedSolutions } from "@/lib/solutions/data";
@@ -20,12 +20,14 @@ export const metadata: Metadata = {
     url: `${BASE_URL}/solutions`,
     siteName: BRAND_NAME,
     type: "website",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: `Browse AI Solutions | ${BRAND_NAME}`,
     description:
       "Find productized AI automations for your business. Ready-made solutions built by verified experts.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
   alternates: { canonical: `${BASE_URL}/solutions` },
   keywords: [
