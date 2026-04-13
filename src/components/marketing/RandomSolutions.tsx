@@ -6,6 +6,7 @@ import { Zap, Clock, ArrowRight } from "lucide-react";
 import { CategoryBadge } from "@/components/ui/CategoryBadge";
 import { TierBadge } from "@/components/ui/TierBadge";
 import { SpecialistTier } from "@prisma/client";
+import { ShimmerButton } from "../ui/shimmer-button";
 
 interface Solution {
   id: number;
@@ -72,9 +73,11 @@ export function RandomSolutions() {
           </div>
           <Link
             href="/solutions"
-            className="text-sm text-primary hover:underline flex items-center gap-1 font-medium"
+            className="text-sm text-primary flex items-center gap-1 font-medium hover:scale-105 ease-in-out transition-transform"
           >
-            Browse all <ArrowRight className="w-3 h-3" />
+            <ShimmerButton className="shadow-2xl" shimmerColor="#000000" background="#ffffff" shimmerSize="0.09em">
+              <span className="text-sm inline-flex gap-2 leading-none text-black font-medium tracking-tight whitespace-pre-wrap lg:text-sm">Browse all <ArrowRight className="w-3 h-3" /></span>
+            </ShimmerButton>
           </Link>
         </div>
 

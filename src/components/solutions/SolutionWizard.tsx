@@ -525,6 +525,13 @@ export function SolutionWizard({
   };
 
   const handleNext = async () => {
+    if (
+      step === 4 &&
+      (!formData.monthly_cost_min || !formData.monthly_cost_max)
+    ) {
+      toast.info("Please add both Monthly running cost Min and Max before continuing.");
+      return;
+    }
     if (validateStep(step)) {
       const nextStep = step + 1;
       // Auto-save on next
