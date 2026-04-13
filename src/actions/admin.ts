@@ -31,7 +31,7 @@ export async function getAdminData() {
   if (!isAdmin) return { error: "Unauthorized" };
 
   const [solutions, orders, bidFeedbackRaw] = await Promise.all([
-    prisma.solution.findMany({ orderBy: { createdAt: "desc" }, include: { expert: true } }),
+    prisma.solution.findMany({ orderBy: { createdAt: "desc" }, include: { expert: { include: { user: { select: { email: true } } } } } }),
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       include: {

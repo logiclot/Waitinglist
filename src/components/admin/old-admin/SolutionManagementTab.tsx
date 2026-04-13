@@ -185,7 +185,7 @@ export function SolutionManagementTab({
                 <span className="text-xs bg-secondary px-2 py-1 rounded-full text-muted-foreground">{solution.category}</span>
               </div>
               {/* @ts-expect-error: expert relation */}
-              <p className="text-xs text-muted-foreground mb-1">Specialist: {solution.expert?.legalFullName ?? solution.expert?.displayName ?? "—"}</p>
+              <p className="text-xs text-muted-foreground mb-1">Specialist: {solution.expert?.legalFullName ?? solution.expert?.displayName ?? "—"}{solution.expert?.user?.email ? ` · ${solution.expert.user.email}` : ""}</p>
               <p className="text-sm text-muted-foreground mb-4 line-clamp-1">{solution.short_summary}</p>
               <div className="flex items-center gap-3 mt-1">
                 <button onClick={() => onEditSolution(solution)} className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
