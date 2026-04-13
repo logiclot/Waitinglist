@@ -2,7 +2,7 @@ function Pulse({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-muted ${className ?? ""}`} />;
 }
 
-function CardSkeleton() {
+export function CardSkeleton() {
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm flex flex-col h-full overflow-hidden">
       <div className="p-6 flex-1 flex flex-col">

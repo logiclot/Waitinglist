@@ -1,85 +1,68 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Heart, Layers, Grid3X3 } from "lucide-react";
-import Link from "next/link";
 import { SolutionCard } from "@/components/SolutionCard";
 import { SuiteCard } from "@/components/ecosystems/SuiteCard";
-import { useSavedSuitesContext } from "@/hooks/SavedSuitesContext";
-import type { Solution } from "@/types";
-import type { SuiteCardData } from "@/types";
-
-interface FavoritesPageClientProps {
-  savedSolutions: Solution[];
-  allSuites: SuiteCardData[];
-}
+import { CardSkeleton } from "@/components/favorites/FavoritesSkeleton";
+import { useFavouriteSuites, useFavouriteSolutions } from "@/hooks/use-favourties";
+import { Grid3X3, Heart, Layers } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 type ActiveTab = "solutions" | "suites";
 
-export function FavoritesPageClient({
-  savedSolutions,
-  allSuites,
-}: FavoritesPageClientProps) {
-  const { savedIds: savedSuiteIds } = useSavedSuitesContext();
+export function FavoritesPageClient() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("solutions");
+  const savedSolutions = useFavouriteSolutions()
+  const savedSuites = useFavouriteSuites()
 
-  // Filter suites to only saved ones
-  const savedSuites = useMemo(
-    () => allSuites.filter((eco) => savedSuiteIds.has(eco.id)),
-    [allSuites, savedSuiteIds]
-  );
-
-  const solutionCount = savedSolutions.length;
-  const suiteCount = savedSuites.length;
+  const solutionCount = savedSolutions.data?.length ?? 0;
+  const suiteCount = savedSuites.data?.length ?? 0;
+  const isLoading = savedSolutions.isPending || savedSuites.isPending;
   const totalCount = solutionCount + suiteCount;
 
   return (
     <>
       {/* Count subtitle */}
       <p className="text-muted-foreground text-sm -mt-6 mb-8">
-        {totalCount} saved item{totalCount !== 1 ? "s" : ""}
+        {isLoading ? "Loading saved items..." : `${totalCount} saved item${totalCount !== 1 ? "s" : ""}`}
       </p>
 
       {/* Tabs */}
       <div className="flex items-center gap-1 p-1 bg-secondary/50 rounded-lg w-fit mb-8">
         <button
           onClick={() => setActiveTab("solutions")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-            activeTab === "solutions"
-              ? "bg-card shadow-sm border border-border text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "solutions"
+            ? "bg-card shadow-sm border border-border text-foreground"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Grid3X3 className="h-4 w-4" />
           Solutions
           <span
-            className={`text-xs px-1.5 py-0.5 rounded-full ${
-              activeTab === "solutions"
-                ? "bg-red-100 text-red-700"
-                : "bg-secondary text-muted-foreground"
-            }`}
+            className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === "solutions"
+              ? "bg-red-100 text-red-700"
+              : "bg-secondary text-muted-foreground"
+              }`}
           >
-            {solutionCount}
+            {savedSolutions.isPending ? "…" : solutionCount}
           </span>
         </button>
         <button
           onClick={() => setActiveTab("suites")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-            activeTab === "suites"
-              ? "bg-card shadow-sm border border-border text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "suites"
+            ? "bg-card shadow-sm border border-border text-foreground"
+            : "text-muted-foreground hover:text-foreground"
+            }`}
         >
           <Layers className="h-4 w-4" />
           Suites
           <span
-            className={`text-xs px-1.5 py-0.5 rounded-full ${
-              activeTab === "suites"
-                ? "bg-red-100 text-red-700"
-                : "bg-secondary text-muted-foreground"
-            }`}
+            className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === "suites"
+              ? "bg-red-100 text-red-700"
+              : "bg-secondary text-muted-foreground"
+              }`}
           >
-            {suiteCount}
+            {savedSuites.isPending ? "…" : suiteCount}
           </span>
         </button>
       </div>
@@ -87,36 +70,40 @@ export function FavoritesPageClient({
       {/* Tab Content */}
       {activeTab === "solutions" && (
         <div>
-          {solutionCount > 0 ? (
+          {savedSolutions.isPending ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <CardSkeleton key={i} />
+              ))}
+            </div>
+          ) : solutionCount > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-              {savedSolutions.map((solution) => (
+              {savedSolutions.data?.map((solution) => (
                 <SolutionCard key={solution.id} solution={solution} />
               ))}
             </div>
           ) : (
-            <EmptyState
-              type="solutions"
-
-              browseHref="/solutions"
-            />
+            <EmptyState type="solutions" browseHref="/solutions" />
           )}
         </div>
       )}
 
       {activeTab === "suites" && (
         <div>
-          {suiteCount > 0 ? (
+          {savedSuites.isPending ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <CardSkeleton key={i} />
+              ))}
+            </div>
+          ) : suiteCount > 0 ? (
             <div className="space-y-5 animate-in fade-in duration-300">
-              {savedSuites.map((eco) => (
+              {savedSuites.data?.map((eco) => (
                 <SuiteCard key={eco.id} ecosystem={eco} />
               ))}
             </div>
           ) : (
-            <EmptyState
-              type="suites"
-
-              browseHref="/stacks"
-            />
+            <EmptyState type="suites" browseHref="/stacks" />
           )}
         </div>
       )}

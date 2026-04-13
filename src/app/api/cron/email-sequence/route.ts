@@ -346,12 +346,23 @@ export async function GET(req: Request) {
   });
   await Promise.allSettled(couponUsers.map((u) => fireWelcomeCoupon(u.id)));
 
+  // Experts only receive the sequence if they haven't published any solutions yet —
+  // the emails nudge them to create their first / next listing, so sending to
+  // experts who already have solutions would be off-message.
+  const onboardingWhere = (daysAgo: number) => ({
+    onboardingCompletedAt: windowFor(daysAgo),
+    OR: [
+      { role: "BUSINESS" as const },
+      {
+        role: "EXPERT" as const,
+        specialistProfile: { is: { solutions: { none: {} } } },
+      },
+    ],
+  });
+
   const [day3Users, day7Users] = await Promise.all([
     prisma.user.findMany({
-      where: {
-        onboardingCompletedAt: windowFor(3),
-        role: { in: ["BUSINESS", "EXPERT"] },
-      },
+      where: onboardingWhere(3),
       select: {
         id: true,
         email: true,
@@ -361,10 +372,7 @@ export async function GET(req: Request) {
       },
     }),
     prisma.user.findMany({
-      where: {
-        onboardingCompletedAt: windowFor(7),
-        role: { in: ["BUSINESS", "EXPERT"] },
-      },
+      where: onboardingWhere(7),
       select: {
         id: true,
         email: true,

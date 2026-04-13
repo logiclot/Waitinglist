@@ -1,34 +1,16 @@
-import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getSavedSolutionsFull } from "@/actions/saved";
-import { getPublishedEcosystemsFull } from "@/actions/ecosystems";
 import { FavoritesPageClient } from "@/components/favorites/FavoritesPageClient";
-import { FavoritesSkeleton } from "@/components/favorites/FavoritesSkeleton";
 import { BRAND_NAME } from "@/lib/branding";
 import { Heart, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import type { Solution, SuiteCardData } from "@/types";
+
 
 export const metadata = {
   title: `Favorites | ${BRAND_NAME}`,
   description: "View your saved solutions and suites.",
 };
-
-async function FavoritesContent() {
-  const [savedSolutions, allSuites] = await Promise.all([
-    getSavedSolutionsFull(),
-    getPublishedEcosystemsFull(),
-  ]);
-
-  return (
-    <FavoritesPageClient
-      savedSolutions={savedSolutions as unknown as Solution[]}
-      allSuites={allSuites as unknown as SuiteCardData[]}
-    />
-  );
-}
 
 export default async function FavoritesPage() {
   const session = await getServerSession(authOptions);
@@ -61,10 +43,7 @@ export default async function FavoritesPage() {
         </div>
       </div>
 
-      {/* Dynamic Content with Suspense */}
-      <Suspense fallback={<FavoritesSkeleton />}>
-        <FavoritesContent />
-      </Suspense>
+      <FavoritesPageClient />
     </div>
   );
 }
