@@ -26,10 +26,53 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { BidStatus } from "@prisma/client";
-import { Eye } from "lucide-react";
+import {
+  Eye,
+  Target,
+  Zap,
+  LayoutList,
+  EuroIcon,
+  UserCheck,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Wrench,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc/client";
+
+interface Outcome {
+  what: string;
+  value: string;
+  timeframe: string;
+}
+interface Phase {
+  name: string;
+  scope: string;
+  duration: string;
+}
+interface ProposalData {
+  automationTitle?: string;
+  problemAddressed?: string;
+  whatYoullBuild?: string;
+  outcomes?: Outcome[];
+  tools?: string[];
+  phases?: Phase[];
+  included?: string[];
+  excluded?: string[];
+  credibility?: string;
+  supportDays?: number;
+}
+
+function parseProposal(raw: string | null | undefined): ProposalData | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 type Bid = NonNullable<ReturnType<typeof useBids>["data"]>[number];
 
@@ -73,6 +116,8 @@ function BidManagementSkeleton() {
 }
 
 function ProposalDialog({ bid }: { bid: Bid }) {
+  const proposal = parseProposal(bid.proposedApproach);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -83,38 +128,211 @@ function ProposalDialog({ bid }: { bid: Bid }) {
           <Eye className="w-4 h-4" />
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Proposal from {bid.specialist.displayName}</DialogTitle>
-          <DialogDescription>
-            Job: {bid.jobPost.title}
-          </DialogDescription>
+          <DialogDescription>Job: {bid.jobPost.title}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 text-sm">
-          <div>
-            <div className="text-xs font-medium text-muted-foreground mb-1">Message</div>
-            <p className="whitespace-pre-wrap">{bid.message}</p>
-          </div>
-          {bid.proposedApproach && (
-            <div>
-              <div className="text-xs font-medium text-muted-foreground mb-1">Proposed approach</div>
-              <p className="whitespace-pre-wrap">{bid.proposedApproach}</p>
-            </div>
+
+        <div className="space-y-5">
+          {proposal?.automationTitle && (
+            <h4 className="font-semibold text-base">{proposal.automationTitle}</h4>
           )}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-xs font-medium text-muted-foreground mb-1">Estimated time</div>
-              <p>{bid.estimatedTime}</p>
+
+          {bid.message && (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {bid.message}
+            </p>
+          )}
+
+          {/* Key stats row */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-1 text-sm font-semibold text-foreground">
+              <EuroIcon className="h-3.5 w-3.5 text-primary" />
+              {bid.priceEstimate || "—"}
             </div>
-            <div>
-              <div className="text-xs font-medium text-muted-foreground mb-1">Price estimate</div>
-              <p>{bid.priceEstimate || "—"}</p>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              {bid.estimatedTime}
             </div>
+            {proposal?.tools && proposal.tools.length > 0 && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Wrench className="h-3.5 w-3.5" />
+                {proposal.tools.slice(0, 3).join(", ")}
+                {proposal.tools.length > 3 && ` +${proposal.tools.length - 3}`}
+              </div>
+            )}
           </div>
+
+          {proposal ? (
+            <div className="border-t border-border pt-5 space-y-5">
+              {proposal.problemAddressed && (
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-2">
+                    <Target className="h-4 w-4 text-primary" /> Problem being
+                    addressed
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed pl-6">
+                    {proposal.problemAddressed}
+                  </p>
+                </div>
+              )}
+
+              {proposal.whatYoullBuild && (
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-2">
+                    <Zap className="h-4 w-4 text-primary" /> The automation
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed pl-6 whitespace-pre-wrap">
+                    {proposal.whatYoullBuild}
+                  </p>
+                </div>
+              )}
+
+              {proposal.outcomes && proposal.outcomes.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-3">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />{" "}
+                    Measurable outcomes
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 pl-6">
+                    {proposal.outcomes.map((o, i) => (
+                      <div
+                        key={i}
+                        className="bg-secondary/40 border border-border rounded-lg p-3"
+                      >
+                        <div className="text-xs text-muted-foreground mb-0.5">
+                          {o.what}
+                        </div>
+                        <div className="font-bold text-foreground">
+                          {o.value}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {o.timeframe}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {proposal.phases && proposal.phases.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-3">
+                    <LayoutList className="h-4 w-4 text-primary" />{" "}
+                    Implementation plan
+                  </div>
+                  <div className="space-y-2 pl-6">
+                    {proposal.phases.map((p, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                          {i + 1}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">
+                              {p.name}
+                            </span>
+                            {p.duration && (
+                              <span className="text-xs bg-secondary px-2 py-0.5 rounded-full text-muted-foreground">
+                                {p.duration}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {p.scope}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {((proposal.included?.length ?? 0) > 0 ||
+                (proposal.excluded?.length ?? 0) > 0) && (
+                <div className="grid sm:grid-cols-2 gap-4 pl-6">
+                  {proposal.included && proposal.included.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mb-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />{" "}
+                        Included
+                      </div>
+                      <ul className="space-y-1">
+                        {proposal.included.map((item, i) => (
+                          <li
+                            key={i}
+                            className="text-xs text-muted-foreground flex items-start gap-1.5"
+                          >
+                            <CheckCircle2 className="h-3 w-3 text-primary shrink-0 mt-0.5" />{" "}
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {proposal.excluded && proposal.excluded.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
+                        <XCircle className="h-3.5 w-3.5" /> Not included
+                      </div>
+                      <ul className="space-y-1">
+                        {proposal.excluded.map((item, i) => (
+                          <li
+                            key={i}
+                            className="text-xs text-muted-foreground flex items-start gap-1.5"
+                          >
+                            <XCircle className="h-3 w-3 shrink-0 mt-0.5 opacity-40" />{" "}
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {proposal.supportDays && (
+                <div className="flex items-center gap-2 pl-6 text-sm">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="font-medium">Post-delivery support:</span>
+                  <span className="text-muted-foreground">
+                    {proposal.supportDays} days
+                  </span>
+                </div>
+              )}
+
+              {proposal.credibility && (
+                <div className="bg-primary/5 border border-primary/15 rounded-lg p-4 ml-6">
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-1">
+                    <UserCheck className="h-4 w-4 text-primary" /> Why{" "}
+                    {bid.specialist.displayName}
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {proposal.credibility}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            bid.proposedApproach && (
+              <div className="border-t border-border pt-5">
+                <div className="text-xs font-medium text-muted-foreground mb-1">
+                  Proposed approach
+                </div>
+                <p className="text-sm whitespace-pre-wrap">
+                  {bid.proposedApproach}
+                </p>
+              </div>
+            )
+          )}
+
           {bid.solution && (
-            <div>
-              <div className="text-xs font-medium text-muted-foreground mb-1">Linked solution</div>
-              <p>{bid.solution.title}</p>
+            <div className="border-t border-border pt-4">
+              <div className="text-xs font-medium text-muted-foreground mb-1">
+                Linked solution
+              </div>
+              <p className="text-sm">{bid.solution.title}</p>
             </div>
           )}
         </div>
