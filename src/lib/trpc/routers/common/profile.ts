@@ -4,17 +4,7 @@ import { commonProcedure } from "../../procedures";
 
 export const profileRouter = createRouter({
     getProfile: commonProcedure.query(async ({ ctx }) => {
-        const { session, userId } = ctx;
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-                role: true,
-            },
-        });
+        const { session } = ctx;
 
         let portfolioSlug: string | null = null;
         let isFoundingExpert = false;
@@ -31,7 +21,6 @@ export const profileRouter = createRouter({
         }
 
         return {
-            user,
             portfolioSlug,
             isFoundingExpert,
         };
