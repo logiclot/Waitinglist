@@ -1,9 +1,6 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { FavoritesPageClient } from "@/components/favorites/FavoritesPageClient";
 import { BRAND_NAME } from "@/lib/branding";
-import { Heart, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Heart } from "lucide-react";
 import Link from "next/link";
 
 
@@ -13,11 +10,6 @@ export const metadata = {
 };
 
 export default async function FavoritesPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    redirect("/auth/sign-in?callbackUrl=/favorites");
-  }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       {/* Static Header */}
