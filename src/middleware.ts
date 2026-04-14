@@ -77,5 +77,6 @@ export const config = {
     "/expert/:path*",
     "/admin/:path*",
     "/jobs/:path*",
+    "/favorites",
   ],
 };
