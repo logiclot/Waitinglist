@@ -90,20 +90,29 @@ export default function AdminDashboard() {
 
 
       <Tabs defaultValue="experts" className="flex-col" orientation="horizontal">
-        <TabsList
-          variant="line"
-          className="gap-4 border-b border-border mb-6 w-full"
-        >
-          <TabsTrigger value="experts" className="px-4 py-2 capitalize">
+        <TabsList className="mb-6 h-auto gap-1 rounded-lg border border-border bg-secondary/50 p-1">
+          <TabsTrigger
+            value="experts"
+            className="rounded-md px-4 py-2 text-sm font-medium capitalize text-muted-foreground transition-all hover:text-foreground data-active:border-border data-active:bg-card data-active:text-foreground data-active:shadow-sm"
+          >
             Experts
           </TabsTrigger>
-          <TabsTrigger value="businesses" className="px-4 py-2 capitalize">
+          <TabsTrigger
+            value="businesses"
+            className="rounded-md px-4 py-2 text-sm font-medium capitalize text-muted-foreground transition-all hover:text-foreground data-active:border-border data-active:bg-card data-active:text-foreground data-active:shadow-sm"
+          >
             Businesses
           </TabsTrigger>
-          <TabsTrigger value="solutions" className="px-4 py-2 capitalize">
+          <TabsTrigger
+            value="solutions"
+            className="rounded-md px-4 py-2 text-sm font-medium capitalize text-muted-foreground transition-all hover:text-foreground data-active:border-border data-active:bg-card data-active:text-foreground data-active:shadow-sm"
+          >
             Solutions
           </TabsTrigger>
-          <TabsTrigger value="bids" className="px-4 py-2 capitalize">
+          <TabsTrigger
+            value="bids"
+            className="rounded-md px-4 py-2 text-sm font-medium capitalize text-muted-foreground transition-all hover:text-foreground data-active:border-border data-active:bg-card data-active:text-foreground data-active:shadow-sm"
+          >
             Bids
           </TabsTrigger>
           {/* Coming soon */}

@@ -128,7 +128,7 @@ function ProposalDialog({ bid }: { bid: Bid }) {
           <Eye className="w-4 h-4" />
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Proposal from {bid.specialist.displayName}</DialogTitle>
           <DialogDescription>Job: {bid.jobPost.title}</DialogDescription>
@@ -251,46 +251,46 @@ function ProposalDialog({ bid }: { bid: Bid }) {
 
               {((proposal.included?.length ?? 0) > 0 ||
                 (proposal.excluded?.length ?? 0) > 0) && (
-                <div className="grid sm:grid-cols-2 gap-4 pl-6">
-                  {proposal.included && proposal.included.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mb-2">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />{" "}
-                        Included
+                  <div className="grid sm:grid-cols-2 gap-4 pl-6">
+                    {proposal.included && proposal.included.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mb-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />{" "}
+                          Included
+                        </div>
+                        <ul className="space-y-1">
+                          {proposal.included.map((item, i) => (
+                            <li
+                              key={i}
+                              className="text-xs text-muted-foreground flex items-start gap-1.5"
+                            >
+                              <CheckCircle2 className="h-3 w-3 text-primary shrink-0 mt-0.5" />{" "}
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul className="space-y-1">
-                        {proposal.included.map((item, i) => (
-                          <li
-                            key={i}
-                            className="text-xs text-muted-foreground flex items-start gap-1.5"
-                          >
-                            <CheckCircle2 className="h-3 w-3 text-primary shrink-0 mt-0.5" />{" "}
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {proposal.excluded && proposal.excluded.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
-                        <XCircle className="h-3.5 w-3.5" /> Not included
+                    )}
+                    {proposal.excluded && proposal.excluded.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
+                          <XCircle className="h-3.5 w-3.5" /> Not included
+                        </div>
+                        <ul className="space-y-1">
+                          {proposal.excluded.map((item, i) => (
+                            <li
+                              key={i}
+                              className="text-xs text-muted-foreground flex items-start gap-1.5"
+                            >
+                              <XCircle className="h-3 w-3 shrink-0 mt-0.5 opacity-40" />{" "}
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul className="space-y-1">
-                        {proposal.excluded.map((item, i) => (
-                          <li
-                            key={i}
-                            className="text-xs text-muted-foreground flex items-start gap-1.5"
-                          >
-                            <XCircle className="h-3 w-3 shrink-0 mt-0.5 opacity-40" />{" "}
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
 
               {proposal.supportDays && (
                 <div className="flex items-center gap-2 pl-6 text-sm">
