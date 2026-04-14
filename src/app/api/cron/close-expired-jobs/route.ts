@@ -126,7 +126,7 @@ export async function GET(request: Request) {
           buyerTitle,
           buyerMsg,
           "alert",
-          `/business/jobs/${job.id}`
+          `/jobs/${job.id}`
         );
 
         log.info("cron.close_expired_job", {

@@ -13,6 +13,7 @@ import { Solution } from "@/types";
 import { TierBadge } from "@/components/ui/TierBadge";
 import { mapPrismaExpert } from "@/lib/solutions/data";
 import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+import { SpecialistTier } from "@prisma/client";
 
 interface PageProps {
   params: {
@@ -161,13 +162,8 @@ export default async function ExpertProfilePage({ params }: PageProps) {
                 )}
                 <TierBadge
                   tier={
-                    (expert.tier as
-                      | "STANDARD"
-                      | "PROVEN"
-                      | "ELITE"
-                      | "FOUNDING") ?? "STANDARD"
+                    (expert.tier as SpecialistTier) ?? "STANDARD"
                   }
-                  isFoundingExpert={expert.isFoundingExpert || false}
                   size="md"
                 />
               </div>
