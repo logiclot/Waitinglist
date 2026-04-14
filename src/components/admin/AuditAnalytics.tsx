@@ -84,11 +84,11 @@ const AUDIT_ANALYTICS_PERIOD_OPTIONS = [
 }>;
 
 const STEP_LABELS = [
-  "Team Size",
+  "Frustration",
   "Manual Tasks",
   "Hours/Week",
   "Data Setup",
-  "Frustration",
+  "Team Size",
 ] as const;
 
 const KPI_CONFIG = [
@@ -326,32 +326,32 @@ export function AuditAnalytics() {
     summary && stepCounts ? Math.max(summary.totalStarts, 1) : 1;
   const maxScoreBucket = scoreDistribution
     ? Math.max(
-        ...scoreDistribution.scoreBuckets.map((bucket) => bucket.count),
-        1,
-      )
+      ...scoreDistribution.scoreBuckets.map((bucket) => bucket.count),
+      1,
+    )
     : 1;
 
   const kpis = summary
     ? [
-        { label: "Starts", value: summary.totalStarts, icon: Activity },
-        {
-          label: "Completions",
-          value: summary.totalCompletes,
-          icon: BarChart2,
-        },
-        {
-          label: "Completion Rate",
-          value: `${summary.completionRate}%`,
-          icon: TrendingDown,
-        },
-        { label: "Emails Captured", value: summary.totalEmails, icon: Mail },
-        { label: "Average Score", value: summary.avgScore, icon: Gauge },
-        {
-          label: "Email Rate",
-          value: `${summary.emailCaptureRate}%`,
-          icon: Users,
-        },
-      ]
+      { label: "Starts", value: summary.totalStarts, icon: Activity },
+      {
+        label: "Completions",
+        value: summary.totalCompletes,
+        icon: BarChart2,
+      },
+      {
+        label: "Completion Rate",
+        value: `${summary.completionRate}%`,
+        icon: TrendingDown,
+      },
+      { label: "Emails Captured", value: summary.totalEmails, icon: Mail },
+      { label: "Average Score", value: summary.avgScore, icon: Gauge },
+      {
+        label: "Email Rate",
+        value: `${summary.emailCaptureRate}%`,
+        icon: Users,
+      },
+    ]
     : [];
 
   return (

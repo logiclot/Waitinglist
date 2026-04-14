@@ -44,14 +44,35 @@ type Question = QuestionSingle | QuestionMulti;
 
 const QUESTIONS: Question[] = [
   {
-    id: "teamSize",
-    question: "How big is your team?",
+    id: "frustration",
+    question: "What's your biggest frustration right now?",
     type: "single",
     options: [
-      { id: "solo", label: "Just me", sub: "Solo operator" },
-      { id: "small", label: "2–10 people", sub: "Small team" },
-      { id: "medium", label: "11–50 people", sub: "Growing business" },
-      { id: "large", label: "50+ people", sub: "Established company" },
+      {
+        id: "cracks",
+        label: "Things fall through the cracks",
+        sub: "Tasks and follow-ups get missed",
+      },
+      {
+        id: "repetitive",
+        label: "Too much repetitive admin work",
+        sub: "Manual tasks eating up time",
+      },
+      {
+        id: "visibility",
+        label: "Hard to see what's happening",
+        sub: "Lack of reporting and oversight",
+      },
+      {
+        id: "scaling",
+        label: "Team is stretched as we grow",
+        sub: "Growth is creating chaos",
+      },
+      {
+        id: "unsure",
+        label: "Not sure where automation fits",
+        sub: "Want to explore the options first",
+      },
     ],
   },
   {
@@ -125,35 +146,14 @@ const QUESTIONS: Question[] = [
     ],
   },
   {
-    id: "frustration",
-    question: "What's your biggest frustration right now?",
+    id: "teamSize",
+    question: "How big is your team?",
     type: "single",
     options: [
-      {
-        id: "cracks",
-        label: "Things fall through the cracks",
-        sub: "Tasks and follow-ups get missed",
-      },
-      {
-        id: "repetitive",
-        label: "Too much repetitive admin work",
-        sub: "Manual tasks eating up time",
-      },
-      {
-        id: "visibility",
-        label: "Hard to see what's happening",
-        sub: "Lack of reporting and oversight",
-      },
-      {
-        id: "scaling",
-        label: "Team is stretched as we grow",
-        sub: "Growth is creating chaos",
-      },
-      {
-        id: "unsure",
-        label: "Not sure where automation fits",
-        sub: "Want to explore the options first",
-      },
+      { id: "solo", label: "Just me", sub: "Solo operator" },
+      { id: "small", label: "2–10 people", sub: "Small team" },
+      { id: "medium", label: "11–50 people", sub: "Growing business" },
+      { id: "large", label: "50+ people", sub: "Established company" },
     ],
   },
 ];
@@ -691,10 +691,10 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
               <div
                 key={i}
                 className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i < step
-                    ? "bg-primary"
-                    : i === step
-                      ? "bg-primary/50"
-                      : "bg-border"
+                  ? "bg-primary"
+                  : i === step
+                    ? "bg-primary/50"
+                    : "bg-border"
                   }`}
               />
             ))}
@@ -727,8 +727,8 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                         handleSingleSelect(currentQuestion.id, opt.id)
                       }
                       className={`w-full text-left px-5 py-4 rounded-xl border transition-all duration-200 ${isSelected
-                          ? "border-primary bg-primary/5"
-                          : "border-border bg-background hover:border-primary/40 hover:bg-secondary/30"
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background hover:border-primary/40 hover:bg-secondary/30"
                         }`}
                     >
                       <div className="flex items-center justify-between">
@@ -742,8 +742,8 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           {opt.sub && (
                             <p
                               className={`text-xs mt-0.5 ${isSelected
-                                  ? "text-primary/70"
-                                  : "text-muted-foreground"
+                                ? "text-primary/70"
+                                : "text-muted-foreground"
                                 }`}
                             >
                               {opt.sub}
@@ -788,14 +788,14 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                         key={opt.id}
                         onClick={() => handleMultiToggle(currentQuestion.id, opt.id)}
                         className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border bg-background hover:border-primary/40 hover:bg-secondary/30"
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-background hover:border-primary/40 hover:bg-secondary/30"
                           }`}
                       >
                         <div
                           className={`w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${isSelected
-                              ? "border-primary bg-primary"
-                              : "border-border"
+                            ? "border-primary bg-primary"
+                            : "border-border"
                             }`}
                         >
                           {isSelected && (
