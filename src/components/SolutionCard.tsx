@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { useCopyToClipboard } from "@uidotdev/usehooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc/client";
+import { SpecialistTier } from "@prisma/client";
 
 interface SolutionCardProps {
   solution: Solution;
@@ -274,7 +275,7 @@ export function SolutionCard({
         {/* Expert Attribution */}
         {solution.expert && (
           <div className="flex items-center gap-2 pb-3 pt-0">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15 overflow-hidden relative">
+            <div className="size-8 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15 overflow-hidden relative">
               {solution.expert.profile_image_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
@@ -290,18 +291,13 @@ export function SolutionCard({
             <span className="text-xs font-medium text-muted-foreground truncate flex-1">
               {solution.expert.name}
             </span>
-            {(solution.expert.founding ||
+            {(
               (solution.expert.tier &&
                 solution.expert.tier !== "STANDARD")) && (
                 <TierBadge
                   tier={
-                    (solution.expert.tier || "STANDARD") as
-                    | "STANDARD"
-                    | "PROVEN"
-                    | "ELITE"
-                    | "FOUNDING"
+                    (solution.expert.tier) as SpecialistTier
                   }
-                  isFoundingExpert={solution.expert.founding}
                   size="sm"
                 />
               )}

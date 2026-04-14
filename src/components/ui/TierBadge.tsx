@@ -5,13 +5,11 @@ type Tier = SpecialistTier;
 
 interface TierBadgeProps {
   tier: Tier;
-  isFoundingExpert?: boolean;
   size?: "sm" | "md";
 }
 
 export function TierBadge({
   tier,
-  isFoundingExpert = false,
   size = "sm",
 }: TierBadgeProps) {
   const base =
@@ -19,6 +17,7 @@ export function TierBadge({
       ? "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border"
       : "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border";
 
+  const isFoundingExpert = tier === "FOUNDING"
   const iconSize = size === "md" ? "h-3.5 w-3.5" : "h-3 w-3";
 
   const foundingBadge = isFoundingExpert ? (

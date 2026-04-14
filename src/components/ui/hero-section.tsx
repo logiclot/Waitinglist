@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { HoverBorderGradient } from "./hover-border-gradient";
 import Link from "next/link";
 import { ShimmerButton } from "./shimmer-button";
+import { Check } from "lucide-react";
 
 const colors = {
   50: "#FBFAF8",
@@ -23,9 +24,11 @@ const colors = {
 const WORKS_WITH = ["Zapier", "Make", "n8n", "HubSpot", "Notion", "Stripe", "Airtable", "OpenAI"];
 
 const TRUST_STATS = [
-  { value: "0%", label: "Fee for businesses" },
-  { value: "Escrow", label: "Every payment protected — funds release only when you approve" },
-  { value: "NDA", label: "On every project, by default" },
+  { label: "Get your evenings back" },
+  { label: "Reclaim 10+ hours per week" },
+  { label: "Fixed price" },
+  { label: "See it work before you pay" },
+  { label: "Live in days" },
 ];
 
 interface Dot {
@@ -226,18 +229,20 @@ export function Hero() {
           </h1>
 
           {/* Trust stat pills */}
-          <div
-            className="mt-8 flex flex-wrap items-center justify-center gap-3"
-            style={{ animation: "word-appear 0.6s ease-out 900ms both" }}
-          >
-            {TRUST_STATS.map((s) => (
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {TRUST_STATS.map((s, i) => (
               <div
-                key={s.value}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border bg-white shadow-sm text-sm"
-                style={{ borderColor: "rgba(17,24,39,0.10)" }}
+                key={s.label}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-full border bg-white shadow-md text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                style={{
+                  borderColor: "rgba(17,24,39,0.18)",
+                  animation: `word-appear 0.6s ease-out ${900 + i * 90}ms both`,
+                }}
               >
-                <span className="font-bold" style={{ color: colors[800] }}>{s.value}</span>
-                <span style={{ color: colors[500] }}>{s.label}</span>
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white font-bold leading-none">
+                  <Check className="p-0.5 font-bold" strokeWidth={4} />
+                </span>
+                <span className="font-semibold" style={{ color: colors[800] }}>{s.label}</span>
               </div>
             ))}
           </div>
