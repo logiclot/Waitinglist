@@ -10,15 +10,18 @@ import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { getFoundingExpertStatus } from "@/actions/auth";
+import { useSession } from "next-auth/react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-import { Session } from "next-auth";
-
-export function Navbar({ user }: { user?: Session["user"] & { role?: string } }) {
+export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isFoundingExpert, setIsFoundingExpert] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoading = status === "loading";
 
   useEffect(() => {
     if (user?.role === "EXPERT") {
@@ -41,11 +44,10 @@ export function Navbar({ user }: { user?: Session["user"] & { role?: string } })
 
   const getLinkClass = (href: string) => {
     const isActive = pathname.startsWith(href);
-    return `text-sm font-medium transition-all duration-200 ${
-      isActive 
-        ? "text-primary" 
-        : "text-muted-foreground hover:text-foreground hover:underline underline-offset-4"
-    }`;
+    return `text-sm font-medium transition-all duration-200 ${isActive
+      ? "text-primary"
+      : "text-muted-foreground hover:text-foreground hover:underline underline-offset-4"
+      }`;
   };
 
   return (
@@ -72,17 +74,21 @@ export function Navbar({ user }: { user?: Session["user"] & { role?: string } })
           </Link>
           <Link
             href="/audit"
-            className={`text-sm font-semibold transition-all duration-200 px-3 py-1.5 rounded-full border ${
-              pathname.startsWith("/audit")
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-primary/30 text-primary hover:bg-primary/10"
-            }`}
+            className={`text-sm font-semibold transition-all duration-200 px-3 py-1.5 rounded-full border ${pathname.startsWith("/audit")
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-primary/30 text-primary hover:bg-primary/10"
+              }`}
           >
             Free Audit
           </Link>
 
           {/* Auth / Join */}
-          {user ? (
+          {isLoading ? (
+            <div className="flex items-center gap-3 pl-2 border-l border-border">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-32 rounded-full" />
+            </div>
+          ) : user ? (
             <div className="flex items-center gap-3 pl-2 border-l border-border">
               <NotificationDropdown />
               <div className="relative" ref={profileRef}>
@@ -106,70 +112,70 @@ export function Navbar({ user }: { user?: Session["user"] & { role?: string } })
                 </button>
 
                 {isProfileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-xl shadow-xl py-1 animate-in fade-in zoom-in-95 z-50 text-foreground">
-                  {/* User identity */}
-                  <div className="px-4 py-3 border-b border-border">
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        src={user.image}
-                        name={user.name || user.email?.split("@")[0] || "User"}
-                        size="sm"
-                      />
-                      <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate">{user.name || user.email?.split("@")[0]}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-xl shadow-xl py-1 animate-in fade-in zoom-in-95 z-50 text-foreground">
+                    {/* User identity */}
+                    <div className="px-4 py-3 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <Avatar
+                          src={user.image}
+                          name={user.name || user.email?.split("@")[0] || "User"}
+                          size="sm"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm truncate">{user.name || user.email?.split("@")[0]}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Quick links */}
+                    <div className="py-1">
+                      {user.role === 'ADMIN' && (
+                        <DropdownLink href="/admin" icon={ShieldCheck} label="Admin Dashboard" onClick={() => setIsProfileOpen(false)} />
+                      )}
+
+                      {user.role !== 'ADMIN' && (
+                        <DropdownLink href="/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={() => setIsProfileOpen(false)} />
+                      )}
+
+                      <DropdownLink href="/dashboard/messages" icon={MessageSquare} label="Messages" onClick={() => setIsProfileOpen(false)} />
+
+                      {user.role === 'EXPERT' && (
+                        <>
+                          <DropdownLink href="/expert/projects" icon={FolderKanban} label="Projects" onClick={() => setIsProfileOpen(false)} />
+                          <DropdownLink href="/expert/my-solutions" icon={Layers} label="My Solutions" onClick={() => setIsProfileOpen(false)} />
+                          <DropdownLink href="/jobs" icon={Briefcase} label="Browse Jobs" onClick={() => setIsProfileOpen(false)} />
+                        </>
+                      )}
+
+                      {user.role === 'BUSINESS' && (
+                        <>
+                          <DropdownLink href="/business/projects" icon={FolderKanban} label="My Projects" onClick={() => setIsProfileOpen(false)} />
+                          <DropdownLink href="/business/add-request" icon={PlusCircle} label="Post a Request" onClick={() => setIsProfileOpen(false)} />
+                        </>
+                      )}
+                    </div>
+
+                    {/* Settings & Sign out */}
+                    <div className="border-t border-border py-1">
+                      {user.role !== 'ADMIN' && (
+                        <DropdownLink
+                          href={user.role === 'EXPERT' ? '/expert/settings' : '/business/settings'}
+                          icon={Settings}
+                          label="Settings"
+                          onClick={() => setIsProfileOpen(false)}
+                        />
+                      )}
+                      <button
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors flex items-center gap-2.5"
+                      >
+                        <LogOut className="h-4 w-4" /> Sign Out
+                      </button>
+                    </div>
                   </div>
-
-                  {/* Quick links */}
-                  <div className="py-1">
-                    {user.role === 'ADMIN' && (
-                      <DropdownLink href="/admin" icon={ShieldCheck} label="Admin Dashboard" onClick={() => setIsProfileOpen(false)} />
-                    )}
-
-                    {user.role !== 'ADMIN' && (
-                      <DropdownLink href="/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={() => setIsProfileOpen(false)} />
-                    )}
-
-                    <DropdownLink href="/dashboard/messages" icon={MessageSquare} label="Messages" onClick={() => setIsProfileOpen(false)} />
-
-                    {user.role === 'EXPERT' && (
-                      <>
-                        <DropdownLink href="/expert/projects" icon={FolderKanban} label="Projects" onClick={() => setIsProfileOpen(false)} />
-                        <DropdownLink href="/expert/my-solutions" icon={Layers} label="My Solutions" onClick={() => setIsProfileOpen(false)} />
-                        <DropdownLink href="/jobs" icon={Briefcase} label="Browse Jobs" onClick={() => setIsProfileOpen(false)} />
-                      </>
-                    )}
-
-                    {user.role === 'BUSINESS' && (
-                      <>
-                        <DropdownLink href="/business/projects" icon={FolderKanban} label="My Projects" onClick={() => setIsProfileOpen(false)} />
-                        <DropdownLink href="/business/add-request" icon={PlusCircle} label="Post a Request" onClick={() => setIsProfileOpen(false)} />
-                      </>
-                    )}
-                  </div>
-
-                  {/* Settings & Sign out */}
-                  <div className="border-t border-border py-1">
-                    {user.role !== 'ADMIN' && (
-                      <DropdownLink
-                        href={user.role === 'EXPERT' ? '/expert/settings' : '/business/settings'}
-                        icon={Settings}
-                        label="Settings"
-                        onClick={() => setIsProfileOpen(false)}
-                      />
-                    )}
-                    <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors flex items-center gap-2.5"
-                    >
-                      <LogOut className="h-4 w-4" /> Sign Out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             </div>
           ) : (
             <Link
@@ -238,7 +244,15 @@ export function Navbar({ user }: { user?: Session["user"] & { role?: string } })
             </Link>
 
             <div className="border-t border-border pt-4 flex flex-col gap-3">
-              {user ? (
+              {isLoading ? (
+                <div className="flex items-center gap-3 px-2">
+                  <Skeleton className="h-9 w-9 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+              ) : user ? (
                 <>
                   <div className="flex items-center gap-3 px-2">
                     <Avatar

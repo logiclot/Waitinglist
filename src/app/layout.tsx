@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { Providers } from "@/components/providers/SessionProvider";
 import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 import { Toaster } from "sonner";
@@ -94,8 +92,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
-
   return (
     <html lang="en">
       <head>
@@ -144,7 +140,7 @@ export default async function RootLayout({
           <PostHogProvider>
             <SavedSolutionsProvider>
               <SavedSuitesProvider>
-                <Navbar user={session?.user} />
+                <Navbar />
                 <main className="flex-1">{children}</main>
                 <Analytics />
                 <Toaster
