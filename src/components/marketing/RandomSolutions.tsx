@@ -66,8 +66,7 @@ export function RandomSolutions() {
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-2">
               Featured Solutions
             </p>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
-              <Zap className="w-6 h-6 text-yellow-500" />
+            <h2 className="text-lg md:text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
               Ready to deploy
             </h2>
           </div>
