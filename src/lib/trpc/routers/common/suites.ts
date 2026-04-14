@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { createRouter } from "../../init";
-import { commonProcedure } from "../../procedures";
+import { publicProcedure } from "../../procedures";
 import { SuiteCardData } from "@/types";
 
 export const suitesRouter = createRouter({
-    getPublishedSuites: commonProcedure.query(async () => {
+    getPublishedSuites: publicProcedure.query(async () => {
         return await prisma.ecosystem.findMany({
             where: { isPublished: true },
             include: {

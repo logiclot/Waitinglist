@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createRouter } from "../../init";
-import { commonProcedure } from "../../procedures";
+import { publicProcedure } from "../../procedures";
 import { mapPrismaExpert } from "@/lib/solutions/data";
 import { Solution } from "@/types";
 
@@ -12,7 +12,7 @@ const tierToLabel = {
 }
 
 export const solutionsRouter = createRouter({
-    getPublishedSolutions: commonProcedure.query(async () => {
+    getPublishedSolutions: publicProcedure.query(async () => {
         const solutions = await prisma.solution.findMany({
             where: {
                 status: "published",
