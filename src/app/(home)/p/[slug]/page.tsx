@@ -192,18 +192,16 @@ export default async function ExpertPortfolioPage({ params }: Props) {
                     src={profileImageUrl}
                     alt={displayName}
                     loading="lazy"
-                    className={`w-24 h-24 rounded-2xl object-cover shrink-0 border-2 shadow-lg ${
-                      hasCover
+                    className={`w-24 h-24 rounded-2xl object-cover shrink-0 border-2 shadow-lg ${hasCover
                         ? "border-white/30 shadow-black/20"
                         : "border-primary/20 shadow-primary/10"
-                    }`}
+                      }`}
                   />
                 ) : (
-                  <div className={`w-24 h-24 rounded-2xl flex items-center justify-center shrink-0 shadow-lg text-3xl font-bold select-none ${
-                    hasCover
+                  <div className={`w-24 h-24 rounded-2xl flex items-center justify-center shrink-0 shadow-lg text-3xl font-bold select-none ${hasCover
                       ? "bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 shadow-black/20"
                       : "bg-gradient-to-br from-primary to-primary/60 text-white shadow-primary/20"
-                  }`}>
+                    }`}>
                     {initials}
                   </div>
                 )}
@@ -218,7 +216,6 @@ export default async function ExpertPortfolioPage({ params }: Props) {
                     {(tier !== "STANDARD" || isFoundingExpert) && (
                       <TierBadge
                         tier={tier}
-                        isFoundingExpert={isFoundingExpert}
                         size="md"
                       />
                     )}
@@ -259,11 +256,10 @@ export default async function ExpertPortfolioPage({ params }: Props) {
                       {tools.map((tool: string) => (
                         <span
                           key={tool}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${
-                            hasCover
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${hasCover
                               ? "bg-white/15 backdrop-blur-sm border border-white/20 text-white"
                               : "bg-background border border-border text-foreground"
-                          }`}
+                            }`}
                         >
                           <Zap className="w-3 h-3 text-yellow-500" />
                           {tool}

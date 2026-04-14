@@ -8,6 +8,7 @@ import { TierBadge } from "@/components/ui/TierBadge";
 import { formatCentsToCurrency } from "@/lib/commission";
 import { useSavedSuitesContext } from "@/hooks/SavedSuitesContext";
 import type { SuiteCardData } from "@/types";
+import { SpecialistTier } from "@prisma/client";
 
 interface SuiteCardProps {
   ecosystem: SuiteCardData;
@@ -214,27 +215,22 @@ export function SuiteCard({ ecosystem }: SuiteCardProps) {
               </span>
               {(expert.isFoundingExpert ||
                 (expert.tier && expert.tier !== "STANDARD")) && (
-                <TierBadge
-                  tier={
-                    (expert.tier || "STANDARD") as
-                      | "STANDARD"
-                      | "PROVEN"
-                      | "ELITE"
-                  }
-                  isFoundingExpert={expert.isFoundingExpert}
-                  size="sm"
-                />
-              )}
+                  <TierBadge
+                    tier={
+                      (expert.tier || "STANDARD") as SpecialistTier
+                    }
+                    size="sm"
+                  />
+                )}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleSave}
-                className={`p-2 rounded-lg border transition-all ${
-                  isSaved
-                    ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
-                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-                }`}
+                className={`p-2 rounded-lg border transition-all ${isSaved
+                  ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                  : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+                  }`}
                 title={isSaved ? "Saved" : "Save Suite"}
               >
                 <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />

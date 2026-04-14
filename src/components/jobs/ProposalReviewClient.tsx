@@ -15,8 +15,8 @@ import { RejectAllProposalsButton } from "@/components/jobs/RejectAllProposalsBu
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface Outcome  { what: string; value: string; timeframe: string; }
-interface Phase    { name: string; scope: string; duration: string; price?: number; }
+interface Outcome { what: string; value: string; timeframe: string; }
+interface Phase { name: string; scope: string; duration: string; price?: number; }
 interface Proposal {
   automationTitle?: string;
   problemAddressed?: string;
@@ -74,9 +74,9 @@ function BriefToggle({ goal, isDiscovery }: { goal: string; isDiscovery: boolean
 // ── Thumbs feedback widget ───────────────────────────────────────────────────
 
 function ProposalFeedback({ bidId, initialFeedback }: { bidId: string; initialFeedback?: string | null }) {
-  const [current, setCurrent]   = useState<string | null>(initialFeedback ?? null);
-  const [loading, setLoading]   = useState<"up" | "down" | null>(null);
-  const [banned,  setBanned]    = useState(false);
+  const [current, setCurrent] = useState<string | null>(initialFeedback ?? null);
+  const [loading, setLoading] = useState<"up" | "down" | null>(null);
+  const [banned, setBanned] = useState(false);
 
   const vote = async (feedback: "up" | "down") => {
     // Clicking the active vote again is a no-op (can't un-vote, only switch)
@@ -101,11 +101,10 @@ function ProposalFeedback({ bidId, initialFeedback }: { bidId: string; initialFe
         onClick={() => vote("up")}
         disabled={loading !== null}
         title="Good proposal — relevant and specific"
-        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-          current === "up"
+        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${current === "up"
             ? "bg-primary text-primary-foreground border-primary"
             : "bg-card border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
-        } disabled:opacity-60`}
+          } disabled:opacity-60`}
       >
         {loading === "up"
           ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -119,11 +118,10 @@ function ProposalFeedback({ bidId, initialFeedback }: { bidId: string; initialFe
         onClick={() => vote("down")}
         disabled={loading !== null}
         title="Poor quality — didn't address the brief"
-        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-          current === "down"
+        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${current === "down"
             ? "bg-destructive text-destructive-foreground border-destructive"
             : "bg-card border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive"
-        } disabled:opacity-60`}
+          } disabled:opacity-60`}
       >
         {loading === "down"
           ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -256,18 +254,16 @@ function ProposalReviewCard({
   return (
     <div
       id={`proposal-${index + 1}`}
-      className={`bg-card border rounded-2xl overflow-hidden transition-all duration-200 ${
-        isAwarded
+      className={`bg-card border rounded-2xl overflow-hidden transition-all duration-200 ${isAwarded
           ? "border-primary shadow-sm"
           : isSelected
-          ? "border-primary/60 shadow-sm"
-          : "border-border hover:border-primary/30"
-      }`}
+            ? "border-primary/60 shadow-sm"
+            : "border-border hover:border-primary/30"
+        }`}
     >
       {/* ── Numbered header strip ── */}
-      <div className={`flex items-center justify-between gap-3 px-6 py-3 border-b border-border text-xs font-bold ${
-        isAwarded ? "bg-primary/5" : "bg-secondary/30"
-      }`}>
+      <div className={`flex items-center justify-between gap-3 px-6 py-3 border-b border-border text-xs font-bold ${isAwarded ? "bg-primary/5" : "bg-secondary/30"
+        }`}>
         <div className="flex items-center gap-2 shrink-0">
           <span className="bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold">
             {index + 1}
@@ -323,7 +319,6 @@ function ProposalReviewCard({
                 <span className="font-bold text-base">{bid.specialist?.displayName ?? "Expert"}</span>
                 <TierBadge
                   tier={bid.specialist?.tier ?? "STANDARD"}
-                  isFoundingExpert={bid.specialist?.isFoundingExpert ?? false}
                 />
               </div>
               {proposal?.automationTitle && (
@@ -615,10 +610,10 @@ function DiscoveryConfirmPanel({
           {confirming
             ? <><Loader2 className="h-4 w-4 animate-spin" /> Starting projects…</>
             : <><CheckCircle2 className="h-4 w-4" />
-                {selected.length === 1
-                  ? "Confirm & Start Project"
-                  : `Confirm & Start All ${selected.length} Projects`}
-              </>}
+              {selected.length === 1
+                ? "Confirm & Start Project"
+                : `Confirm & Start All ${selected.length} Projects`}
+            </>}
         </button>
       </div>
     </div>
@@ -662,8 +657,8 @@ export function ProposalReviewClient({ job }: { job: Job }) {
           {job.bids.length === 0
             ? "No proposals yet — experts will respond within 48 hours."
             : job.bids.length === 1
-            ? "1 proposal received"
-            : `${job.bids.length} proposals received`}
+              ? "1 proposal received"
+              : `${job.bids.length} proposals received`}
         </p>
       </div>
 
@@ -731,8 +726,8 @@ export function ProposalReviewClient({ job }: { job: Job }) {
         job.status !== "awarded" &&
         job.status !== "cancelled" &&
         job.status !== "closed" && (
-        <RejectAllProposalsButton jobId={job.id} />
-      )}
+          <RejectAllProposalsButton jobId={job.id} />
+        )}
 
       {/* Brief reference */}
       <div>

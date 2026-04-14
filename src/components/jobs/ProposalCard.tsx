@@ -28,6 +28,7 @@ import {
   MessageCircle,
   Undo2,
 } from "lucide-react";
+import { SpecialistTier } from "@prisma/client";
 
 const EDIT_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
 const WARN_THRESHOLD_MS = 5 * 60 * 1000; // warn at 5 minutes remaining
@@ -329,15 +330,14 @@ export function ProposalCard({
 
   return (
     <div
-      className={`bg-card border rounded-xl overflow-hidden transition-all ${
-        isAwarded && isPostTenderView
-          ? "border-primary/40 shadow-sm shadow-primary/10"
-          : isAwarded
-            ? "border-green-500/40 shadow-sm shadow-green-500/10"
-            : isOwnBid && isPostTenderView
-              ? "border-blue-500/30"
-              : "border-border"
-      }`}
+      className={`bg-card border rounded-xl overflow-hidden transition-all ${isAwarded && isPostTenderView
+        ? "border-primary/40 shadow-sm shadow-primary/10"
+        : isAwarded
+          ? "border-green-500/40 shadow-sm shadow-green-500/10"
+          : isOwnBid && isPostTenderView
+            ? "border-blue-500/30"
+            : "border-border"
+        }`}
     >
       {/* Post-tender badges */}
       {isPostTenderView && (isOwnBid || isAwarded) && (
@@ -372,15 +372,9 @@ export function ProposalCard({
                   <div className="flex items-center gap-2 mt-0.5">
                     <TierBadge
                       tier={
-                        (bid.specialist?.tier ?? "STANDARD") as
-                          | "STANDARD"
-                          | "PROVEN"
-                          | "ELITE"
-                          | "FOUNDING"
+                        (bid.specialist?.tier ?? "STANDARD") as SpecialistTier
                       }
-                      isFoundingExpert={
-                        bid.specialist?.isFoundingExpert ?? false
-                      }
+
                     />
                     <span className="text-xs text-muted-foreground">
                       {bid.specialist?.completedSalesCount ?? 0} completed
@@ -625,46 +619,46 @@ export function ProposalCard({
           {/* Included / Excluded */}
           {((proposal.included?.length ?? 0) > 0 ||
             (proposal.excluded?.length ?? 0) > 0) && (
-            <div className="grid sm:grid-cols-2 gap-4 pl-6">
-              {proposal.included && proposal.included.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mb-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-primary" />{" "}
-                    Included
+              <div className="grid sm:grid-cols-2 gap-4 pl-6">
+                {proposal.included && proposal.included.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mb-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" />{" "}
+                      Included
+                    </div>
+                    <ul className="space-y-1">
+                      {proposal.included.map((item, i) => (
+                        <li
+                          key={i}
+                          className="text-xs text-muted-foreground flex items-start gap-1.5"
+                        >
+                          <CheckCircle2 className="h-3 w-3 text-primary shrink-0 mt-0.5" />{" "}
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul className="space-y-1">
-                    {proposal.included.map((item, i) => (
-                      <li
-                        key={i}
-                        className="text-xs text-muted-foreground flex items-start gap-1.5"
-                      >
-                        <CheckCircle2 className="h-3 w-3 text-primary shrink-0 mt-0.5" />{" "}
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {proposal.excluded && proposal.excluded.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
-                    <XCircle className="h-3.5 w-3.5" /> Not included
+                )}
+                {proposal.excluded && proposal.excluded.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-2">
+                      <XCircle className="h-3.5 w-3.5" /> Not included
+                    </div>
+                    <ul className="space-y-1">
+                      {proposal.excluded.map((item, i) => (
+                        <li
+                          key={i}
+                          className="text-xs text-muted-foreground flex items-start gap-1.5"
+                        >
+                          <XCircle className="h-3 w-3 shrink-0 mt-0.5 opacity-40" />{" "}
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul className="space-y-1">
-                    {proposal.excluded.map((item, i) => (
-                      <li
-                        key={i}
-                        className="text-xs text-muted-foreground flex items-start gap-1.5"
-                      >
-                        <XCircle className="h-3 w-3 shrink-0 mt-0.5 opacity-40" />{" "}
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
           {/* Support period */}
           {proposal.supportDays && (

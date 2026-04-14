@@ -131,7 +131,6 @@ export function RandomSolutions() {
                     solution.expert.tier !== "STANDARD" && (
                       <TierBadge
                         tier={solution.expert.tier}
-                        isFoundingExpert={solution.expert.tier === "FOUNDING"}
                         size="sm"
                       />
                     )}

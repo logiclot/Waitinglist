@@ -112,7 +112,6 @@ export function BidList({
               <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
                 <TierBadge
                   tier={bid.specialist?.tier ?? "STANDARD"}
-                  isFoundingExpert={bid.specialist?.isFoundingExpert ?? false}
                 />
                 <span>
                   {bid.specialist?.completedSalesCount ?? 0} completed

@@ -174,6 +174,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 // --- Client Component Wrapper for Payment ---
 import { PaymentButton } from "@/components/PaymentButton";
+import { SpecialistTier } from "@prisma/client";
 // ---
 
 export default async function SolutionPage({ params }: PageProps) {
@@ -235,14 +236,14 @@ export default async function SolutionPage({ params }: PageProps) {
   const similarFromOther =
     similarRaw.length < 3
       ? await prisma.solution.findMany({
-          where: {
-            status: "published",
-            id: { notIn: [solution.id, ...similarRaw.map((s) => s.id)] },
-          },
-          orderBy: { publishedAt: "desc" },
-          take: 3 - similarRaw.length,
-          include: { expert: true },
-        })
+        where: {
+          status: "published",
+          id: { notIn: [solution.id, ...similarRaw.map((s) => s.id)] },
+        },
+        orderBy: { publishedAt: "desc" },
+        take: 3 - similarRaw.length,
+        include: { expert: true },
+      })
       : [];
   const similarSolutions = [...similarRaw, ...similarFromOther].map((s) => ({
     id: s.id,
@@ -278,27 +279,27 @@ export default async function SolutionPage({ params }: PageProps) {
               availability: "https://schema.org/InStock",
               seller: solution.expert
                 ? {
-                    "@type": "Person",
-                    name: solution.expert.name,
-                  }
+                  "@type": "Person",
+                  name: solution.expert.name,
+                }
                 : undefined,
             },
             ...(solution.faq && solution.faq.length > 0
               ? {
-                  subjectOf: {
-                    "@type": "FAQPage",
-                    mainEntity: solution.faq.map(
-                      (item: { question: string; answer: string }) => ({
-                        "@type": "Question",
-                        name: item.question,
-                        acceptedAnswer: {
-                          "@type": "Answer",
-                          text: item.answer,
-                        },
-                      }),
-                    ),
-                  },
-                }
+                subjectOf: {
+                  "@type": "FAQPage",
+                  mainEntity: solution.faq.map(
+                    (item: { question: string; answer: string }) => ({
+                      "@type": "Question",
+                      name: item.question,
+                      acceptedAnswer: {
+                        "@type": "Answer",
+                        text: item.answer,
+                      },
+                    }),
+                  ),
+                },
+              }
               : {}),
           }),
         }}
@@ -555,9 +556,9 @@ export default async function SolutionPage({ params }: PageProps) {
                     {(solution.included && solution.included.length > 0
                       ? solution.included
                       : [
-                          "Fully configured automation workflow",
-                          "Video walkthrough & documentation",
-                        ]
+                        "Fully configured automation workflow",
+                        "Video walkthrough & documentation",
+                      ]
                     ).map((item, i) => (
                       <li
                         key={i}
@@ -585,7 +586,7 @@ export default async function SolutionPage({ params }: PageProps) {
                     What we&apos;ll need from you
                   </h3>
                   {solution.requiredInputs &&
-                  solution.requiredInputs.length > 0 ? (
+                    solution.requiredInputs.length > 0 ? (
                     <ul className="space-y-2.5">
                       {solution.requiredInputs.map((item, i) => (
                         <li
@@ -700,21 +701,21 @@ export default async function SolutionPage({ params }: PageProps) {
 
                 {(solution.monthly_cost_min > 0 ||
                   solution.monthly_cost_max > 0) && (
-                  <div className="mb-6 p-3 bg-secondary/30 rounded-lg border border-border/50">
-                    <div className="flex items-start gap-2">
-                      <Euro className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-xs font-medium text-foreground">
-                          Est. Monthly Tool Costs
-                        </p>
-                        <p className="text-sm font-semibold text-foreground/80">
-                          €{solution.monthly_cost_min} – €
-                          {solution.monthly_cost_max} / mo
-                        </p>
+                    <div className="mb-6 p-3 bg-secondary/30 rounded-lg border border-border/50">
+                      <div className="flex items-start gap-2">
+                        <Euro className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-xs font-medium text-foreground">
+                            Est. Monthly Tool Costs
+                          </p>
+                          <p className="text-sm font-semibold text-foreground/80">
+                            €{solution.monthly_cost_min} – €
+                            {solution.monthly_cost_max} / mo
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <div className="space-y-3">
                   {!isOwnSolution && (
@@ -812,19 +813,15 @@ export default async function SolutionPage({ params }: PageProps) {
                       {(solution.expert.founding ||
                         (solution.expert.tier &&
                           solution.expert.tier !== "STANDARD")) && (
-                        <div className="mt-1.5">
-                          <TierBadge
-                            tier={
-                              (solution.expert.tier || "STANDARD") as
-                                | "STANDARD"
-                                | "PROVEN"
-                                | "ELITE"
-                                | "FOUNDING"
-                            }
-                            isFoundingExpert={solution.expert.founding}
-                          />
-                        </div>
-                      )}
+                          <div className="mt-1.5">
+                            <TierBadge
+                              tier={
+                                (solution.expert.tier || "STANDARD") as SpecialistTier
+                              }
+
+                            />
+                          </div>
+                        )}
                     </div>
                   </div>
 
