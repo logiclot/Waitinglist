@@ -1,5 +1,6 @@
 "use client";
 
+import { BidManagement } from "@/components/admin/BidManagement";
 import { BusinessManagement } from "@/components/admin/BusinessManagement";
 import { ExpertManagement } from "@/components/admin/ExpertManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -102,6 +103,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="solutions" className="px-4 py-2 capitalize">
             Solutions
           </TabsTrigger>
+          <TabsTrigger value="bids" className="px-4 py-2 capitalize">
+            Bids
+          </TabsTrigger>
           {/* Coming soon */}
           {/* <TabsTrigger value="orders" className="px-4 py-2 capitalize">
             Orders
@@ -119,6 +123,9 @@ export default function AdminDashboard() {
         <TabsContent value="solutions">
           {/* <SolutionManagement /> */}
           <Link href={"/admin/old-admin"} className="underline">Comming Soon !! Refer Old Admin </Link>
+        </TabsContent>
+        <TabsContent value="bids">
+          <BidManagement />
         </TabsContent>
         {/* <TabsContent value="orders">
           <OrderManagement />

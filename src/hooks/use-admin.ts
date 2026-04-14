@@ -36,6 +36,14 @@ export function useSetExpertTier() {
     return useMutation(trpc.admin.expert.setTier.mutationOptions())
 }
 
+export function useBids() {
+    return useQuery(trpc.admin.expert.getBids.queryOptions())
+}
+
+export function useUpdateBidStatus() {
+    return useMutation(trpc.admin.expert.updateBidStatus.mutationOptions())
+}
+
 export function useDeleteSolution() {
     return useMutation(trpc.admin.expert.deleteSolution.mutationOptions())
 }

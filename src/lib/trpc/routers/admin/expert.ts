@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { TIER_THRESHOLDS } from "@/lib/commission";
 import { createNotification } from "@/lib/notifications";
-import { SpecialistTier } from "@prisma/client";
+import { BidStatus, SpecialistTier } from "@prisma/client";
 import { z } from "zod";
 import { createRouter } from "../../init";
 import { adminProcedure } from "../../procedures";
@@ -22,6 +22,34 @@ export const adminExpertRouter = createRouter({
 
         return profiles
     }),
+
+    getBids: adminProcedure.query(async () => {
+        const bids = await prisma.bid.findMany({
+            orderBy: { createdAt: "desc" },
+            include: {
+                specialist: {
+                    select: {
+                        id: true,
+                        displayName: true,
+                        user: { select: { email: true } },
+                    },
+                },
+                jobPost: { select: { id: true, title: true } },
+                solution: { select: { id: true, title: true } },
+            },
+        });
+        return bids;
+    }),
+
+    updateBidStatus: adminProcedure
+        .input(z.object({ id: z.string(), status: z.enum(BidStatus) }))
+        .mutation(async ({ input }) => {
+            await prisma.bid.update({
+                where: { id: input.id },
+                data: { status: input.status },
+            });
+            return { success: true };
+        }),
 
     getSolutions: adminProcedure.query(async () => {
         const solutions = await prisma.solution.findMany({ orderBy: { createdAt: "desc" }, include: { expert: true } })
