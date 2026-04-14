@@ -2,10 +2,7 @@ import { Suspense } from "react";
 import { BRAND_NAME, BRAND_DOMAIN, DEFAULT_OG_IMAGE } from "@/lib/branding";
 const BASE_URL = `https://${BRAND_DOMAIN}`;
 import { SolutionsPageClient } from "@/components/solutions/SolutionsPageClient";
-import { getPublishedSolutions } from "@/lib/solutions/data";
-import { getPublishedEcosystems } from "@/actions/ecosystems";
-import { LogoMark } from "@/components/LogoMark";
-import type { Category } from "@/types";
+import { SolutionsPageSkeleton } from "@/components/solutions/SolutionsPageSkeleton";
 
 import type { Metadata } from "next";
 
@@ -39,58 +36,13 @@ export const metadata: Metadata = {
   ],
 };
 
-/** Derive category list from actual published solutions (always in sync) */
-function deriveCategoriesFromSolutions(
-  solutions: { category: string }[],
-): Category[] {
-  const seen = new Set<string>();
-  const cats: Category[] = [];
-  for (const s of solutions) {
-    if (!s.category || seen.has(s.category)) continue;
-    seen.add(s.category);
-    cats.push({
-      id: s.category,
-      name: s.category,
-      slug: s.category
-        .toLowerCase()
-        .replace(/ & /g, "-")
-        .replace(/ /g, "-")
-        .replace(/[^\w-]+/g, ""),
-      description: `Automations for ${s.category}`,
-    });
-  }
-  return cats.sort((a, b) => a.name.localeCompare(b.name));
-}
 
 export default function SolutionsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <Suspense
-        fallback={
-          <div className="flex justify-center py-20 animate-pulse">
-            <LogoMark size={48} />
-          </div>
-        }
-      >
-        <SolutionsContent />
+      <Suspense fallback={<SolutionsPageSkeleton />}>
+        <SolutionsPageClient />
       </Suspense>
     </div>
-  );
-}
-
-async function SolutionsContent() {
-  const [publishedSolutions, ecosystems] = await Promise.all([
-    getPublishedSolutions(),
-    getPublishedEcosystems(),
-  ]);
-
-  const categories = deriveCategoriesFromSolutions(publishedSolutions);
-
-  return (
-    <SolutionsPageClient
-      initialSolutions={publishedSolutions}
-      categories={categories}
-      ecosystems={ecosystems}
-    />
   );
 }

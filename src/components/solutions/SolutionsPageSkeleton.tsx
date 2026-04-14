@@ -2,7 +2,7 @@ function Pulse({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-muted ${className ?? ""}`} />;
 }
 
-function CardSkeleton() {
+export function CardSkeleton() {
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm flex flex-col h-full overflow-hidden">
       {/* Top Section */}
@@ -71,7 +71,7 @@ function CardSkeleton() {
   );
 }
 
-function SidebarSkeleton() {
+export function SidebarSkeleton() {
   return (
     <div className="hidden lg:block w-64 flex-shrink-0">
       {/* Header */}
@@ -112,36 +112,42 @@ function SidebarSkeleton() {
   );
 }
 
+export function CardGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: count }).map((_, i) => (
+        <CardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+export function HeaderSkeleton() {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <div className="mb-3">
+          <Pulse className="h-10 w-56 rounded-lg" />
+        </div>
+        <Pulse className="h-8 w-52 mb-1" />
+        <Pulse className="h-4 w-32 mt-1" />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Pulse className="h-9 w-28 rounded-lg" />
+        <Pulse className="h-9 w-36 rounded-md" />
+      </div>
+    </div>
+  );
+}
+
 export function SolutionsPageSkeleton() {
   return (
     <div className="flex flex-col lg:flex-row gap-8">
-      {/* Sidebar */}
       <SidebarSkeleton />
-
-      {/* Main Content */}
       <div className="flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <div className="mb-3">
-              <Pulse className="h-10 w-56 rounded-lg" />
-            </div>
-            <Pulse className="h-8 w-52 mb-1" />
-            <Pulse className="h-4 w-32 mt-1" />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Pulse className="h-9 w-28 rounded-lg" />
-            <Pulse className="h-9 w-36 rounded-md" />
-          </div>
-        </div>
-
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <CardSkeleton key={i} />
-          ))}
-        </div>
+        <HeaderSkeleton />
+        <CardGridSkeleton />
       </div>
     </div>
   );

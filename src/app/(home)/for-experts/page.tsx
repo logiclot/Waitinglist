@@ -11,7 +11,7 @@ import {
   Zap,
   Crown,
 } from "lucide-react";
-import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN, DEFAULT_OG_IMAGE } from "@/lib/branding";
 import { prisma } from "@/lib/prisma";
 const BASE_URL = `https://${BRAND_DOMAIN}`;
 
@@ -26,12 +26,14 @@ export const metadata = {
     url: `${BASE_URL}/for-experts`,
     siteName: BRAND_NAME,
     type: "website",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: `For Experts | ${BRAND_NAME}`,
     description:
       "Productize your AI automations and sell them repeatedly. Fixed scope and protected payouts.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
   alternates: { canonical: `${BASE_URL}/for-experts` },
   keywords: [

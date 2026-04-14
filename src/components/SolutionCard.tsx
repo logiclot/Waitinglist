@@ -27,6 +27,8 @@ import { createPortal } from "react-dom";
 import { archiveSolution, createSolutionVersion } from "@/actions/solutions";
 import { toast } from "sonner";
 import { useCopyToClipboard } from "@uidotdev/usehooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
 
 interface SolutionCardProps {
   solution: Solution;
@@ -42,6 +44,7 @@ export function SolutionCard({
   lockReason,
 }: SolutionCardProps) {
   const { savedIds, toggleSaved } = useSavedSolutionsContext();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const isSaved = savedIds.has(solution.id);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,6 +63,10 @@ export function SolutionCard({
     setIsSaving(false);
     if (!success) {
       toast.error("Sign in to save solutions");
+    } else {
+      queryClient.invalidateQueries({
+        queryKey: trpc.common.favourites.getSavedSolutionsFull.queryOptions().queryKey,
+      });
     }
   };
 

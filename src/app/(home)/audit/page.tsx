@@ -1,4 +1,4 @@
-import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
+import { BRAND_NAME, BRAND_DOMAIN, DEFAULT_OG_IMAGE } from "@/lib/branding";
 import { AuditQuiz } from "@/components/audit/AuditQuiz";
 import { ClipboardList, ShieldCheck, Clock } from "lucide-react";
 import { getPublishedSolutions } from "@/lib/solutions/data";
@@ -13,11 +13,13 @@ export const metadata = {
     url: `${BASE_URL}/audit`,
     siteName: BRAND_NAME,
     type: "website",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: `Free Automation Audit | ${BRAND_NAME}`,
     description: "Find out where your business is losing time to manual work. Free 5-question audit, instant results.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
   alternates: { canonical: `${BASE_URL}/audit` },
   keywords: ["automation audit", "free automation assessment", "business automation quiz", "automation readiness", "where to automate"],
