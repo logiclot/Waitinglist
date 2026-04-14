@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createRouter } from "../../init";
 import { commonProcedure } from "../../procedures";
+import { SuiteCardData } from "@/types";
 
 export const suitesRouter = createRouter({
     getPublishedSuites: commonProcedure.query(async () => {
@@ -14,6 +15,6 @@ export const suitesRouter = createRouter({
                 expert: true
             },
             orderBy: { createdAt: 'desc' }
-        });
+        }) as unknown as SuiteCardData[];
     })
 })

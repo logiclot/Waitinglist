@@ -13,10 +13,8 @@ import { useSavedSuitesContext } from "@/hooks/SavedSuitesContext";
 import { useSavedSolutionsContext } from "@/hooks/SavedSolutionsContext";
 import Link from "next/link";
 import type { SuiteCardData } from "@/types";
+import { useSuites } from "@/hooks/use-suites";
 
-interface SuitesPageClientProps {
-  ecosystems: SuiteCardData[];
-}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -137,7 +135,12 @@ function sortSuites(
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function SuitesPageClient({ ecosystems }: SuitesPageClientProps) {
+export function SuitesPageClient() {
+
+  const suites = useSuites()
+  const ecosystems = suites.data ?? []
+  const isLoading = suites.isLoading
+
   const [filters, setFilters] = useState<SuiteFilters>(INITIAL_SUITE_FILTERS);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const { savedIds } = useSavedSuitesContext();
@@ -172,6 +175,10 @@ export function SuitesPageClient({ ecosystems }: SuitesPageClientProps) {
     filters.businessGoals.length;
 
   const clearFilters = () => setFilters(INITIAL_SUITE_FILTERS);
+
+  if (isLoading) {
+    return <SuitesPageSkeleton />;
+  }
 
   // Global empty state
   if (ecosystems.length === 0) {
@@ -280,17 +287,17 @@ export function SuitesPageClient({ ecosystems }: SuitesPageClientProps) {
             )}
             {(filters.deliveryMinDays !== null ||
               filters.deliveryMaxDays !== null) && (
-              <Chip
-                label={`Delivery: ${filters.deliveryMinDays ?? 0}–${filters.deliveryMaxDays ?? "∞"} days`}
-                onRemove={() =>
-                  setFilters({
-                    ...filters,
-                    deliveryMinDays: null,
-                    deliveryMaxDays: null,
-                  })
-                }
-              />
-            )}
+                <Chip
+                  label={`Delivery: ${filters.deliveryMinDays ?? 0}–${filters.deliveryMaxDays ?? "∞"} days`}
+                  onRemove={() =>
+                    setFilters({
+                      ...filters,
+                      deliveryMinDays: null,
+                      deliveryMaxDays: null,
+                    })
+                  }
+                />
+              )}
             {filters.businessGoals.map((g) => (
               <Chip
                 key={g}
@@ -341,6 +348,101 @@ export function SuitesPageClient({ ecosystems }: SuitesPageClientProps) {
             </button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function SuitesPageSkeleton() {
+  return (
+    <div className="flex flex-col lg:flex-row gap-8 animate-pulse">
+      {/* Sidebar skeleton */}
+      <div className="hidden lg:block w-[260px] shrink-0 space-y-6">
+        <div className="h-5 w-20 bg-muted rounded" />
+        <div className="h-10 bg-muted rounded-lg" />
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-4 bg-muted rounded w-full" />
+          ))}
+        </div>
+        <div className="h-px bg-border" />
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-4 bg-muted rounded w-3/4" />
+          ))}
+        </div>
+      </div>
+
+      {/* Main content skeleton */}
+      <div className="flex-1 min-w-0">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="h-9 w-48 bg-muted rounded-lg mb-3" />
+            <div className="h-8 w-56 bg-muted rounded mb-1" />
+            <div className="h-4 w-32 bg-muted rounded" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-28 bg-muted rounded-lg" />
+            <div className="h-10 w-40 bg-muted rounded-md" />
+          </div>
+        </div>
+
+        {/* Suite card skeletons */}
+        <div className="space-y-5">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SuiteCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SuiteCardSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="p-4 sm:p-5">
+        {/* Category + solution count badges */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <div className="h-5 w-24 bg-muted rounded-full" />
+          <div className="h-5 w-20 bg-muted rounded" />
+        </div>
+
+        {/* Title */}
+        <div className="h-6 w-3/5 bg-muted rounded mb-3" />
+
+        {/* Solution timeline dots */}
+        <div className="flex items-center gap-0 mb-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center shrink-0">
+              <div className="flex flex-col items-center" style={{ minWidth: 56 }}>
+                <div className="w-6 h-6 rounded-full bg-muted" />
+                <div className="h-2 w-10 bg-muted rounded mt-1" />
+              </div>
+              {i < 2 && <div className="h-0.5 w-6 bg-muted shrink-0" />}
+            </div>
+          ))}
+        </div>
+
+        {/* Stats row */}
+        <div className="flex flex-wrap items-center justify-between mb-3">
+          <div className="h-4 w-20 bg-muted rounded" />
+          <div className="h-4 w-14 bg-muted rounded" />
+          <div className="h-4 w-14 bg-muted rounded" />
+        </div>
+
+        {/* Outcome */}
+        <div className="h-8 w-4/5 bg-muted rounded-md mb-3" />
+
+        {/* Expert + CTA row */}
+        <div className="flex items-center justify-between pt-3 border-t border-border">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-muted" />
+            <div className="h-4 w-24 bg-muted rounded" />
+          </div>
+          <div className="h-9 w-28 bg-muted rounded-lg" />
+        </div>
       </div>
     </div>
   );
