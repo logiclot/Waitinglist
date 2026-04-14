@@ -1,10 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { createRouter } from "../../init";
-import { commonProcedure } from "../../procedures";
+import { commonProcedure, publicProcedure } from "../../procedures";
 
 export const profileRouter = createRouter({
-    getProfile: commonProcedure.query(async ({ ctx }) => {
+    getProfile: publicProcedure.query(async ({ ctx }) => {
         const { session } = ctx;
+
+        if (!session) {
+            return {
+                portfolioSlug: null,
+                isFoundingExpert: null
+            }
+        }
 
         let portfolioSlug: string | null = null;
         let isFoundingExpert = false;

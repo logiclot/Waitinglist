@@ -15,10 +15,10 @@ export function SidebarShell() {
     const { data: session, status } = useSession();
     const role = toSidebarRole(session?.user?.role);
 
-    const portfolio = useProfile();
+    const portfolio = useProfile(role === "EXPERT");
     const portfolioData = portfolio.data
 
-    if (status === "loading" || portfolio.isPending) return <SidebarSkeleton />;
+    if (status === "loading" || (role === "EXPERT" && portfolio.isPending)) return <SidebarSkeleton />;
     if (!session?.user || !role) return null;
 
     return (
