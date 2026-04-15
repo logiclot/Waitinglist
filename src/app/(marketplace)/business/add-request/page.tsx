@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { Crown, Sparkles, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 import { DISCOVERY_SCAN_COPY, DISCOVERY_SCAN_BULLETS, CUSTOM_PROJECT_COPY, CUSTOM_PROJECT_BULLETS } from "@/lib/copy/requestCards";
-import { useFreeDiscoveryScans } from "@/hooks/use-business";
+import { useFreeCustomProjects, useFreeDiscoveryScans } from "@/hooks/use-business";
 
 export default function AddRequestPage() {
   const freeDiscoveryScans = useFreeDiscoveryScans()
+  const freeCustomProjects = useFreeCustomProjects()
 
   const hasFreeScans = freeDiscoveryScans?.data != null && freeDiscoveryScans.data > 0
+  const hasFreeCustomProjects = freeCustomProjects.data != null && freeCustomProjects.data > 0
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -44,7 +46,10 @@ export default function AddRequestPage() {
                   </div>
                 ) : hasFreeScans ? (
                   <>
-                    <div className="text-3xl font-bold text-emerald-400">FREE</div>
+                    <div className="flex items-baseline gap-2 justify-end">
+                      <span className="text-lg font-bold text-slate-500 line-through">{DISCOVERY_SCAN_COPY.price}</span>
+                      <span className="text-3xl font-bold text-emerald-400">FREE</span>
+                    </div>
                     <div className="text-[10px] text-emerald-300/70 uppercase tracking-wide font-medium">Your first scan is free</div>
                   </>
                 ) : (
@@ -95,8 +100,25 @@ export default function AddRequestPage() {
                 <Crown className="h-6 w-6" />
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-white">{CUSTOM_PROJECT_COPY.price}</div>
-                <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
+                {freeCustomProjects.isPending ? (
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-sm">Checking price…</span>
+                  </div>
+                ) : hasFreeCustomProjects ? (
+                  <>
+                    <div className="flex items-baseline gap-2 justify-end">
+                      <span className="text-lg font-bold text-slate-500 line-through">{CUSTOM_PROJECT_COPY.price}</span>
+                      <span className="text-3xl font-bold text-emerald-400">FREE</span>
+                    </div>
+                    <div className="text-[10px] text-emerald-300/70 uppercase tracking-wide font-medium">Your first project is free</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-3xl font-bold text-white">{CUSTOM_PROJECT_COPY.price}</div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
+                  </>
+                )}
               </div>
             </div>
             <h2 className="text-2xl font-bold text-white mb-1">{CUSTOM_PROJECT_COPY.headline.split("\n").map((line, i) => <span key={i}>{line}{i === 0 && <br />}</span>)}</h2>

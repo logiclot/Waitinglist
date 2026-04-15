@@ -209,6 +209,9 @@ model BusinessProfile {
   // Free Discovery Scan — granted to waitlist signups
   freeDiscoveryScansRemaining Int @default(0)
 
+  // Free Custom Project — granted by the admin
+  freeCustomProjects Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

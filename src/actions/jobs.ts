@@ -39,6 +39,12 @@ export async function createJobPost(prevState: unknown, formData: FormData) {
 
   const tools = toolsRaw ? toolsRaw.split(",").map((t) => t.trim()).filter(Boolean) : [];
 
+  const businessProfile = await prisma.businessProfile.findFirst({
+    where: { userId: session.user.id },
+    select: { freeCustomProjects: true },
+  });
+
+  const freeProjects = businessProfile?.freeCustomProjects ?? 0;
 
   // for notifiying buyer we should fire even here , for notifying sellers we should do in the webhook
   try {
@@ -51,9 +57,31 @@ export async function createJobPost(prevState: unknown, formData: FormData) {
         budgetRange,
         timeline,
         tools,
-        status: "pending_payment",
+        status: freeProjects > 0 ? "open" : "pending_payment",
+        paymentProvider: freeProjects > 0 ? "free_credit" : null,
       },
     });
+
+    if (freeProjects > 0) {
+      await prisma.businessProfile.update({
+        where: { userId: session.user.id },
+        data: { freeCustomProjects: { decrement: 1 } },
+      });
+
+      sendJobNotificationToExperts(job.id, "JOB_POSTING").catch((e) =>
+        log.error("notification.email_fire_and_forget_failed", { userId: session.user.id, error: String(e) })
+      );
+
+      createNotification(
+        session.user.id,
+        "🎉 Free Custom Project activated!",
+        `"${job.title}" is now live. Your free custom project credit has been used.`,
+        "success",
+        `/jobs/${job.id}`
+      ).catch((e) =>
+        log.error("notification.email_fire_and_forget_failed", { userId: session.user.id, error: String(e) })
+      );
+    }
 
     return { success: true, jobId: job.id };
   } catch (e) {

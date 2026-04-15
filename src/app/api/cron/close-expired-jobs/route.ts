@@ -85,20 +85,26 @@ export async function GET(request: Request) {
     // ─────────────────────────────────────────────
     // DAY-7 CLOSE + REFUND
     // Jobs still open 7+ days after createdAt are closed.
-    // Custom projects: 50% refund (awarded jobs are no longer "open" and
-    // are naturally excluded). Discovery scans: never refunded.
+    // (bids). If any expert submitted a proposal, the buyer got what they paid
+    // for and no refund applies. Free-credit postings are never refunded.
+    // Discovery scans: never refunded.
     // ─────────────────────────────────────────────
     const expiredJobs = await prisma.jobPost.findMany({
       where: {
         status: "open",
         createdAt: { lte: d7 },
       },
+      include: {
+        _count: { select: { bids: true } },
+      },
     });
 
     for (const job of expiredJobs) {
       try {
         const isDiscovery = job.category === "Discovery Scan";
-        const refundPercent = isDiscovery ? 0 : 50;
+        const isFreeCredit = job.paymentProvider === "free_credit";
+        const refundPercent =
+          isDiscovery || isFreeCredit ? 0 : 50;
 
         const refund =
           refundPercent > 0
@@ -115,11 +121,15 @@ export async function GET(request: Request) {
 
         const buyerTitle = isDiscovery
           ? "⌛ Your Discovery Scan has expired"
-          : "⌛ Your Custom Project expired — 50% refunded";
+          : isFreeCredit
+            ? "⌛ Your Custom Project has expired"
+            : "⌛ Your Custom Project expired — 50% refunded";
 
         const buyerMsg = isDiscovery
           ? `"${job.title}" ran for 7 days without being awarded and has been closed. Discovery Scans are non-refundable.`
-          : `"${job.title}" ran for 7 days without a selected proposal and has been closed. A 50% refund has been issued to your original payment method.`;
+          : isFreeCredit
+            ? `"${job.title}" ran for 7 days without a selected proposal and has been closed.`
+            : `"${job.title}" ran for 7 days without a selected proposal and has been closed. A 50% refund has been issued to your original payment method.`;
 
         await createNotification(
           job.buyerId,
@@ -132,6 +142,8 @@ export async function GET(request: Request) {
         log.info("cron.close_expired_job", {
           jobId: job.id,
           isDiscovery,
+          isFreeCredit,
+          bidCount: job._count.bids,
           refundPercent,
           refundReason: refund.reason,
         });

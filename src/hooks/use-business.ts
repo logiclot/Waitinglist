@@ -5,6 +5,10 @@ export function useFreeDiscoveryScans() {
     return useQuery(trpc.business.profile.getFreeScans.queryOptions())
 }
 
+export function useFreeCustomProjects() {
+    return useQuery(trpc.business.profile.getFreeCustomProjects.queryOptions())
+}
+
 export function useCompletedProjectCount() {
     return useQuery(trpc.business.orders.completedProjectCount.queryOptions())
 }

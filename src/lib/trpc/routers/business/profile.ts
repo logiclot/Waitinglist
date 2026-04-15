@@ -12,5 +12,15 @@ export const businessProfileRouter = createRouter({
         })
 
         return count?.freeDiscoveryScansRemaining ?? 0
+    }),
+    getFreeCustomProjects: businessProcedure.query(async ({ ctx }) => {
+        const { userId } = ctx
+
+        const count = await prisma.businessProfile.findUnique({
+            where: { userId },
+            select: { freeCustomProjects: true },
+        })
+
+        return count?.freeCustomProjects ?? 0
     })
 })

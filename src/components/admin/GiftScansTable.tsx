@@ -19,6 +19,7 @@ interface Business {
   companyName: string;
   country: string | null;
   freeDiscoveryScansRemaining: number;
+  freeCustomProjects: number;
   createdAt: string;
   user: {
     id: string;
@@ -33,31 +34,48 @@ async function fetchBusinesses(): Promise<Business[]> {
   return data.businesses;
 }
 
-async function updateScans(businessProfileId: string, action: "increment" | "decrement") {
+type GiftKind = "scan" | "customProject";
+
+async function updateGift(
+  businessProfileId: string,
+  action: "increment" | "decrement",
+  kind: GiftKind
+) {
   const res = await fetch("/api/admin/businesses", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ businessProfileId, action }),
+    body: JSON.stringify({ businessProfileId, action, kind }),
   });
   if (!res.ok) {
     const data = await res.json();
-    throw new Error(data.error || "Failed to update scans");
+    throw new Error(data.error || "Failed to update");
   }
   return res.json();
 }
 
-function ScanControls({ business }: { business: Business }) {
+function GiftControls({
+  business,
+  kind,
+}: {
+  business: Business;
+  kind: GiftKind;
+}) {
   const queryClient = useQueryClient();
+  const count =
+    kind === "scan"
+      ? business.freeDiscoveryScansRemaining
+      : business.freeCustomProjects;
+  const label = kind === "scan" ? "scan" : "custom project";
 
   const mutation = useMutation({
     mutationFn: ({ action }: { action: "increment" | "decrement" }) =>
-      updateScans(business.id, action),
+      updateGift(business.id, action, kind),
     onSuccess: (_data, { action }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-businesses"] });
       if (action === "increment") {
-        toast.success(`Free scan gifted to ${business.firstName}`);
+        toast.success(`Free ${label} gifted to ${business.firstName}`);
       } else {
-        toast.success(`Scan removed from ${business.firstName}`);
+        toast.success(`${label} removed from ${business.firstName}`);
       }
     },
     onError: (error: Error) => {
@@ -69,7 +87,7 @@ function ScanControls({ business }: { business: Business }) {
     <div className="flex items-center gap-2">
       <button
         onClick={() => mutation.mutate({ action: "decrement" })}
-        disabled={mutation.isPending || business.freeDiscoveryScansRemaining <= 0}
+        disabled={mutation.isPending || count <= 0}
         className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
       >
         {mutation.isPending ? (
@@ -78,9 +96,7 @@ function ScanControls({ business }: { business: Business }) {
           <Minus className="h-3.5 w-3.5" />
         )}
       </button>
-      <span className="w-6 text-center font-medium tabular-nums">
-        {business.freeDiscoveryScansRemaining}
-      </span>
+      <span className="w-6 text-center font-medium tabular-nums">{count}</span>
       <button
         onClick={() => mutation.mutate({ action: "increment" })}
         disabled={mutation.isPending}
@@ -136,6 +152,7 @@ export function GiftScansTable() {
           <TableHead>Country</TableHead>
           <TableHead>Joined on</TableHead>
           <TableHead>Gift Scans</TableHead>
+          <TableHead>Gift Custom Projects</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -155,7 +172,10 @@ export function GiftScansTable() {
               })}
             </TableCell>
             <TableCell>
-              <ScanControls business={biz} />
+              <GiftControls business={biz} kind="scan" />
+            </TableCell>
+            <TableCell>
+              <GiftControls business={biz} kind="customProject" />
             </TableCell>
           </TableRow>
         ))}

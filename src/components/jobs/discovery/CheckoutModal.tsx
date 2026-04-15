@@ -12,7 +12,7 @@ import { useState } from "react";
 interface CheckoutModalProps {
   jobId: string;
   type: "discovery" | "custom";
-  hasFreeScans?: boolean;
+  hasFreeCredit?: boolean;
   onClose: () => void;
 }
 
@@ -20,7 +20,7 @@ export function CheckoutModal({
   jobId,
   type,
   onClose,
-  hasFreeScans = false,
+  hasFreeCredit = false,
 }: CheckoutModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,13 +78,13 @@ export function CheckoutModal({
           </p>
         </div>
         <div
-          className={`rounded-lg p-4 mb-6 border ${hasFreeScans ? "bg-emerald-500/5 border-emerald-500/20" : "bg-secondary/50 border-border"}`}
+          className={`rounded-lg p-4 mb-6 border ${hasFreeCredit ? "bg-emerald-500/5 border-emerald-500/20" : "bg-secondary/50 border-border"}`}
         >
           <div className="flex justify-between items-center mb-2">
             <span className="font-medium text-foreground">
               {isDiscovery ? "Discovery Scan Fee" : "Project Posting Fee"}
             </span>
-            {hasFreeScans ? (
+            {hasFreeCredit ? (
               <span className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground line-through">
                   {price}
@@ -97,10 +97,12 @@ export function CheckoutModal({
               </span>
             )}
           </div>
-          {hasFreeScans ? (
+          {hasFreeCredit ? (
             <div className="text-xs text-emerald-600 flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3" /> Your waitlist credit covers this.
-              Click below to go live instantly.
+              <Sparkles className="w-3 h-3" />{" "}
+              {isDiscovery
+                ? "Your waitlist credit covers this. Click below to go live instantly."
+                : "Your free custom project credit covers this. Click below to go live instantly."}
             </div>
           ) : isDiscovery ? (
             <div className="text-xs text-emerald-600 flex items-center gap-1.5">
@@ -151,7 +153,7 @@ export function CheckoutModal({
             {error}
           </p>
         )}
-        {hasFreeScans ? (
+        {hasFreeCredit ? (
           <Link
             href={`/jobs/${jobId}`}
             className="w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
@@ -175,8 +177,10 @@ export function CheckoutModal({
           </button>
         )}
         <p className="text-xs text-center text-muted-foreground mt-4">
-          {hasFreeScans
-            ? "No payment required. Your waitlist credit will be applied."
+          {hasFreeCredit
+            ? isDiscovery
+              ? "No payment required. Your waitlist credit will be applied."
+              : "No payment required. Your free custom project credit will be applied."
             : "Secure payment via Stripe. One-time fee."}
         </p>
         <p className="text-[10px] text-center text-muted-foreground/80 mt-2">

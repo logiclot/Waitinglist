@@ -18,7 +18,10 @@ import {
 import Link from "next/link";
 import { createJobPost } from "@/actions/jobs";
 import { CheckoutModal } from "@/components/jobs/discovery/CheckoutModal";
+import { useFreeCustomProjects } from "@/hooks/use-business";
 import * as C from "./constants";
+import { useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client";
 
 // --- HELPER COMPONENTS (Moved outside to prevent re-mounting on render) ---
 
@@ -57,11 +60,10 @@ const SingleSelect = ({
           key={opt}
           onClick={() => onChange(opt)}
           type="button"
-          className={`p-3 rounded-lg border text-left text-sm transition-all ${
-            value === opt
-              ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
-              : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
-          }`}
+          className={`p-3 rounded-lg border text-left text-sm transition-all ${value === opt
+            ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
+            : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
+            }`}
         >
           {opt}
         </button>
@@ -126,11 +128,10 @@ const MultiSelectWithToolNames = ({
             <button
               type="button"
               onClick={() => onToggle(opt)}
-              className={`w-full p-3 rounded-lg border text-left text-sm transition-all ${
-                isSelected
-                  ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
-                  : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
-              }`}
+              className={`w-full p-3 rounded-lg border text-left text-sm transition-all ${isSelected
+                ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
+                : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
+                }`}
             >
               {opt}
             </button>
@@ -205,11 +206,10 @@ const MultiSelect = ({
             key={opt}
             onClick={() => onToggle(opt)}
             type="button"
-            className={`p-3 rounded-lg border text-left text-sm transition-all ${
-              isSelected
-                ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
-                : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
-            }`}
+            className={`p-3 rounded-lg border text-left text-sm transition-all ${isSelected
+              ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
+              : "border-border hover:border-primary/30 text-muted-foreground hover:text-foreground"
+              }`}
           >
             {opt}
           </button>
@@ -265,11 +265,15 @@ const ShortText = ({
 );
 
 export default function NewJobPage() {
+  const queryClient = useQueryClient()
   const [step, setStep] = useState(0); // 0 = Intro
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingJobId, setPendingJobId] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const { data: freeCustomProjects = 0, isPending: isFreeProjectsPending } =
+    useFreeCustomProjects();
+  const hasFreeProject = freeCustomProjects > 0;
 
   // Form State
   const [formData, setFormData] = useState({
@@ -577,11 +581,11 @@ export default function NewJobPage() {
             },
             ...(formData.currentProcessDescription
               ? [
-                  {
-                    q: "Process description",
-                    a: formData.currentProcessDescription,
-                  },
-                ]
+                {
+                  q: "Process description",
+                  a: formData.currentProcessDescription,
+                },
+              ]
               : []),
           ],
         },
@@ -642,11 +646,11 @@ export default function NewJobPage() {
             },
             ...(formData.boundariesConstraints
               ? [
-                  {
-                    q: "Additional boundaries",
-                    a: formData.boundariesConstraints,
-                  },
-                ]
+                {
+                  q: "Additional boundaries",
+                  a: formData.boundariesConstraints,
+                },
+              ]
               : []),
           ],
         },
@@ -680,28 +684,28 @@ export default function NewJobPage() {
             },
             ...(formData.otherExpectations
               ? [
-                  {
-                    q: "Additional expectations",
-                    a: formData.otherExpectations,
-                  },
-                ]
+                {
+                  q: "Additional expectations",
+                  a: formData.otherExpectations,
+                },
+              ]
               : []),
           ],
         },
         ...(formData.finalClarifier
           ? [
-              {
-                id: "F",
-                title: "Final Clarifier",
-                subtitle: "Extra context from the business owner",
-                qa: [
-                  {
-                    q: "Anything else that would help experts?",
-                    a: formData.finalClarifier,
-                  },
-                ],
-              },
-            ]
+            {
+              id: "F",
+              title: "Final Clarifier",
+              subtitle: "Extra context from the business owner",
+              qa: [
+                {
+                  q: "Anything else that would help experts?",
+                  a: formData.finalClarifier,
+                },
+              ],
+            },
+          ]
           : []),
       ],
     };
@@ -759,9 +763,19 @@ export default function NewJobPage() {
               <h1 className="text-xl font-bold">
                 Describe it once. Get it built right.
               </h1>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                Custom Project &middot; &euro;100 one-time &middot; Max 3
-                tailored proposals
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium flex items-center gap-1.5">
+                Custom Project &middot;{" "}
+                {isFreeProjectsPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : hasFreeProject ? (
+                  <>
+                    <span className="line-through opacity-60">&euro;100</span>{" "}
+                    <span className="text-emerald-600 font-bold">FREE</span>
+                  </>
+                ) : (
+                  <>&euro;100 one-time</>
+                )}{" "}
+                &middot; Max 3 tailored proposals
               </p>
             </div>
           </div>
@@ -798,13 +812,40 @@ export default function NewJobPage() {
 
           {/* Right: Pricing + CTA */}
           <div className="flex flex-col gap-4">
-            <div className="bg-secondary/40 rounded-xl p-5 border border-border">
-              <div className="text-2xl font-bold text-foreground mb-0.5">
-                &euro;100
-              </div>
-              <div className="text-xs text-muted-foreground mb-3">
-                One-time posting fee
-              </div>
+            <div className={`rounded-xl p-5 border ${hasFreeProject ? "bg-emerald-500/5 border-emerald-500/30" : "bg-secondary/40 border-border"}`}>
+              {isFreeProjectsPending ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <div className="h-6 w-20 rounded bg-muted animate-pulse" />
+                  </div>
+                  <div className="h-3 w-40 rounded bg-muted animate-pulse mb-3" />
+                </>
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-2 mb-0.5">
+                    {hasFreeProject ? (
+                      <>
+                        <div className="text-2xl font-bold text-emerald-600">
+                          FREE
+                        </div>
+                        <div className="text-lg font-semibold text-muted-foreground line-through">
+                          &euro;100
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-2xl font-bold text-foreground">
+                        &euro;100
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-3">
+                    {hasFreeProject
+                      ? `You have ${freeCustomProjects} free custom project${freeCustomProjects > 1 ? "s" : ""} available`
+                      : "One-time posting fee"}
+                  </div>
+                </>
+              )}
               <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li className="flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
@@ -1425,6 +1466,8 @@ export default function NewJobPage() {
                         <Loader2 className="h-4 w-4 animate-spin" />{" "}
                         Processing...
                       </>
+                    ) : hasFreeProject ? (
+                      "Claim Your Free Project →"
                     ) : (
                       "Confirm & Pay →"
                     )
@@ -1448,6 +1491,7 @@ export default function NewJobPage() {
         <CheckoutModal
           jobId={pendingJobId}
           type="custom"
+          hasFreeCredit={hasFreeProject}
           onClose={() => setShowPaymentModal(false)}
         />
       )}

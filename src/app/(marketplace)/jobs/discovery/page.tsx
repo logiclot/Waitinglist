@@ -911,7 +911,7 @@ export default function DiscoveryWizardPage() {
         <CheckoutModal
           jobId={pendingJobId}
           type="discovery"
-          hasFreeScans={hasFreeScans}
+          hasFreeCredit={hasFreeScans}
           onClose={() => setShowPaymentModal(false)}
         />
       )}
