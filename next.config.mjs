@@ -20,24 +20,41 @@ const nextConfig = {
   // Proxy PostHog through our own domain to bypass ad blockers
   async rewrites() {
     return [
+      // Google Tag Manager proxy
+      {
+        source: "/metrics/gtm.js",
+        destination: "https://www.googletagmanager.com/gtm.js",
+      },
+      // Google Ads gtag loader proxy
       {
         source: "/metrics/ads-loader",
         destination: "https://www.googletagmanager.com/gtag/js",
       },
+      // Bing UET loader proxy
       {
         source: "/metrics/ms-loader",
         destination: "https://bat.bing.net/bat.js",
       },
+      // Bing UET action/event proxy
       {
-        source: "/a/static/:path*",
+        source: "/metrics/ms-action/:path*",
+        destination: "https://bat.bing.net/action/:path*",
+      },
+      {
+        source: "/metrics/ms-p/:path*",
+        destination: "https://bat.bing.com/p/:path*",
+      },
+      // PostHog proxy (obscured paths)
+      {
+        source: "/t/static/:path*",
         destination: "https://eu-assets.i.posthog.com/static/:path*",
       },
       {
-        source: "/a/decide",
+        source: "/t/decide",
         destination: "https://eu.i.posthog.com/decide",
       },
       {
-        source: "/a/:path*",
+        source: "/t/:path*",
         destination: "https://eu.i.posthog.com/:path*",
       },
     ];

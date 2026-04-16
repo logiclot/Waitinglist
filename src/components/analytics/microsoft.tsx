@@ -15,6 +15,7 @@ export function MicrosoftAnalytics() {
               (function(w, d, t, u, o) {
                 w[u] = w[u] || [];
                 o.ts = (new Date).getTime();
+                o.actionEndpoint = "/metrics/ms-action/";
                 var n = d.createElement(t);
                 n.src = "/metrics/ms-loader?ti=" + o.ti + ("uetq" != u ? "&q=" + u : "");
                 n.async = 1;

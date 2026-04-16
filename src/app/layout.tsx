@@ -99,7 +99,7 @@ export default async function RootLayout({
         <Script id="gtm-head" strategy="afterInteractive">{`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+'/metrics/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-WGQGGMG6');`}</Script>
         <script
           type="application/ld+json"
@@ -178,7 +178,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         </Providers>
         <Script src="/chat.js" async />
         <Script async src={`/metrics/ads-loader?id=${GOOGLE_ADS_ID}`} />
-        <Script src="/gtag.js" async />
+        <Script src="/metrics-init.js" async />
         <MicrosoftAnalytics />
         {/* <CookieConsent /> */}
       </body>
