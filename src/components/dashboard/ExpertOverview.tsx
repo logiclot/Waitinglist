@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { formatCentsToCurrency, TIER_THRESHOLDS } from "@/lib/commission";
 import { SpecialistTier } from "@prisma/client";
 import { useCoupons, useReferals } from "@/hooks/use-awards";
+import { useExpertProfile, useExpertStats } from "@/hooks/use-expert";
 
 interface ActiveOrder {
   id: string;
@@ -97,46 +98,37 @@ interface EliteApplicationInfo {
   demotedReason?: string | null;
 }
 
-interface ExpertOverviewProps {
-  referralStats?: ReferralStats;
-  activeCoupons?: { code: string; title: string }[];
-  hasCalendarUrl?: boolean;
-  hasStripeConnected?: boolean;
-  isFoundingExpert?: boolean;
-  tier?: SpecialistTier;
-  publishedSolutionCount?: number;
-  earningsThisMonthCents?: number;
-  inEscrowCents?: number;
-  activeOrders?: ActiveOrder[];
-  topSolution?: TopSolution | null;
-  recentJobs?: RecentJob[];
-  totalCompletedSales?: number;
-  portfolioSlug?: string | null;
-  eliteApplication?: EliteApplicationInfo | null;
-  newExpertBoostUntil?: string | null;
-}
 
-export function ExpertOverview({
-  hasCalendarUrl,
-  hasStripeConnected,
-  isFoundingExpert,
-  tier = "STANDARD",
-  publishedSolutionCount = 0,
-  earningsThisMonthCents = 0,
-  inEscrowCents = 0,
-  activeOrders = [],
-  topSolution,
-  recentJobs = [],
-  totalCompletedSales = 0,
-  portfolioSlug,
-  eliteApplication,
-  newExpertBoostUntil,
-}: ExpertOverviewProps) {
+export function ExpertOverview() {
   const [referralLink, setReferralLink] = useState("");
+  const profileQuery = useExpertProfile()
+  const statsQuery = useExpertStats()
   const { data: referrals, isPending: isReferalsLoading } = useReferals()
   const { data: coupons, isPending: isCouponsPending } = useCoupons()
 
+  const profile = profileQuery.data
+  const stats = statsQuery.data
 
+  const tier = profile?.tier ?? "STANDARD"
+  const isFoundingExpert = tier === "FOUNDING"
+  const totalCompletedSales = profile?.completedSalesCount ?? 0
+  const publishedSolutionCount = profile?._count?.solutions ?? 0
+  const hasStripeConnected = !!profile?.stripeDetailsSubmitted
+  const hasCalendarUrl = !!profile?.calendarUrl
+  const portfolioSlug = profile?.slug ?? null
+  const activeOrders = stats?.activeOrders ?? []
+  const recentJobs = stats?.recentJobs ?? []
+  const topSolution = stats?.topSolution ?? null
+  const eliteApplication: EliteApplicationInfo | null = profile
+    ? {
+        status: profile.eliteApplicationStatus,
+        appliedAt: profile.eliteAppliedAt?.toString() ?? null,
+        deniedAt: profile.eliteDeniedAt?.toString() ?? null,
+        deniedReason: profile.eliteDeniedReason ?? null,
+        demotedAt: profile.eliteDemotedAt?.toString() ?? null,
+        demotedReason: profile.eliteDemotedReason ?? null,
+      }
+    : null
 
   useEffect(() => {
     setReferralLink(
@@ -148,6 +140,10 @@ export function ExpertOverview({
     navigator.clipboard.writeText(referralLink);
     toast.success("Referral link copied!");
   };
+
+  if (profileQuery.isPending || statsQuery.isPending) {
+    return <ExpertOverviewSkeleton />;
+  }
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
@@ -210,8 +206,8 @@ export function ExpertOverview({
               This Month
             </p>
             <p className="text-2xl font-bold">
-              {earningsThisMonthCents > 0
-                ? formatCentsToCurrency(earningsThisMonthCents)
+              {stats?.earningsThisMonthCents != null && stats?.earningsThisMonthCents > 0
+                ? formatCentsToCurrency(stats.earningsThisMonthCents)
                 : "—"}
             </p>
           </div>
@@ -220,14 +216,14 @@ export function ExpertOverview({
               In Escrow
             </p>
             <p className="text-2xl font-bold text-muted-foreground">
-              {inEscrowCents > 0 ? formatCentsToCurrency(inEscrowCents) : "—"}
+              {stats?.inEscrowCents != null && stats.inEscrowCents > 0 ? formatCentsToCurrency(stats.inEscrowCents) : "—"}
             </p>
           </div>
         </div>
       </section>
 
       {/* Referral Section — shown only after first sale */}
-      {totalCompletedSales >= 1 && (
+      {profile?.completedSalesCount != null && profile?.completedSalesCount >= 1 && (
         <section className="bg-card border border-border rounded-xl p-6">
           {isReferalsLoading ? (
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-pulse">
@@ -246,78 +242,78 @@ export function ExpertOverview({
               </div>
             </div>
           ) : (
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h3 className="font-bold text-base mb-1.5 flex items-center gap-2">
-                <Users className="w-5 h-5 text-foreground" /> Referral Program
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
-                Share your link. When a referred expert stays active for 3 days
-                and publishes a solution, you receive{" "}
-                <span className="font-bold text-foreground">
-                  5% off our platform fee
-                </span>{" "}
-                for your next 2 sales.
-              </p>
-              <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
-                <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
-                  {referralLink}
-                </code>
-                <button
-                  onClick={copyToClipboard}
-                  className="p-1 hover:bg-secondary rounded-md transition-colors"
-                  title="Copy link"
-                >
-                  <Copy className="w-4 h-4 text-foreground" />
-                </button>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h3 className="font-bold text-base mb-1.5 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-foreground" /> Referral Program
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+                  Share your link. When a referred expert stays active for 3 days
+                  and publishes a solution, you receive{" "}
+                  <span className="font-bold text-foreground">
+                    5% off our platform fee
+                  </span>{" "}
+                  for your next 2 sales.
+                </p>
+                <div className="flex items-center gap-2 bg-secondary/50 border border-border rounded-md p-2 w-fit">
+                  <code className="text-sm font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
+                    {referralLink}
+                  </code>
+                  <button
+                    onClick={copyToClipboard}
+                    className="p-1 hover:bg-secondary rounded-md transition-colors"
+                    title="Copy link"
+                  >
+                    <Copy className="w-4 h-4 text-foreground" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-8 text-right">
-              {(referrals?.referralRewards?.expertDiscountCount || 0) >
-                0 && (
-                  <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
-                      <Gift className="w-4 h-4 text-green-500 shrink-0" />
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                          {referrals?.referralRewards?.expertDiscountCount}{" "}
-                          discount credit
-                          {referrals?.referralRewards?.expertDiscountCount !==
-                            1
-                            ? "s"
-                            : ""}{" "}
-                          available
-                        </p>
-                        <p className="text-xs text-green-600/70 dark:text-green-400/70">
-                          5% off platform fee · auto-applied on next sale
-                        </p>
+              <div className="flex gap-8 text-right">
+                {(referrals?.referralRewards?.expertDiscountCount || 0) >
+                  0 && (
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                        <Gift className="w-4 h-4 text-green-500 shrink-0" />
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                            {referrals?.referralRewards?.expertDiscountCount}{" "}
+                            discount credit
+                            {referrals?.referralRewards?.expertDiscountCount !==
+                              1
+                              ? "s"
+                              : ""}{" "}
+                            available
+                          </p>
+                          <p className="text-xs text-green-600/70 dark:text-green-400/70">
+                            5% off platform fee · auto-applied on next sale
+                          </p>
+                        </div>
                       </div>
                     </div>
+                  )}
+                <div className="flex flex-col items-end">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                    Referrals
+                  </p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-foreground">
+                      {referrals?.referralCount || 0}
+                    </span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      joined
+                    </span>
                   </div>
-                )}
-              <div className="flex flex-col items-end">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
-                  Referrals
-                </p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-foreground">
-                    {referrals?.referralCount || 0}
-                  </span>
-                  <span className="text-sm font-medium text-muted-foreground">
-                    joined
-                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">Experts</p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Experts</p>
               </div>
             </div>
-          </div>
           )}
         </section>
       )}
 
       {/* New Expert Boost Banner */}
-      {newExpertBoostUntil && new Date(newExpertBoostUntil) > new Date() && (
+      {profile?.newExpertBoostUntil && new Date(profile.newExpertBoostUntil) > new Date() && (
         <section className="bg-card border border-primary/20 rounded-xl p-5 flex items-center gap-4">
           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -327,12 +323,12 @@ export function ExpertOverview({
             <p className="text-xs text-muted-foreground">
               Your solutions get extra visibility for{" "}
               {Math.ceil(
-                (new Date(newExpertBoostUntil).getTime() - Date.now()) /
+                (new Date(profile.newExpertBoostUntil).getTime() - Date.now()) /
                 (1000 * 60 * 60 * 24),
               )}{" "}
               more day
               {Math.ceil(
-                (new Date(newExpertBoostUntil).getTime() - Date.now()) /
+                (new Date(profile.newExpertBoostUntil).getTime() - Date.now()) /
                 (1000 * 60 * 60 * 24),
               ) !== 1
                 ? "s"
@@ -883,5 +879,134 @@ function EliteApplicationCard({
         </button>
       </div>
     </section>
+  );
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────────────────
+
+function SkeletonBlock({ className }: { className?: string }) {
+  return <div className={`bg-muted rounded ${className ?? ""}`} />;
+}
+
+export function ExpertOverviewSkeleton() {
+  return (
+    <div className="p-8 max-w-6xl mx-auto space-y-8 animate-pulse">
+      {/* Header + Earnings */}
+      <section className="flex flex-col md:flex-row justify-between gap-6">
+        <div className="space-y-2">
+          <SkeletonBlock className="h-7 w-72" />
+          <SkeletonBlock className="h-4 w-56" />
+        </div>
+        <div className="flex gap-3">
+          <SkeletonBlock className="h-[72px] w-[130px] rounded-xl" />
+          <SkeletonBlock className="h-[72px] w-[130px] rounded-xl" />
+          <SkeletonBlock className="h-[72px] w-[130px] rounded-xl" />
+        </div>
+      </section>
+
+      {/* Priority Actions */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <SkeletonBlock className="w-5 h-5" />
+          <SkeletonBlock className="h-5 w-36" />
+        </div>
+        <div className="flex gap-4 overflow-hidden">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="min-w-[300px] flex-shrink-0 bg-muted/20 border border-border p-4 rounded-xl flex items-center gap-4"
+            >
+              <SkeletonBlock className="w-5 h-5 shrink-0" />
+              <div className="flex-1 space-y-2">
+                <SkeletonBlock className="h-4 w-28" />
+                <SkeletonBlock className="h-3 w-40" />
+              </div>
+              <SkeletonBlock className="h-7 w-16 rounded-md" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Grid layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Col (2/3) */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* New Opportunities */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <SkeletonBlock className="w-5 h-5" />
+                <SkeletonBlock className="h-5 w-40" />
+              </div>
+              <SkeletonBlock className="h-4 w-16" />
+            </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-card border border-border rounded-xl p-4 flex justify-between items-center"
+                >
+                  <div className="space-y-2">
+                    <SkeletonBlock className="h-4 w-48" />
+                    <div className="flex gap-2">
+                      <SkeletonBlock className="h-5 w-20 rounded" />
+                      <SkeletonBlock className="h-5 w-16 rounded" />
+                    </div>
+                  </div>
+                  <SkeletonBlock className="h-5 w-10 rounded" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Active Projects */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <SkeletonBlock className="w-5 h-5" />
+              <SkeletonBlock className="h-5 w-32" />
+            </div>
+            <div className="bg-card border border-border rounded-xl p-6 text-center">
+              <SkeletonBlock className="h-4 w-64 mx-auto" />
+            </div>
+          </section>
+        </div>
+
+        {/* Right Col (1/3) */}
+        <div className="space-y-6">
+          {/* Top Solution */}
+          <section className="bg-card border border-border rounded-xl p-5">
+            <SkeletonBlock className="h-4 w-28 mb-4" />
+            <div className="space-y-2 mb-4">
+              <SkeletonBlock className="h-4 w-full" />
+              <SkeletonBlock className="h-3 w-20" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              <div className="text-center p-2 bg-secondary/30 rounded">
+                <SkeletonBlock className="h-3 w-10 mx-auto mb-1" />
+                <SkeletonBlock className="h-4 w-6 mx-auto" />
+              </div>
+              <div className="text-center p-2 bg-secondary/30 rounded">
+                <SkeletonBlock className="h-3 w-10 mx-auto mb-1" />
+                <SkeletonBlock className="h-4 w-6 mx-auto" />
+              </div>
+            </div>
+            <SkeletonBlock className="h-8 w-full rounded-lg" />
+          </section>
+
+          {/* Stats */}
+          <section className="bg-card border border-border rounded-xl p-5">
+            <SkeletonBlock className="h-4 w-24 mb-4" />
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex justify-between items-center">
+                  <SkeletonBlock className="h-4 w-28" />
+                  <SkeletonBlock className="h-4 w-8" />
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
   );
 }

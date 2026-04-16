@@ -83,7 +83,7 @@ export const businessProcedure = t.procedure.use(({ ctx, next }) => {
     });
 });
 
-export const expertProcedures = t.procedure.use(({ ctx, next }) => {
+export const expertProcedure = t.procedure.use(({ ctx, next }) => {
     if (!ctx.session) {
         throw new TRPCError({
             code: "UNAUTHORIZED",
