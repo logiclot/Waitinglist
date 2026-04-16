@@ -31,6 +31,28 @@ const TRUST_STATS = [
   { label: "Live in days" },
 ];
 
+const DEFAULT_HEADLINE = "Automate your daily grind.";
+const DEFAULT_SUBHEADING = "Browse proven automations. See them work. Deploy in days.";
+const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "Sync Shopify to HubSpot" or "AI Phone Receptionist"';
+const DEFAULT_CTA_LABEL = "Browse Solutions";
+
+function splitSubheading(text: string): string[] {
+  const parts = text
+    .split(/(?<=\.)\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts : [text];
+}
+
+export interface HeroProps {
+  headline?: string;
+  subheading?: string;
+  trustStats?: string[];
+  worksWith?: string[];
+  searchPlaceholder?: string;
+  ctaLabel?: string;
+}
+
 interface Dot {
   top: number;
   left: number;
@@ -40,12 +62,27 @@ interface Dot {
   delay: number;
 }
 
-export function Hero() {
+export function Hero({
+  headline = DEFAULT_HEADLINE,
+  subheading = DEFAULT_SUBHEADING,
+  trustStats,
+  worksWith,
+  searchPlaceholder = DEFAULT_SEARCH_PLACEHOLDER,
+  ctaLabel = DEFAULT_CTA_LABEL,
+}: HeroProps = {}) {
   const router = useRouter();
   const gradientRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [dots, setDots] = useState<Dot[]>([]);
+
+  const headlineWords = headline.trim().split(/\s+/).filter(Boolean);
+  const subheadingChunks = splitSubheading(subheading);
+  const trustList =
+    trustStats && trustStats.length > 0
+      ? trustStats.map((label) => ({ label }))
+      : TRUST_STATS;
+  const worksWithList = worksWith && worksWith.length > 0 ? worksWith : WORKS_WITH;
 
   useEffect(() => {
     const newDots = Array.from({ length: 34 }).map(() => {
@@ -214,23 +251,39 @@ export function Hero() {
         <div className="text-center max-w-5xl mx-auto">
           <h1 className="tracking-tight flex flex-col items-center">
             <div className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight" style={{ color: colors[800] }}>
-              <span className="word" style={{ animation: "word-appear 0.7s ease-out 0ms both" }}>Automate</span>{" "}
-              <span className="word" style={{ animation: "word-appear 0.7s ease-out 110ms both" }}>your</span>{" "}
-              <span className="word" style={{ animation: "word-appear 0.7s ease-out 220ms both" }}>daily</span>{" "}
-              <span className="word" style={{ animation: "word-appear 0.7s ease-out 330ms both" }}>grind.</span>
+              {headlineWords.map((word, i) => (
+                <React.Fragment key={`${word}-${i}`}>
+                  <span
+                    className="word"
+                    style={{ animation: `word-appear 0.7s ease-out ${i * 110}ms both` }}
+                  >
+                    {word}
+                  </span>
+                  {i < headlineWords.length - 1 ? " " : null}
+                </React.Fragment>
+              ))}
             </div>
             <div
               className="mt-4 md:mt-5 text-xl md:text-3xl lg:text-4xl font-medium leading-[1.35] text-balance"
               style={{ color: "rgba(17,24,39,0.52)" }}
             >
-              <span className="word" style={{ animation: "word-appear 0.7s ease-out 500ms both" }}>Browse proven automations.</span>{" "}
-              <span className="word" style={{ animation: "word-appear 0.7s ease-out 660ms both" }}>See them work. Deploy in days.</span>
+              {subheadingChunks.map((chunk, i) => (
+                <React.Fragment key={`${chunk}-${i}`}>
+                  <span
+                    className="word"
+                    style={{ animation: `word-appear 0.7s ease-out ${500 + i * 160}ms both` }}
+                  >
+                    {chunk}
+                  </span>
+                  {i < subheadingChunks.length - 1 ? " " : null}
+                </React.Fragment>
+              ))}
             </div>
           </h1>
 
           {/* Trust stat pills */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            {TRUST_STATS.map((s, i) => (
+            {trustList.map((s, i) => (
               <div
                 key={s.label}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-full border bg-white shadow-md text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
@@ -260,7 +313,7 @@ export function Hero() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
-                placeholder='e.g., "Sync Shopify to HubSpot" or "AI Phone Receptionist"'
+                placeholder={searchPlaceholder}
                 className="w-full bg-transparent outline-none text-sm md:text-base"
                 style={{ color: colors[800] }}
               />
@@ -286,7 +339,7 @@ export function Hero() {
               <Link href={"/solutions"}>
                 <ShimmerButton className="shadow-2xl">
                   <span className="text-center text-sm leading-none font-medium tracking-tight whitespace-pre-wrap text-white lg:text-sm dark:from-white dark:to-slate-900/10">
-                    Browse Solutions
+                    {ctaLabel}
                   </span>
                 </ShimmerButton>
               </Link>
@@ -302,7 +355,7 @@ export function Hero() {
               Works with
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-              {WORKS_WITH.map((tool) => (
+              {worksWithList.map((tool) => (
                 <span key={tool} className="text-sm font-semibold" style={{ color: "rgba(17,24,39,0.28)" }}>
                   {tool}
                 </span>
