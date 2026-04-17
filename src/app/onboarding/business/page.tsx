@@ -23,25 +23,6 @@ const INDUSTRIES = [
   "Other"
 ];
 
-const TEAM_SIZES = [
-  "Solo",
-  "1–5",
-  "6–20",
-  "21–50",
-  "50+"
-];
-
-const POPULAR_TOOLS = [
-  "HubSpot", "Salesforce", "Pipedrive",
-  "Slack", "Google Workspace", "Microsoft 365",
-  "Notion", "Airtable", "ClickUp", "Asana",
-  "Shopify", "WooCommerce",
-  "Stripe", "QuickBooks", "Xero",
-  "Mailchimp", "Klaviyo", "ActiveCampaign",
-  "Zendesk", "Intercom",
-  "Zapier", "Make",
-];
-
 const PAIN_POINTS = [
   "Manual data entry or repetitive work",
   "Leads not being followed up properly",
@@ -51,13 +32,6 @@ const PAIN_POINTS = [
   "Too many tools that don’t talk to each other",
   "I’m not sure — I just know things are inefficient",
   "Other"
-];
-
-const INTENT_OPTIONS = [
-  "Just explore ready-made solutions",
-  "Compare options for a known problem",
-  "Get help defining the right solution",
-  "Replace a manual or inefficient process"
 ];
 
 const JOB_TITLES = [
@@ -128,19 +102,11 @@ export default function BusinessOnboardingPage() {
   const [howHeard, setHowHeard] = useState("");
   const [customHowHeard, setCustomHowHeard] = useState("");
 
-  // Step 2: Context
+  // Step 2: Context & Friction
   const [industry, setIndustry] = useState("");
   const [customIndustry, setCustomIndustry] = useState("");
-  const [teamSize, setTeamSize] = useState("");
-
-  // Step 3: Tools & Friction
-  const [selectedTools, setSelectedTools] = useState<string[]>([]);
-  const [customTool, setCustomTool] = useState("");
   const [painPoints, setPainPoints] = useState<string[]>([]);
   const [customPainPoint, setCustomPainPoint] = useState("");
-
-  // Step 4: Intent
-  const [intent, setIntent] = useState("");
 
   // --- Effects ---
 
@@ -185,8 +151,6 @@ export default function BusinessOnboardingPage() {
   };
 
   const validateStep1 = () => getMissingFieldsForStep(1).length === 0;
-  const validateStep2 = () => true;
-  const validateStep3 = () => true; // Optional as per instructions ("This must feel optional")
 
   const handleNext = () => {
     const missingFields = getMissingFieldsForStep(step);
@@ -196,12 +160,59 @@ export default function BusinessOnboardingPage() {
     }
 
     if (step === 1 && validateStep1()) setStep(2);
-    else if (step === 2 && validateStep2()) setStep(3);
-    else if (step === 3 && validateStep3()) setStep(4);
   };
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
+  };
+
+  const handleSubmit = async () => {
+    if (pending || step !== 2) return;
+
+    const missingFields = getMissingFieldsForStep(1);
+    if (missingFields.length > 0) {
+      setStep(1);
+      showMissingFieldsToast(missingFields);
+      return;
+    }
+
+    setPending(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+
+      painPoints.forEach(p => formData.append("businessPrimaryProblems", p));
+      if (customPainPoint) formData.append("businessPrimaryProblems", customPainPoint);
+
+      formData.append("companyName", companyName);
+      formData.append("fullName", fullName);
+      formData.append("jobTitle", jobTitle === "Other" ? customJobTitle : jobTitle);
+      formData.append("website", website);
+      formData.append("country", country);
+      formData.append("howHeard", resolvedHowHeard());
+
+      formData.append("industry", industry === "Other" ? customIndustry : industry);
+
+      const result = await createBusinessProfile(null, formData);
+
+      if (result?.error) {
+        setError(result.error);
+        toast.error(result.error);
+        setPending(false);
+        return;
+      }
+
+      // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
+      await refreshSession();
+      // Hard navigation ensures the browser sends the freshly-set cookie
+      window.location.href = "/business";
+    } catch {
+      const message = "Something went wrong. Please try again.";
+      setError(message);
+      toast.error(message);
+      setPending(false);
+    }
   };
 
   // --- Render ---
@@ -213,20 +224,20 @@ export default function BusinessOnboardingPage() {
         {/* GLOBAL UI: Step Indicator */}
         <div className="flex flex-col items-center space-y-2 mb-8">
           <div className="flex items-center gap-3">
-            {[1, 2, 3, 4].map((s) => {
+            {[1, 2].map((s) => {
               const isActive = s === step;
               const isCompleted = s < step;
               return (
                 <div key={s} className="flex items-center">
-                  <div 
+                  <div
                     className={`
-                      w-3 h-3 rounded-full transition-all duration-300 
+                      w-3 h-3 rounded-full transition-all duration-300
                       ${isActive ? 'bg-primary scale-125 ring-2 ring-primary/30' : ''}
                       ${isCompleted ? 'bg-primary' : ''}
                       ${!isActive && !isCompleted ? 'bg-secondary' : ''}
                     `}
                   />
-                  {s < 4 && (
+                  {s < 2 && (
                     <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-primary' : 'bg-secondary'}`} />
                   )}
                 </div>
@@ -234,65 +245,12 @@ export default function BusinessOnboardingPage() {
             })}
           </div>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-            Step {step} of 4
+            Step {step} of 2
           </p>
         </div>
 
-        <form onSubmit={async (e) => {
+        <form onSubmit={(e) => {
           e.preventDefault();
-
-          const missingFields = getMissingFieldsForStep(1);
-          if (missingFields.length > 0) {
-            setStep(1);
-            showMissingFieldsToast(missingFields);
-            return;
-          }
-
-          setPending(true);
-          setError(null);
-
-          try {
-            const formData = new FormData();
-
-            // Append arrays
-            selectedTools.forEach(t => formData.append("tools", t));
-            if (customTool) formData.append("tools", customTool);
-
-            painPoints.forEach(p => formData.append("businessPrimaryProblems", p));
-            if (customPainPoint) formData.append("businessPrimaryProblems", customPainPoint);
-
-            // Map fields
-            formData.append("companyName", companyName);
-            formData.append("fullName", fullName);
-            formData.append("jobTitle", jobTitle === "Other" ? customJobTitle : jobTitle);
-            formData.append("website", website);
-            formData.append("country", country);
-            formData.append("howHeard", resolvedHowHeard());
-
-            formData.append("industry", industry === "Other" ? customIndustry : industry);
-            formData.append("companySize", teamSize);
-
-            formData.append("intent", intent);
-
-            const result = await createBusinessProfile(null, formData);
-
-            if (result?.error) {
-              setError(result.error);
-              toast.error(result.error);
-              setPending(false);
-              return;
-            }
-
-            // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
-            await refreshSession();
-            // Hard navigation ensures the browser sends the freshly-set cookie
-            window.location.href = "/business";
-          } catch {
-            const message = "Something went wrong. Please try again.";
-            setError(message);
-            toast.error(message);
-            setPending(false);
-          }
         }} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
           {/* STEP 1: WORKSPACE SETUP */}
@@ -409,125 +367,50 @@ export default function BusinessOnboardingPage() {
             </div>
           )}
 
-          {/* STEP 2: BUSINESS CONTEXT */}
+          {/* STEP 2: BUSINESS CONTEXT & FRICTION */}
           {step === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-12">
               <div className="text-center space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Tell us a bit about your business</h1>
                 <p className="text-muted-foreground text-lg">This helps us show solutions that fit your reality.</p>
               </div>
 
-              <div className="bg-card border border-border rounded-xl p-8 space-y-8 shadow-sm">
-                <div>
-                  <label className="block text-sm font-medium mb-3">Industry <span className="text-muted-foreground font-normal">(Optional)</span></label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {INDUSTRIES.map(ind => (
-                      <label 
-                        key={ind} 
-                        className={`
-                          flex items-center p-3 rounded-lg border cursor-pointer transition-all
-                          ${industry === ind ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'hover:bg-secondary/50 border-border'}
-                        `}
-                      >
-                        <input 
-                          type="radio" 
-                          name="industry" 
-                          value={ind}
-                          checked={industry === ind}
-                          onChange={() => setIndustry(ind)}
-                          className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-                        />
-                        <span className="ml-3 text-sm font-medium">{ind}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {industry === "Other" && (
-                    <div className="mt-3">
-                      <input 
-                        value={customIndustry}
-                        onChange={e => setCustomIndustry(e.target.value)}
-                        placeholder="Please specify..."
-                        className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                        autoFocus
+              <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
+                <label className="block text-sm font-medium mb-3">Industry <span className="text-muted-foreground font-normal">(Optional)</span></label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {INDUSTRIES.map(ind => (
+                    <label
+                      key={ind}
+                      className={`
+                        flex items-center p-3 rounded-lg border cursor-pointer transition-all
+                        ${industry === ind ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'hover:bg-secondary/50 border-border'}
+                      `}
+                    >
+                      <input
+                        type="radio"
+                        name="industry"
+                        value={ind}
+                        checked={industry === ind}
+                        onChange={() => setIndustry(ind)}
+                        className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
                       />
-                    </div>
-                  )}
+                      <span className="ml-3 text-sm font-medium">{ind}</span>
+                    </label>
+                  ))}
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-3">Team Size <span className="text-muted-foreground font-normal">(Optional)</span></label>
-                  <div className="flex flex-wrap gap-3">
-                    {TEAM_SIZES.map(s => (
-                      <label 
-                        key={s} 
-                        className={`
-                          flex items-center justify-center px-4 py-2 rounded-full border cursor-pointer transition-all min-w-[80px]
-                          ${teamSize === s ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-secondary border-border'}
-                        `}
-                      >
-                        <input 
-                          type="radio" 
-                          name="teamSize" 
-                          value={s}
-                          checked={teamSize === s}
-                          onChange={() => setTeamSize(s)}
-                          className="sr-only"
-                        />
-                        <span className="text-sm font-medium">{s}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: TOOLS & FRICTION */}
-          {step === 3 && (
-            <div className="space-y-12">
-              
-              {/* Part 1: Tools */}
-              <div className="space-y-6">
-                <div className="text-center space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tight">What tools does your team use?</h1>
-                  <p className="text-muted-foreground text-lg">Select any that apply — experts will already know them.</p>
-                </div>
-
-                <div className="bg-card border border-border rounded-xl p-8 shadow-sm space-y-5">
-                  <div className="flex flex-wrap gap-2">
-                    {POPULAR_TOOLS.map(tool => {
-                      const active = selectedTools.includes(tool);
-                      return (
-                        <button
-                          key={tool}
-                          type="button"
-                          onClick={() => toggleSelection(selectedTools, setSelectedTools, tool)}
-                          className={`
-                            px-4 py-2 rounded-full border text-sm font-medium transition-all
-                            ${active
-                              ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                              : "bg-background border-border text-foreground hover:border-foreground/40 hover:bg-secondary/50"}
-                          `}
-                        >
-                          {active && <Check className="inline w-3 h-3 mr-1.5 -mt-0.5" />}
-                          {tool}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div>
+                {industry === "Other" && (
+                  <div className="mt-3">
                     <input
-                      value={customTool}
-                      onChange={e => setCustomTool(e.target.value)}
-                      placeholder="Don't see yours? Type any other tools here..."
-                      className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-foreground placeholder:text-muted-foreground"
+                      value={customIndustry}
+                      onChange={e => setCustomIndustry(e.target.value)}
+                      placeholder="Please specify..."
+                      className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                      autoFocus
                     />
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Part 2: Friction (Step 3.5) */}
               <div className="space-y-6">
                 <div className="text-center space-y-2">
                   <h2 className="text-2xl font-bold tracking-tight">What&apos;s slowing you down the most right now?</h2>
@@ -537,16 +420,16 @@ export default function BusinessOnboardingPage() {
                 <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
                   <div className="grid grid-cols-1 gap-3">
                     {PAIN_POINTS.map(pain => (
-                      <label 
-                        key={pain} 
+                      <label
+                        key={pain}
                         className={`
                           flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-all
                           ${painPoints.includes(pain) ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'hover:bg-secondary/50 border-border'}
                         `}
                       >
-                        <input 
-                          type="checkbox" 
-                          checked={painPoints.includes(pain)} 
+                        <input
+                          type="checkbox"
+                          checked={painPoints.includes(pain)}
                           onChange={() => toggleSelection(painPoints, setPainPoints, pain)}
                           className="mt-1 w-4 h-4 text-primary border-gray-300 focus:ring-primary rounded"
                         />
@@ -556,7 +439,7 @@ export default function BusinessOnboardingPage() {
                   </div>
                   {painPoints.includes("Other") && (
                     <div className="mt-4 pl-8">
-                       <input 
+                       <input
                         value={customPainPoint}
                         onChange={e => setCustomPainPoint(e.target.value)}
                         placeholder="Tell us more..."
@@ -566,45 +449,6 @@ export default function BusinessOnboardingPage() {
                     </div>
                   )}
                 </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* STEP 4: INTENT */}
-          {step === 4 && (
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">What would you like to do next?</h1>
-                <p className="text-muted-foreground text-lg">You can change this anytime.</p>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-8 space-y-4 shadow-sm max-w-xl mx-auto">
-                {INTENT_OPTIONS.map(opt => (
-                  <label 
-                    key={opt} 
-                    className={`
-                      flex items-center justify-between p-5 rounded-xl border cursor-pointer transition-all
-                      ${intent === opt ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'hover:bg-secondary/50 border-border'}
-                    `}
-                  >
-                    <span className="font-medium text-lg">{opt}</span>
-                    <div className={`
-                      w-5 h-5 rounded-full border flex items-center justify-center
-                      ${intent === opt ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground'}
-                    `}>
-                      {intent === opt && <Check className="w-3 h-3" />}
-                    </div>
-                    <input 
-                      type="radio" 
-                      name="intent" 
-                      value={opt}
-                      checked={intent === opt}
-                      onChange={() => setIntent(opt)}
-                      className="sr-only"
-                    />
-                  </label>
-                ))}
               </div>
             </div>
           )}
@@ -624,7 +468,7 @@ export default function BusinessOnboardingPage() {
               Back
             </button>
             
-            {step < 4 ? (
+            {step < 2 ? (
               <button 
                 type="button" 
                 onClick={handleNext} 
@@ -634,7 +478,8 @@ export default function BusinessOnboardingPage() {
               </button>
             ) : (
               <button 
-                type="submit" 
+                type="button" 
+                onClick={handleSubmit}
                 disabled={pending} 
                 className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center gap-2"
               >
