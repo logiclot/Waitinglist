@@ -92,20 +92,25 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
   if (!session?.user?.id) return { error: "Not authenticated" };
 
   // Phase 1 Fields (Updated)
-  const companyName = (formData.get("companyName") as string) || "";
-  const fullName = formData.get("fullName") as string;
-  const jobTitle = (formData.get("jobTitle") as string) || "";
-  const website = formData.get("website") as string;
-  const country = formData.get("country") as string;
+  const companyName = ((formData.get("companyName") as string) || "").trim();
+  const fullName = ((formData.get("fullName") as string) || "").trim();
+  const jobTitle = ((formData.get("jobTitle") as string) || "").trim();
+  const website = ((formData.get("website") as string) || "").trim();
+  const country = ((formData.get("country") as string) || "").trim();
+  const howHeard = ((formData.get("howHeard") as string) || "").trim();
 
-  const industry = formData.get("industry") as string;
-  const companySize = formData.get("companySize") as string; // teamSize
+  const industry = ((formData.get("industry") as string) || "").trim();
+  const companySize = ((formData.get("companySize") as string) || "").trim(); // teamSize
 
   const tools = formData.getAll("tools") as string[]; // coreTools
   const businessPrimaryProblems = formData.getAll("businessPrimaryProblems") as string[]; // painPoints
 
-  const intent = formData.get("intent") as string; // decisionContext
+  const intent = ((formData.get("intent") as string) || "").trim(); // decisionContext
   const profileImageUrl = (formData.get("profileImageUrl") as string) || null;
+
+  if (!fullName || !companyName || !country || !howHeard) {
+    return { error: "Please complete Full Name, Company Name, Country, and How did you hear about us." };
+  }
 
   // Derived fields — normalize casing ("JOHN DOE" → "John Doe")
   const normalizedName = fullName ? toTitleCase(fullName.trim()) : "";
@@ -114,7 +119,6 @@ export async function createBusinessProfile(prevState: unknown, formData: FormDa
   const lastName = nameParts.slice(1).join(" ") || "";
 
   const jobRole = jobTitle || "Admin";
-  const howHeard = "Direct"; // Placeholder
 
   try {
     await prisma.businessProfile.upsert({

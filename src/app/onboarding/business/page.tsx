@@ -7,7 +7,7 @@ import {
   ChevronRight,
   Check
 } from "lucide-react";
-import { ProfilePicUpload } from "@/components/ProfilePicUpload";
+import { toast } from "sonner";
 
 // --- Constants ---
 
@@ -73,6 +73,15 @@ const JOB_TITLES = [
   "Other",
 ];
 
+const HOW_HEARD_OPTIONS = [
+  "Social Media",
+  "Newsletter",
+  "Google",
+  "Microsoft",
+  "Referral",
+  "Other",
+];
+
 const COUNTRIES = [
   "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia",
   "Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium",
@@ -110,13 +119,14 @@ export default function BusinessOnboardingPage() {
   // --- Form State ---
 
   // Step 1: Workspace
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("");
   const [fullName, setFullName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [customJobTitle, setCustomJobTitle] = useState("");
   const [country, setCountry] = useState("");
   const [website, setWebsite] = useState("");
+  const [howHeard, setHowHeard] = useState("");
+  const [customHowHeard, setCustomHowHeard] = useState("");
 
   // Step 2: Context
   const [industry, setIndustry] = useState("");
@@ -149,18 +159,42 @@ export default function BusinessOnboardingPage() {
     }
   };
 
+  const resolvedHowHeard = () => {
+    const custom = customHowHeard.trim();
+    if (howHeard === "Other" && custom) return `Other: ${custom}`;
+    return howHeard;
+  };
+
   // --- Validation ---
 
-  const validateStep1 = () =>
-    !!fullName &&
-    !!country &&
-    !!jobTitle &&
-    (jobTitle !== "Other" || !!customJobTitle);
-  const validateStep2 = () => !!industry && (industry !== "Other" || !!customIndustry) && !!teamSize;
+  const getMissingFieldsForStep = (currentStep: number) => {
+    if (currentStep !== 1) return [];
+
+    const missingFields = [];
+    if (!fullName.trim()) missingFields.push("Full Name");
+    if (!companyName.trim()) missingFields.push("Company Name");
+    if (!country) missingFields.push("Country");
+    if (!howHeard) missingFields.push("How did you hear about us?");
+    return missingFields;
+  };
+
+  const showMissingFieldsToast = (missingFields: string[]) => {
+    toast.error("Please complete the required fields.", {
+      description: missingFields.join(", "),
+    });
+  };
+
+  const validateStep1 = () => getMissingFieldsForStep(1).length === 0;
+  const validateStep2 = () => true;
   const validateStep3 = () => true; // Optional as per instructions ("This must feel optional")
-  const validateStep4 = () => !!intent;
 
   const handleNext = () => {
+    const missingFields = getMissingFieldsForStep(step);
+    if (missingFields.length > 0) {
+      showMissingFieldsToast(missingFields);
+      return;
+    }
+
     if (step === 1 && validateStep1()) setStep(2);
     else if (step === 2 && validateStep2()) setStep(3);
     else if (step === 3 && validateStep3()) setStep(4);
@@ -206,6 +240,14 @@ export default function BusinessOnboardingPage() {
 
         <form onSubmit={async (e) => {
           e.preventDefault();
+
+          const missingFields = getMissingFieldsForStep(1);
+          if (missingFields.length > 0) {
+            setStep(1);
+            showMissingFieldsToast(missingFields);
+            return;
+          }
+
           setPending(true);
           setError(null);
 
@@ -225,17 +267,18 @@ export default function BusinessOnboardingPage() {
             formData.append("jobTitle", jobTitle === "Other" ? customJobTitle : jobTitle);
             formData.append("website", website);
             formData.append("country", country);
+            formData.append("howHeard", resolvedHowHeard());
 
             formData.append("industry", industry === "Other" ? customIndustry : industry);
             formData.append("companySize", teamSize);
 
             formData.append("intent", intent);
-            if (profileImageUrl) formData.append("profileImageUrl", profileImageUrl);
 
             const result = await createBusinessProfile(null, formData);
 
             if (result?.error) {
               setError(result.error);
+              toast.error(result.error);
               setPending(false);
               return;
             }
@@ -245,7 +288,9 @@ export default function BusinessOnboardingPage() {
             // Hard navigation ensures the browser sends the freshly-set cookie
             window.location.href = "/business";
           } catch {
-            setError("Something went wrong. Please try again.");
+            const message = "Something went wrong. Please try again.";
+            setError(message);
+            toast.error(message);
             setPending(false);
           }
         }} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -259,17 +304,6 @@ export default function BusinessOnboardingPage() {
               </div>
 
               <div className="bg-card border border-border rounded-xl p-8 space-y-6 shadow-sm">
-
-                <div className="flex flex-col items-center">
-                  <label className="block text-sm font-medium mb-3">
-                    Profile photo <span className="text-muted-foreground font-normal">(Optional)</span>
-                  </label>
-                  <ProfilePicUpload
-                    value={profileImageUrl}
-                    onChange={setProfileImageUrl}
-                    name={fullName || "Profile"}
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -285,7 +319,7 @@ export default function BusinessOnboardingPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Job Title <span className="text-primary">*</span>
+                    Job Title <span className="text-muted-foreground font-normal">(Optional)</span>
                   </label>
                   <select
                     value={jobTitle}
@@ -310,7 +344,7 @@ export default function BusinessOnboardingPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Company Name <span className="text-muted-foreground font-normal">(Optional)</span>
+                    Company Name <span className="text-primary">*</span>
                   </label>
                   <input
                     value={companyName}
@@ -338,6 +372,30 @@ export default function BusinessOnboardingPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
+                    How did you hear about us? <span className="text-primary">*</span>
+                  </label>
+                  <select
+                    value={howHeard}
+                    onChange={e => setHowHeard(e.target.value)}
+                    className="w-full bg-background border border-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                  >
+                    <option value="">Select an option...</option>
+                    {HOW_HEARD_OPTIONS.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  {howHeard === "Other" && (
+                    <input
+                      value={customHowHeard}
+                      onChange={e => setCustomHowHeard(e.target.value)}
+                      placeholder="Please specify (optional)"
+                      className="mt-2 w-full bg-background border border-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
                     Website <span className="text-muted-foreground font-normal">(Optional)</span>
                   </label>
                   <input
@@ -361,7 +419,7 @@ export default function BusinessOnboardingPage() {
 
               <div className="bg-card border border-border rounded-xl p-8 space-y-8 shadow-sm">
                 <div>
-                  <label className="block text-sm font-medium mb-3">Industry <span className="text-primary">*</span></label>
+                  <label className="block text-sm font-medium mb-3">Industry <span className="text-muted-foreground font-normal">(Optional)</span></label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {INDUSTRIES.map(ind => (
                       <label 
@@ -397,7 +455,7 @@ export default function BusinessOnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-3">Team Size <span className="text-primary">*</span></label>
+                  <label className="block text-sm font-medium mb-3">Team Size <span className="text-muted-foreground font-normal">(Optional)</span></label>
                   <div className="flex flex-wrap gap-3">
                     {TEAM_SIZES.map(s => (
                       <label 
@@ -577,7 +635,7 @@ export default function BusinessOnboardingPage() {
             ) : (
               <button 
                 type="submit" 
-                disabled={pending || !validateStep4()} 
+                disabled={pending} 
                 className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center gap-2"
               >
                 {pending ? "Setting up..." : "Go to Dashboard"} <ChevronRight className="w-4 h-4" />
