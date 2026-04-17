@@ -2,7 +2,6 @@
 
 import { useFormState } from "react-dom";
 import { createSpecialistProfile } from "@/actions/onboarding";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
@@ -47,7 +46,6 @@ const SECONDARY_TOOLS = [
 const CAPACITIES = ["<5h", "5–10h", "10–20h", "20h+"];
 
 export default function ExpertOnboardingPage() {
-  const router = useRouter();
   const { update: refreshSession } = useSession();
   // @ts-expect-error: types mismatch
   const [state, formAction] = useFormState(createSpecialistProfile, initialState);
@@ -92,12 +90,15 @@ export default function ExpertOnboardingPage() {
 
   useEffect(() => {
     if (state?.success) {
-      // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
+      // Force JWT refresh so middleware sees updated role + onboardingCompletedAt.
+      // Use a full-page navigation instead of router.push so the browser re-sends
+      // the freshly-updated session cookie — otherwise middleware can still see
+      // a stale token and bounce /dashboard → /onboarding → /onboarding/expert.
       refreshSession().then(() => {
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       });
     }
-  }, [state, router, refreshSession]);
+  }, [state, refreshSession]);
 
 
   useEffect(() => {
