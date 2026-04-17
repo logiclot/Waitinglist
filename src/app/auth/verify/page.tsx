@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 export default function VerifyPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -31,13 +30,13 @@ export default function VerifyPage() {
 
       if (res?.ok && !res.error) {
         setStatus("success");
-        router.push("/onboarding");
-        router.refresh();
+        // Hard navigation ensures middleware reads the fresh session cookie
+        window.location.href = "/onboarding";
       } else {
         setStatus("error");
       }
     })();
-  }, [token, router]);
+  }, [token]);
 
   if (status === "loading") {
     return (

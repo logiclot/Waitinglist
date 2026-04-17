@@ -147,7 +147,7 @@ export default function BusinessOnboardingPage() {
     if (state?.success) {
       // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
       refreshSession().then(() => {
-        router.push("/business");
+        window.location.href = "/business";
       });
     }
   }, [state, router, refreshSession]);
