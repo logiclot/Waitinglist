@@ -113,6 +113,61 @@ export const authOptions: NextAuthOptions = {
       ]
       : []),
     CredentialsProvider({
+      id: "verify-email",
+      name: "VerifyEmail",
+      credentials: {
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.token) return null;
+
+        try {
+          const verificationToken = await prisma.emailVerificationToken.findUnique({
+            where: { token: credentials.token },
+          });
+
+          if (!verificationToken) {
+            log.warn("auth.verify_email.token_not_found");
+            return null;
+          }
+
+          if (new Date() > verificationToken.expiresAt) {
+            log.warn("auth.verify_email.token_expired", { userId: verificationToken.userId });
+            return null;
+          }
+
+          const user = await prisma.$transaction(async (tx) => {
+            const updated = await tx.user.update({
+              where: { id: verificationToken.userId },
+              data: { emailVerifiedAt: new Date() },
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                emailVerifiedAt: true,
+                onboardingCompletedAt: true,
+                profileImageUrl: true,
+              },
+            });
+            await tx.emailVerificationToken.delete({ where: { id: verificationToken.id } });
+            return updated;
+          });
+
+          return {
+            id: user.id,
+            email: user.email,
+            role: user.role as "USER" | "BUSINESS" | "EXPERT" | "ADMIN",
+            emailVerifiedAt: user.emailVerifiedAt,
+            onboardingCompletedAt: user.onboardingCompletedAt,
+            profileImageUrl: user.profileImageUrl,
+          };
+        } catch (err) {
+          log.error("auth.verify_email.error", { error: String(err) });
+          return null;
+        }
+      },
+    }),
+    CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
