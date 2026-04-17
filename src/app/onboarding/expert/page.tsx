@@ -85,9 +85,13 @@ export default function ExpertOnboardingPage() {
 
 
   const handleNext = () => {
-    setAttempted(true);
-    if (step === 1 && validateStep1()) { setAttempted(false); setStep(2); }
-    else if (step === 2 && validateStep2()) { setAttempted(false); setStep(3); }
+    if (step === 1) {
+      if (!validateStep1()) { setAttempted(true); return; }
+      setStep(2);
+    } else if (step === 2) {
+      if (!validateStep2()) { setAttempted(true); return; }
+      setStep(3);
+    }
   };
 
   const handleBack = () => {
@@ -482,7 +486,6 @@ export default function ExpertOnboardingPage() {
             ) : (
               <button
                 type="submit"
-                onClick={() => setAttempted(true)}
                 disabled={pending}
                 className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center gap-2"
               >
