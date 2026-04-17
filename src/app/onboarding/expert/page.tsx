@@ -8,7 +8,6 @@ import {
   User,
   Check,
   Building2,
-  Globe,
   ShieldCheck,
   FileText
 } from "lucide-react";
@@ -21,24 +20,15 @@ import { COUNTRY_NAME_TO_ISO } from "@/lib/stripe-countries";
 
 const COUNTRIES = Object.keys(COUNTRY_NAME_TO_ISO).sort();
 
-const TEAM_SIZES = ["1–5", "6–20", "21–50", "50+"];
-
 const YEARS_EXPERIENCE = ["0–1", "1–3", "3–5", "5+"];
 const IMPLEMENTATION_COUNTS = ["1–5", "6–20", "21–50", "50+"];
 const PROJECT_SIZES = ["<$500", "$500–$2k", "$2k–$5k", "$5k+"];
 
 const ACQUISITION_SOURCES = [
-  "Referrals", "Freelance platforms", "Agency", "Direct outreach", "Other"
+  "Referrals", "Freelance platforms", "Agency", "Direct outreach", "Social Media", "Other"
 ];
 
-const PRIMARY_TOOLS = ["n8n", "Make", "Zapier", "Custom code", "Other"];
-
-const SECONDARY_TOOLS = [
-  "HubSpot", "Salesforce", "Shopify", "Stripe", "Google Sheets",
-  "Notion", "Slack", "AWS", "Azure", "Other"
-];
-
-const CAPACITIES = ["<5h", "5–10h", "10–20h", "20h+"];
+const TOTAL_STEPS = 3;
 
 export default function ExpertOnboardingPage() {
   const { update: refreshSession } = useSession();
@@ -56,26 +46,14 @@ export default function ExpertOnboardingPage() {
   const [country, setCountry] = useState("");
   const [roleType, setRoleType] = useState("Individual");
 
-  const [agencyName, setAgencyName] = useState("");
-  const [businessId, setBusinessId] = useState("");
-  const [agencyTeamSize, setAgencyTeamSize] = useState("");
-
   // Step 2: Experience
   const [yearsExperience, setYearsExperience] = useState("");
   const [approxImplementations, setApproxImplementations] = useState("");
   const [typicalProjectSize, setTypicalProjectSize] = useState("");
   const [acquisitionSources, setAcquisitionSources] = useState<string[]>([]);
   const [customSource, setCustomSource] = useState("");
-  const [portfolioUrl, setPortfolioUrl] = useState("");
 
-  // Step 3: Tools & Capacity
-  const [primaryTool, setPrimaryTool] = useState("");
-  const [customPrimaryTool, setCustomPrimaryTool] = useState("");
-  const [secondaryTools, setSecondaryTools] = useState<string[]>([]);
-  const [customSecondaryTool, setCustomSecondaryTool] = useState("");
-  const [weeklyCapacity, setWeeklyCapacity] = useState("");
-
-  // Step 4: Legal
+  // Step 3: Legal
   const [legalAgreed, setLegalAgreed] = useState(false);
   const [authorityConsent, setAuthorityConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(true);
@@ -99,26 +77,17 @@ export default function ExpertOnboardingPage() {
 
   // --- Validation ---
 
-  const validateStep1 = () => {
-    const basic = !!legalFullName && !!country;
-    if (roleType === "Agency") {
-      return basic && !!agencyName && !!businessId && !!agencyTeamSize;
-    }
-    return basic;
-  };
+  const validateStep1 = () => !!legalFullName && !!country;
 
   const validateStep2 = () => !!yearsExperience && !!approxImplementations && !!typicalProjectSize;
 
-  const validateStep3 = () => !!primaryTool && (primaryTool !== "Other" || !!customPrimaryTool) && !!weeklyCapacity;
-
-  const validateStep4 = () => legalAgreed && authorityConsent;
+  const validateStep3 = () => legalAgreed && authorityConsent;
 
 
   const handleNext = () => {
     setAttempted(true);
     if (step === 1 && validateStep1()) { setAttempted(false); setStep(2); }
     else if (step === 2 && validateStep2()) { setAttempted(false); setStep(3); }
-    else if (step === 3 && validateStep3()) { setAttempted(false); setStep(4); }
   };
 
   const handleBack = () => {
@@ -140,7 +109,7 @@ export default function ExpertOnboardingPage() {
         {/* Progress Bubbles */}
         <div className="flex flex-col items-center space-y-2 mb-8">
           <div className="flex items-center gap-3">
-            {[1, 2, 3, 4].map((s) => {
+            {Array.from({ length: TOTAL_STEPS }, (_, index) => index + 1).map((s) => {
               const isActive = s === step;
               const isCompleted = s < step;
               return (
@@ -153,7 +122,7 @@ export default function ExpertOnboardingPage() {
                       ${!isActive && !isCompleted ? 'bg-secondary' : ''}
                     `}
                   />
-                  {s < 4 && (
+                  {s < TOTAL_STEPS && (
                     <div className={`w-8 h-0.5 mx-1 ${isCompleted ? 'bg-primary' : 'bg-secondary'}`} />
                   )}
                 </div>
@@ -161,13 +130,13 @@ export default function ExpertOnboardingPage() {
             })}
           </div>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-            Step {step} of 4
+            Step {step} of {TOTAL_STEPS}
           </p>
         </div>
 
         <form onSubmit={async (e) => {
           e.preventDefault();
-          if (!validateStep4()) { setAttempted(true); return; }
+          if (!validateStep3()) { setAttempted(true); return; }
           setPending(true);
           setError(null);
 
@@ -178,28 +147,15 @@ export default function ExpertOnboardingPage() {
             acquisitionSources.forEach(s => formData.append("clientAcquisitionSource", s));
             if (customSource) formData.append("clientAcquisitionSource", customSource);
 
-            secondaryTools.forEach(t => formData.append("secondaryTools", t));
-            if (customSecondaryTool) formData.append("secondaryTools", customSecondaryTool);
-
             // Map Fields
             formData.append("legalFullName", legalFullName);
             formData.append("displayName", displayName || legalFullName);
             formData.append("country", country);
             formData.append("roleType", roleType);
 
-            if (roleType === "Agency") {
-              formData.append("agencyName", agencyName);
-              formData.append("businessIdentificationNumber", businessId);
-              formData.append("agencyTeamSize", agencyTeamSize);
-            }
-
             formData.append("yearsExperience", yearsExperience);
             formData.append("approxImplementations", approxImplementations);
             formData.append("typicalProjectSize", typicalProjectSize);
-            formData.append("portfolioUrl", portfolioUrl);
-
-            formData.append("primaryTool", primaryTool === "Other" ? customPrimaryTool : primaryTool);
-            formData.append("availability", weeklyCapacity);
 
             if (legalAgreed) formData.append("legalAgreed", "on");
             if (authorityConsent) formData.append("authorityConsent", "on");
@@ -305,41 +261,6 @@ export default function ExpertOnboardingPage() {
                   </div>
                 </div>
 
-                {roleType === "Agency" && (
-                  <div className="space-y-6 pt-4 border-t border-border animate-in fade-in slide-in-from-top-2">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Legal Entity Name <span className="text-primary">*</span></label>
-                      <input
-                        value={agencyName}
-                        onChange={e => setAgencyName(e.target.value)}
-                        className={`w-full bg-background border rounded-lg px-4 py-3 focus:ring-2 transition-all outline-none ${fieldErr(!agencyName)}`}
-                        placeholder="Agency Ltd."
-                      />
-                      <FieldError show={!agencyName} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Business Identification Number <span className="text-primary">*</span></label>
-                      <input
-                        value={businessId}
-                        onChange={e => setBusinessId(e.target.value)}
-                        className={`w-full bg-background border rounded-lg px-4 py-3 focus:ring-2 transition-all outline-none ${fieldErr(!businessId)}`}
-                        placeholder="Tax ID / EIN / VAT"
-                      />
-                      <FieldError show={!businessId} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Team Size</label>
-                      <select
-                        value={agencyTeamSize}
-                        onChange={e => setAgencyTeamSize(e.target.value)}
-                        className="w-full bg-background border border-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                      >
-                        <option value="">Select...</option>
-                        {TEAM_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -433,109 +354,12 @@ export default function ExpertOnboardingPage() {
                   )}
                 </div>
 
-                {/* Portfolio */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Portfolio / LinkedIn / GitHub URL <span className="text-muted-foreground font-normal">(Optional)</span></label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      value={portfolioUrl}
-                      onChange={e => setPortfolioUrl(e.target.value)}
-                      className="w-full bg-background border border-border rounded-lg pl-10 pr-4 py-3 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-
               </div>
             </div>
           )}
 
-          {/* STEP 3: TOOLS & CAPACITY */}
+          {/* STEP 3: LEGAL */}
           {step === 3 && (
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Tools & Capacity</h1>
-                <p className="text-muted-foreground text-lg">This is used to match you with the right buyers — not to limit you.</p>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-8 space-y-8 shadow-sm">
-
-                {/* Primary Tool */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">Primary Automation Tool <span className="text-primary">*</span></label>
-                  <div className={`flex flex-wrap gap-3 p-2 rounded-lg transition-all ${attempted && !primaryTool ? 'bg-red-50 ring-1 ring-red-300' : ''}`}>
-                    {PRIMARY_TOOLS.map(t => (
-                      <label key={t} className={`flex items-center justify-center px-4 py-2 rounded-full border cursor-pointer transition-all ${primaryTool === t ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-secondary border-border'}`}>
-                        <input type="radio" name="primary" value={t} checked={primaryTool === t} onChange={() => setPrimaryTool(t)} className="sr-only" />
-                        <span className="text-sm font-medium">{t}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <FieldError show={!primaryTool} msg="Please select your primary tool" />
-                  {primaryTool === "Other" && (
-                    <div className="mt-3">
-                      <input
-                        value={customPrimaryTool}
-                        onChange={e => setCustomPrimaryTool(e.target.value)}
-                        placeholder="Which tool?"
-                        className={`w-full bg-background border rounded-lg px-4 py-2 text-sm focus:ring-2 transition-all outline-none ${fieldErr(primaryTool === "Other" && !customPrimaryTool)}`}
-                      />
-                      <FieldError show={primaryTool === "Other" && !customPrimaryTool} msg="Please specify the tool" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Secondary Tools */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">Secondary tools you actively work with</label>
-                  <div className="flex flex-wrap gap-2">
-                    {SECONDARY_TOOLS.map(t => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => toggleSelection(secondaryTools, setSecondaryTools, t)}
-                        className={`
-                          px-3 py-1.5 rounded-md border text-sm transition-all
-                          ${secondaryTools.includes(t) ? 'bg-primary/10 border-primary text-primary font-medium' : 'bg-background border-border text-foreground hover:border-foreground/30'}
-                        `}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                  {secondaryTools.includes("Other") && (
-                    <div className="mt-3">
-                      <input
-                        value={customSecondaryTool}
-                        onChange={e => setCustomSecondaryTool(e.target.value)}
-                        placeholder="Other tools..."
-                        className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Availability */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">Current weekly capacity <span className="text-primary">*</span></label>
-                  <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 p-2 rounded-lg transition-all ${attempted && !weeklyCapacity ? 'bg-red-50 ring-1 ring-red-300' : ''}`}>
-                    {CAPACITIES.map(c => (
-                      <label key={c} className={`flex items-center justify-center px-4 py-3 rounded-lg border cursor-pointer transition-all ${weeklyCapacity === c ? 'bg-primary/5 border-primary text-primary ring-1 ring-primary/20' : 'hover:bg-secondary/50 border-border'}`}>
-                        <input type="radio" name="capacity" value={c} checked={weeklyCapacity === c} onChange={() => setWeeklyCapacity(c)} className="sr-only" />
-                        <span className="text-sm font-medium">{c}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <FieldError show={!weeklyCapacity} msg="Please select your weekly availability" />
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {/* STEP 4: LEGAL */}
-          {step === 4 && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Legal & Platform Authority</h1>
@@ -582,10 +406,6 @@ export default function ExpertOnboardingPage() {
                     <input type="checkbox" checked={legalAgreed} onChange={() => setLegalAgreed(!legalAgreed)} className="sr-only" />
                     <span className="text-sm leading-relaxed">
                       I have read and agree to the{" "}
-                      <Link href="/terms" target="_blank" onClick={e => e.stopPropagation()} className="text-primary underline underline-offset-2 font-medium">Terms &amp; Conditions</Link>
-                      ,{" "}
-                      <Link href="/privacy" target="_blank" onClick={e => e.stopPropagation()} className="text-primary underline underline-offset-2 font-medium">Privacy Policy</Link>
-                      , and{" "}
                       <Link href="/nda" target="_blank" onClick={e => e.stopPropagation()} className="text-primary underline underline-offset-2 font-medium">Mutual NDA</Link>
                       . <span className="text-primary font-semibold">*</span>
                     </span>
@@ -636,8 +456,7 @@ export default function ExpertOnboardingPage() {
           {attempted && (
             (step === 1 && !validateStep1()) ||
             (step === 2 && !validateStep2()) ||
-            (step === 3 && !validateStep3()) ||
-            (step === 4 && !validateStep4())
+            (step === 3 && !validateStep3())
           ) && (
               <p className="text-sm text-red-500 text-right max-w-2xl mx-auto w-full -mb-4">
                 Please complete all required fields before continuing.
@@ -652,7 +471,7 @@ export default function ExpertOnboardingPage() {
               Back
             </button>
 
-            {step < 4 ? (
+            {step < TOTAL_STEPS ? (
               <button
                 type="button"
                 onClick={handleNext}

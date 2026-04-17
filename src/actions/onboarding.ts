@@ -243,49 +243,44 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
   const country = formData.get("country") as string;
   const isAgency = formData.get("roleType") === "Agency";
 
-  const agencyName = formData.get("agencyName") as string;
-  const businessIdentificationNumber = formData.get("businessIdentificationNumber") as string;
-  const agencyTeamSize = formData.get("agencyTeamSize") as string;
-
   // --- Step 2: Experience ---
   const yearsExperience = formData.get("yearsExperience") as string;
   const pastImplementations = formData.get("approxImplementations") as string; // Mapping to pastImplementations
   const typicalProjectSize = formData.get("typicalProjectSize") as string;
   const clientAcquisitionSource = formData.getAll("clientAcquisitionSource") as string[];
-  const portfolioUrl = formData.get("portfolioUrl") as string;
 
-  // --- Step 3: Tools & Capacity ---
-  const primaryTool = formData.get("primaryTool") as string;
-  const tools = formData.getAll("secondaryTools") as string[]; // Secondary tools
-  const availability = formData.get("availability") as string; // Weekly capacity
+  // These profile fields are intentionally not collected during onboarding.
+  const agencyName = null;
+  const businessIdentificationNumber = null;
+  const agencyTeamSize = null;
+  const portfolioUrl = null;
+  const primaryTool = null;
+  const tools: string[] = [];
+  const availability = null;
 
   const profileImageUrl = (formData.get("profileImageUrl") as string) || null;
 
-  // --- Step 4: Legal ---
+  // --- Step 3: Legal ---
   // Checkboxes are usually "on" if checked, null if not.
   const legalAgreed = formData.get("legalAgreed") === "on";
   const authorityConsent = formData.get("authorityConsent") === "on";
   const marketingConsent = formData.get("marketingConsent") === "on";
 
   // Required Fields Validation
-  if (!legalFullName || !country || !yearsExperience || !pastImplementations || !typicalProjectSize || !primaryTool || !availability) {
+  if (!legalFullName || !country || !yearsExperience || !pastImplementations || !typicalProjectSize) {
     return { error: "Required fields missing" };
-  }
-
-  if (isAgency && (!agencyName || !businessIdentificationNumber)) {
-    return { error: "Agency details required" };
   }
 
   if (!legalAgreed || !authorityConsent) {
     return { error: "You must agree to the terms and authority consent." };
   }
 
-  // Generate a slug (using legal name or agency name)
-  const baseName = isAgency && agencyName ? agencyName : legalFullName;
+  // Generate a slug from the collected identity fields.
+  const baseName = legalFullName;
   const slug = baseName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") + "-" + Math.random().toString(36).substr(2, 4);
 
-  // Display Name: user input → agency name fallback → legal name
-  const displayName = isAgency && agencyName ? agencyName : (displayNameInput || legalFullName);
+  // Display Name: user input → legal name
+  const displayName = displayNameInput || legalFullName;
 
   try {
     await prisma.specialistProfile.upsert({
@@ -298,9 +293,9 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         tier: foundingExperts.includes(session.user.email) ? "FOUNDING" : "STANDARD",
         isFoundingExpert: foundingExperts.includes(session.user.email),
         platformFeePercentage: foundingExperts.includes(session.user.email) ? TIER_THRESHOLDS.FOUNDING : TIER_THRESHOLDS.STANDARD,
-        agencyName: isAgency ? agencyName : null,
-        businessIdentificationNumber: isAgency ? businessIdentificationNumber : null,
-        agencyTeamSize: isAgency ? agencyTeamSize : null,
+        agencyName,
+        businessIdentificationNumber,
+        agencyTeamSize,
         yearsExperience,
         pastImplementations,
         typicalProjectSize,
@@ -308,8 +303,8 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         portfolioUrl,
 
         primaryTool,
-        tools, // Secondary
-        availability, // Capacity
+        tools,
+        availability,
 
         legalStatus: legalAgreed ? "accepted" : "pending",
         termsAcceptedAt: new Date(),
@@ -318,7 +313,7 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
 
         // On update: preserve existing status (do NOT reset a SUSPENDED expert to APPROVED)
         specialties: [], // Deprecated in new flow or empty
-        portfolioLinks: [], // Using portfolioUrl now
+        portfolioLinks: [],
       },
       create: {
         userId: session.user.id,
@@ -328,9 +323,9 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         displayName,
         country,
         isAgency,
-        agencyName: isAgency ? agencyName : null,
-        businessIdentificationNumber: isAgency ? businessIdentificationNumber : null,
-        agencyTeamSize: isAgency ? agencyTeamSize : null,
+        agencyName,
+        businessIdentificationNumber,
+        agencyTeamSize,
 
         yearsExperience,
         pastImplementations,
@@ -339,8 +334,8 @@ export async function createSpecialistProfile(prevState: unknown, formData: Form
         portfolioUrl,
 
         primaryTool,
-        tools, // Secondary
-        availability, // Capacity
+        tools,
+        availability,
 
         legalStatus: legalAgreed ? "accepted" : "pending",
         termsAcceptedAt: new Date(),
