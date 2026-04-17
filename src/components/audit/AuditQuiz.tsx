@@ -554,6 +554,25 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
     }
   }
 
+  function pushAuditCompletedEvent(result: ReturnType<typeof computeResults>, finalAnswers: Answers) {
+    if (typeof window === "undefined") return;
+    const w = window as Window & { dataLayer?: Record<string, unknown>[] };
+    w.dataLayer = w.dataLayer || [];
+    w.dataLayer.push({
+      event: "audit_completed",
+      session_id: sessionId,
+      score: result.overall,
+      score_label: result.scoreLabel,
+      team_size: finalAnswers.teamSize,
+      hours: finalAnswers.hours,
+      data_org: finalAnswers.dataOrg,
+      frustration: finalAnswers.frustration,
+      task_count: finalAnswers.tasks?.length ?? 0,
+      strength_count: finalAnswers.strengths?.length ?? 0,
+      financial_estimate: result.financialEstimate,
+    });
+  }
+
   function advance(newAnswers: Partial<Answers>) {
     setAnswers(newAnswers);
     trackAudit("step_complete", { step });
@@ -563,6 +582,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
       // Track completion before opening new tab
       const r = computeResults(newAnswers as Answers);
       trackAudit("quiz_complete", { score: r.overall, scoreLabel: r.scoreLabel, answers: newAnswers });
+      pushAuditCompletedEvent(r, newAnswers as Answers);
       // Open results in a new tab, then reset the homepage quiz
       const encoded = btoa(JSON.stringify(newAnswers));
       window.open(`/audit?a=${encoded}`, "_blank");
@@ -573,6 +593,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
     } else {
       const r = computeResults(newAnswers as Answers);
       trackAudit("quiz_complete", { score: r.overall, scoreLabel: r.scoreLabel, answers: newAnswers });
+      pushAuditCompletedEvent(r, newAnswers as Answers);
       setTimeout(() => {
         setShowResults(true);
         setTimeout(() => {

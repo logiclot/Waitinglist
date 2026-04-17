@@ -66,9 +66,23 @@ export function MilestoneTable({ orderId, milestones, isBuyer, isSeller, orderSt
     }
   };
 
+  const pushProjectCompleteEvent = () => {
+    const w = window as Window & { dataLayer?: Record<string, unknown>[] };
+    w.dataLayer = w.dataLayer || [];
+    const value = milestones.reduce((sum, m) => sum + (m.price ?? 0), 0);
+    w.dataLayer.push({
+      event: "payment_completed",
+      order_id: orderId,
+      value,
+      currency: "EUR",
+      milestone_count: milestones.length,
+    });
+  };
+
   const handleRelease = async (index: number) => {
     if (!confirm("Are you sure you want to release funds to the expert? This cannot be undone.")) return;
     setLoading(true);
+    const isLastMilestone = index + 1 >= milestones.length;
     try {
       const res = await fetch("/api/projects/release-milestone", {
         method: "POST",
@@ -77,6 +91,7 @@ export function MilestoneTable({ orderId, milestones, isBuyer, isSeller, orderSt
       });
       if (res.ok) {
         toast.success("Funds Released. Thank you for using LogicLot!");
+        if (isLastMilestone) pushProjectCompleteEvent();
         router.refresh();
       } else if (res.status === 502) {
         // Stripe transfer failed — fall back to simulate in dev
@@ -87,6 +102,7 @@ export function MilestoneTable({ orderId, milestones, isBuyer, isSeller, orderSt
         });
         if (sim.ok) {
           toast.success("Funds Released (simulated). Thank you for using LogicLot!");
+          if (isLastMilestone) pushProjectCompleteEvent();
           router.refresh();
         } else {
           const simData = await sim.json();
