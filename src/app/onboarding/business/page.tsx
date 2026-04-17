@@ -1,8 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
 import { createBusinessProfile } from "@/actions/onboarding";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
@@ -10,11 +8,6 @@ import {
   Check
 } from "lucide-react";
 import { ProfilePicUpload } from "@/components/ProfilePicUpload";
-
-const initialState = {
-  error: null as string | null,
-  success: false as boolean,
-};
 
 // --- Constants ---
 
@@ -109,10 +102,8 @@ const COUNTRIES = [
 ];
 
 export default function BusinessOnboardingPage() {
-  const router = useRouter();
   const { update: refreshSession } = useSession();
-  // @ts-expect-error: types mismatch
-  const [state, formAction] = useFormState(createBusinessProfile, initialState);
+  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [step, setStep] = useState(1);
 
@@ -142,16 +133,6 @@ export default function BusinessOnboardingPage() {
   const [intent, setIntent] = useState("");
 
   // --- Effects ---
-
-  useEffect(() => {
-    if (state?.success) {
-      // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
-      refreshSession().then(() => {
-        window.location.href = "/business";
-      });
-    }
-  }, [state, router, refreshSession]);
-
 
   // Scroll to top on step change
   useEffect(() => {
@@ -223,30 +204,50 @@ export default function BusinessOnboardingPage() {
           </p>
         </div>
 
-        <form action={(formData) => {
-          // Append arrays
-          selectedTools.forEach(t => formData.append("tools", t));
-          if (customTool) formData.append("tools", customTool);
-          
-          painPoints.forEach(p => formData.append("businessPrimaryProblems", p));
-          if (customPainPoint) formData.append("businessPrimaryProblems", customPainPoint);
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          setPending(true);
+          setError(null);
 
-          // Map fields
-          formData.append("companyName", companyName);
-          formData.append("fullName", fullName);
-          formData.append("jobTitle", jobTitle === "Other" ? customJobTitle : jobTitle);
-          formData.append("website", website);
-          formData.append("country", country);
-          
-          formData.append("industry", industry === "Other" ? customIndustry : industry);
-          formData.append("companySize", teamSize);
-          
-          formData.append("intent", intent);
-          if (profileImageUrl) formData.append("profileImageUrl", profileImageUrl);
-          
-          setPending(true); 
-          // @ts-expect-error: formAction type mismatch
-          formAction(formData); 
+          try {
+            const formData = new FormData();
+
+            // Append arrays
+            selectedTools.forEach(t => formData.append("tools", t));
+            if (customTool) formData.append("tools", customTool);
+
+            painPoints.forEach(p => formData.append("businessPrimaryProblems", p));
+            if (customPainPoint) formData.append("businessPrimaryProblems", customPainPoint);
+
+            // Map fields
+            formData.append("companyName", companyName);
+            formData.append("fullName", fullName);
+            formData.append("jobTitle", jobTitle === "Other" ? customJobTitle : jobTitle);
+            formData.append("website", website);
+            formData.append("country", country);
+
+            formData.append("industry", industry === "Other" ? customIndustry : industry);
+            formData.append("companySize", teamSize);
+
+            formData.append("intent", intent);
+            if (profileImageUrl) formData.append("profileImageUrl", profileImageUrl);
+
+            const result = await createBusinessProfile(null, formData);
+
+            if (result?.error) {
+              setError(result.error);
+              setPending(false);
+              return;
+            }
+
+            // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
+            await refreshSession();
+            // Hard navigation ensures the browser sends the freshly-set cookie
+            window.location.href = "/business";
+          } catch {
+            setError("Something went wrong. Please try again.");
+            setPending(false);
+          }
         }} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
           {/* STEP 1: WORKSPACE SETUP */}
@@ -551,6 +552,11 @@ export default function BusinessOnboardingPage() {
           )}
 
           {/* NAVIGATION */}
+          {error && (
+            <p className="text-sm text-red-500 text-right max-w-2xl mx-auto w-full -mb-4">
+              {error}
+            </p>
+          )}
           <div className="flex justify-between pt-8 max-w-2xl mx-auto w-full">
             <button 
               type="button" 

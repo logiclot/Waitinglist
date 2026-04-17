@@ -1,8 +1,6 @@
 "use client";
 
-import { useFormState } from "react-dom";
 import { createSpecialistProfile } from "@/actions/onboarding";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
@@ -18,10 +16,6 @@ import Link from "next/link";
 import { ProfilePicUpload } from "@/components/ProfilePicUpload";
 import { COUNTRY_NAME_TO_ISO } from "@/lib/stripe-countries";
 
-const initialState = {
-  error: null as string | null,
-  success: false as boolean,
-};
 
 // --- Constants ---
 
@@ -47,10 +41,8 @@ const SECONDARY_TOOLS = [
 const CAPACITIES = ["<5h", "5–10h", "10–20h", "20h+"];
 
 export default function ExpertOnboardingPage() {
-  const router = useRouter();
   const { update: refreshSession } = useSession();
-  // @ts-expect-error: types mismatch
-  const [state, formAction] = useFormState(createSpecialistProfile, initialState);
+  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [step, setStep] = useState(1);
   const [attempted, setAttempted] = useState(false);
@@ -89,18 +81,6 @@ export default function ExpertOnboardingPage() {
   const [marketingConsent, setMarketingConsent] = useState(true);
 
   // --- Effects ---
-
-  useEffect(() => {
-    if (state?.success) {
-      // Force JWT refresh so middleware sees updated role + onboardingCompletedAt.
-      // Hard navigation ensures the browser sends the freshly-set cookie —
-      // router.push uses cached middleware responses and causes a redirect loop.
-      refreshSession().then(() => {
-        window.location.href = "/dashboard";
-      });
-    }
-  }, [state, router, refreshSession]);
-
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -185,44 +165,64 @@ export default function ExpertOnboardingPage() {
           </p>
         </div>
 
-        <form action={(formData) => {
-          // Append Arrays & Customs
-          acquisitionSources.forEach(s => formData.append("clientAcquisitionSource", s));
-          if (customSource) formData.append("clientAcquisitionSource", customSource);
-
-          secondaryTools.forEach(t => formData.append("secondaryTools", t));
-          if (customSecondaryTool) formData.append("secondaryTools", customSecondaryTool);
-
-          // Map Fields
-          formData.append("legalFullName", legalFullName);
-          formData.append("displayName", displayName || legalFullName);
-          formData.append("country", country);
-          formData.append("roleType", roleType);
-
-          if (roleType === "Agency") {
-            formData.append("agencyName", agencyName);
-            formData.append("businessIdentificationNumber", businessId);
-            formData.append("agencyTeamSize", agencyTeamSize);
-          }
-
-          formData.append("yearsExperience", yearsExperience);
-          formData.append("approxImplementations", approxImplementations);
-          formData.append("typicalProjectSize", typicalProjectSize);
-          formData.append("portfolioUrl", portfolioUrl);
-
-          formData.append("primaryTool", primaryTool === "Other" ? customPrimaryTool : primaryTool);
-          formData.append("availability", weeklyCapacity);
-
-          if (legalAgreed) formData.append("legalAgreed", "on");
-          if (authorityConsent) formData.append("authorityConsent", "on");
-          if (marketingConsent) formData.append("marketingConsent", "on");
-
-          if (profileImageUrl) formData.append("profileImageUrl", profileImageUrl);
-
-          if (!validateStep4()) return;
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          if (!validateStep4()) { setAttempted(true); return; }
           setPending(true);
-          // @ts-expect-error: formAction type mismatch
-          formAction(formData);
+          setError(null);
+
+          try {
+            const formData = new FormData();
+
+            // Append Arrays & Customs
+            acquisitionSources.forEach(s => formData.append("clientAcquisitionSource", s));
+            if (customSource) formData.append("clientAcquisitionSource", customSource);
+
+            secondaryTools.forEach(t => formData.append("secondaryTools", t));
+            if (customSecondaryTool) formData.append("secondaryTools", customSecondaryTool);
+
+            // Map Fields
+            formData.append("legalFullName", legalFullName);
+            formData.append("displayName", displayName || legalFullName);
+            formData.append("country", country);
+            formData.append("roleType", roleType);
+
+            if (roleType === "Agency") {
+              formData.append("agencyName", agencyName);
+              formData.append("businessIdentificationNumber", businessId);
+              formData.append("agencyTeamSize", agencyTeamSize);
+            }
+
+            formData.append("yearsExperience", yearsExperience);
+            formData.append("approxImplementations", approxImplementations);
+            formData.append("typicalProjectSize", typicalProjectSize);
+            formData.append("portfolioUrl", portfolioUrl);
+
+            formData.append("primaryTool", primaryTool === "Other" ? customPrimaryTool : primaryTool);
+            formData.append("availability", weeklyCapacity);
+
+            if (legalAgreed) formData.append("legalAgreed", "on");
+            if (authorityConsent) formData.append("authorityConsent", "on");
+            if (marketingConsent) formData.append("marketingConsent", "on");
+
+            if (profileImageUrl) formData.append("profileImageUrl", profileImageUrl);
+
+            const result = await createSpecialistProfile(null, formData);
+
+            if (result?.error) {
+              setError(result.error);
+              setPending(false);
+              return;
+            }
+
+            // Force JWT refresh so middleware sees updated role + onboardingCompletedAt
+            await refreshSession();
+            // Hard navigation ensures the browser sends the freshly-set cookie
+            window.location.href = "/dashboard";
+          } catch {
+            setError("Something went wrong. Please try again.");
+            setPending(false);
+          }
         }} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
           {/* STEP 1: IDENTITY */}
@@ -628,6 +628,11 @@ export default function ExpertOnboardingPage() {
           )}
 
           {/* NAVIGATION */}
+          {error && (
+            <p className="text-sm text-red-500 text-right max-w-2xl mx-auto w-full -mb-4">
+              {error}
+            </p>
+          )}
           {attempted && (
             (step === 1 && !validateStep1()) ||
             (step === 2 && !validateStep2()) ||
