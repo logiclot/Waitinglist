@@ -24,9 +24,9 @@ const colors = {
 const WORKS_WITH = ["Zapier", "Make", "n8n", "HubSpot", "Notion", "Stripe", "Airtable", "OpenAI"];
 
 const TRUST_STATS = [
-  { label: "Fixed price" },
-  { label: "See it work before you pay" },
-  { label: "Live in days" },
+  { label: "CRM & Sales" },
+  { label: "Lead Generation" },
+  { label: "Email Automation" },
 ];
 
 const DEFAULT_HEADLINE = "Find your automation expert";
@@ -280,11 +280,11 @@ export function Hero({
           </h1>
 
           {/* Trust stat pills */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-1.5 md:gap-3">
             {trustList.map((s, i) => (
               <div
                 key={s.label}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-full border bg-white shadow-md text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                className="flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-3 md:py-2.5 rounded-full border bg-white shadow-md text-xs md:text-sm whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                 style={{
                   borderColor: "rgba(17,24,39,0.18)",
                   animation: `word-appear 0.6s ease-out ${900 + i * 90}ms both`,
