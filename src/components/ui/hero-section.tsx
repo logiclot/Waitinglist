@@ -24,15 +24,13 @@ const colors = {
 const WORKS_WITH = ["Zapier", "Make", "n8n", "HubSpot", "Notion", "Stripe", "Airtable", "OpenAI"];
 
 const TRUST_STATS = [
-  { label: "Get your evenings back" },
-  { label: "Reclaim 10+ hours per week" },
   { label: "Fixed price" },
   { label: "See it work before you pay" },
   { label: "Live in days" },
 ];
 
-const DEFAULT_HEADLINE = "Automate your daily grind.";
-const DEFAULT_SUBHEADING = "Browse proven automations. See them work. Deploy in days.";
+const DEFAULT_HEADLINE = "Find your automation expert";
+const DEFAULT_SUBHEADING = "Browse a solution. See how it works. Deploy in days."
 const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "Sync Shopify to HubSpot" or "AI Phone Receptionist"';
 const DEFAULT_CTA_LABEL = "Browse Solutions";
 
