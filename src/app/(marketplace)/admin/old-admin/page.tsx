@@ -46,28 +46,6 @@ async function AdminContent() {
   const disputeData = await getDisputedOrders();
   const eliteAppsData = await getEliteApplications();
 
-  // Map Prisma camelCase fields to the snake_case fields expected by Solution type
-  const solutions = (
-    data.solutions as {
-      implementationPriceCents: number;
-      monthlyCostMinCents: number | null;
-      monthlyCostMaxCents: number | null;
-      deliveryDays: number;
-      status: string;
-      outcome: string | null;
-      [key: string]: unknown;
-    }[]
-  ).map((s) => ({
-    ...s,
-    implementation_price_cents: s.implementationPriceCents,
-    implementation_price: s.implementationPriceCents / 100,
-    monthly_cost_min: s.monthlyCostMinCents ? s.monthlyCostMinCents / 100 : 0,
-    monthly_cost_max: s.monthlyCostMaxCents ? s.monthlyCostMaxCents / 100 : 0,
-    delivery_days: s.deliveryDays,
-    status: s.status as SolutionStatus,
-    outcome: s.outcome ?? undefined,
-  })) as unknown as Solution[];
-
   const disputes =
     "error" in disputeData
       ? []
@@ -79,7 +57,6 @@ async function AdminContent() {
 
   return (
     <AdminDashboard
-      initialSolutions={solutions}
       initialOrders={data.orders}
       initialDisputes={disputes}
       initialEliteApplications={eliteApplications}

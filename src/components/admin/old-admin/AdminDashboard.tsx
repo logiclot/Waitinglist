@@ -99,7 +99,6 @@ export interface EliteApplication {
 }
 
 interface AdminDashboardProps {
-  initialSolutions: Solution[];
   initialOrders: AdminOrder[];
   initialDisputes: AdminDispute[];
   initialEliteApplications?: EliteApplication[];
@@ -301,21 +300,17 @@ function BusinessInvitePanel({
 }
 
 export function AdminDashboard({
-  initialSolutions,
   initialOrders,
   initialDisputes,
   initialEliteApplications = [],
 }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<
-    | "solutions"
     | "orders"
     | "businesses"
     | "disputes"
     | "invites"
     | "business-invites"
-  >("solutions");
-  const [solutionList, setSolutionList] =
-    useState<Solution[]>(initialSolutions);
+  >("orders");
   const [orderList, setOrderList] = useState<AdminOrder[]>(initialOrders);
   const [eliteApplications, setEliteApplications] = useState<
     EliteApplication[]
@@ -342,46 +337,7 @@ export function AdminDashboard({
     showMessage("Elite application denied.");
   };
 
-  // ── Solution actions ────────────────────────────────────────────────────────
-  const handleVideoStatus = async (
-    id: string,
-    status: "approved" | "rejected",
-    reason?: string,
-  ) => {
-    await updateSolutionVideoStatus(id, status, reason);
-    setSolutionList(
-      solutionList.map((s) =>
-        s.id === id ? { ...s, demoVideoStatus: status } : s,
-      ),
-    );
-    showMessage(`Video ${status}.`);
-  };
 
-  const handleDeleteSolution = async (id: string) => {
-    if (!confirm("Permanently delete this solution?")) return;
-    const result = await adminDeleteSolution(id);
-    if (result.error) {
-      showMessage(`Error: ${result.error}`, true);
-      return;
-    }
-    setSolutionList(solutionList.filter((s) => s.id !== id));
-    showMessage("Solution deleted.");
-  };
-
-  const handleSaveListing = (data: Partial<Solution>) => {
-    if (fullEditingSolution) {
-      setSolutionList(
-        solutionList.map((s) =>
-          s.id === fullEditingSolution.id ? ({ ...s, ...data } as Solution) : s,
-        ),
-      );
-      setFullEditingSolution(null);
-      showMessage("Solution updated.");
-    } else {
-      setIsCreating(false);
-      showMessage("Solution created.");
-    }
-  };
 
   // ── Order actions ───────────────────────────────────────────────────────────
   const handleDeleteOrder = async (id: string) => {
@@ -415,14 +371,6 @@ export function AdminDashboard({
             ← Back
           </button>
         </div>
-        <ListingEditor
-          initialData={fullEditingSolution || {}}
-          onSave={handleSaveListing}
-          onCancel={() => {
-            setFullEditingSolution(null);
-            setIsCreating(false);
-          }}
-        />
       </div>
     );
   }
@@ -438,7 +386,6 @@ export function AdminDashboard({
       <div className="flex gap-4 mb-6 border-b border-border overflow-x-auto">
         {(
           [
-            "solutions",
             "orders",
             "disputes",
             "invites",
@@ -446,7 +393,6 @@ export function AdminDashboard({
           ] as const
         ).map((tab) => {
           const counts: Record<string, number> = {
-            solutions: solutionList.length,
             orders: orderList.length,
             disputes: initialDisputes.length,
             invites: 0,
@@ -482,15 +428,6 @@ export function AdminDashboard({
         </div>
       )}
 
-      {activeTab === "solutions" && (
-        <SolutionManagementTab
-          solutionList={solutionList}
-          onVideoStatus={handleVideoStatus}
-          onEditSolution={setFullEditingSolution}
-          onCreateNew={() => setIsCreating(true)}
-          onDeleteSolution={handleDeleteSolution}
-        />
-      )}
 
       {activeTab === "orders" && (
         <div className="space-y-2">

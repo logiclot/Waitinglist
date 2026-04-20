@@ -3,25 +3,17 @@
 import { BidManagement } from "@/components/admin/BidManagement";
 import { BusinessManagement } from "@/components/admin/BusinessManagement";
 import { ExpertManagement } from "@/components/admin/ExpertManagement";
+import { SolutionManagement } from "@/components/admin/SolutionManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStats } from "@/hooks/use-admin";
 import { BRAND_NAME } from "@/lib/branding";
 import { Briefcase, LayoutGrid, ShoppingBag, Users } from "lucide-react";
-import Link from "next/link";
 
 export default function AdminDashboard() {
   const { data, isPending } = useStats();
 
   return (
     <div className="mx-auto px-4 py-10">
-      {/* Work-in-progress banner */}
-      <div className="mb-6 flex items-center justify-between rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400">
-        <span>This admin panel is under active development. Some features may be incomplete.</span>
-        <Link href="/admin/old-admin" className="ml-4 shrink-0 font-medium underline hover:no-underline">
-          Use Old Admin
-        </Link>
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">{BRAND_NAME} Admin</h1>
@@ -130,8 +122,7 @@ export default function AdminDashboard() {
           <BusinessManagement />
         </TabsContent>
         <TabsContent value="solutions">
-          {/* <SolutionManagement /> */}
-          <Link href={"/admin/old-admin"} className="underline">Comming Soon !! Refer Old Admin </Link>
+          <SolutionManagement />
         </TabsContent>
         <TabsContent value="bids">
           <BidManagement />

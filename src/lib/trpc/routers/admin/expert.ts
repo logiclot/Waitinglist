@@ -52,7 +52,16 @@ export const adminExpertRouter = createRouter({
         }),
 
     getSolutions: adminProcedure.query(async () => {
-        const solutions = await prisma.solution.findMany({ orderBy: { createdAt: "desc" }, include: { expert: true } })
+        const solutions = await prisma.solution.findMany({
+            orderBy: { createdAt: "desc" },
+            include: {
+                expert: {
+                    include: {
+                        user: { select: { email: true } },
+                    },
+                },
+            },
+        })
 
         return solutions
     }),
@@ -93,6 +102,51 @@ export const adminExpertRouter = createRouter({
                     "/expert/my-solutions",
                 );
             }
+
+            return { success: true };
+        }),
+
+    updateSolution: adminProcedure
+        .input(z.object({
+            id: z.string(),
+            data: z.object({
+                title: z.string().min(1).optional(),
+                shortSummary: z.string().optional(),
+                outcome: z.string().optional(),
+                category: z.string().optional(),
+                integrations: z.array(z.string()).optional(),
+                included: z.array(z.string()).optional(),
+                excluded: z.array(z.string()).optional(),
+                requiredInputs: z.array(z.string()).optional(),
+                supportDays: z.number().int().optional(),
+                implementationPriceCents: z.number().int().min(0).optional(),
+                monthlyCostMinCents: z.number().int().min(0).optional(),
+                monthlyCostMaxCents: z.number().int().min(0).optional(),
+                demoVideoUrl: z.string().nullable().optional(),
+            }),
+        }))
+        .mutation(async ({ input }) => {
+            const existing = await prisma.solution.findUnique({
+                where: { id: input.id },
+                select: { demoVideoUrl: true, status: true },
+            });
+            if (!existing) throw new Error("Solution not found");
+
+            const updateData: Record<string, unknown> = { ...input.data };
+
+            if (
+                input.data.demoVideoUrl !== undefined &&
+                input.data.demoVideoUrl !== existing.demoVideoUrl &&
+                existing.status === "published"
+            ) {
+                updateData.demoVideoStatus = "pending";
+                updateData.demoVideoReviewedAt = null;
+            }
+
+            await prisma.solution.update({
+                where: { id: input.id },
+                data: updateData,
+            });
 
             return { success: true };
         }),

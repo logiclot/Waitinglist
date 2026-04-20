@@ -1,16 +1,21 @@
 "use client";
 
+import { ListingEditor } from "@/components/admin/ListingEditor";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TierBadge } from "@/components/ui/TierBadge";
 import {
   useDeleteSolution,
   useSolutions,
+  useUpdateSolution,
   useUpdateVideoStatus,
 } from "@/hooks/use-admin";
 import { getVideoEmbedUrl, normalizeVideoUrl } from "@/lib/video";
+import { Solution as TypeSolution } from "@/types";
 import {
   AlertTriangle,
   ExternalLink,
+  Loader2,
   Pencil,
   Search,
   Trash2
@@ -39,14 +44,66 @@ function getVideoId(s: Solution) {
   return getVideoResult(s)?.videoId ?? null;
 }
 
+function toEditorInitialData(solution: Solution): Partial<TypeSolution> {
+  return {
+    title: solution.title,
+    short_summary: solution.shortSummary ?? "",
+    outcome: solution.outcome ?? "",
+    description: solution.description ?? "",
+    category: solution.category,
+    integrations: solution.integrations ?? [],
+    included: solution.included ?? [],
+    excluded: solution.excluded ?? [],
+    prerequisites: solution.requiredInputs ?? [],
+    support_days: solution.supportDays ?? 30,
+    delivery_days: solution.deliveryDays ?? 3,
+    implementation_price: (solution.implementationPriceCents ?? 0) / 100,
+    monthly_cost_min: (solution.monthlyCostMinCents ?? 0) / 100,
+    monthly_cost_max: (solution.monthlyCostMaxCents ?? 0) / 100,
+    demo_video_url: solution.demoVideoUrl ?? "",
+  };
+}
+
+function toUpdatePayload(data: Partial<TypeSolution>) {
+  return {
+    title: data.title,
+    shortSummary: data.short_summary,
+    outcome: data.outcome,
+    category: data.category,
+    integrations: data.integrations,
+    included: data.included,
+    excluded: data.excluded,
+    requiredInputs: data.prerequisites,
+    supportDays: data.support_days,
+    implementationPriceCents:
+      data.implementation_price_cents ??
+      (data.implementation_price !== undefined
+        ? Math.round(data.implementation_price * 100)
+        : undefined),
+    monthlyCostMinCents:
+      data.monthly_cost_min_cents ??
+      (data.monthly_cost_min !== undefined
+        ? Math.round(data.monthly_cost_min * 100)
+        : undefined),
+    monthlyCostMaxCents:
+      data.monthly_cost_max_cents ??
+      (data.monthly_cost_max !== undefined
+        ? Math.round(data.monthly_cost_max * 100)
+        : undefined),
+    demoVideoUrl: data.demo_video_url || null,
+  };
+}
+
 export function SolutionManagement() {
   const { data: solutions, isPending, refetch } = useSolutions();
   const deleteMutation = useDeleteSolution();
   const videoStatusMutation = useUpdateVideoStatus();
+  const updateSolutionMutation = useUpdateSolution();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [editingSolution, setEditingSolution] = useState<Solution | null>(null);
 
   const pendingSolutions = useMemo(
     () => (solutions ?? []).filter((s) => getVideoStatus(s) === "pending"),
@@ -108,6 +165,45 @@ export function SolutionManagement() {
     setRejectingId(null);
     setRejectReason("");
   };
+
+  const handleSaveEdit = (data: Partial<TypeSolution>) => {
+    if (!editingSolution) return;
+    const payload = toUpdatePayload(data);
+    updateSolutionMutation.mutate(
+      { id: editingSolution.id, data: payload },
+      {
+        onSuccess: () => {
+          toast.success("Solution updated");
+          setEditingSolution(null);
+          refetch();
+        },
+        onError: (error) => toast.error(error.message),
+      },
+    );
+  };
+
+  if (editingSolution) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Edit: {editingSolution.title}</h2>
+          <button
+            onClick={() => setEditingSolution(null)}
+            disabled={updateSolutionMutation.isPending}
+            className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            ← Back
+          </button>
+        </div>
+        <ListingEditor
+          initialData={toEditorInitialData(editingSolution)}
+          onSave={handleSaveEdit}
+          onCancel={() => setEditingSolution(null)}
+          isSaving={updateSolutionMutation.isPending}
+        />
+      </div>
+    );
+  }
 
   if (isPending) {
     return <SolutionManagementSkeleton />;
@@ -172,49 +268,76 @@ export function SolutionManagement() {
                   </div>
                 </div>
 
-                {rejectingId === solution.id ? (
-                  <div className="mt-4 space-y-2">
-                    <textarea
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="Optional: explain what needs to change so the expert can fix it..."
-                      rows={2}
-                      className="w-full text-sm bg-background border border-border rounded-md px-3 py-2 resize-none focus:outline-none focus:border-destructive"
-                      autoFocus
-                    />
-                    <div className="flex justify-end gap-2">
+                {(() => {
+                  const pendingId = videoStatusMutation.isPending
+                    ? videoStatusMutation.variables?.id
+                    : null;
+                  const isApproving =
+                    pendingId === solution.id &&
+                    videoStatusMutation.variables?.status === "approved";
+                  const isRejecting =
+                    pendingId === solution.id &&
+                    videoStatusMutation.variables?.status === "rejected";
+                  const isBusy = isApproving || isRejecting;
+
+                  return rejectingId === solution.id ? (
+                    <div className="mt-4 space-y-2">
+                      <textarea
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="Optional: explain what needs to change so the expert can fix it..."
+                        rows={2}
+                        disabled={isRejecting}
+                        className="w-full text-sm bg-background border border-border rounded-md px-3 py-2 resize-none focus:outline-none focus:border-destructive disabled:opacity-50"
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setRejectingId(null)}
+                          disabled={isRejecting}
+                          className="px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => confirmRejection(solution.id)}
+                          disabled={isRejecting}
+                          className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isRejecting && (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          )}
+                          Confirm Rejection
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end gap-2 mt-4">
                       <button
-                        onClick={() => setRejectingId(null)}
-                        className="px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                        onClick={() =>
+                          handleVideoStatus(solution.id, "approved")
+                        }
+                        disabled={isBusy}
+                        className="px-3 py-1 bg-green-500/10 text-green-500 border border-green-500/20 rounded text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Cancel
+                        {isApproving && (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        )}
+                        Approve Video
                       </button>
                       <button
-                        onClick={() => confirmRejection(solution.id)}
-                        className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded text-xs font-bold"
+                        onClick={() => startRejection(solution.id)}
+                        disabled={isBusy}
+                        className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Confirm Rejection
+                        {isRejecting && (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        )}
+                        Reject Video
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex justify-end gap-2 mt-4">
-                    <button
-                      onClick={() =>
-                        handleVideoStatus(solution.id, "approved")
-                      }
-                      className="px-3 py-1 bg-green-500/10 text-green-500 border border-green-500/20 rounded text-xs font-bold"
-                    >
-                      Approve Video
-                    </button>
-                    <button
-                      onClick={() => startRejection(solution.id)}
-                      className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded text-xs font-bold"
-                    >
-                      Reject Video
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             ))}
           </div>
@@ -241,9 +364,7 @@ export function SolutionManagement() {
           <SolutionCard
             key={solution.id}
             solution={solution}
-            onEdit={() => {
-              toast.info("Coming Soon , Refer Old Dashboar For now")
-            }}
+            onEdit={() => setEditingSolution(solution)}
             onDelete={() => handleDelete(solution)}
           />
         ))}
@@ -263,13 +384,31 @@ function SolutionCard({
 }) {
   const videoStatus = getVideoStatus(solution);
 
+  const expert = solution.expert;
+  const expertName = expert?.legalFullName ?? expert?.displayName ?? null;
+  const expertEmail = expert?.user?.email ?? null;
+
   return (
     <div className="bg-card border border-border rounded-xl p-5 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3 min-w-0">
-        <h3 className="font-semibold truncate">{solution.title}</h3>
-        <span className="shrink-0 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-          {solution.category}
-        </span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <h3 className="font-semibold truncate">{solution.title}</h3>
+          <span className="shrink-0 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+            {solution.category}
+          </span>
+        </div>
+        {(expertName || expertEmail || expert?.tier) && (
+          <div className="mt-1.5 flex items-center flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            {expertName && <span className="font-medium text-foreground">{expertName}</span>}
+            {expertEmail && (
+              <>
+                {expertName && <span>·</span>}
+                <span>{expertEmail}</span>
+              </>
+            )}
+            {expert?.tier && <TierBadge tier={expert.tier} />}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2 shrink-0">

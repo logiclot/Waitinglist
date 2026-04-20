@@ -48,6 +48,10 @@ export function useDeleteSolution() {
     return useMutation(trpc.admin.expert.deleteSolution.mutationOptions())
 }
 
+export function useUpdateSolution() {
+    return useMutation(trpc.admin.expert.updateSolution.mutationOptions())
+}
+
 export function useUpdateVideoStatus() {
     return useMutation(trpc.admin.expert.updateVideoStatus.mutationOptions())
 }

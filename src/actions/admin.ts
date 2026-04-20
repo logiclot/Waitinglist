@@ -30,8 +30,7 @@ export async function getAdminData() {
   const isAdmin = await checkAdmin();
   if (!isAdmin) return { error: "Unauthorized" };
 
-  const [solutions, orders, bidFeedbackRaw] = await Promise.all([
-    prisma.solution.findMany({ orderBy: { createdAt: "desc" }, include: { expert: { include: { user: { select: { email: true } } } } } }),
+  const [orders] = await Promise.all([
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -40,15 +39,9 @@ export async function getAdminData() {
         seller: { select: { displayName: true } },
       },
     }),
-    prisma.bid.groupBy({
-      by: ["specialistId", "feedback"],
-      where: { feedback: { not: null } },
-      _count: { feedback: true },
-    }),
   ]);
 
   return {
-    solutions,
     orders,
   };
 }

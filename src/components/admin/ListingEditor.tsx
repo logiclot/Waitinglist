@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Solution, ImplementationTime, ImplementationType } from "@/types";
 import { CATEGORY_DEFINITIONS } from "@/lib/categories";
-import { Check, X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { validateDemoVideoUrl } from "@/lib/video";
 
 interface ListingEditorProps {
   initialData: Partial<Solution>;
   onSave: (data: Partial<Solution>) => void;
   onCancel: () => void;
+  isSaving?: boolean;
 }
 
 const IMPLEMENTATION_TIMES: ImplementationTime[] = [
@@ -20,7 +21,7 @@ const IMPLEMENTATION_TYPES: ImplementationType[] = [
   "Done-for-you implementation", "Guided setup", "Audit & optimization"
 ];
 
-export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorProps) {
+export function ListingEditor({ initialData, onSave, onCancel, isSaving = false }: ListingEditorProps) {
   const [formData, setFormData] = useState<Partial<Solution>>({
     title: "",
     short_summary: "",
@@ -99,10 +100,10 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
 
   const handleSubmit = () => {
     if (!isFormValid) return;
-    
+
     // If video is present but invalid, don't submit or warn?
     // Let's assume valid if no error
-    
+
     onSave({
       ...formData,
       status: 'draft', // Always save as draft first or keep existing status? Prompt implies logic.
@@ -117,15 +118,15 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left: Form */}
       <div className="lg:col-span-2 space-y-8">
-        
+
         {/* Basic Info */}
         <section className="bg-card border border-border rounded-xl p-6 space-y-6">
           <h2 className="text-xl font-bold">Basic Information</h2>
-          
+
           <div>
             <label className="block text-sm font-medium mb-2">Title <span className="text-red-500">*</span></label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="w-full bg-background border border-border rounded-md px-3 py-2"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
@@ -136,8 +137,8 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
 
           <div>
             <label className="block text-sm font-medium mb-2">Outcome Line (Optional)</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="w-full bg-background border border-border rounded-md px-3 py-2"
               value={formData.outcome || ''}
               onChange={(e) => handleInputChange('outcome', e.target.value)}
@@ -148,7 +149,7 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
 
           <div>
             <label className="block text-sm font-medium mb-2">Short Summary <span className="text-red-500">*</span></label>
-            <textarea 
+            <textarea
               className="w-full bg-background border border-border rounded-md px-3 py-2 h-24 resize-none"
               value={formData.short_summary}
               onChange={(e) => handleInputChange('short_summary', e.target.value)}
@@ -163,7 +164,7 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
 
           <div>
             <label className="block text-sm font-medium mb-2">Category <span className="text-red-500">*</span></label>
-            <select 
+            <select
               className="w-full bg-background border border-border rounded-md px-3 py-2"
               value={formData.category}
               onChange={(e) => handleInputChange('category', e.target.value)}
@@ -177,15 +178,15 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
           <div>
             <label className="block text-sm font-medium mb-2">Tools Used <span className="text-red-500">*</span></label>
             <div className="flex gap-2 mb-2">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="flex-1 bg-background border border-border rounded-md px-3 py-2"
                 value={toolInput}
                 onChange={(e) => setToolInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleArrayAdd('integrations', toolInput, setToolInput)}
                 placeholder="Add tool (e.g. Zapier)"
               />
-              <button 
+              <button
                 onClick={() => handleArrayAdd('integrations', toolInput, setToolInput)}
                 className="px-4 py-2 bg-secondary rounded-md hover:bg-secondary/80"
               >
@@ -206,49 +207,49 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
         {/* Implementation Details */}
         <section className="bg-card border border-border rounded-xl p-6 space-y-6">
           <h2 className="text-xl font-bold">Implementation Scope</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-               <label className="block text-sm font-medium mb-2">Implementation Type <span className="text-red-500">*</span></label>
-               <select 
-                  className="w-full bg-background border border-border rounded-md px-3 py-2"
-                  value={formData.implementation_type}
-                  onChange={(e) => handleInputChange('implementation_type', e.target.value)}
-                >
-                  {IMPLEMENTATION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+              <label className="block text-sm font-medium mb-2">Implementation Type <span className="text-red-500">*</span></label>
+              <select
+                className="w-full bg-background border border-border rounded-md px-3 py-2"
+                value={formData.implementation_type}
+                onChange={(e) => handleInputChange('implementation_type', e.target.value)}
+              >
+                {IMPLEMENTATION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
             <div>
-               <label className="block text-sm font-medium mb-2">Estimated Time <span className="text-red-500">*</span></label>
-               <select 
-                  className="w-full bg-background border border-border rounded-md px-3 py-2"
-                  value={formData.estimated_implementation_time}
-                  onChange={(e) => handleInputChange('estimated_implementation_time', e.target.value)}
-                >
-                  {IMPLEMENTATION_TIMES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+              <label className="block text-sm font-medium mb-2">Estimated Time <span className="text-red-500">*</span></label>
+              <select
+                className="w-full bg-background border border-border rounded-md px-3 py-2"
+                value={formData.estimated_implementation_time}
+                onChange={(e) => handleInputChange('estimated_implementation_time', e.target.value)}
+              >
+                {IMPLEMENTATION_TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
           </div>
 
           <div>
-             <label className="block text-sm font-medium mb-2">Post-Delivery Support <span className="text-red-500">*</span></label>
-             <select 
-                className="w-full bg-background border border-border rounded-md px-3 py-2"
-                value={formData.support_days}
-                onChange={(e) => handleInputChange('support_days', parseInt(e.target.value))}
-              >
-                <option value={15}>15 days included</option>
-                <option value={30}>30 days included</option>
-                <option value={60}>60 days included</option>
-              </select>
-             <p className="text-xs text-muted-foreground mt-1">Mandatory support period for bug fixes and adjustments.</p>
+            <label className="block text-sm font-medium mb-2">Post-Delivery Support <span className="text-red-500">*</span></label>
+            <select
+              className="w-full bg-background border border-border rounded-md px-3 py-2"
+              value={formData.support_days}
+              onChange={(e) => handleInputChange('support_days', parseInt(e.target.value))}
+            >
+              <option value={15}>15 days included</option>
+              <option value={30}>30 days included</option>
+              <option value={60}>60 days included</option>
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">Mandatory support period for bug fixes and adjustments.</p>
           </div>
 
           <div>
-             <label className="block text-sm font-medium mb-2">Deliverables (Included) <span className="text-red-500">*</span></label>
-             <div className="flex gap-2 mb-2">
-              <input 
-                type="text" 
+            <label className="block text-sm font-medium mb-2">Deliverables (Included) <span className="text-red-500">*</span></label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
                 className="flex-1 bg-background border border-border rounded-md px-3 py-2"
                 value={includedInput}
                 onChange={(e) => setIncludedInput(e.target.value)}
@@ -258,22 +259,22 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
               <button onClick={() => handleArrayAdd('included', includedInput, setIncludedInput)} className="px-4 py-2 bg-secondary rounded-md">Add</button>
             </div>
             <ul className="space-y-2">
-               {formData.included?.map((item, i) => (
-                 <li key={i} className="flex items-start gap-2 text-sm">
-                   <Check className="h-4 w-4 text-green-500 mt-0.5" />
-                   <span className="flex-1">{item}</span>
-                   <button onClick={() => handleArrayRemove('included', i)} className="text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></button>
-                 </li>
-               ))}
+              {formData.included?.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <Check className="h-4 w-4 text-green-500 mt-0.5" />
+                  <span className="flex-1">{item}</span>
+                  <button onClick={() => handleArrayRemove('included', i)} className="text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></button>
+                </li>
+              ))}
             </ul>
-             <p className="text-xs text-muted-foreground mt-1">Min 3 items</p>
+            <p className="text-xs text-muted-foreground mt-1">Min 3 items</p>
           </div>
 
-           <div>
-             <label className="block text-sm font-medium mb-2">Deliverables (Excluded)</label>
-             <div className="flex gap-2 mb-2">
-              <input 
-                type="text" 
+          <div>
+            <label className="block text-sm font-medium mb-2">Deliverables (Excluded)</label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
                 className="flex-1 bg-background border border-border rounded-md px-3 py-2"
                 value={excludedInput}
                 onChange={(e) => setExcludedInput(e.target.value)}
@@ -283,21 +284,21 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
               <button onClick={() => handleArrayAdd('excluded', excludedInput, setExcludedInput)} className="px-4 py-2 bg-secondary rounded-md">Add</button>
             </div>
             <ul className="space-y-2">
-               {formData.excluded?.map((item, i) => (
-                 <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                   <X className="h-4 w-4 mt-0.5" />
-                   <span className="flex-1">{item}</span>
-                   <button onClick={() => handleArrayRemove('excluded', i)} className="hover:text-destructive"><X className="h-4 w-4" /></button>
-                 </li>
-               ))}
+              {formData.excluded?.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <X className="h-4 w-4 mt-0.5" />
+                  <span className="flex-1">{item}</span>
+                  <button onClick={() => handleArrayRemove('excluded', i)} className="hover:text-destructive"><X className="h-4 w-4" /></button>
+                </li>
+              ))}
             </ul>
           </div>
-          
-           <div>
-             <label className="block text-sm font-medium mb-2">Prerequisites <span className="text-red-500">*</span></label>
-             <div className="flex gap-2 mb-2">
-              <input 
-                type="text" 
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Prerequisites <span className="text-red-500">*</span></label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
                 className="flex-1 bg-background border border-border rounded-md px-3 py-2"
                 value={prereqInput}
                 onChange={(e) => setPrereqInput(e.target.value)}
@@ -307,70 +308,70 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
               <button onClick={() => handleArrayAdd('prerequisites', prereqInput, setPrereqInput)} className="px-4 py-2 bg-secondary rounded-md">Add</button>
             </div>
             <ul className="space-y-2">
-               {formData.prerequisites?.map((item, i) => (
-                 <li key={i} className="flex items-start gap-2 text-sm">
-                   <span className="text-muted-foreground">•</span>
-                   <span className="flex-1">{item}</span>
-                   <button onClick={() => handleArrayRemove('prerequisites', i)} className="text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></button>
-                 </li>
-               ))}
+              {formData.prerequisites?.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-muted-foreground">•</span>
+                  <span className="flex-1">{item}</span>
+                  <button onClick={() => handleArrayRemove('prerequisites', i)} className="text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></button>
+                </li>
+              ))}
             </ul>
-             <p className="text-xs text-muted-foreground mt-1">Min 1 item</p>
+            <p className="text-xs text-muted-foreground mt-1">Min 1 item</p>
           </div>
         </section>
-        
+
         {/* Pricing */}
         <section className="bg-card border border-border rounded-xl p-6 space-y-6">
           <h2 className="text-xl font-bold">Pricing</h2>
-           <div>
-             <label className="block text-sm font-medium mb-2">Implementation Price ($) <span className="text-red-500">*</span></label>
-             <input 
-               type="number" 
-               className="w-full bg-background border border-border rounded-md px-3 py-2"
-               value={formData.implementation_price || ''}
-               onChange={(e) => handleInputChange('implementation_price', parseFloat(e.target.value))}
-               placeholder="2500"
-             />
-           </div>
-           
-           <div className="grid grid-cols-2 gap-4">
-             <div>
-               <label className="block text-sm font-medium mb-2">Min Monthly Cost ($)</label>
-               <input 
-                 type="number" 
-                 className="w-full bg-background border border-border rounded-md px-3 py-2"
-                 value={formData.monthly_cost_min || ''}
-                 onChange={(e) => handleInputChange('monthly_cost_min', parseFloat(e.target.value))}
-               />
-             </div>
-             <div>
-               <label className="block text-sm font-medium mb-2">Max Monthly Cost ($)</label>
-               <input 
-                 type="number" 
-                 className="w-full bg-background border border-border rounded-md px-3 py-2"
-                 value={formData.monthly_cost_max || ''}
-                 onChange={(e) => handleInputChange('monthly_cost_max', parseFloat(e.target.value))}
-               />
-             </div>
-           </div>
-           <p className="text-xs text-muted-foreground">Estimated third-party costs (OpenAI, hosting, etc.)</p>
+          <div>
+            <label className="block text-sm font-medium mb-2">Implementation Price ($) <span className="text-red-500">*</span></label>
+            <input
+              type="number"
+              className="w-full bg-background border border-border rounded-md px-3 py-2"
+              value={formData.implementation_price || ''}
+              onChange={(e) => handleInputChange('implementation_price', parseFloat(e.target.value))}
+              placeholder="2500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Min Monthly Cost ($)</label>
+              <input
+                type="number"
+                className="w-full bg-background border border-border rounded-md px-3 py-2"
+                value={formData.monthly_cost_min || ''}
+                onChange={(e) => handleInputChange('monthly_cost_min', parseFloat(e.target.value))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Max Monthly Cost ($)</label>
+              <input
+                type="number"
+                className="w-full bg-background border border-border rounded-md px-3 py-2"
+                value={formData.monthly_cost_max || ''}
+                onChange={(e) => handleInputChange('monthly_cost_max', parseFloat(e.target.value))}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Estimated third-party costs (OpenAI, hosting, etc.)</p>
         </section>
 
         {/* Demo Video */}
-         <section className="bg-card border border-border rounded-xl p-6 space-y-6">
+        <section className="bg-card border border-border rounded-xl p-6 space-y-6">
           <h2 className="text-xl font-bold">Demo Video (Optional)</h2>
-           <div>
-             <label className="block text-sm font-medium mb-2">YouTube URL</label>
-             <input 
-               type="text" 
-               className="w-full bg-background border border-border rounded-md px-3 py-2"
-               value={formData.demo_video_url || ''}
-               onChange={(e) => handleVideoChange(e.target.value)}
-               placeholder="https://youtube.com/..."
-             />
-             {videoError && <p className="text-sm text-red-500 mt-1">{videoError}</p>}
-             <p className="text-xs text-muted-foreground mt-1">Must be a valid YouTube link.</p>
-           </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">YouTube URL</label>
+            <input
+              type="text"
+              className="w-full bg-background border border-border rounded-md px-3 py-2"
+              value={formData.demo_video_url || ''}
+              onChange={(e) => handleVideoChange(e.target.value)}
+              placeholder="https://youtube.com/..."
+            />
+            {videoError && <p className="text-sm text-red-500 mt-1">{videoError}</p>}
+            <p className="text-xs text-muted-foreground mt-1">Must be a valid YouTube link.</p>
+          </div>
         </section>
 
       </div>
@@ -388,26 +389,30 @@ export function ListingEditor({ initialData, onSave, onCancel }: ListingEditorPr
             <CheckItem label="Prerequisites (1+)" checked={checks.prereqs} />
             <CheckItem label="Time & Type selected" checked={checks.time && checks.type} />
             <CheckItem label="Support included" checked={checks.support} />
-             <CheckItem label="Price set" checked={checks.price} />
+            <CheckItem label="Price set" checked={checks.price} />
           </ul>
 
           <div className="space-y-3">
-            <button 
+            <button
               onClick={handleSubmit}
-              disabled={!isFormValid}
-              className="w-full py-3 bg-primary text-primary-foreground rounded-md font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!isFormValid || isSaving}
+              className="w-full cursor-pointer py-3 bg-primary text-primary-foreground rounded-md font-bold disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Publish Listing
             </button>
-            <button 
-              onClick={onSave.bind(null, { ...formData, status: 'draft' })}
-              className="w-full py-3 border border-border bg-background hover:bg-secondary rounded-md font-medium"
+            <button
+              onClick={() => onSave({ ...formData, status: 'draft' })}
+              disabled={isSaving}
+              className="w-full py-3 cursor-pointer border border-border bg-background hover:bg-secondary rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
+              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
               Save as Draft
             </button>
-             <button 
+            <button
               onClick={onCancel}
-              className="w-full py-2 text-sm text-muted-foreground hover:text-foreground"
+              disabled={isSaving}
+              className="w-full cursor-pointer py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
