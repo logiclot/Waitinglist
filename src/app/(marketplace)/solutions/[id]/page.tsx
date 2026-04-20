@@ -29,6 +29,7 @@ import { TierBadge } from "@/components/ui/TierBadge";
 import { CategoryBadge } from "@/components/ui/CategoryBadge";
 import { mapPrismaExpert } from "@/lib/solutions/data";
 import { BackToBrowse } from "@/components/BackToBrowse";
+import { TrackSolutionView } from "@/components/analytics/TrackSolutionView";
 
 // Always fetch fresh data — suites and solution details can change at any time
 export const dynamic = "force-dynamic";
@@ -258,6 +259,14 @@ export default async function SolutionPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen pb-20">
+      <TrackSolutionView
+        solutionId={solution.id}
+        slug={solution.slug}
+        title={solution.title}
+        category={solution.category}
+        expertId={solution.expert?.id ?? null}
+        priceCents={Math.round(solution.implementation_price * 100)}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

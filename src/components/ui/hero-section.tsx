@@ -30,7 +30,7 @@ const TRUST_STATS = [
 ];
 
 const DEFAULT_HEADLINE = "Find your automation expert";
-const DEFAULT_SUBHEADING = "Browse a solution. See how it works. Deploy in days."
+const DEFAULT_SUBHEADING = "Browse solutions. See how it works. Deploy in days."
 const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "Sync Shopify to HubSpot" or "AI Phone Receptionist"';
 const DEFAULT_CTA_LABEL = "Browse Solutions";
 
