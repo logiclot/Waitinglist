@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X, LogOut, LayoutDashboard, MessageSquare, FolderKanban, Settings, Briefcase, PlusCircle, Layers, ShieldCheck } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard, MessageSquare, FolderKanban, Settings, Briefcase, PlusCircle, Layers, ShieldCheck, PanelTop, Gift, Users, BarChart2, Activity, Globe, CircleDollarSign } from "lucide-react";
 import { LogoBrand } from "@/components/LogoBrand";
 import { ExpertBadge } from "@/components/ui/ExpertBadge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -269,7 +269,16 @@ export function Navbar() {
 
                   <div className="flex flex-col gap-1">
                     {user.role === 'ADMIN' && (
-                      <MobileMenuLink href="/admin" icon={ShieldCheck} label="Admin Dashboard" onClick={() => setIsMenuOpen(false)} />
+                      <>
+                        <MobileMenuLink href="/admin" icon={ShieldCheck} label="Admin Dashboard" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/admin/old-admin" icon={PanelTop} label="Old Admin Panel" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/admin/gift-scans" icon={Gift} label="Gift Scan" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/admin/post-on-behalf" icon={Users} label="Post on Behalf" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/admin/audit-analytics" icon={BarChart2} label="Audit Analytics" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/admin/job-analytics" icon={Activity} label="Job Analytics" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/admin/traffic" icon={Globe} label="Traffic" onClick={() => setIsMenuOpen(false)} />
+                        <MobileMenuLink href="/admin/payouts" icon={CircleDollarSign} label="Payouts" onClick={() => setIsMenuOpen(false)} />
+                      </>
                     )}
                     {user.role !== 'ADMIN' && (
                       <MobileMenuLink href="/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={() => setIsMenuOpen(false)} />

@@ -178,36 +178,7 @@ export function Sidebar({
       : [];
 
   return (
-    <>
-      {/* Mobile Admin Nav — horizontally scrollable strip */}
-      {adminLinks.length > 0 && (
-        <nav
-          aria-label="Admin"
-          className="md:hidden sticky top-16 z-40 bg-card border-b border-border overflow-x-auto"
-        >
-          <div className="flex items-center gap-1 px-3 py-2 min-w-max">
-            {adminLinks.map((link) => {
-              const Icon = link.icon;
-              const active = isActive(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition-all duration-200 ${active
-                    ? "bg-primary/10 text-primary border-primary/30"
-                    : "text-amber-600 border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-700"
-                    }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {link.label}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      )}
-
-      <aside className="w-64 bg-card border-r border-border h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto hidden md:flex flex-col">
+    <aside className="w-64 bg-card border-r border-border h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto hidden md:flex flex-col">
       <div className="p-4 space-y-1 flex-1">
         {links.map((link) => {
           const Icon = link.icon;
@@ -326,7 +297,6 @@ export function Sidebar({
           );
         })}
       </div>
-      </aside>
-    </>
+    </aside>
   );
 }
