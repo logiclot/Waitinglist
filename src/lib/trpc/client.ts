@@ -10,8 +10,8 @@ import type { AppRouter } from "./routers/_app";
  */
 export const queryClient = new QueryClient({
     queryCache: new QueryCache({
-        onError: (error) => {
-            toast.error(error.message, {
+        onError: () => {
+            toast.error("Something went wrong", {
                 action: {
                     label: "retry",
                     onClick: () => {
