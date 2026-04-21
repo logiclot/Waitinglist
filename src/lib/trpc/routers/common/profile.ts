@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createRouter } from "../../init";
-import { commonProcedure, publicProcedure } from "../../procedures";
+import { publicProcedure } from "../../procedures";
 
 export const profileRouter = createRouter({
     getProfile: publicProcedure.query(async ({ ctx }) => {

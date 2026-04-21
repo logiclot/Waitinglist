@@ -10,60 +10,60 @@ import { BRAND_NAME } from "@/lib/branding";
 import { Briefcase, LayoutGrid, ShoppingBag, Users } from "lucide-react";
 
 export default function AdminDashboard() {
-  const { data, isPending } = useStats();
+  const stats = useStats();
 
   return (
     <div className="mx-auto px-4 py-10">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">{BRAND_NAME} Admin</h1>
-        {!isPending && data && (
+        {!stats.isPending && stats.data && (
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>
               Founding:{" "}
               <span className="font-bold text-foreground">
-                {data.expertsByTier.FOUNDING ?? 0}/20
+                {stats.data.expertsByTier.FOUNDING ?? 0}/20
               </span>
             </span>
             <span>
               Elite:{" "}
               <span className="font-bold text-foreground">
-                {data.expertsByTier.ELITE ?? 0}
+                {stats.data.expertsByTier.ELITE ?? 0}
               </span>
             </span>
             <span className="text-border">|</span>
             <span>
               Proven:{" "}
               <span className="font-bold text-foreground">
-                {data.expertsByTier.PROVEN ?? 0}
+                {stats.data.expertsByTier.PROVEN ?? 0}
               </span>
             </span>
             <span className="text-border">|</span>
             <span>
               Standard:{" "}
               <span className="font-bold text-foreground">
-                {data.expertsByTier.STANDARD ?? 0}
+                {stats.data.expertsByTier.STANDARD ?? 0}
               </span>
             </span>
           </div>
         )}
       </div>
 
-      {isPending ? (
+      {stats.isPending ? (
         <StatsSkeleton />
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {[
-            { label: "Total Users", value: data?.users ?? 0, icon: Users },
-            { label: "Experts", value: data?.experts ?? 0, icon: Briefcase },
+            { label: "Total Users", value: stats.data?.users ?? 0, icon: Users },
+            { label: "Experts", value: stats.data?.experts ?? 0, icon: Briefcase },
             {
               label: "Businesses",
-              value: data?.businesses ?? 0,
+              value: stats.data?.businesses ?? 0,
               icon: LayoutGrid,
             },
             {
               label: "Solutions",
-              value: data?.solutions ?? 0,
+              value: stats.data?.solutions ?? 0,
               icon: ShoppingBag,
             },
           ].map(({ label, value, icon: Icon }) => (
