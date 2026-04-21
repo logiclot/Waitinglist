@@ -72,7 +72,7 @@ export async function createJobPost(prevState: unknown, formData: FormData) {
         log.error("notification.email_fire_and_forget_failed", { userId: session.user.id, error: String(e) })
       );
 
-      await createNotification(
+      createNotification(
         session.user.id,
         "🎉 Free Custom Project activated!",
         `"${job.title}" is now live. Your free custom project credit has been used.`,
@@ -157,7 +157,8 @@ export async function createDiscoveryJobPost(formData: FormData) {
       // migrate emails to inngest for reliability
       sendJobNotificationToExperts(job.id, "DISCOVERY").catch((e) => log.error("notification.email_fire_and_forget_failed", { userId: session.user.id, error: String(e) }))
 
-      await createNotification(
+      // fire and forget (should be added to queue)
+      createNotification(
         session.user.id,
         "🎉 Free Discovery Scan activated!",
         `"${job.title}" is now live. Your free waitlist credit has been used.`,
