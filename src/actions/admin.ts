@@ -148,6 +148,7 @@ export async function approveSpecialist(id: string, grantProven = true) {
     include: { user: { select: { id: true } } },
   });
 
+  const { createNotification } = await import("@/lib/notifications");
   const message = grantProven
     ? "Your expert profile has been approved. You now have Proven tier — access Discovery Scans and bid on opportunities. Complete 10 projects to unlock Custom Projects."
     : "Your expert profile has been approved. You can now access Discovery Scans (Proven tier) and bid on opportunities — or level up to Elite to unlock Custom Projects.";

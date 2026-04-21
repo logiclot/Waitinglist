@@ -1,12 +1,44 @@
 import { prisma } from "@/lib/prisma";
 import { resend, getFromEmail } from "@/lib/resend";
-import { jobPostNotificationEmail } from "@/lib/email-templates";
+import { notificationEmail, jobPostNotificationEmail } from "@/lib/email-templates";
 import { log } from "@/lib/logger";
 import { randomUUID } from 'node:crypto';
 import { APP_URL } from "./app-url";
 import { captureException } from "./sentry";
-import { inngest } from "@/lib/inngest";
 export type NotificationType = "info" | "success" | "alert";
+
+const FROM_EMAIL = getFromEmail();
+
+async function sendNotificationEmail(
+  userId: string,
+  title: string,
+  message: string,
+  actionUrl?: string
+) {
+  // Skip silently if email sending is not configured in this environment
+  if (!FROM_EMAIL) return;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user?.email) return;
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: user.email,
+      subject: title,
+      html: notificationEmail({ title, message, actionUrl }),
+      headers: {
+        'X-Entity-Ref-ID': randomUUID(),
+      }
+    });
+  } catch (error) {
+    log.error("notification.email_send_failed", { userId, error: String(error) });
+  }
+}
 
 export async function sendJobNotificationToExperts(jobId: string, type: "DISCOVERY" | "JOB_POSTING" = "DISCOVERY") {
   try {
@@ -72,12 +104,22 @@ export async function createNotification(
   sendEmail: boolean = true
 ) {
   try {
-    await inngest.send({
-      name: "notification/send",
-      data: { userId, title, message, type, actionUrl, sendEmail },
+    const notification = await prisma.notification.create({
+      data: { userId, title, message, type, actionUrl },
     });
+
+    if (sendEmail) {
+      // Fire-and-forget: email delivery should not block the in-app notification.
+      sendNotificationEmail(userId, title, message, actionUrl).catch((e) =>
+        log.error("notification.email_fire_and_forget_failed", { userId, error: String(e) })
+      );
+
+    }
+
+    return notification;
   } catch (error) {
-    log.error("notification.dispatch_failed", { userId, error: String(error) });
+    log.error("notification.create_failed", { userId, error: String(error) });
+    return null;
   }
 }
 
