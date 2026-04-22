@@ -147,16 +147,17 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        const email = credentials.email.trim().toLowerCase();
+
+        const rateCheck = await loginLimiter.check(`login:${email}`);
+
+        if (!rateCheck.success) {
+          log.warn("auth.credentials.rate_limited", { emailPrefix: email.slice(0, 5) + "***" });
+          throw new Error("Too many login attempts. Please try again in 15 minutes.");
+        }
+
         try {
-          const email = credentials.email.trim().toLowerCase();
-
           // Brute-force protection
-          const rateCheck = await loginLimiter.check(`login:${email}`);
-          if (!rateCheck.success) {
-            log.warn("auth.credentials.rate_limited", { emailPrefix: email.slice(0, 5) + "***" });
-            throw new Error("Too many login attempts. Please try again in 15 minutes.");
-          }
-
           type UserRow = {
             id: string;
             email: string;
