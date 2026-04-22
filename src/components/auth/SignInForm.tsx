@@ -37,6 +37,11 @@ export function SignInForm({ hasGoogle, hasLinkedIn }: SignInFormProps) {
     });
 
     if (res?.error) {
+      if (res.error.toLowerCase().includes("too many login attempts")) {
+        setError(res.error);
+        setPending(false);
+        return;
+      }
       const oauthError = await getCredentialSignInError(email.trim().toLowerCase());
       setError(oauthError || "Invalid email or password");
       setPending(false);
