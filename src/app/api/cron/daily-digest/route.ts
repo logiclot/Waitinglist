@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     const h48 = new Date(now.getTime() - 48 * 60 * 60 * 1000);
     const h72 = new Date(now.getTime() - 72 * 60 * 60 * 1000);
     const d5 = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+    const d6 = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
 
     // ─────────────────────────────────────────────
     // AUTO-REFUND: Orders not accepted within 48h
@@ -243,11 +244,17 @@ export async function GET(request: Request) {
     // EXPERT NOTIFICATIONS
     // ─────────────────────────────────────────────
 
-    // 4. Expert bids pending decision for 3+ days — prompt to follow up
+    // 4. Expert bids pending decision for 3+ days — prompt to follow up.
+    // Skip jobs older than 6 days: they'll be auto-closed by close-expired-jobs
+    // within 24h, so a "follow up" nudge would be misleading.
     const staleBids = await prisma.bid.findMany({
       where: {
         status: "submitted",
         createdAt: { lte: h72 },
+        jobPost: {
+          status: "open",
+          createdAt: { gt: d6 },
+        }
       },
       include: {
         specialist: { select: { userId: true, displayName: true } },

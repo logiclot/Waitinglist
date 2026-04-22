@@ -21,6 +21,8 @@ export async function GET(request: Request) {
     refunded: 0,
     midwayJobs: 0,
     midwayNotifications: 0,
+    bidsRejected: 0,
+    expertsNotified: 0,
   };
 
   try {
@@ -96,6 +98,12 @@ export async function GET(request: Request) {
       },
       include: {
         _count: { select: { bids: true } },
+        bids: {
+          where: { status: "submitted" },
+          include: {
+            specialist: { select: { userId: true } },
+          },
+        },
       },
     });
 
@@ -118,6 +126,29 @@ export async function GET(request: Request) {
 
         results.closed++;
         if (refund.refunded) results.refunded++;
+
+        // Reject open bids and notify the experts who submitted them.
+        if (job.bids.length > 0) {
+          const rejected = await prisma.bid.updateMany({
+            where: { jobPostId: job.id, status: "submitted" },
+            data: { status: "rejected" },
+          });
+          results.bidsRejected += rejected.count;
+
+          const expertTitle = `📪 Proposal not awarded — ${job.title}`;
+          const expertMsg = `"${job.title}" expired after 7 days without being awarded, so your proposal is now closed. Keep an eye on the marketplace — new projects are posted regularly.`;
+
+          for (const bid of job.bids) {
+            await createNotification(
+              bid.specialist.userId,
+              expertTitle,
+              expertMsg,
+              "info",
+              `/jobs`
+            );
+            results.expertsNotified++;
+          }
+        }
 
         const buyerTitle = isDiscovery
           ? "⌛ Your Discovery Scan has expired"
