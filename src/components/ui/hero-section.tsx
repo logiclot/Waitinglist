@@ -29,9 +29,9 @@ const TRUST_STATS = [
   { label: "Email Automation" },
 ];
 
-const DEFAULT_HEADLINE = "Find your automation expert.";
-const DEFAULT_SUBHEADING = "Browse solutions. See how it works. Deploy in days."
-const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "Sync Shopify to HubSpot" or "AI Phone Receptionist"';
+const DEFAULT_HEADLINE = "Your team is doing work your software should be doing.";
+const DEFAULT_SUBHEADING = "Price agreed upfront. Money held in escrow, released only as milestones land. Built by verified specialists."
+const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "WhatsApp AI Automation" or "Invoice & Document Processing"';
 const DEFAULT_CTA_LABEL = "Browse Solutions";
 
 function splitSubheading(text: string): string[] {
