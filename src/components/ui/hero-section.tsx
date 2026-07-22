@@ -24,15 +24,15 @@ const colors = {
 const WORKS_WITH = ["Zapier", "Make", "n8n", "HubSpot", "Notion", "Stripe", "Airtable", "OpenAI"];
 
 const TRUST_STATS = [
-  { label: "CRM & Sales" },
-  { label: "Lead Generation" },
-  { label: "Email Automation" },
+  { label: "Fixed price, agreed upfront" },
+  { label: "Escrow-protected milestones" },
+  { label: "Live in days, not quarters" },
 ];
 
 const DEFAULT_HEADLINE = "Your team is doing work your software should be doing.";
-const DEFAULT_SUBHEADING = "Price agreed upfront. Money held in escrow, released only as milestones land. Built by verified specialists."
+const DEFAULT_SUBHEADING = "We map where your team loses time, show you what's worth fixing, and connect you with the specialist who builds it."
 const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "WhatsApp AI Automation" or "Invoice & Document Processing"';
-const DEFAULT_CTA_LABEL = "Browse Solutions";
+const DEFAULT_CTA_LABEL = "Find a Specialist";
 
 function splitSubheading(text: string): string[] {
   const parts = text
