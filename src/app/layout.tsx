@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+//import localFont from "next/font/local";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Providers } from "@/components/providers/SessionProvider";
@@ -10,18 +11,24 @@ import { SavedSuitesProvider } from "@/hooks/SavedSuitesContext";
 import { Analytics } from "@vercel/analytics/react";
 import { BotIdClient } from 'botid/client';
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
+const geistSans = Outfit({
+  subsets: ["latin"],
   variable: "--font-geist-sans",
-  weight: "100 900",
   display: "swap",
 });
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-  display: "swap",
-});
+
+// const geistSans = localFont({
+//   src: "./fonts/GeistVF.woff",
+//   variable: "--font-geist-sans",
+//   weight: "100 900",
+//   display: "swap",
+// });
+// const geistMono = localFont({
+//   src: "./fonts/GeistMonoVF.woff",
+//   variable: "--font-geist-mono",
+//   weight: "100 900",
+//   display: "swap",
+// });
 
 import { BRAND_NAME, BRAND_DOMAIN } from "@/lib/branding";
 import Script from "next/script";
@@ -139,7 +146,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}
+        className={`${geistSans.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}
       >
         <noscript>
           <iframe
