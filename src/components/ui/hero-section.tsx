@@ -29,7 +29,7 @@ const TRUST_STATS = [
   { label: "Live in days, not quarters" },
 ];
 
-const DEFAULT_HEADLINE = "Your team is doing work your software should be doing.";
+const DEFAULT_HEADLINE = "Your team is doing work your software should be doing, let's end it.";
 const DEFAULT_SUBHEADING = "We map where your team loses time, show you what's worth fixing, and connect you with the specialist who builds it."
 const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "WhatsApp AI Automation" or "Invoice & Document Processing"';
 const DEFAULT_CTA_LABEL = "Find a Specialist";
@@ -244,13 +244,13 @@ export function Hero({
       </svg>
 
       <div className="relative z-10 min-h-[88vh] flex flex-col justify-center items-center px-6 py-14 md:px-12 md:py-20">
-        <div className="text-center max-w-5xl mx-auto">
+        <div className="text-center max-w-7xl mx-auto">
           {/* Trust stat pills */}
           <div className="mb-8 flex flex-wrap items-center justify-center gap-1.5 md:gap-3">
             {trustList.map((s, i) => (
               <div
                 key={s.label}
-                className="flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-3 md:py-2.5 rounded-full border bg-white shadow-md text-xs md:text-sm whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                className="flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-3 md:py-2.5 rounded-full border bg-white shadow-xl text-xs md:text-sm whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                 style={{
                   borderColor: "rgba(17,24,39,0.18)",
                   animation: `word-appear 0.6s ease-out ${900 + i * 90}ms both`,
@@ -259,7 +259,7 @@ export function Hero({
                 <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white font-bold leading-none">
                   <Check className="p-0.5 font-bold" strokeWidth={4} />
                 </span>
-                <span className="font-semibold" style={{ color: colors[800] }}>{s.label}</span>
+                <span className="font-medium" style={{ color: colors[800] }}>{s.label}</span>
               </div>
             ))}
           </div>
