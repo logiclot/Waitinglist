@@ -244,9 +244,27 @@ export function Hero({
       </svg>
 
       <div className="relative z-10 min-h-[88vh] flex flex-col justify-center items-center px-6 py-14 md:px-12 md:py-20">
-
-        {/* Headline */}
         <div className="text-center max-w-5xl mx-auto">
+          {/* Trust stat pills */}
+          <div className="mb-8 flex flex-wrap items-center justify-center gap-1.5 md:gap-3">
+            {trustList.map((s, i) => (
+              <div
+                key={s.label}
+                className="flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-3 md:py-2.5 rounded-full border bg-white shadow-md text-xs md:text-sm whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                style={{
+                  borderColor: "rgba(17,24,39,0.18)",
+                  animation: `word-appear 0.6s ease-out ${900 + i * 90}ms both`,
+                }}
+              >
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white font-bold leading-none">
+                  <Check className="p-0.5 font-bold" strokeWidth={4} />
+                </span>
+                <span className="font-semibold" style={{ color: colors[800] }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Headline */}
           <h1 className="tracking-tight flex flex-col items-center">
             <div className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight" style={{ color: colors[800] }}>
               {headlineWords.map((word, i) => (
@@ -278,25 +296,6 @@ export function Hero({
               ))}
             </div>
           </h1>
-
-          {/* Trust stat pills */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-1.5 md:gap-3">
-            {trustList.map((s, i) => (
-              <div
-                key={s.label}
-                className="flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-3 md:py-2.5 rounded-full border bg-white shadow-md text-xs md:text-sm whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-                style={{
-                  borderColor: "rgba(17,24,39,0.18)",
-                  animation: `word-appear 0.6s ease-out ${900 + i * 90}ms both`,
-                }}
-              >
-                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white font-bold leading-none">
-                  <Check className="p-0.5 font-bold" strokeWidth={4} />
-                </span>
-                <span className="font-semibold" style={{ color: colors[800] }}>{s.label}</span>
-              </div>
-            ))}
-          </div>
 
           {/* Search bar */}
           <div
