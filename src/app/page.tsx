@@ -140,7 +140,7 @@ export default function Home() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-16 md:py-20 bg-background">
+      <section className="py-16 md:py-20 bg-[#FBFAF8]">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
           <div className="bg-[#111827] rounded-2xl p-8 md:p-12 lg:p-16 text-white text-center relative overflow-hidden border border-gray-800">
             {/* Background Accent Glow */}
@@ -164,13 +164,13 @@ export default function Home() {
                   href="/solutions"
                   className="w-full sm:w-auto px-6 py-3 bg-white text-gray-900 font-semibold text-sm rounded-xl hover:bg-gray-100 transition-colors text-center"
                 >
-                  Explore Automations
+                  Find a Specialist
                 </a>
                 <a
-                  href="/hire"
+                  href="/audit"
                   className="w-full sm:w-auto px-6 py-3 bg-gray-800 text-gray-200 border border-gray-700 font-semibold text-sm rounded-xl hover:bg-gray-700 transition-colors text-center"
                 >
-                  Hire an Expert
+                  Free Audit
                 </a>
               </div>
             </div>
