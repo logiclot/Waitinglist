@@ -41,6 +41,72 @@ export function Footer() {
                   How It Works
                 </Link>
               </li>
+              <li>
+                <Link href="/pricing" className="hover:text-primary transition-colors">
+                  Pricing
+                </Link>
+              </li>
+              <li>
+                <Link href="/documentation" className="hover:text-primary transition-colors">
+                  Documentation
+                </Link>
+              </li>
+              <li>
+                <Link href="/stacks" className="hover:text-primary transition-colors">
+                  Suites
+                </Link>
+              </li>
+              <li>
+                <Link href="/audit" className="hover:text-primary transition-colors">
+                  Audit
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-4 text-foreground">Browse by category</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>
+                <Link href="/solutions?category=marketing-automation" className="hover:text-primary transition-colors">
+                  Marketing Automation
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions?category=sales-crm" className="hover:text-primary transition-colors">
+                  Sales & CRM
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions?category=customer-support" className="hover:text-primary transition-colors">
+                  Customer Support
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions?category=data-analysis" className="hover:text-primary transition-colors">
+                  Data Analysis
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions?category=finance-operations" className="hover:text-primary transition-colors">
+                  Finance & Operations
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions?category=content-creation" className="hover:text-primary transition-colors">
+                  Content Creation
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions?category=hr-recruiting" className="hover:text-primary transition-colors">
+                  HR & Recruiting
+                </Link>
+              </li>
+              <li>
+                <Link href="/solutions?category=other" className="hover:text-primary transition-colors">
+                  Other
+                </Link>
+              </li>
             </ul>
           </div>
 
