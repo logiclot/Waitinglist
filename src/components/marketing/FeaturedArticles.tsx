@@ -49,10 +49,10 @@ export function FeaturedArticles() {
           <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
             Learn
           </p>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-2">
+          <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-foreground mb-2">
             Guides to get you started
           </h2>
-          <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+          <p className="text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
             Practical articles on automation strategy, ROI, and when to bring in an expert.
           </p>
         </div>
@@ -68,10 +68,10 @@ export function FeaturedArticles() {
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors mb-1">
+                  <h3 className="font-bold text-foreground group-hover:text-primary transition-colors mb-1">
                     {title}
                   </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                     {description}
                   </p>
                 </div>
