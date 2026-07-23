@@ -58,10 +58,10 @@ export function ValueGrid() {
         <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
           Why LogicLot
         </p>
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-2">
+        <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-foreground mb-2">
           Engineered for Trust & High-Impact Results
         </h2>
-        <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+        <p className="text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
           Discover how our platform protects your business, guarantees quality, and simplifies automation execution.
         </p>
       </div>
@@ -73,17 +73,17 @@ export function ValueGrid() {
           return (
             <div
               key={index}
-              className="block bg-white border border-border rounded-xl p-5 hover:border-primary/50 transition-colors group cursor-pointer"
+              className="block bg-white border border-border rounded-xl p-5 md:p-8 hover:border-primary/20 transition-colors group"
             >
               <div className="flex flex-col h-full justify-between gap-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/8 border border-primary/15 flex items-center justify-center text-primary group-hover:bg-primary/15 transition-colors">
                   <Icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-foreground font-medium leading-relaxed">
+                  <h3 className="font-bold text-foreground group-hover:text-primary transition-colors mb-1">
                     {item.text}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                     {item.description}
                   </p>
                 </div>
