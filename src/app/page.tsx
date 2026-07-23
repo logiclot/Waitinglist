@@ -59,6 +59,18 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://logiclot.io" },
 };
 
+const worksWithList = [
+  "Make.com",
+  "Zapier",
+  "n8n",
+  "OpenAI",
+  "Anthropic",
+  "HubSpot",
+  "Salesforce",
+  "Airtable",
+  "Notion",
+];
+
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col">
@@ -124,6 +136,22 @@ export default function Home() {
       <section className="py-14 md:py-20 bg-[#FBFAF8]">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
           <ValueGrid />
+        </div>
+      </section>
+
+      {/* Static works-with row */}
+      <section className="py-6 text-center border-b border-border/50 bg-background">
+        <div className="container mx-auto px-4">
+          <p className="text-[11px] uppercase tracking-widest font-semibold mb-3 text-muted-foreground">
+            Works with
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {worksWithList.map((tool) => (
+              <span key={tool} className="text-sm font-semibold text-foreground/40">
+                {tool}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 

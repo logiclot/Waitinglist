@@ -342,23 +342,6 @@ export function Hero({
               </Link>
             </div>
           </div>
-
-          {/* Static works-with row */}
-          <div
-            className="mt-10"
-            style={{ animation: "word-appear 0.6s ease-out 1500ms both" }}
-          >
-            <p className="text-[11px] uppercase tracking-widest font-semibold mb-3" style={{ color: colors[400] }}>
-              Works with
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-              {worksWithList.map((tool) => (
-                <span key={tool} className="text-sm font-semibold" style={{ color: "rgba(17,24,39,0.28)" }}>
-                  {tool}
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
