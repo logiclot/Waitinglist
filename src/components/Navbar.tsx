@@ -56,9 +56,9 @@ export function Navbar() {
         <LogoBrand href="/" size="lg" />
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-6">
           <Link href="/solutions" className={getLinkClass("/solutions")}>
-            Browse Solutions
+            Find a Specialist
           </Link>
           <Link href="/stacks" className={getLinkClass("/stacks")}>
             Suites
@@ -189,7 +189,7 @@ export function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden p-2 text-muted-foreground hover:text-foreground"
+          className="lg:hidden p-2 text-muted-foreground hover:text-foreground"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
