@@ -382,7 +382,7 @@ export function HowItWorksBusinessView() {
             >
               {CUSTOM_PROJECT_COPY.cta} <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="text-xs text-white/30 text-center mt-3">{CUSTOM_PROJECT_COPY.footer}</p>
+            <p className="text-sm text-white/30 text-center mt-3">{CUSTOM_PROJECT_COPY.footer}</p>
           </div>
         </div>
       </div>
