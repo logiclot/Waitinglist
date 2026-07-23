@@ -63,7 +63,7 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col">
       <Hero />
-      <TrustCarousel />
+      {/* <TrustCarousel /> */}
       <CategoryGrid />
 
       {/* Inline Audit + Hire vs. Automate Section */}
