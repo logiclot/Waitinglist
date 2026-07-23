@@ -120,7 +120,7 @@ export default function Home() {
       <FeaturedArticles />
       <FounderNote />
 
-      {/* Grid Value Section */}
+      {/* Value Grid Section */}
       <section className="py-14 md:py-20 bg-background">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
           <ValueGrid />

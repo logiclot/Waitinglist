@@ -1,49 +1,57 @@
 "use client";
 
+import React from "react";
 import {
   Award,
-  ShieldLock,
+  ShieldCheck,
   TrendingUp,
   FileText,
   Lightbulb,
   Percent,
   BarChart3,
+  type LucideIcon,
 } from "lucide-react";
 
-export function ValueGrid() {
-  const items = [
-    {
-      icon: Award,
-      text: "Only the top 5% of automation architects earn the Founding Expert badge.",
-    },
-    {
-      icon: ShieldLock,
-      text: "Zero-Data Handover: Keep your API keys private, we just build the engine.",
-    },
-    {
-      icon: TrendingUp,
-      text: "Nearly 60% of companies have already introduced some level of process automation.",
-      author: "— McKinsey & Company",
-    },
-    {
-      icon: FileText,
-      text: "Every implementation is protected by a platform-wide Mutual NDA.",
-    },
-    {
-      icon: Lightbulb,
-      text: "Stop guessing. Let our Elite Experts propose the ideas to you for €50.",
-    },
-    {
-      icon: Percent,
-      text: "0% Platform Commission for Businesses. Pay for outcomes, not access.",
-    },
-    {
-      icon: BarChart3,
-      text: "The intelligent process automation market is projected to reach $44.7B by 2030.",
-      author: "— Grand View Research, 2024",
-    },
-  ];
+interface GridItem {
+  icon: LucideIcon;
+  text: string;
+  author?: string;
+}
 
+const items: GridItem[] = [
+  {
+    icon: Award,
+    text: "Only the top 5% of automation architects earn the Founding Expert badge.",
+  },
+  {
+    icon: ShieldCheck,
+    text: "Zero-Data Handover: Keep your API keys private, we just build the engine.",
+  },
+  {
+    icon: TrendingUp,
+    text: "Nearly 60% of companies have already introduced some level of process automation.",
+    author: "— McKinsey & Company",
+  },
+  {
+    icon: FileText,
+    text: "Every implementation is protected by a platform-wide Mutual NDA.",
+  },
+  {
+    icon: Lightbulb,
+    text: "Stop guessing. Let our Elite Experts propose the ideas to you for €50.",
+  },
+  {
+    icon: Percent,
+    text: "0% Platform Commission for Businesses. Pay for outcomes, not access.",
+  },
+  {
+    icon: BarChart3,
+    text: "The intelligent process automation market is projected to reach $44.7B by 2030.",
+    author: "— Grand View Research, 2024",
+  },
+];
+
+export function ValueGrid() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {items.map((item, index) => {
