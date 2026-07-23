@@ -337,7 +337,7 @@ export function HowItWorksBusinessView() {
           <div className="mt-auto pt-6 border-t border-white/10">
             <Link
               href="/jobs/discovery"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white hover:bg-primary/90 text-primary text-sm font-bold transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white text-primary text-sm font-bold transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
             >
               {DISCOVERY_SCAN_COPY.cta} <ArrowRight className="h-4 w-4" />
             </Link>
@@ -378,7 +378,7 @@ export function HowItWorksBusinessView() {
           <div className="mt-auto pt-6 border-t border-white/10">
             <Link
               href="/jobs/new"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white hover:bg-primary/90 text-primary text-sm font-bold transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white text-primary text-sm font-bold transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
             >
               {CUSTOM_PROJECT_COPY.cta} <ArrowRight className="h-4 w-4" />
             </Link>
