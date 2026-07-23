@@ -12,13 +12,13 @@ export function Footer() {
   if (pathname === "/waitlist") return null;
 
   return (
-    <footer className="border-t border-border bg-background py-12">
+    <footer className="border-t border-border bg-background pt-12 pb-6">
       <CookieConsent />
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 lg:grid-cols-5">
           <div className="space-y-4">
             <LogoBrand href="/" size="md" />
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="w-60 text-sm text-muted-foreground leading-relaxed">
               Ready-to-use AI automations, implemented by verified experts.
             </p>
           </div>
@@ -166,7 +166,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-8 text-center text-xs text-muted-foreground">
+        <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground flex flex-wrap justify-between">
           <p>© {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.</p>
           <p className="mt-2">{BRAND_NAME} is a marketplace connecting businesses with specialists who implement automation.</p>
         </div>
