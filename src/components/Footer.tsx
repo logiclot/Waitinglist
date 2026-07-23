@@ -15,7 +15,7 @@ export function Footer() {
     <footer className="border-t border-border bg-background py-12">
       <CookieConsent />
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 lg:grid-cols-5">
           <div className="space-y-4">
             <LogoBrand href="/" size="md" />
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -58,7 +58,7 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/audit" className="hover:text-primary transition-colors">
-                  Audit
+                  Free Audit
                 </Link>
               </li>
             </ul>
