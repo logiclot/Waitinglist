@@ -139,6 +139,45 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Call to Action Section */}
+      <section className="py-16 md:py-20 bg-background">
+        <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
+          <div className="bg-[#111827] rounded-2xl p-8 md:p-12 lg:p-16 text-white text-center relative overflow-hidden border border-gray-800">
+            {/* Background Accent Glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none -z-0" />
+
+            <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center">
+              <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-gray-800 text-gray-300 rounded-full mb-4 border border-gray-700">
+                Ready to scale?
+              </span>
+
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+                Automate your business logic today.
+              </h2>
+
+              <p className="text-sm md:text-base text-gray-400 mb-8 leading-relaxed">
+                Browse our verified catalog of ready-to-deploy automations or hire a vetted expert to build a custom engine for your stack.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <a
+                  href="/solutions"
+                  className="w-full sm:w-auto px-6 py-3 bg-white text-gray-900 font-semibold text-sm rounded-xl hover:bg-gray-100 transition-colors text-center"
+                >
+                  Explore Automations
+                </a>
+                <a
+                  href="/hire"
+                  className="w-full sm:w-auto px-6 py-3 bg-gray-800 text-gray-200 border border-gray-700 font-semibold text-sm rounded-xl hover:bg-gray-700 transition-colors text-center"
+                >
+                  Hire an Expert
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Static works-with row */}
       <section className="py-6 text-center border-t border-border bg-background">
         <div className="container mx-auto px-4">
