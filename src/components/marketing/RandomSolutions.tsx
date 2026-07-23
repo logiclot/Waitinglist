@@ -124,7 +124,7 @@ export function RandomSolutions() {
                       (solution.expert.name || "?").slice(0, 2).toUpperCase()
                     )}
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground truncate flex-1">
+                  <span className="text-sm font-medium text-muted-foreground truncate flex-1">
                     {solution.expert.name}
                   </span>
                   {solution.expert.tier &&
