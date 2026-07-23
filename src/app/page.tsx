@@ -140,7 +140,7 @@ export default function Home() {
       </section>
 
       {/* Static works-with row */}
-      <section className="py-6 text-center border-b border-border/50 bg-background">
+      <section className="py-6 text-center border-t border-b border-border bg-background">
         <div className="container mx-auto px-4">
           <p className="text-[11px] uppercase tracking-widest font-semibold mb-3 text-muted-foreground">
             Works with
