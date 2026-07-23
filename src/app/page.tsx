@@ -63,7 +63,6 @@ export default function Home() {
     <main className="min-h-screen flex flex-col">
       <Hero />
       <TrustCarousel />
-      <RandomSolutions />
       <CategoryGrid />
 
       {/* Inline Audit + Hire vs. Automate Section */}
@@ -115,6 +114,7 @@ export default function Home() {
         </div>
       </section>
 
+      <RandomSolutions />
       <HowItWorks />
       <FeaturedArticles />
       <FounderNote />
