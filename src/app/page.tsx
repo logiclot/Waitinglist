@@ -114,8 +114,8 @@ export default function Home() {
         </div>
       </section>
 
-      <RandomSolutions />
       <HowItWorks />
+      <RandomSolutions />
       <FeaturedArticles />
       <FounderNote />
       <Footer />
