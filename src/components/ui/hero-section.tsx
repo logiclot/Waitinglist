@@ -29,10 +29,10 @@ const TRUST_STATS = [
   { label: "Email Automation" },
 ];
 
-const DEFAULT_HEADLINE = "Find your automation expert";
-const DEFAULT_SUBHEADING = "Browse solutions. See how it works. Deploy in days."
-const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "Sync Shopify to HubSpot" or "AI Phone Receptionist"';
-const DEFAULT_CTA_LABEL = "Browse Solutions";
+const DEFAULT_HEADLINE = "Your team is doing work your software should be doing, let's end it.";
+const DEFAULT_SUBHEADING = "We map where your team loses time, show you what's worth fixing, and connect you with the specialist who builds it."
+const DEFAULT_SEARCH_PLACEHOLDER = 'e.g., "WhatsApp AI Automation" or "Invoice & Document Processing"';
+const DEFAULT_CTA_LABEL = "Find a Specialist";
 
 function splitSubheading(text: string): string[] {
   const parts = text
@@ -320,7 +320,7 @@ export function Hero({
                 className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-all duration-200 hover:brightness-95 active:scale-[0.98] disabled:hover:brightness-100 disabled:active:scale-100"
                 style={{ background: colors[800], color: "#fff" }}
               >
-                Search
+                Search Solutions
               </button>
             </div>
 
