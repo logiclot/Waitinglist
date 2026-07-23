@@ -11,6 +11,7 @@ import { HireVsAutomateCarousel } from "@/components/marketing/HireVsAutomateCar
 import { GlowBorder } from "@/components/ui/glow-border";
 import { ClipboardList, ShieldCheck, Clock } from "lucide-react";
 import { Footer } from "@/components/Footer";
+import { ValueGrid } from "@/components/marketing/ValueGrid";
 
 export const metadata: Metadata = {
   title: "LogicLot | Verified Automation Solutions for Growing Businesses",
@@ -118,6 +119,14 @@ export default function Home() {
       <RandomSolutions />
       <FeaturedArticles />
       <FounderNote />
+
+      {/* Grid Value Section */}
+      <section className="py-14 md:py-20 bg-background">
+        <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
+          <ValueGrid />
+        </div>
+      </section>
+
       <Footer />
     </main>
   );
