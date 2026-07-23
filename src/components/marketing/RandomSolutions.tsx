@@ -66,7 +66,7 @@ export function RandomSolutions() {
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-2">
               Featured Solutions
             </p>
-            <h2 className="text-lg md:text-3xl font-bold text-foreground tracking-tight flex items-center gap-2">
+            <h2 className="text-lg md:text-4xl font-bold text-foreground tracking-tight flex items-center gap-2">
               Ready to deploy
             </h2>
           </div>
@@ -102,7 +102,7 @@ export function RandomSolutions() {
                 <div className="mb-3">
                   <CategoryBadge category={solution.category} size="sm" />
                 </div>
-                <h3 className="font-bold text-base mb-1.5 group-hover:text-primary transition-colors line-clamp-2">
+                <h3 className="font-bold text-foreground group-hover:text-primary transition-colors mb-1">
                   {solution.title}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
