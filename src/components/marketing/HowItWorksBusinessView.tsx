@@ -347,7 +347,6 @@ export function HowItWorksBusinessView() {
 
         {/* Tier 3 — Custom Project */}
         <div className="relative p-8 rounded-2xl bg-[#111827] border border-white/8 shadow-xl flex flex-col min-h-[420px]">
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/60 rounded-t-2xl" />
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs font-bold mb-4 border border-white/10">
               {CUSTOM_PROJECT_COPY.badge}
