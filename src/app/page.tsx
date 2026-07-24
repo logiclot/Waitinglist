@@ -9,7 +9,7 @@ import { FounderNote } from "@/components/marketing/FounderNote";
 import { AuditQuiz } from "@/components/audit/AuditQuiz";
 import { HireVsAutomateCarousel } from "@/components/marketing/HireVsAutomateCarousel";
 import { GlowBorder } from "@/components/ui/glow-border";
-import { ClipboardList, ShieldCheck, Clock } from "lucide-react";
+import { ClipboardList, ShieldCheck, Clock, Check } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import { ValueGrid } from "@/components/marketing/ValueGrid";
 
@@ -71,10 +71,17 @@ const worksWithList = [
   "Notion",
 ];
 
+const trustStatsList = [
+  { label: "CRM & Sales" },
+  { label: "Lead Generation" },
+  { label: "Email Automation" },
+];
+
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col">
       <Hero />
+
       {/* <TrustCarousel /> */}
       <CategoryGrid />
 
@@ -136,6 +143,25 @@ export default function Home() {
       <section className="py-14 md:py-20 bg-[#FBFAF8]">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
           <ValueGrid />
+        </div>
+      </section>
+
+      {/* Trust stat pills */}
+      <section className="py-6 bg-background border-b border-border/50">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+            {trustStatsList.map((s) => (
+              <div
+                key={s.label}
+                className="flex items-center gap-2 px-3 py-2 rounded-full border border-border/80 bg-white shadow-sm text-xs md:text-sm whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white font-bold leading-none">
+                  <Check className="p-0.5 font-bold" strokeWidth={4} />
+                </span>
+                <span className="font-medium text-foreground">{s.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
