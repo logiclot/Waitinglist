@@ -135,6 +135,64 @@ export default function Home() {
       </section>
 
       <HowItWorks />
+
+      <div className="max-w-3xl mx-auto text-center mb-14">
+        <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-3">Fees &amp; Commissions</p>
+        <h1 className="text-4xl font-bold mb-4 tracking-tight">Transparent Pricing</h1>
+        <p className="text-base text-muted-foreground leading-relaxed">
+          No hidden fees, no subscriptions. Businesses pay nothing extra. Experts keep more as they grow.
+        </p>
+      </div>
+      <div className="max-w-5xl mx-auto mb-20">
+        <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
+            <div className="p-8 md:p-10 flex flex-col h-full">
+              <div className="mb-auto">
+                <h3 className="font-bold text-lg mb-2 text-foreground">Implementation Fee</h3>
+                <div className="text-3xl font-bold mb-4 text-foreground">Milestone Based</div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Paid in stages defined by the expert. Funds are held in secure escrow until you approve the work.
+                </p>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border/50">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-bold border border-border">
+                  Paid by Buyer
+                </span>
+              </div>
+            </div>
+            <div className="p-8 md:p-10 bg-primary/5 flex flex-col h-full relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+              <div className="mb-auto">
+                <h3 className="font-bold text-lg mb-2 text-primary">Platform Fee</h3>
+                <div className="text-4xl font-bold mb-4 text-foreground">0%</div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  We charge the expert a commission. You pay exactly the listed price.
+                </p>
+              </div>
+              <div className="mt-6 pt-6 border-t border-primary/10">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-foreground text-background text-xs font-bold">
+                  Free for Buyers
+                </span>
+              </div>
+            </div>
+            <div className="p-8 md:p-10 flex flex-col h-full">
+              <div className="mb-auto">
+                <h3 className="font-bold text-lg mb-2 text-foreground">AI/Cloud Usage</h3>
+                <div className="text-3xl font-bold mb-4 text-foreground">At Cost</div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Paid directly to providers (OpenAI, Make, etc.). No markup. Every solution lists estimated monthly costs upfront.
+                </p>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border/50">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-bold border border-border">
+                  Paid to 3rd Parties
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <RandomSolutions />
       <FeaturedArticles />
       <FounderNote />
