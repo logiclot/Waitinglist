@@ -5,7 +5,7 @@ const notoSerif = Noto_Serif({
   subsets: ["latin"],
   variable: "--font-noto",
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  style: ["normal", "italic"], // Opțional: adaugă și stilul italic dacă ai nevoie
+  style: ["normal", "italic"],
 });
 
 //import localFont from "next/font/local";
