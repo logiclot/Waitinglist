@@ -73,7 +73,7 @@ export function ValueGrid() {
           return (
             <div
               key={index}
-              className="block bg-white border border-border rounded-xl p-5 md:p-8 hover:border-primary/20 transition-colors group"
+              className="block bg-white border border-ash-300 rounded-xl p-6 md:p-8"
             >
               <div className="flex flex-col h-full justify-between gap-4">
                 <div className="size-10 bg-ash-100 flex items-center justify-center border border-ash-300 ring-2 ring-ash-100 rounded-xl">
