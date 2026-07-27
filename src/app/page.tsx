@@ -219,22 +219,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Static works-with row */}
-      <section className="pt-6 text-center">
-        <div className="container mx-auto px-4">
-          <p className="text-[11px] uppercase tracking-widest font-semibold mb-3">
-            Works with
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-            {worksWithList.map((tool) => (
-              <span key={tool} className="text-sm font-semibold">
-                {tool}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <Footer />
     </main>
   );

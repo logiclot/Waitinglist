@@ -18,14 +18,14 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 lg:grid-cols-5">
           <div className="space-y-4">
             <LogoBrand href="/" size="md" />
-            <p className="w-60 text-sm text-muted-foreground leading-relaxed">
+            <p className="w-60 text-sm">
               Ready-to-use AI automations, implemented by verified experts.
             </p>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Company</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h3 className="text-ash-800 font-noto font-semibold tracking-tight">Company</h3>
+            <ul className="space-y-2 text-sm mt-4">
               <li>
                 <Link href="/about" className="hover:text-primary transition-colors">
                   About
@@ -65,8 +65,8 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Browse by category</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h3 className="text-ash-800 font-noto font-semibold tracking-tight">Browse by category</h3>
+            <ul className="space-y-2 text-sm mt-4">
               <li>
                 <Link href="/solutions?category=marketing-automation" className="hover:text-primary transition-colors">
                   Marketing Automation
@@ -111,8 +111,8 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Resources</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h3 className="text-ash-800 font-noto font-semibold tracking-tight">Resources</h3>
+            <ul className="space-y-2 text-sm mt-4">
               <li>
                 <Link href="/solutions" className="hover:text-primary transition-colors">
                   Browse Solutions
@@ -142,8 +142,8 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Legal</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h3 className="text-ash-800 font-noto font-semibold tracking-tight">Legal</h3>
+            <ul className="space-y-2 text-sm mt-4">
               <li>
                 <Link href="/terms" className="hover:text-primary transition-colors">
                   Terms
@@ -166,7 +166,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground flex flex-wrap justify-between">
+        <div className="border-t border-border pt-6 text-center text-sm  flex flex-wrap justify-between">
           <p>© {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.</p>
           <p className="mt-2">{BRAND_NAME} is a marketplace connecting businesses with specialists who implement automation.</p>
         </div>
