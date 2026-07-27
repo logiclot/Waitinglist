@@ -210,19 +210,17 @@ export default function Home() {
           {trustStatsList.map((s) => (
             <div
               key={s.label}
-              className="text-sm whitespace-nowrap bg-ash-300 flex items-center gap-2 py-2 pl-2.5 pr-5 rounded-full"
+              className="whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full"
             >
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-white font-bold leading-none">
-                <Check className="p-0.5 font-bold" strokeWidth={4} />
-              </span>
-              <span className="text-ash-800 font-medium">{s.label}</span>
+              <svg className="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              <span className="text-sm text-ash-800 font-medium">{s.label}</span>
             </div>
           ))}
         </div>
       </section>
 
       {/* Static works-with row */}
-      <section className="py-6 text-center">
+      <section className="pt-6 text-center">
         <div className="container mx-auto px-4">
           <p className="text-[11px] uppercase tracking-widest font-semibold mb-3">
             Works with
