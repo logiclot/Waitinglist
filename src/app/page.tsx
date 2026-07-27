@@ -95,7 +95,7 @@ export default function Home() {
                 <p className="text-xs font-semibold uppercase tracking-widest mb-3">
                   Free Automation Audit
                 </p>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
                   Where is your business losing time?
                 </h2>
                 <p className="text-[13px] leading-relaxed max-w-md mx-auto lg:mx-0">
@@ -148,14 +148,14 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
             <div className="p-8 md:p-10 flex flex-col h-full">
               <div className="mb-auto">
-                <h3 className="font-bold text-lg mb-2 text-foreground">Implementation Fee</h3>
-                <div className="text-3xl font-bold mb-4 text-foreground">Milestone Based</div>
+                <h3 className="font-bold text-lg mb-2">Implementation Fee</h3>
+                <div className="text-3xl font-bold mb-4">Milestone Based</div>
                 <p className="text-sm leading-relaxed">
                   Paid in stages defined by the expert. Funds are held in secure escrow until you approve the work.
                 </p>
               </div>
               <div className="mt-6 pt-6">
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-bold">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-xs font-bold">
                   Paid by Buyer
                 </span>
               </div>
@@ -164,7 +164,7 @@ export default function Home() {
               <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
               <div className="mb-auto">
                 <h3 className="font-bold text-lg mb-2 text-primary">Platform Fee</h3>
-                <div className="text-4xl font-bold mb-4 text-foreground">0%</div>
+                <div className="text-4xl font-bold mb-4">0%</div>
                 <p className="text-sm leading-relaxed">
                   We charge the expert a commission. You pay exactly the listed price.
                 </p>
@@ -177,14 +177,14 @@ export default function Home() {
             </div>
             <div className="p-8 md:p-10 flex flex-col h-full">
               <div className="mb-auto">
-                <h3 className="font-bold text-lg mb-2 text-foreground">AI/Cloud Usage</h3>
-                <div className="text-3xl font-bold mb-4 text-foreground">At Cost</div>
+                <h3 className="font-bold text-lg mb-2">AI/Cloud Usage</h3>
+                <div className="text-3xl font-bold mb-4">At Cost</div>
                 <p className="text-sm leading-relaxed">
                   Paid directly to providers (OpenAI, Make, etc.). No markup. Every solution lists estimated monthly costs upfront.
                 </p>
               </div>
               <div className="mt-6 pt-6">
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-bold">
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-xs font-bold">
                   Paid to 3rd Parties
                 </span>
               </div>
@@ -216,7 +216,7 @@ export default function Home() {
                 <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white font-bold leading-none">
                   <Check className="p-0.5 font-bold" strokeWidth={4} />
                 </span>
-                <span className="font-medium text-foreground">{s.label}</span>
+                <span className="font-medium">{s.label}</span>
               </div>
             ))}
           </div>
@@ -231,7 +231,7 @@ export default function Home() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             {worksWithList.map((tool) => (
-              <span key={tool} className="text-sm font-semibold text-foreground/40">
+              <span key={tool} className="text-sm font-semibold">
                 {tool}
               </span>
             ))}

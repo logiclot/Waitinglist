@@ -155,7 +155,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       </head>
       <body
-        className={`${geistSans.variable} ${notoSerif.variable} antialiased min-h-screen flex flex-col bg-ash-100 text-foreground`}
+        className={`${geistSans.variable} ${notoSerif.variable} min-h-screen text-ash-600 antialiased bg-ash-100 flex flex-col`}
       >
         <noscript>
           <iframe
