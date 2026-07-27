@@ -82,6 +82,20 @@
   }
 }
 
+@theme static {
+  --color-ash-50: #f9fbfa;
+  --color-ash-100: #f3f6f5;
+  --color-ash-200: #e5ebe9;
+  --color-ash-300: #d1dbd7;
+  --color-ash-400: #b2c2bc;
+  --color-ash-500: #6a8179;
+  --color-ash-600: #4a6459;
+  --color-ash-700: #365247;
+  --color-ash-800: #1e382d;
+  --color-ash-900: #102820;
+  --color-ash-950: #02130e;
+}
+
 @keyframes marquee {
   0% {
     transform: translateX(0);
