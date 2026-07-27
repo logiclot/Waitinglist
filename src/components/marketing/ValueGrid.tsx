@@ -55,13 +55,13 @@ export function ValueGrid() {
     <div>
       {/* Header Secțiune */}
       <div className="text-center mb-8">
-        <p className="text-xs font-semibold uppercase tracking-widesttext-xs font-semibold uppercase tracking-widest bg-ash-200 inline-flex py-1.5 px-3 border border-ash-300 rounded-full">
+        <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
           Why LogicLot
         </p>
-        <h2 className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-4 md:text-4xl">
+        <h2 className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-6 md:text-4xl">
           Engineered for Trust & High-Impact Results
         </h2>
-        <p className="text-lg max-w-md mx-auto leading-relaxed">
+        <p className="max-w-md mx-auto mt-2 md:text-lg md:mt-4">
           Discover how our platform protects your business, guarantees quality, and simplifies automation execution.
         </p>
       </div>
