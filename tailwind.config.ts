@@ -10,24 +10,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        noto: ["var(--font-noto)", "serif"],
-      },
       colors: {
-        // 2. Adăugăm paleta ta custom de culori
-        ash: {
-          50: "#f9fbfa",
-          100: "#f3f6f5",
-          200: "#e5ebe9",
-          300: "#d1dbd7",
-          400: "#b2c2bc",
-          500: "#6a8179",
-          600: "#4a6459",
-          700: "#365247",
-          800: "#1e382d",
-          900: "#102820",
-          950: "#02130e",
-        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

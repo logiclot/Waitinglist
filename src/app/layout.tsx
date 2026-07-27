@@ -3,7 +3,7 @@ import { Noto_Serif } from "next/font/google";
 
 const notoSerif = Noto_Serif({
   subsets: ["latin"],
-  variable: "--font-noto",
+  variable: "--font-noto-serif",
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
 });
