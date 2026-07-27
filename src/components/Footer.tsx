@@ -12,7 +12,7 @@ export function Footer() {
   if (pathname === "/waitlist") return null;
 
   return (
-    <footer className="border-t border-border bg-background pt-12 pb-6">
+    <footer className="border-t border-border bg-background mt-12 pt-12 pb-6">
       <CookieConsent />
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 lg:grid-cols-5">
