@@ -161,7 +161,7 @@
 
 @layer utilities {
   .font-noto {
-    font-family: var(--font-noto), "Noto Serif", serif;
+    font-family: "Noto Serif", "Noto Serif Display", "Noto Sans", serif;
   }
 }
 
