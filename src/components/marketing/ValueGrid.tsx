@@ -55,19 +55,19 @@ export function ValueGrid() {
     <div>
       {/* Header Secțiune */}
       <div className="text-center mb-8">
-        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3">
           Why LogicLot
         </p>
-        <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-foreground mb-2">
+        <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
           Engineered for Trust & High-Impact Results
         </h2>
-        <p className="text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
+        <p className="text-lg max-w-md mx-auto leading-relaxed">
           Discover how our platform protects your business, guarantees quality, and simplifies automation execution.
         </p>
       </div>
 
       {/* Grid-ul cu mt-10 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mt-10">
         {items.map((item, index) => {
           const Icon = item.icon;
           return (
@@ -76,14 +76,14 @@ export function ValueGrid() {
               className="block bg-white border border-border rounded-xl p-5 md:p-8 hover:border-primary/20 transition-colors group"
             >
               <div className="flex flex-col h-full justify-between gap-4">
-                <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/8 border border-primary/15 flex items-center justify-center text-primary group-hover:bg-primary/15 transition-colors">
+                <div className="size-10 bg-ash-100 flex items-center justify-center border border-ash-300 ring-2 ring-ash-100 rounded-xl">
                   <Icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground group-hover:text-primary transition-colors mb-1">
+                  <h3 className="text-ask-900 font-noto font-medium tracking-tight">
                     {item.text}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                  <p className="text-sm leading-relaxed line-clamp-2">
                     {item.description}
                   </p>
                 </div>

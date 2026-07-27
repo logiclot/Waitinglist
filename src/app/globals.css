@@ -145,6 +145,7 @@
     @apply bg-background text-foreground;
     font-family:
       var(--font-geist-sans),
+      var(--font-noto),
       ui-sans-serif,
       system-ui,
       -apple-system,
@@ -157,6 +158,12 @@
   }
   body::before {
     display: none;
+  }
+}
+
+@layer utilities {
+  .font-noto {
+    font-family: var(--font-noto), "Noto Serif", serif;
   }
 }
 
