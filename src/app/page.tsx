@@ -262,30 +262,6 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-2xl p-6">
-        <div className="rounded-2xl border border-ash-200 bg-ash-50 p-8 shadow-sm transition-all hover:shadow-md dark:border-ash-800 dark:bg-ash-900">
-          
-          <span className="inline-block rounded-full bg-ash-200/60 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-ash-700 dark:bg-ash-800 dark:text-ash-300">
-            Noutăți & Articole
-          </span>
-
-          <h2 className="font-noto mt-4 text-3xl font-bold tracking-tight text-ash-900 dark:text-ash-50 sm:text-4xl">
-            Eleganță și simplitate în fiecare detaliu
-          </h2>
-
-          <p className="font-noto mt-3 text-base leading-relaxed text-ash-600 dark:text-ash-300">
-            Acest bloc folosește noua familie de fonturi <span className="font-semibold underline decoration-ash-400">Noto Serif</span> alături de tonurile naturale din paleta <span className="font-semibold underline decoration-ash-400">Ash</span>.
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center gap-4">
-            <button className="rounded-lg bg-ash-800 px-5 py-2.5 text-sm font-medium text-ash-50 shadow transition-colors hover:bg-ash-700">
-              Citește articolul
-            </button>
-          </div>
-
-        </div>
-      </div>
-
       {/* Static works-with row */}
       <section className="py-6 text-center border-t border-border bg-background">
         <div className="container mx-auto px-4">
