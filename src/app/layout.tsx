@@ -1,4 +1,13 @@
 import type { Metadata } from "next";
+import { Noto_Serif } from "next/font/google";
+
+const notoSerif = Noto_Serif({
+  subsets: ["latin"],
+  variable: "--font-noto",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"], // Opțional: adaugă și stilul italic dacă ai nevoie
+});
+
 //import localFont from "next/font/local";
 import { Outfit } from "next/font/google";
 import "./globals.css";
