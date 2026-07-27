@@ -47,6 +47,7 @@
   --color-ash-800: #1e382d;
   --color-ash-900: #102820;
   --color-ash-950: #02130e;
+  --font-noto: var(--font-noto-serif), serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
