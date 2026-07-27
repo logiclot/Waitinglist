@@ -262,6 +262,10 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="bg-ash-500 text-white p-8 font-noto text-2xl">
+        Test paletă și font.
+      </div>
+
       {/* Static works-with row */}
       <section className="py-6 text-center border-t border-border bg-background">
         <div className="container mx-auto px-4">
