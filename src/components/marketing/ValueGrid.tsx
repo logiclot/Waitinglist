@@ -55,10 +55,10 @@ export function ValueGrid() {
     <div>
       {/* Header Secțiune */}
       <div className="text-center mb-8">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-3">
+        <p className="text-xs font-semibold uppercase tracking-widesttext-xs font-semibold uppercase tracking-widest bg-ash-200 inline-flex py-1.5 px-3 border border-ash-300 rounded-full">
           Why LogicLot
         </p>
-        <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
+        <h2 className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-4 md:text-4xl">
           Engineered for Trust & High-Impact Results
         </h2>
         <p className="text-lg max-w-md mx-auto leading-relaxed">
@@ -73,17 +73,17 @@ export function ValueGrid() {
           return (
             <div
               key={index}
-              className="block bg-white border border-ash-300 rounded-xl p-6 md:p-8"
+              className="bg-white border border-ash-300 shadow-2xl shadow-ash-200 rounded-2xl p-6 md:p-8"
             >
-              <div className="flex flex-col h-full justify-between gap-4">
+              <div className="flex flex-col h-full justify-between gap-6">
                 <div className="size-10 bg-ash-100 flex items-center justify-center border border-ash-300 ring-2 ring-ash-100 rounded-xl">
                   <Icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-ask-900 font-noto font-medium tracking-tight">
+                  <h3 className="text-ash-800 font-noto font-semibold tracking-tight">
                     {item.text}
                   </h3>
-                  <p className="text-sm leading-relaxed line-clamp-2">
+                  <p className="text-sm leading-relaxed line-clamp-2 mt-1">
                     {item.description}
                   </p>
                 </div>
