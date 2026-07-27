@@ -83,7 +83,7 @@ export function ValueGrid() {
                   <h3 className="text-ash-800 font-noto font-semibold tracking-tight">
                     {item.text}
                   </h3>
-                  <p className="text-sm leading-relaxed line-clamp-2 mt-1">
+                  <p className="text-ash-500 mt-1">
                     {item.description}
                   </p>
                 </div>
