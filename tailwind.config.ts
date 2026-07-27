@@ -10,6 +10,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        noto: ["var(--font-noto)", "serif"],
+      },
       colors: {
         // 2. Adăugăm paleta ta custom de culori
         ash: {
