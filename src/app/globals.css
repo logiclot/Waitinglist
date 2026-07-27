@@ -360,4 +360,3 @@ input[type="number"] {
       0 0 40px 10px rgba(17, 24, 39, 0.12);
   }
 }
-@source inline("{bg,text,border,ring,outline,divide,fill,stroke,shadow,from,via,to,accent,caret,decoration}-ash-{50,100,200,300,400,500,600,700,800,900,950}");
