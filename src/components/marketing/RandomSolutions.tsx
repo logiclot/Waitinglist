@@ -148,41 +148,25 @@ export function RandomSolutions() {
         )}
       </div>
       
-      <div className="mt-10 bg-ash-900 border border-ash-800 rounded-2xl md:rounded-3xl p-5 md:px-8 md:py-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-        <div className="space-y-0.5 text-center sm:text-left">
-          <h3 className="text-base md:text-lg font-noto font-semibold text-ash-50 tracking-tight">
+      <div className="max-w-4xl bg-ash-900 flex flex-col p-6 items-center justify-between gap-4 mt-10 mx-4 rounded-3xl sm:flex-row md:p-8 md:mx-auto">
+        <div className="text-center sm:text-left">
+          <h3 className="text-lg font-noto font-semibold text-ash-50 tracking-tight">
             Haven&apos;t found the exact workflow you need?
           </h3>
-          <p className="text-xs md:text-sm text-ash-300">
+          <p className="text-ash-300 mt-1">
             Explore our full library of expert-built solutions or request a custom setup.
           </p>
         </div>
 
         <Link
           href="/solutions"
-          className="shrink-0 text-sm text-primary flex items-center gap-1 font-medium hover:scale-105 ease-in-out transition-transform"
+          className="text-sm font-medium flex items-center gap-2 shrink-0"
         >
-          <ShimmerButton
-            className="shadow-2xl"
-            shimmerColor="#000000"
-            background="#ffffff"
-            shimmerSize="0.09em"
-          >
-            <span className="text-sm inline-flex gap-2 leading-none text-black font-medium tracking-tight whitespace-pre-wrap lg:text-sm">
-              Browse all <ArrowRight className="w-3 h-3" />
-            </span>
-          </ShimmerButton>
+          <span className="text-sm inline-flex gap-2 leading-none font-medium tracking-tight whitespace-pre-wrap">
+            Browse all <ArrowRight className="size-4" />
+          </span>
         </Link>
       </div>
-
-      <Link
-        href="/solutions"
-        className="text-sm text-primary flex items-center gap-1 font-medium hover:scale-105 ease-in-out transition-transform"
-      >
-        <ShimmerButton className="shadow-2xl" shimmerColor="#000000" background="#ffffff" shimmerSize="0.09em">
-          <span className="text-sm inline-flex gap-2 leading-none text-black font-medium tracking-tight whitespace-pre-wrap lg:text-sm">Browse all <ArrowRight className="w-3 h-3" /></span>
-        </ShimmerButton>
-      </Link>
     </section>
   );
 }
