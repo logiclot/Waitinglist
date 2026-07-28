@@ -87,9 +87,9 @@ export function FeaturedArticles() {
         <div className="text-center mt-10">
           <Link
             href="/docs"
-            className="bg-ash-900 py-2 px-4 rounded-lg transition-[background] hover:bg-ash-800"
+            className="bg-ash-200 inline-flex py-2.5 px-5 rounded-full transition-[background] hover:bg-ash-300"
           >
-            <span className="text-white font-medium">View all guides</span>
+            <span className="text-sm text-ash-800 font-bold font-noto tracking-tight">See all our guides</span>
           </Link>
         </div>
       </div>

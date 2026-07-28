@@ -157,9 +157,9 @@ export function RandomSolutions() {
 
         <Link
           href="/solutions"
-          className="bg-white py-2 px-4 rounded-lg transition-[background] hover:bg-ash-100"
+          className="bg-white flex py-2.5 px-5 rounded-full transition-[background] hover:bg-ash-100"
         >
-          <span className="text-ash-800 font-bold font-noto tracking-tight">
+          <span className="text-sm text-ash-800 font-bold font-noto tracking-tight">
             Explore our library
           </span>
         </Link>
