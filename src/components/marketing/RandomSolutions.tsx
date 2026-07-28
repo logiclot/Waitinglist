@@ -146,7 +146,7 @@ export function RandomSolutions() {
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-semibold">See more</span>
-                    <ArrowRight className="size-4 -rotate-45" />
+                    <ArrowRight className="size-4 -rotate-45 mt-0.5" />
                   </div>
                 </div>
               </Link>
