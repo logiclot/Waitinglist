@@ -99,11 +99,11 @@ export function RandomSolutions() {
                 href={`/solutions/${solution.id}`}
                 className="bg-ash-200 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl"
               >
-                <div className="bg-white flex gap-6 p-5 rounded-[20px]">
+                <div className="bg-white p-5 rounded-[20px]">
                   <div className="">
                     <CategoryBadge category={solution.category} size="sm" />
                   </div>
-                  <h3 className="text-ash-800 font-noto font-semibold tracking-tight">
+                  <h3 className="text-ash-800 font-noto font-semibold tracking-tight mt-4">
                     {solution.title}
                   </h3>
                   <p className="text-ash-500 mt-1">
@@ -111,7 +111,7 @@ export function RandomSolutions() {
                   </p>
 
                   {/* Expert Attribution */}
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mt-4">
                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15 overflow-hidden relative">
                       {solution.expert.profileImageUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
@@ -138,15 +138,15 @@ export function RandomSolutions() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2 py-2.5 px-5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-bold">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-bold">
                       €{solution.implementationPrice.toLocaleString()}
                     </span>
-                    <span className="flex items-center gap-1">
+                    <span className="text-sm flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {solution.deliveryDays} days
                     </span>
                   </div>
-                  <div className="mt-3 flex items-center gap-1 text-sm group-hover:text-primary transition-colors">
+                  <div className="flex items-center gap-1 text-sm group-hover:text-primary transition-colors">
                     See more
                     <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
                   </div>
