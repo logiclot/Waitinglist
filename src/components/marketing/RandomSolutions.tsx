@@ -63,10 +63,10 @@ export function RandomSolutions() {
       <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-2">
+            <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
               Featured Solutions
             </p>
-            <h2 className="text-lg md:text-4xl font-bold text-foreground tracking-tight flex items-center gap-2">
+            <h2 className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-6 md:text-4xl">
               Ready to deploy
             </h2>
           </div>
