@@ -149,12 +149,12 @@ export default function Home() {
               We believe in honest partnerships. Businesses pay zero platform fees and no marked-up tool costs, while experts get paid fairly as they deliver milestones. What you see is exactly what you invest.
             </p>
           </div>
-          <div className="grid gap-4 mt-10 md:grid-cols-3">
-            <div className="p-6 md:p-10 flex flex-col h-full">
+          <div className="max-w-5xl grid gap-4 mx-auto mt-10 md:grid-cols-3">
+            <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
               <div className="mb-auto">
-                <h3 className="font-bold text-lg mb-2">Implementation Fee</h3>
-                <div className="text-3xl font-bold mb-4">Milestone Based</div>
-                <p className="text-sm leading-relaxed">
+                <h3 className="text-xs text-ash-500 font-medium uppercase tracking-widest">Implementation Fee</h3>
+                <div className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-4">Milestone Based</div>
+                <p className="text-ash-500 mt-2">
                   Paid in stages defined by the expert. Funds are held in secure escrow until you approve the work.
                 </p>
               </div>
@@ -164,12 +164,11 @@ export default function Home() {
                 </span>
               </div>
             </div>
-            <div className="p-6 md:p-10 bg-primary/5 flex flex-col h-full relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+            <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
               <div className="mb-auto">
-                <h3 className="font-bold text-lg mb-2 text-primary">Platform Fee</h3>
-                <div className="text-4xl font-bold mb-4">0%</div>
-                <p className="text-sm leading-relaxed">
+                <h3 className="text-xs text-ash-500 font-medium uppercase tracking-widest">Platform Fee</h3>
+                <div className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-4">0%</div>
+                <p className="text-ash-500 mt-2">
                   We charge the expert a commission. You pay exactly the listed price.
                 </p>
               </div>
@@ -179,11 +178,11 @@ export default function Home() {
                 </span>
               </div>
             </div>
-            <div className="p-6 md:p-10 flex flex-col h-full">
+            <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
               <div className="mb-auto">
-                <h3 className="font-bold text-lg mb-2">AI/Cloud Usage</h3>
-                <div className="text-3xl font-bold mb-4">At Cost</div>
-                <p className="text-sm leading-relaxed">
+                <h3 className="text-xs text-ash-500 font-medium uppercase tracking-widest">AI/Cloud Usage</h3>
+                <div className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-4">At Cost</div>
+                <p className="text-ash-500 mt-2">
                   Paid directly to providers (OpenAI, Make, etc.). No markup. Every solution lists estimated monthly costs upfront.
                 </p>
               </div>
