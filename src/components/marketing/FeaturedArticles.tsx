@@ -56,7 +56,7 @@ export function FeaturedArticles() {
           </p>
         </div>
 
-        <div className="grid items-start gap-2 mt-10 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid items-start gap-4 mt-10 md:grid-cols-2 lg:grid-cols-3">
           {FEATURED_ARTICLES.map(({ slug, title, description, icon: Icon }) => (
             <Link
               key={slug}
