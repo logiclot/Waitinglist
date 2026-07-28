@@ -92,7 +92,7 @@ export function RandomSolutions() {
             </Link>
           </div>
         ) : (
-          <div className="grid items-start gap-2 mt-10 md:grid-cols-3">
+          <div className="grid items-start gap-4 mt-10 md:grid-cols-3">
             {solutions.map((solution) => (
               <Link
                 key={solution.id}
