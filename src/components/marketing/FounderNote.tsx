@@ -5,8 +5,7 @@ export function FounderNote() {
   return (
     <section className="pt-24">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto p-8 md:p-10 bg-white border border-border rounded-2xl flex flex-col md:flex-row items-center gap-8 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-foreground rounded-l-2xl" />
+        <div className="max-w-4xl mx-auto p-6 bg-white flex flex-col items-center gap-8 relative border border-ash-300 shadow-2xl shadow-ash-200 rounded-2xl md:flex-row md:p-8 xl:p-10">
           <div className="shrink-0">
             <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border shadow-sm">
               <Image
