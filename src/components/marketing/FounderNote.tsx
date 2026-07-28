@@ -18,7 +18,7 @@ export function FounderNote() {
             </div>
           </div>
           <div className="text-center md:text-left">
-            <h4 className="text-xl text-ash-800 font-noto font-medium tracking-tight">Where this all started.</h4>
+            <h4 className="text-xl text-ash-800 font-noto font-medium tracking-tight">Where this all started</h4>
             <p className="text-ash-500 mt-2">
               &ldquo;I built LogicLot after spending years watching good businesses stay stuck on work that should have been automated long ago. The talent to fix it was always out there. Getting the two in the same room, reliably, was the hard part. Thank you for being here.&rdquo;
             </p>
