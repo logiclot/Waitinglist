@@ -15,7 +15,7 @@ interface CategoryBadgeProps {
 
 const sizeConfig = {
   sm: {
-    wrapper: "gap-1.5",
+    wrapper: "gap-2",
     iconContainer: "size-8 rounded-md",
     iconSize: "size-5",
     text: "text-sm",
@@ -58,7 +58,7 @@ export function CategoryBadge({
 
       {/* Category name — always black/foreground, only icon is colored */}
       {!iconOnly && (
-        <span className={`${s.text} truncate max-w-[140px]`}>
+        <span className={`${s.text} font-medium truncate max-w-[140px]`}>
           {category}
         </span>
       )}
