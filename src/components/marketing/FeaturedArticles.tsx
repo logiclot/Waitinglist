@@ -29,7 +29,7 @@ const FEATURED_ARTICLES = [
   {
     slug: "how-escrow-works",
     title: "How Escrow Protects You",
-    description: "Payments are held securely until you approve the work. Here's how it works on LogicLot.",
+    description: "Payments are held securely until you approve the work, see how it works.",
     icon: Shield,
   },
   {
@@ -56,7 +56,7 @@ export function FeaturedArticles() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-2 mt-10">
+        <div className="grid items-start gap-2 mt-10 md:grid-cols-2 lg:grid-cols-3">
           {FEATURED_ARTICLES.map(({ slug, title, description, icon: Icon }) => (
             <Link
               key={slug}
