@@ -63,7 +63,7 @@ export function FeaturedArticles() {
               href={`/docs/${slug}`}
               className="bg-ash-200 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl"
             >
-              <div className="bg-white flex gap-6 p-5 rounded-[20px]">
+              <div className="bg-white flex gap-6 p-6 rounded-[20px]">
                 <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
                   <Icon className="size-5" />
                 </div>
@@ -76,7 +76,7 @@ export function FeaturedArticles() {
                   </p>
                 </div>
               </div>
-              <div className=" flex items-center justify-between gap-2 py-2.5 px-5">
+              <div className=" flex items-center justify-between gap-2 py-2.5 px-6">
                 <span className="text-sm font-semibold">Read full guide</span>
                 <ArrowRight className="size-4 -rotate-45" />
               </div>
