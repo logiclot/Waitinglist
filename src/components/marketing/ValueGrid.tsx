@@ -54,7 +54,7 @@ export function ValueGrid() {
   return (
     <div>
       {/* Header Secțiune */}
-      <div className="text-center relative">
+      <div className="text-center relative mb-8">
         <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-300 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
           trust
         </span>
