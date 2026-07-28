@@ -54,7 +54,8 @@ export function ValueGrid() {
   return (
     <div>
       {/* Header Secțiune */}
-      <div className="text-center mb-8">
+      <div className="text-center relative mb-8">
+        <span class="text-[75px] font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-300 flex justify-center absolute -top-[65px] inset-x-0 md:text-[125px] md:-top-[110px] lg:text-[150px] lg:-top-[130px] xl:text-[175px] xl:-top-[155px]">logicLot</span>
         <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
           Why LogicLot
         </p>
