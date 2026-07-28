@@ -6,6 +6,10 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: "5mb",
+      allowedOrigins: [
+        "studious-fiesta-777gvq46w5q72xg74-3000.app.github.dev",
+        "localhost:3000",
+      ],
     },
   },
   images: {
