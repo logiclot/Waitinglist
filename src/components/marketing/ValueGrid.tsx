@@ -67,7 +67,7 @@ export function ValueGrid() {
       </div>
 
       {/* Grid-ul cu mt-10 */}
-      <div className="grid gap-2 mt-10 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 mt-10 md:grid-cols-2 lg:grid-cols-3">
         {items.map((item, index) => {
           const Icon = item.icon;
           return (
