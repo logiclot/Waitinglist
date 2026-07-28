@@ -14,7 +14,7 @@ export function Footer() {
   return (
     <footer className="bg-white mt-12 mx-4 mb-4 border border-ash-300 shadow-2xl shadow-ash-200 rounded-2xl">
       <CookieConsent />
-      <div className="container mx-auto p-6 md:p-8">
+      <div className="container mx-auto p-6 md:p-8 xl:p-12">
         <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-5">
           <div>
             <LogoBrand href="/" size="md" />
