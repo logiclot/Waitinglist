@@ -157,12 +157,11 @@ export function RandomSolutions() {
 
         <Link
           href="/solutions"
-          className="bg-white flex items-center gap-2 py-2 px-4 rounded-lg transition-[background] hover:bg-ash-100"
+          className="bg-white py-2 px-4 rounded-lg transition-[background] hover:bg-ash-100"
         >
-          <span className="text-ash-800 font-semibold">
-            Browse all
+          <span className="text-ash-800 font-bold font-noto tracking-tight">
+            Explore our library
           </span>
-          <svg className="size-4 text-ash-800" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8L22 12L18 16"/><path d="M2 12H22"/></svg>
         </Link>
       </div>
     </section>
