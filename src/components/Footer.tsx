@@ -12,15 +12,14 @@ export function Footer() {
   if (pathname === "/waitlist") return null;
 
   return (
-    <footer className="border-t border-border bg-background mt-12 pt-12 pb-6">
+    <footer className="bg-white mt-12 mx-4 mb-4 border border-ash-300 shadow-2xl shadow-ash-200 rounded-2xl">
       <CookieConsent />
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 lg:grid-cols-5">
-          <div className="space-y-4">
+      <div className="container mx-auto p-6 md:p-8">
+        <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-5">
+          <div>
             <LogoBrand href="/" size="md" />
-            <p className="w-60 text-sm">
-              Ready-to-use AI automations, implemented by verified experts.
-            </p>
+            <p className="w-60 text-sm mt-4">{BRAND_NAME} is a marketplace connecting businesses with specialists who implement automation.</p>
+            <p className="mt-2">Ready-to-use AI automations, implemented by verified experts.</p>
           </div>
 
           <div>
@@ -166,9 +165,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-6 text-center text-sm  flex flex-wrap justify-between">
-          <p>© {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.</p>
-          <p className="mt-2">{BRAND_NAME} is a marketplace connecting businesses with specialists who implement automation.</p>
+        <div className="text-sm flex flex-wrap justify-between gap-2 pt-12">
+          <p>© {new Date().getFullYear()} {BRAND_NAME}. All rights reserved</p>
+          {/* copyright 7px.ro */}
         </div>
       </div>
     </footer>
