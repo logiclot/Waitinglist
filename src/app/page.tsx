@@ -146,34 +146,34 @@ export default function Home() {
               Simple, transparent pricing with zero hidden costs or markups
             </h1>
             <p className="max-w-4xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
-              We believe in honest partnerships. Businesses pay zero platform fees and no marked-up tool costs, while experts get paid fairly as they deliver milestones. What you see is exactly what you invest.
+              We believe in honest partnerships. Businesses pay zero platform fees and no marked-up tool costs, while experts get paid fairly as they deliver milestones.
             </p>
           </div>
           <div className="max-w-5xl grid gap-4 mx-auto mt-10 md:grid-cols-3">
             <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
               <div className="mb-auto">
                 <h3 className="text-xs text-ash-500 font-medium uppercase tracking-widest">Implementation Fee</h3>
-                <div className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-4">Milestone Based</div>
+                <div className="text-3xl text-ash-800 font-noto font-semibold tracking-tight mt-2">Milestone Based</div>
                 <p className="text-ash-500 mt-2">
                   Paid in stages defined by the expert. Funds are held in secure escrow until you approve the work.
                 </p>
               </div>
-              <div className="mt-6 pt-6">
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-xs font-bold">
+              <div className="mt-6 md:mt-8">
+                <span className="text-sm font-semibold bg-ash-200 py-1.5 px-3 r rounded-md">
                   Paid by Buyer
                 </span>
               </div>
             </div>
-            <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
+            <div className="h-full bg-ash-900 flex flex-col relative p-6 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
               <div className="mb-auto">
                 <h3 className="text-xs text-ash-500 font-medium uppercase tracking-widest">Platform Fee</h3>
-                <div className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-4">0%</div>
-                <p className="text-ash-500 mt-2">
+                <div className="text-3xl text-ash-50 font-noto font-semibold tracking-tight mt-2">0%</div>
+                <p className="text-ash-300 mt-2">
                   We charge the expert a commission. You pay exactly the listed price.
                 </p>
               </div>
-              <div className="mt-6 pt-6">
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-foreground text-background text-xs font-bold">
+              <div className="mt-6 md:mt-8">
+                <span className="text-sm text-ash-800 font-semibold bg-white py-1.5 px-3 r rounded-md">
                   Free for Buyers
                 </span>
               </div>
@@ -181,13 +181,13 @@ export default function Home() {
             <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
               <div className="mb-auto">
                 <h3 className="text-xs text-ash-500 font-medium uppercase tracking-widest">AI/Cloud Usage</h3>
-                <div className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-4">At Cost</div>
+                <div className="text-3xl text-ash-800 font-noto font-semibold tracking-tight mt-2">At Cost</div>
                 <p className="text-ash-500 mt-2">
                   Paid directly to providers (OpenAI, Make, etc.). No markup. Every solution lists estimated monthly costs upfront.
                 </p>
               </div>
-              <div className="mt-6 pt-6">
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-secondary text-xs font-bold">
+              <div className="mt-6 md:mt-8">
+                <span className="text-sm font-semibold bg-ash-200 py-1.5 px-3 r rounded-md">
                   Paid to 3rd Parties
                 </span>
               </div>
