@@ -19,7 +19,7 @@ export function Footer() {
           <div>
             <LogoBrand href="/" size="md" />
             <p className="w-60 text-sm mt-4">{BRAND_NAME} is a marketplace connecting businesses with specialists who implement automation.</p>
-            <p className="mt-2">Ready-to-use AI automations, implemented by verified experts.</p>
+            <p className="text-sm mt-2">Ready-to-use AI automations, implemented by verified experts.</p>
           </div>
 
           <div>
