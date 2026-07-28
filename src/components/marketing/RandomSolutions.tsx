@@ -59,7 +59,7 @@ export function RandomSolutions() {
   });
 
   return (
-    <section className="py-14 md:py-20 bg-[#FBFAF8] border-b border-border">
+    <section className="pt-14 md:pt-28">
       <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
         <div className="flex items-center justify-between mb-8">
           <div>
