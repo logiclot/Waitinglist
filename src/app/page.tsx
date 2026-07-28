@@ -195,7 +195,6 @@ export default function Home() {
 
       <RandomSolutions />
       <FeaturedArticles />
-      FeaturedArticles
       <FounderNote />
 
       {/* Value Grid Section */}
