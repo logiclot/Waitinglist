@@ -73,8 +73,9 @@ export function ValueGrid() {
           return (
             <div
               key={index}
-              className="bg-white border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl p-6 md:p-8"
+              className="bg-white relative border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 md:p-8"
             >
+              <Icon className="size-60 text-ash-100 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color,transform] group-hover:text-ash-200 group-hover:-rotate-[30deg]" />
               <div className="flex flex-col h-full justify-between gap-6">
                 <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
                   <Icon className="size-5" />
