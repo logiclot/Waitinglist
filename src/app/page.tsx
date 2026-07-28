@@ -144,7 +144,7 @@ export default function Home() {
           <h1 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
             Simple, transparent pricing with zero hidden costs or markups
           </h1>
-          <p className="max-w-2xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
+          <p className="max-w-4xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
             We believe in honest partnerships. Businesses pay zero platform fees and no marked-up tool costs, while experts get paid fairly as they deliver milestones. What you see is exactly what you invest.
           </p>
         </div>
