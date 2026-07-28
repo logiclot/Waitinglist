@@ -86,19 +86,19 @@ export default function Home() {
       <CategoryGrid />
 
       {/* Inline Audit */}
-      <section className="bg-ash-900 py-20 mx-4 rounded-3xl md:py-40">
+      <section className="bg-ash-900 pt-20 pb-4 mx-4 rounded-3xl md:py-40">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
           <div className="text-center relative">
             <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-800 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
               free audit
             </span>
-            <h2 className="max-w-xl text-2xl text-ash-50 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
-              Where is your business losing time?
+            <h2 className="max-w-2xl text-2xl text-ash-50 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
+              Where is your business losing time and growth potential every day?
             </h2>
             <p className="max-w-2xl text-ash-300 text-balance mx-auto mt-2 md:text-lg md:mt-4">
               5 questions. Find out what&apos;s costing you the most and whether automation is worth it for your stage of growth.
             </p>
-            <div className="flex items-center justify-center gap-5 flex-wrap mt-4">
+            <div className="flex items-center justify-center flex-wrap gap-y-2 gap-x-4 mt-2">
               {[
                 { icon: Clock, label: "2 minutes" },
                 { icon: ShieldCheck, label: "No account needed" },
@@ -108,8 +108,8 @@ export default function Home() {
                   key={label}
                   className="flex items-center gap-1 text-sm"
                 >
-                  <Icon className="size-3" />
-                  <span>{label}</span>
+                  <Icon className="size-3 text-ash-500" />
+                  <span className="text-ash-500">{label}</span>
                 </div>
               ))}
             </div>

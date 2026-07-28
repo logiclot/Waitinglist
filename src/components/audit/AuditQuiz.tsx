@@ -705,9 +705,9 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
       {/* Quiz card                                                           */}
       {/* ------------------------------------------------------------------ */}
       {!showResults && (
-        <div className="bg-white border border-border rounded-2xl shadow-sm p-8 md:p-10 max-w-2xl mx-auto">
+        <div className="max-w-2xl bg-ash-200 mx-auto p-6 rounded-3xl md:p-8 xl:p-10">
           {/* Progress bar */}
-          <div className="flex items-center gap-1.5 mb-8">
+          <div className="flex items-center gap-2">
             {QUESTIONS.map((_, i) => (
               <div
                 key={i}
@@ -722,20 +722,20 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
           </div>
 
           {/* Step label + question */}
-          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
+          <p className="text-xs text-ash-500 font-medium uppercase tracking-widest mt-5">
             Step {step + 1} of {QUESTIONS.length}
           </p>
-          <h2 className="text-2xl font-bold text-foreground mb-1">
+          <h2 className="text-xl text-ash-800 font-noto font-semibold tracking-tight mt-2 md:text-2xl">
             {currentQuestion.question}
           </h2>
           {currentQuestion.hint && (
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="text-sm text-ash-500">
               {currentQuestion.hint}
             </p>
           )}
 
           {/* Options */}
-          <div className="mt-6">
+          <div className="mt-5">
             {currentQuestion.type === "single" ? (
               <div className="grid grid-cols-1 gap-3">
                 {currentQuestion.options.map((opt) => {
