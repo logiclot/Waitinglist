@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, TrendingUp, Users, Zap, BarChart2, Shield } from "lucide-react";
-import { GlowBorder } from "@/components/ui/glow-border";
 
 const FEATURED_ARTICLES = [
   {
