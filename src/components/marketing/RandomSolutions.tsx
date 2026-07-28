@@ -99,17 +99,17 @@ export function RandomSolutions() {
                 href={`/solutions/${solution.id}`}
                 className="bg-ash-200 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl"
               >
-                <div className="bg-white p-5 rounded-[20px]">
+                <div className="bg-white p-6 rounded-[20px]">
                   <CategoryBadge category={solution.category} size="sm" />
-                  <h3 className="text-ash-800 font-noto font-semibold tracking-tight mt-4">
+                  <h3 className="text-ash-800 font-noto font-semibold tracking-tight mt-3">
                     {solution.title}
                   </h3>
-                  <p className="text-ash-500 mt-1">
+                  <p className="text-ash-500 line-clamp-2 mt-1">
                     {solution.description}
                   </p>
 
                   {/* Expert Attribution */}
-                  <div className="flex items-center gap-2 mt-4">
+                  <div className="flex items-center gap-2 mt-6">
                     <div className="size-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden relative">
                       {solution.expert.profileImageUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
@@ -135,7 +135,7 @@ export function RandomSolutions() {
                       )}
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-2 py-2.5 px-5">
+                <div className="flex items-center justify-between gap-2 py-2.5 px-6">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-sm font-semibold">
                       €{solution.implementationPrice.toLocaleString()}

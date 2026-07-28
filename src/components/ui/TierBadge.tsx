@@ -14,18 +14,18 @@ export function TierBadge({
 }: TierBadgeProps) {
   const base =
     size === "md"
-      ? "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border"
-      : "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border";
+      ? "flex items-center gap-2 px-4 py-1 rounded-full"
+      : "flex items-center gap-2 px-4 py-1 rounded-full";
 
   const isFoundingExpert = tier === "FOUNDING"
   const iconSize = size === "md" ? "h-3.5 w-3.5" : "h-3 w-3";
 
   const foundingBadge = isFoundingExpert ? (
     <span
-      className={`${base} bg-gradient-to-r from-neutral-900 to-neutral-800 text-white border-neutral-700`}
+      className={`${base} bg-amber-900`}
     >
       <Crown className={`${iconSize} text-amber-400`} />
-      Founding Expert
+      <span className="text-sm text-amber-400 font-semibold">Founding Expert</span>
     </span>
   ) : null;
 
@@ -33,20 +33,20 @@ export function TierBadge({
     if (tier === "ELITE") {
       return (
         <span
-          className={`${base} bg-foreground text-background border-foreground`}
+          className={`${base}`}
         >
           <Award className={iconSize} />
-          Elite
+          <span className="text-sm font-semibold">Elite</span>
         </span>
       );
     }
     if (tier === "PROVEN") {
       return (
         <span
-          className={`${base} bg-primary/10 text-primary border-primary/20`}
+          className={`${base}`}
         >
           <TrendingUp className={iconSize} />
-          Proven
+          <span className="text-sm font-semibold">Proven</span>
         </span>
       );
     }
@@ -56,7 +56,7 @@ export function TierBadge({
   // Show both badges if founding AND has earned a tier — founding always first
   if (foundingBadge && tierBadge) {
     return (
-      <span className="inline-flex items-center gap-1">
+      <span className="flex items-center gap-2">
         {foundingBadge}
         {tierBadge}
       </span>
