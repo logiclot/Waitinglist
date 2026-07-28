@@ -61,20 +61,25 @@ export function FeaturedArticles() {
             <Link
               key={slug}
               href={`/docs/${slug}`}
-              className="bg-white flex gap-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl p-6"
+              className="bg-ash-300 p-1 shadow-2xl shadow-ash-200 rounded-3xl p-6"
             >
-              <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
-                <Icon className="size-5" />
+              <div className="bg-white flex gap-6 p-5 rounded-2xl">
+                <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
+                  <Icon className="size-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-ash-800 font-noto font-semibold tracking-tight">
+                    {title}
+                  </h3>
+                  <p className="text-ash-500 mt-1">
+                    {description}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-ash-800 font-noto font-semibold tracking-tight">
-                  {title}
-                </h3>
-                <p className="text-ash-500 mt-1">
-                  {description}
-                </p>
+              <div className="text-sm font-medium flex items-center gap-2 py-2.5 px-5">
+                <span className="text-ash-600">Read guide</span>
+                <ArrowRight className="size-4" />
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0 mt-0.5 transition-colors" />
             </Link>
           ))}
         </div>
