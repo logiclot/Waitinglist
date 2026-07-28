@@ -712,10 +712,10 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
               <div
                 key={i}
                 className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i < step
-                  ? "bg-primary"
+                  ? "bg-ash-800"
                   : i === step
-                    ? "bg-primary/50"
-                    : "bg-border"
+                    ? "bg-ash-500"
+                    : "bg-ash-300"
                   }`}
               />
             ))}
@@ -725,17 +725,17 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
           <p className="text-xs text-ash-500 font-medium uppercase tracking-widest mt-5">
             Step {step + 1} of {QUESTIONS.length}
           </p>
-          <h2 className="text-xl text-ash-800 font-noto font-semibold tracking-tight mt-2 md:text-2xl">
+          <h2 className="text-xl text-ash-900 font-noto font-semibold tracking-tight mt-2 md:text-2xl">
             {currentQuestion.question}
           </h2>
           {currentQuestion.hint && (
-            <p className="text-sm text-ash-500">
+            <p className="text-sm mt-1">
               {currentQuestion.hint}
             </p>
           )}
 
           {/* Options */}
-          <div className="mt-5">
+          <div className="mt-6 md:mt-8 xl:mt-10">
             {currentQuestion.type === "single" ? (
               <div className="grid grid-cols-1 gap-3">
                 {currentQuestion.options.map((opt) => {
