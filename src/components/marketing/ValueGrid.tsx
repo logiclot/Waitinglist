@@ -59,7 +59,7 @@ export function ValueGrid() {
         <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
           Why LogicLot
         </p>
-        <h2 className="text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mt-6 md:text-4xl">
+        <h2 className="max-w-md text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto mt-6 md:text-4xl">
           Engineered for Trust & High-Impact Results
         </h2>
         <p className="max-w-md text-balance mx-auto mt-2 md:text-lg md:mt-4">
