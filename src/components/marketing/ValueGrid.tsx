@@ -76,7 +76,7 @@ export function ValueGrid() {
               className="bg-white border border-ash-300 shadow-2xl shadow-ash-200 rounded-2xl p-6 md:p-8"
             >
               <div className="flex flex-col h-full justify-between gap-6">
-                <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring ring-ash-100 rounded-xl">
+                <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
                   <Icon className="size-5" />
                 </div>
                 <div>
