@@ -51,7 +51,7 @@ export function FeaturedArticles() {
           <h2 className="text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mt-6 md:text-4xl">
             Guides to get you started
           </h2>
-          <p className="max-w-xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
+          <p className="max-w-2xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
             Automating a bad process just generates mistakes faster. Here is how to approach strategy, measure real returns, and know when to hand the keys to a specialist.
           </p>
         </div>
