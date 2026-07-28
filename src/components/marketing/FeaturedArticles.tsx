@@ -61,9 +61,9 @@ export function FeaturedArticles() {
             <Link
               key={slug}
               href={`/docs/${slug}`}
-              className="bg-ash-300 p-1 shadow-2xl shadow-ash-200 rounded-3xl p-6"
+              className="bg-ash-300 p-1 shadow-2xl shadow-ash-200 rounded-3xl"
             >
-              <div className="bg-white flex gap-6 p-5 rounded-2xl">
+              <div className="bg-white flex gap-6 p-5 rounded-[20px]">
                 <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
                   <Icon className="size-5" />
                 </div>
