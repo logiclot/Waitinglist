@@ -88,37 +88,34 @@ export default function Home() {
       {/* Inline Audit */}
       <section className="pt-20 md:pt-40">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
-          <div className="mx-auto lg:mx-0 w-full flex flex-col min-w-0 lg:pr-12">
-            <div className="text-center lg:text-left mb-8">
-              <p className="text-xs font-semibold uppercase tracking-widest mb-3">
-                Free Automation Audit
-              </p>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
-                Where is your business losing time?
-              </h2>
-              <p className="text-[13px] leading-relaxed max-w-md mx-auto lg:mx-0">
-                5 questions. Find out what&apos;s costing you the most and
-                whether automation is worth it for your stage of growth.
-              </p>
-              <div className="flex items-center justify-center lg:justify-start gap-5 flex-wrap mt-4">
-                {[
-                  { icon: Clock, label: "2 minutes" },
-                  { icon: ShieldCheck, label: "No account needed" },
-                  { icon: ClipboardList, label: "Instant report" },
-                ].map(({ icon: Icon, label }) => (
-                  <div
-                    key={label}
-                    className="flex items-center gap-1.5 text-xs"
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span>{label}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="text-center relative">
+            <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-300 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
+              free audit
+            </span>
+            <h2 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
+              Where is your business losing time?
+            </h2>
+            <p className="max-w-2xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
+              5 questions. Find out what&apos;s costing you the most and whether automation is worth it for your stage of growth.
+            </p>
+            <div className="flex items-center justify-center lg:justify-start gap-5 flex-wrap mt-4">
+              {[
+                { icon: Clock, label: "2 minutes" },
+                { icon: ShieldCheck, label: "No account needed" },
+                { icon: ClipboardList, label: "Instant report" },
+              ].map(({ icon: Icon, label }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-1.5 text-xs"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{label}</span>
+                </div>
+              ))}
             </div>
-            <GlowBorder accentColor="#111827" backgroundColor="#FBFAF8">
-              <AuditQuiz newTab />
-            </GlowBorder>
+          </div>
+          <div className="mt-10">
+            <AuditQuiz newTab />
           </div>
         </div>
       </section>
