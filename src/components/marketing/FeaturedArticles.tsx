@@ -47,7 +47,7 @@ export function FeaturedArticles() {
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-10">
           <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
-            Learn
+            Learn.
           </p>
           <h2 className="text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mt-6 md:text-4xl">
             Guides to get you started
