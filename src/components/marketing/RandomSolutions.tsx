@@ -160,12 +160,11 @@ export function RandomSolutions() {
 
         <Link
           href="/solutions"
-          className="bg-white flex items-center gap-2 py-2 px-6 rounded-full"
+          className="bg-white py-2 px-4 rounded-lg transition-[background] hover:bg-ash-100"
         >
-          <span className="text-ash-800 font-medium">
+          <span className="text-ash-800 font-semibold">
             Browse all
           </span>
-          <ArrowRight className="size-4 -rotate-45 mt-1" />
         </Link>
       </div>
     </section>
