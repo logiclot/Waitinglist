@@ -58,7 +58,7 @@ export function CategoryBadge({
 
       {/* Category name — always black/foreground, only icon is colored */}
       {!iconOnly && (
-        <span className={`${s.text} font-medium truncate max-w-[140px]`}>
+        <span className={`${s.text} text-ash-500 font-medium truncate max-w-[140px]`}>
           {category}
         </span>
       )}
