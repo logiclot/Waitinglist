@@ -61,23 +61,16 @@ export function RandomSolutions() {
   return (
     <section className="pt-14 md:pt-28">
       <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
-              Featured Solutions
-            </p>
-            <h2 className="text-2xl text-ash-800 font-noto font-semibold tracking-tight mt-6 md:text-4xl">
-              Ready to deploy
-            </h2>
-          </div>
-          <Link
-            href="/solutions"
-            className="text-sm text-primary flex items-center gap-1 font-medium hover:scale-105 ease-in-out transition-transform"
-          >
-            <ShimmerButton className="shadow-2xl" shimmerColor="#000000" background="#ffffff" shimmerSize="0.09em">
-              <span className="text-sm inline-flex gap-2 leading-none text-black font-medium tracking-tight whitespace-pre-wrap lg:text-sm">Browse all <ArrowRight className="w-3 h-3" /></span>
-            </ShimmerButton>
-          </Link>
+        <div className="text-center">
+          <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
+            Featured Solutions
+          </p>
+          <h2 className="text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mt-6 md:text-4xl">
+            Pre-built automation systems ready for instant deployment
+          </h2>
+          <p className="max-w-2xl text-balance mt-2 md:text-lg md:mt-4">
+            Skip months of custom development. Explore pre-built, turn-key systems ready to be integrated directly into your business in days.
+          </p>
         </div>
 
         {isPending ? (
@@ -154,6 +147,14 @@ export function RandomSolutions() {
           </div>
         )}
       </div>
+      <Link
+        href="/solutions"
+        className="text-sm text-primary flex items-center gap-1 font-medium hover:scale-105 ease-in-out transition-transform"
+      >
+        <ShimmerButton className="shadow-2xl" shimmerColor="#000000" background="#ffffff" shimmerSize="0.09em">
+          <span className="text-sm inline-flex gap-2 leading-none text-black font-medium tracking-tight whitespace-pre-wrap lg:text-sm">Browse all <ArrowRight className="w-3 h-3" /></span>
+        </ShimmerButton>
+      </Link>
     </section>
   );
 }
