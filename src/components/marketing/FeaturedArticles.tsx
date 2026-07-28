@@ -42,13 +42,13 @@ const FEATURED_ARTICLES = [
 
 export function FeaturedArticles() {
   return (
-    <section className="pt-14 md:pt-28">
+    <section className="pt-20 md:pt-40">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center">
-          <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
-            Learn
-          </p>
-          <h2 className="text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mt-6 md:text-4xl">
+          <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-300 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
+            learn
+          </span>
+          <h2 className="text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight md:text-4xl">
             Guides to get you started
           </h2>
           <p className="max-w-2xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
