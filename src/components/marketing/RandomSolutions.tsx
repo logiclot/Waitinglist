@@ -61,7 +61,7 @@ export function RandomSolutions() {
   return (
     <section className="pt-14 md:pt-28">
       <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-2">
               Featured Solutions
@@ -100,9 +100,7 @@ export function RandomSolutions() {
                 className="bg-ash-200 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl"
               >
                 <div className="bg-white p-5 rounded-[20px]">
-                  <div className="">
-                    <CategoryBadge category={solution.category} size="sm" />
-                  </div>
+                  <CategoryBadge category={solution.category} size="sm" />
                   <h3 className="text-ash-800 font-noto font-semibold tracking-tight mt-4">
                     {solution.title}
                   </h3>
@@ -139,16 +137,16 @@ export function RandomSolutions() {
                 </div>
                 <div className="flex items-center justify-between gap-2 py-2.5 px-5">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-bold">
+                    <span className="text-sm font-semibold">
                       €{solution.implementationPrice.toLocaleString()}
                     </span>
                     <span className="text-sm flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {solution.deliveryDays} days
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-sm group-hover:text-primary transition-colors">
-                    See more
-                    <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-semibold">See more</span>
+                    <ArrowRight className="size-4 -rotate-45" />
                   </div>
                 </div>
               </Link>
