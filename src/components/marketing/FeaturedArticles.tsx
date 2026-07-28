@@ -61,7 +61,7 @@ export function FeaturedArticles() {
             <Link
               key={slug}
               href={`/docs/${slug}`}
-              className="bg-ash-300 p-1 shadow-2xl shadow-ash-200 rounded-3xl"
+              className="bg-ash-200 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl"
             >
               <div className="bg-white flex gap-6 p-5 rounded-[20px]">
                 <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
@@ -77,7 +77,7 @@ export function FeaturedArticles() {
                 </div>
               </div>
               <div className="text-sm font-medium flex items-center justify-between gap-2 py-2.5 px-5">
-                <span className="text-ash-600">Read guide</span>
+                <span className="text-ash-600">Read full guide</span>
                 <ArrowRight className="size-4" />
               </div>
             </Link>
