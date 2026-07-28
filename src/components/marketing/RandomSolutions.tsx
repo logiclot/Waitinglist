@@ -148,12 +148,12 @@ export function RandomSolutions() {
         )}
       </div>
       
-      <div className="max-w-4xl bg-ash-900 flex flex-col p-6 items-center justify-between gap-4 mt-10 mx-4 rounded-3xl sm:flex-row md:p-8 md:mx-auto">
-        <div className="text-center sm:text-left">
-          <h3 className="text-lg font-noto font-semibold text-ash-50 tracking-tight">
+      <div className="max-w-4xl bg-ash-900 flex flex-col p-6 items-center justify-between gap-4 mt-10 mx-4 rounded-3xl md:flex-row md:p-8 md:mx-auto">
+        <div className="text-center md:text-left">
+          <h3 className="text-xl text-ash-50 text-balance font-noto font-semibold tracking-tight">
             Haven&apos;t found the exact workflow you need?
           </h3>
-          <p className="text-ash-300 mt-1">
+          <p className="text-ash-300 text-balance mt-2 md:mt-0">
             Explore our full library of expert-built solutions or request a custom setup.
           </p>
         </div>
