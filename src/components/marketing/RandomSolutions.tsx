@@ -130,7 +130,7 @@ export function RandomSolutions() {
                 </div>
                 <div className="flex items-center justify-between gap-2 py-2.5 px-6">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-semibold">
+                    <span className="text-sm text-ash-800 font-semibold">
                       €{solution.implementationPrice.toLocaleString()}
                     </span>
                     <span className="text-sm flex items-center gap-1">
