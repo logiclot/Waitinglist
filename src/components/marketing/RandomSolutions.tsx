@@ -148,23 +148,24 @@ export function RandomSolutions() {
         )}
       </div>
       
-      <div className="max-w-4xl bg-ash-900 flex flex-col p-6 items-center justify-between gap-4 mt-10 mx-4 rounded-3xl md:flex-row md:p-8 md:mx-auto">
+      <div className="max-w-4xl bg-ash-900 flex flex-col p-6 items-center justify-between gap-6 mt-10 mx-4 rounded-3xl md:flex-row md:p-8 lg:mx-auto">
         <div className="text-center md:text-left">
-          <h3 className="text-xl text-ash-50 text-balance font-noto font-semibold tracking-tight">
+          <h3 className="max-w-sm text-xl text-ash-50 text-balance font-noto font-semibold tracking-tight md:max-w-none">
             Haven&apos;t found the exact workflow you need?
           </h3>
-          <p className="text-ash-300 text-balance mt-2 md:mt-0">
+          <p className="max-w-sm text-ash-300 text-balance mt-2 md:mt-0 md:max-w-none">
             Explore our full library of expert-built solutions or request a custom setup.
           </p>
         </div>
 
         <Link
           href="/solutions"
-          className="text-sm font-medium flex items-center gap-2 shrink-0"
+          className="bg-white flex items-center gap-2 py-2 px-6 rounded-full"
         >
-          <span className="text-sm inline-flex gap-2 leading-none font-medium tracking-tight whitespace-pre-wrap">
-            Browse all <ArrowRight className="size-4" />
+          <span className="text-sm text-ash-800 font-medium">
+            Browse all
           </span>
+          <ArrowRight className="size-4" />
         </Link>
       </div>
     </section>
