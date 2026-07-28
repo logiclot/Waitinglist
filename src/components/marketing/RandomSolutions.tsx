@@ -76,7 +76,7 @@ export function RandomSolutions() {
         {isPending ? (
           <SolutionsSkeleton />
         ) : solutions.length === 0 ? (
-          <div className="bg-white border border-border rounded-xl p-6 text-center text-muted-foreground text-sm">
+          <div className="bg-white border border-border rounded-xl p-6 text-center text-muted-foreground text-sm mt-10">
             <Link
               href="/solutions"
               className="text-primary hover:underline font-medium"
