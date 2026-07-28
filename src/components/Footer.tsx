@@ -24,7 +24,7 @@ export function Footer() {
 
           <div>
             <h3 className="text-ash-800 font-noto font-semibold tracking-tight">Company</h3>
-            <ul className="space-y-2 text-sm mt-4">
+            <ul className="text-sm grid gap-2 mt-4">
               <li>
                 <Link href="/about" className="hover:text-primary transition-colors">
                   About
@@ -65,7 +65,7 @@ export function Footer() {
 
           <div>
             <h3 className="text-ash-800 font-noto font-semibold tracking-tight">Browse by category</h3>
-            <ul className="space-y-2 text-sm mt-4">
+            <ul className="text-sm grid gap-2 mt-4">
               <li>
                 <Link href="/solutions?category=marketing-automation" className="hover:text-primary transition-colors">
                   Marketing Automation
@@ -111,7 +111,7 @@ export function Footer() {
 
           <div>
             <h3 className="text-ash-800 font-noto font-semibold tracking-tight">Resources</h3>
-            <ul className="space-y-2 text-sm mt-4">
+            <ul className="text-sm grid gap-2 mt-4">
               <li>
                 <Link href="/solutions" className="hover:text-primary transition-colors">
                   Browse Solutions
@@ -142,7 +142,7 @@ export function Footer() {
 
           <div>
             <h3 className="text-ash-800 font-noto font-semibold tracking-tight">Legal</h3>
-            <ul className="space-y-2 text-sm mt-4">
+            <ul className="text-sm grid gap-2 mt-4">
               <li>
                 <Link href="/terms" className="hover:text-primary transition-colors">
                   Terms
