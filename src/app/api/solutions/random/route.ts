@@ -53,7 +53,7 @@ async function fetchRandomSolutions() {
       },
     },
     skip,
-    take: 3,
+    take: 6,
   });
 
   return solutions;

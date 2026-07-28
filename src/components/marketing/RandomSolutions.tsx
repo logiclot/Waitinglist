@@ -26,7 +26,7 @@ interface Solution {
 function SolutionsSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-      {Array.from({ length: 3 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
           className="bg-white border border-border rounded-xl p-5 space-y-3"
@@ -51,7 +51,7 @@ export function RandomSolutions() {
   const { data: solutions = [], isPending } = useQuery<Solution[]>({
     queryKey: ["random-solutions"],
     queryFn: async () => {
-      const res = await fetch("/api/solutions/random");
+      const res = await fetch("/api/solutions/random?limit=6");
       if (!res.ok) return [];
       return res.json();
     },
