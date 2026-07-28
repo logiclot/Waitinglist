@@ -110,14 +110,14 @@ export function RandomSolutions() {
 
                   {/* Expert Attribution */}
                   <div className="flex items-center gap-2 mt-6">
-                    <div className="size-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden relative">
+                    <div className="size-6 flex items-center justify-center relative overflow-hidden shrink-0 rounded-full">
                       {solution.expert.profileImageUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={solution.expert.profileImageUrl}
                           alt={solution.expert.name}
                           loading="lazy"
-                          className="absolute inset-0 w-full h-full object-cover"
+                          className="size-full absolute inset-0 object-cover"
                         />
                       ) : (
                         (solution.expert.name || "?").slice(0, 2).toUpperCase()
