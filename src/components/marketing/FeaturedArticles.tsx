@@ -61,7 +61,7 @@ export function FeaturedArticles() {
             <Link
               key={slug}
               href={`/docs/${slug}`}
-              className="bg-ash-200 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl transition-[background] hover:bg-ash-300"
+              className="bg-ash-200 flex flex-col gap-1 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl transition-[background] hover:bg-ash-300"
             >
               <div className="bg-white flex gap-6 p-6 rounded-[20px]">
                 <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
