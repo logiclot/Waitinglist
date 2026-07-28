@@ -3,7 +3,7 @@ import { Quote } from "lucide-react";
 
 export function FounderNote() {
   return (
-    <section className="pt-24">
+    <section className="pt-14 md:pt-28">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto p-6 bg-white flex flex-col items-center gap-8 relative border border-ash-300 shadow-2xl shadow-ash-200 rounded-2xl md:flex-row md:p-8 xl:p-10">
           <div className="shrink-0">
