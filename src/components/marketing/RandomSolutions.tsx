@@ -162,10 +162,10 @@ export function RandomSolutions() {
           href="/solutions"
           className="bg-white flex items-center gap-2 py-2 px-6 rounded-full"
         >
-          <span className="text-sm text-ash-800 font-medium">
+          <span className="text-ash-800 font-medium">
             Browse all
           </span>
-          <ArrowRight className="size-4" />
+          <ArrowRight className="size-4 -rotate-45 mt-1" />
         </Link>
       </div>
     </section>
