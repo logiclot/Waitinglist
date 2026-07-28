@@ -14,8 +14,8 @@ export function TierBadge({
 }: TierBadgeProps) {
   const base =
     size === "md"
-      ? "flex items-center gap-2 px-4 py-1 rounded-full"
-      : "flex items-center gap-2 px-4 py-1 rounded-full";
+      ? "h-6 flex items-center gap-2 px-4 py-1 rounded-full"
+      : "h-6 flex items-center gap-2 px-4 py-1 rounded-full";
 
   const isFoundingExpert = tier === "FOUNDING"
   const iconSize = size === "md" ? "h-3.5 w-3.5" : "h-3 w-3";
