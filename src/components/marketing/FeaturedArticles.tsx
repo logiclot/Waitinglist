@@ -76,8 +76,8 @@ export function FeaturedArticles() {
                   </p>
                 </div>
               </div>
-              <div className="text-sm font-medium flex items-center justify-between gap-2 py-2.5 px-5">
-                <span className="text-ash-600">Read full guide</span>
+              <div className=" flex items-center justify-between gap-2 py-2.5 px-5">
+                <span className="text-sm text-ash-600 font-medium">Read full guide</span>
                 <ArrowRight className="size-4 -rotate-45" />
               </div>
             </Link>
