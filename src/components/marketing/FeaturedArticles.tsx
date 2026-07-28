@@ -84,12 +84,13 @@ export function FeaturedArticles() {
           ))}
         </div>
 
-        <div className="text-center mt-8">
+        <div className="text-center mt-10">
           <Link
             href="/docs"
-            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            className="bg-ash-900 inline-flex items-center gap-2 py-2.5 px-8 rounded-full transition-[background] hover:bg-ash-800"
           >
-            View all guides <ArrowRight className="h-4 w-4" />
+            <span className="text-white font-medium">View all guides</span>
+            <ArrowRight className="size-4 text-white" />
           </Link>
         </div>
       </div>
