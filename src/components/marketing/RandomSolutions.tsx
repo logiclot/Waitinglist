@@ -101,7 +101,7 @@ export function RandomSolutions() {
               >
                 <div className="bg-white p-6 rounded-[20px]">
                   <CategoryBadge category={solution.category} size="sm" />
-                  <h3 className="text-ash-800 font-noto font-semibold tracking-tight mt-3">
+                  <h3 className="text-ash-800 font-noto font-semibold tracking-tight mt-6">
                     {solution.title}
                   </h3>
                   <p className="text-ash-500 line-clamp-2 mt-1">
