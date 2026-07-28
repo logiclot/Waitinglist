@@ -90,7 +90,7 @@ export function RandomSolutions() {
               <Link
                 key={solution.id}
                 href={`/solutions/${solution.id}`}
-                className="bg-ash-200 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl"
+                className="bg-ash-200 p-1 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl transition-[background] hover:bg-ash-300"
               >
                 <div className="bg-white p-6 rounded-[20px]">
                   <CategoryBadge category={solution.category} size="sm" />
