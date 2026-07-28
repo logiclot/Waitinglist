@@ -43,41 +43,39 @@ const FEATURED_ARTICLES = [
 
 export function FeaturedArticles() {
   return (
-    <section className="py-16 md:py-24 bg-background border-b border-border">
+    <section className="pt-14 md:pt-28">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-10">
-          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
+          <p className="text-xs text-ash-500 font-medium uppercase tracking-widest bg-white inline-flex py-1.5 px-3 border border-ash-300 ring-2 ring-ash-100 rounded-lg">
             Learn
           </p>
-          <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-foreground mb-2">
+          <h2 className="text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mt-6 md:text-4xl">
             Guides to get you started
           </h2>
-          <p className="text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
+          <p className="max-w-md text-balance mx-auto mt-2 md:text-lg md:mt-4">
             Practical articles on automation strategy, ROI, and when to bring in an expert.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-2 mt-10">
           {FEATURED_ARTICLES.map(({ slug, title, description, icon: Icon }) => (
-            <GlowBorder key={slug} accentColor="#111827" backgroundColor="#ffffff" borderRadius="0.75rem">
-              <Link
-                href={`/docs/${slug}`}
-                className="group flex gap-4 p-5 rounded-xl bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-              >
-                <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/8 border border-primary/15 flex items-center justify-center text-primary group-hover:bg-primary/15 transition-colors">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-foreground group-hover:text-primary transition-colors mb-1">
-                    {title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                    {description}
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0 mt-0.5 transition-colors" />
-              </Link>
-            </GlowBorder>
+            <Link
+              href={`/docs/${slug}`}
+              className="bg-white border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl p-6"
+            >
+              <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
+                <Icon className="size-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-ash-800 font-noto font-semibold tracking-tight">
+                  {title}
+                </h3>
+                <p className="text-ash-500 mt-1">
+                  {description}
+                </p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0 mt-0.5 transition-colors" />
+            </Link>
           ))}
         </div>
 
