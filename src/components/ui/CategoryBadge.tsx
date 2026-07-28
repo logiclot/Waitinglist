@@ -16,8 +16,8 @@ interface CategoryBadgeProps {
 const sizeConfig = {
   sm: {
     wrapper: "gap-2",
-    iconContainer: "size-8 rounded-md",
-    iconSize: "size-5",
+    iconContainer: "size-7 rounded-md",
+    iconSize: "size-4",
     text: "text-sm",
   },
   md: {

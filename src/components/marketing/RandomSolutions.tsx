@@ -110,7 +110,7 @@ export function RandomSolutions() {
 
                   {/* Expert Attribution */}
                   <div className="flex items-center gap-2 mt-4">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 border border-primary/15 overflow-hidden relative">
+                    <div className="size-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden relative">
                       {solution.expert.profileImageUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
