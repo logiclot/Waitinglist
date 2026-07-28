@@ -198,7 +198,7 @@ export default function Home() {
       <FounderNote />
 
       {/* Value Grid Section */}
-      <section className="pt-14 md:pt-24">
+      <section className="pt-14 md:pt-28">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
           <ValueGrid />
         </div>
