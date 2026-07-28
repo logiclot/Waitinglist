@@ -137,12 +137,15 @@ export default function Home() {
       <HowItWorks />
 
       <section className="pt-20 md:pt-40">
-        <div className="max-w-3xl mx-auto text-center mb-14">
-          <p className="text-xs uppercase tracking-widest font-semibold mb-3">Fees &amp; Commissions</p>
-          <h1 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto mt-6 md:text-4xl"
-          >Transparent Pricing</h1>
+        <div className="text-center relative">
+          <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-300 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
+            princing
+          </span>
+          <h1 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
+            Simple, transparent pricing with zero hidden costs or markups
+          </h1>
           <p className="max-w-2xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
-            No hidden fees, no subscriptions. Businesses pay nothing extra. Experts keep more as they grow.
+            We believe in honest partnerships. Businesses pay zero platform fees and no marked-up tool costs, while experts get paid fairly as they deliver milestones. What you see is exactly what you invest.
           </p>
         </div>
         <div className="grid gap-4 mt-10 md:grid-cols-3">
