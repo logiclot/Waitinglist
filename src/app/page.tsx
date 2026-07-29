@@ -123,9 +123,7 @@ export default function Home() {
       {/* Hire vs. Automate Section */}
       <section className="pt-20 md:pt-40">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
-          <div className="mx-auto lg:mx-0 w-full flex flex-col min-w-0 lg:pl-12">
-            <HireVsAutomateCarousel />
-          </div>
+          <HireVsAutomateCarousel />
         </div>
       </section>
 
