@@ -45,7 +45,7 @@ export function FeaturedArticles() {
     <section className="pt-20 md:pt-40">
       <div className="container mx-auto px-4 max-w-7xl xl:px-8">
         <div className="text-center relative">
-          <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-300 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
+          <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-400 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
             learn
           </span>
           <h2 className="text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight md:text-4xl">
