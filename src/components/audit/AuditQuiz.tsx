@@ -818,21 +818,21 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           }`}
                       >
                         <svg
-  xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  strokeWidth="2"
-  strokeLinecap="round"
-  strokeLinejoin="round"
-  className={`lucide lucide-check-icon lucide-check ${
-    isSelected ? "opacity-100" : "opacity-50"
-  }`}
->
-  <path d="M20 6 9 17l-5-5" />
-</svg>
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={`size-5 text-ash-800 ${
+                            isSelected ? "opacity-100" : "opacity-50"
+                          }`}
+                        >
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
                         <span
                           className={`text-sm font-medium ${isSelected ? "text-ash-800" : ""
                             }`}
