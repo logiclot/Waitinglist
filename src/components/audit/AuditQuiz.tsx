@@ -748,23 +748,23 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                         handleSingleSelect(currentQuestion.id, opt.id)
                       }
                       className={`w-full text-left py-4 px-5 ring cursor-pointer rounded-xl ${isSelected
-                        ? "ring-[3px] ring-primary bg-white"
-                        : "bg-white ring-ash-200"
+                        ? "bg-white ring-[3px] ring-ash-500"
+                        : "bg-white ring-ash-200 hover:ring-ash-300"
                         }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
                           <p
-                            className={`font-medium text-sm ${isSelected ? "text-primary" : "text-foreground"
+                            className={`font-medium ${isSelected ? "text-primary" : "text-foreground"
                               }`}
                           >
                             {opt.label}
                           </p>
                           {opt.sub && (
                             <p
-                              className={`text-xs mt-0.5 ${isSelected
-                                ? "text-primary/70"
-                                : "text-muted-foreground"
+                              className={`text-sm ${isSelected
+                                ? "text-ash-500"
+                                : "text-ash-500"
                                 }`}
                             >
                               {opt.sub}
