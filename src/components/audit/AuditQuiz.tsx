@@ -151,6 +151,7 @@ const QUESTIONS: Question[] = [
   {
     id: "teamSize",
     question: "How big is your team?",
+    hint: "Select your team size so we can customize your workspace.",
     type: "single",
     options: [
       { id: "solo", label: "Just me", sub: "Solo operator" },
@@ -732,7 +733,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
             {currentQuestion.question}
           </h2>
           {currentQuestion.hint && (
-            <p className="text-sm mt-1">
+            <p className="">
               {currentQuestion.hint}
             </p>
           )}
@@ -758,7 +759,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                       <div className="flex items-center justify-between">
                         <div>
                           <p
-                            className={`font-medium ${isSelected ? "text-primary" : "text-foreground"
+                            className={`font-medium ${isSelected ? "text-ash-800" : ""
                               }`}
                           >
                             {opt.label}
@@ -817,7 +818,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           }`}
                       >
                         <div
-                          className={`size-4 rounded-lg border-2 shrink-0 flex items-center justify-center ${isSelected
+                          className={`size-4 flex items-center justify-center border-2 shrink-0 rounded-full ${isSelected
                             ? "border-ash-800 bg-ash-800"
                             : "border-ash-300"
                             }`}
