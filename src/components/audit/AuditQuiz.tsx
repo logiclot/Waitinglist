@@ -747,9 +747,9 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                       onClick={() =>
                         handleSingleSelect(currentQuestion.id, opt.id)
                       }
-                      className={`w-full text-left px-5 py-4 rounded-xl border transition-all duration-200 ${isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-background hover:border-primary/40 hover:bg-secondary/30"
+                      className={`w-full text-left py-4 px-5 ring ring-[3px] cursor-pointer rounded-xl ${isSelected
+                        ? "ring-primary bg-primary/5"
+                        : "ring-red-500 bg-background"
                         }`}
                     >
                       <div className="flex items-center justify-between">
