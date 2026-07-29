@@ -753,13 +753,13 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                       }
                       className={`w-full text-left py-4 px-5 cursor-pointer rounded-xl ${isSelected
                         ? "bg-ash-300"
-                        : "bg-white ring ring-ash-200 hover:ring-ash-300"
+                        : "bg-white ring ring-ash-200 transition-[box-shadow] hover:ring-ash-300"
                         }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
                           <p
-                            className={`font-medium ${isSelected ? "text-ash-800" : "text-ash-700"
+                            className={`font-medium ${isSelected ? "text-ash-800" : "text-ash-800"
                               }`}
                           >
                             {opt.label}
@@ -768,7 +768,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                             <p
                               className={`text-sm ${isSelected
                                 ? "text-ash-500"
-                                : ""
+                                : "text-ash-500"
                                 }`}
                             >
                               {opt.sub}
@@ -776,7 +776,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           )}
                         </div>
                         {isSelected && (
-                          <CheckCircle2 className="size-5 text-ash-500 shrink-0" />
+                          <svg className="size-5 text-ash-800" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                         )}
                       </div>
                     </button>
@@ -812,29 +812,27 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                       <button
                         key={opt.id}
                         onClick={() => handleMultiToggle(currentQuestion.id, opt.id)}
-                        className={`w-full text-left flex items-center gap-2 py-3 px-4 rounded-xl ring cursor-pointer ${isSelected
-                          ? "bg-white ring-[3px] ring-ash-500"
-                          : "bg-white ring-ash-200 hover:ring-ash-300"
+                        className={`w-full text-left flex items-center gap-2 py-3 px-4 rounded-xl cursor-pointer ${isSelected
+                          ? "bg-ash-300"
+                          : "bg-white ring ring-ash-200 transition-[box-shadow] hover:ring-ash-300"
                           }`}
                       >
-                        <div
-                          className={`size-4 flex items-center justify-center border-2 shrink-0 rounded-full ${isSelected
-                            ? "border-ash-800 bg-ash-800"
-                            : "border-ash-300"
-                            }`}
-                        >
-                          {isSelected && (
-                            <svg viewBox="0 0 12 12" className="w-3 h-3" fill="none">
-                              <path
-                                d="M2 6L5 9L10 3"
-                                stroke="white"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
-                        </div>
+                        <svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  strokeWidth="2"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+  className={`lucide lucide-check-icon lucide-check ${
+    isSelected ? "opacity-100" : "opacity-50"
+  }`}
+>
+  <path d="M20 6 9 17l-5-5" />
+</svg>
                         <span
                           className={`text-sm font-medium ${isSelected ? "text-ash-800" : ""
                             }`}
