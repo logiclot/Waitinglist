@@ -788,7 +788,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                   {step > 0 && (
                     <button
                       onClick={goBack}
-                      className="text-ash-800 font-noto font-semibold tracking-tight bg-ash-200 px-6 py-3 rounded-xl transition-colors hover:bg-ash-300"
+                      className="text-ash-800 font-noto font-semibold tracking-tight bg-ash-200 px-6 py-3 rounded-xl transition-colors cursor-pointer hover:bg-ash-300"
                     >
                       Back
                     </button>
@@ -796,7 +796,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                   <button
                     onClick={handleNext}
                     disabled={!answers[currentQuestion.id as keyof Answers]}
-                    className="text-white font-semibold font-noto tracking-tight bg-ash-900 py-3 px-6 rounded-xl transition-colors flex flex-1 items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ash-800"
+                    className="text-white font-semibold font-noto tracking-tight bg-ash-900 py-3 px-6 rounded-xl transition-colors flex flex-1 items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ash-800"
                   >
                     {step === QUESTIONS.length - 1 ? "See my results" : "Continue"}
                   </button>
@@ -848,14 +848,14 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                   {step > 0 && (
                     <button
                       onClick={goBack}
-                      className="text-ash-800 font-noto font-semibold tracking-tight bg-ash-200 px-6 py-3 rounded-xl transition-colors hover:bg-ash-300"
+                      className="text-ash-800 font-noto font-semibold tracking-tight bg-ash-200 px-6 py-3 rounded-xl transition-colors cursor-pointer hover:bg-ash-300"
                     >
                       Back
                     </button>
                   )}
                   <button
                     onClick={handleNext}
-                    className="text-white font-semibold font-noto tracking-tight bg-ash-900 py-3 px-6 rounded-xl transition-colors flex flex-1 items-center justify-center hover:bg-ash-800"
+                    className="text-white font-semibold font-noto tracking-tight bg-ash-900 py-3 px-6 rounded-xl transition-colors flex flex-1 items-center justify-center cursor-pointer hover:bg-ash-800"
                   >
                     {step === QUESTIONS.length - 1 ? "See My Results" : "Continue"}
                   </button>
