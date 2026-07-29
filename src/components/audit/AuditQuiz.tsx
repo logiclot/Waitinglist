@@ -751,15 +751,15 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                       onClick={() =>
                         handleSingleSelect(currentQuestion.id, opt.id)
                       }
-                      className={`w-full text-left py-4 px-5 ring cursor-pointer rounded-xl ${isSelected
-                        ? "bg-white ring-[3px] ring-ash-500"
-                        : "bg-white ring-ash-200 hover:ring-ash-300"
+                      className={`w-full text-left py-4 px-5 cursor-pointer rounded-xl ${isSelected
+                        ? "bg-ash-500"
+                        : "bg-white"
                         }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
                           <p
-                            className={`font-medium ${isSelected ? "text-ash-800" : ""
+                            className={`font-medium ${isSelected ? "text-ash-800" : "text-ash-700"
                               }`}
                           >
                             {opt.label}
@@ -767,7 +767,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           {opt.sub && (
                             <p
                               className={`text-sm ${isSelected
-                                ? "text-ash-500"
+                                ? "text-ash-50"
                                 : "text-ash-500"
                                 }`}
                             >
