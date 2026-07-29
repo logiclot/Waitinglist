@@ -741,7 +741,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
           {/* Options */}
           <div className="mt-6 md:mt-8 xl:mt-10">
             {currentQuestion.type === "single" ? (
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-2">
                 {currentQuestion.options.map((opt) => {
                   const isSelected =
                     answers[currentQuestion.id as keyof Answers] === opt.id;
@@ -844,7 +844,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                 </div>
 
                 {/* Multi-select action row */}
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   {step > 0 && (
                     <button
                       onClick={goBack}
@@ -998,7 +998,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-3">
                   Annual Comparison
                 </p>
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex-1 min-w-[120px] bg-secondary/50 border border-border rounded-xl px-4 py-3 text-center">
                     <p className="text-xs text-muted-foreground font-medium mb-1">Lost per year</p>
                     <p className="text-lg font-black text-foreground">&euro;{results.annualWaste.toLocaleString()}</p>
@@ -1106,7 +1106,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
             {/* Readiness barrier — only shown for scores >= 25 */}
             {results.barrier && (
               <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
-                <div className="flex gap-3 mb-3">
+                <div className="flex gap-2 mb-3">
                   <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest">
                     Your Main Barrier
@@ -1123,7 +1123,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
 
             {/* Email capture — send report */}
             <div className="bg-white border border-border rounded-2xl shadow-sm p-6 md:p-8">
-              <div className="flex items-start gap-3 mb-4">
+              <div className="flex items-start gap-2 mb-4">
                 <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-foreground text-sm">Send my report</p>
@@ -1253,7 +1253,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                 </div>
 
                 {/* What's available at launch */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
                   <div className="bg-secondary/30 border border-border rounded-xl p-4 text-center">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                       <Zap className="h-4 w-4 text-primary" />
