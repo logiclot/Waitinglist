@@ -705,7 +705,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
       {/* Quiz card                                                           */}
       {/* ------------------------------------------------------------------ */}
       {!showResults && (
-        <div className="max-w-2xl bg-ash-200 mx-auto p-6 rounded-3xl md:p-8 xl:p-10">
+        <div className="max-w-2xl bg-ash-100 mx-auto p-6 rounded-3xl md:p-8 xl:p-10">
           {/* Progress bar */}
           <div className="flex items-center gap-2">
             {QUESTIONS.map((_, i) => (
@@ -748,8 +748,8 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                         handleSingleSelect(currentQuestion.id, opt.id)
                       }
                       className={`w-full text-left py-4 px-5 ring ring-[3px] cursor-pointer rounded-xl ${isSelected
-                        ? "ring-primary bg-primary/5"
-                        : "ring-red-500 bg-background"
+                        ? "ring-primary bg-white"
+                        : "bg-white"
                         }`}
                     >
                       <div className="flex items-center justify-between">
