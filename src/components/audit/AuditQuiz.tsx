@@ -752,8 +752,8 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                         handleSingleSelect(currentQuestion.id, opt.id)
                       }
                       className={`w-full text-left py-4 px-5 cursor-pointer rounded-xl ${isSelected
-                        ? "bg-ash-500"
-                        : "bg-white"
+                        ? "bg-ash-300"
+                        : "bg-white ring ring-ash-200 hover:ring-ash-300"
                         }`}
                     >
                       <div className="flex items-center justify-between">
@@ -767,8 +767,8 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           {opt.sub && (
                             <p
                               className={`text-sm ${isSelected
-                                ? "text-ash-50"
-                                : "text-ash-500"
+                                ? "text-ash-500"
+                                : ""
                                 }`}
                             >
                               {opt.sub}
