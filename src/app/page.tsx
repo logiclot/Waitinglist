@@ -89,7 +89,7 @@ export default function Home() {
       <section className="bg-ash-900 pt-20 pb-4 mx-4 rounded-3xl md:py-40">
         <div className="container mx-auto px-4 xl:px-8 max-w-7xl">
           <div className="text-center relative">
-            <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-800 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
+            <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-700 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">
               free audit
             </span>
             <h2 className="max-w-2xl text-2xl text-ash-50 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
