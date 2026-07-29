@@ -733,7 +733,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
             {currentQuestion.question}
           </h2>
           {currentQuestion.hint && (
-            <p className="">
+            <p className="mt-0.5">
               {currentQuestion.hint}
             </p>
           )}
@@ -784,28 +784,27 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                 })}
 
                 {/* Single-select action row */}
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-2 mt-10">
                   {step > 0 && (
                     <button
                       onClick={goBack}
-                      className="px-5 py-3.5 rounded-xl border border-border bg-background hover:bg-secondary/30 transition-colors font-medium text-sm text-muted-foreground"
+                      className="font-noto font-semibold tracking-tight bg-ash-200 px-6 py-3 rounded-xl transition-colors hover:bg-ash-300"
                     >
-                      ← Back
+                      Back
                     </button>
                   )}
                   <button
                     onClick={handleNext}
                     disabled={!answers[currentQuestion.id as keyof Answers]}
-                    className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 shadow-md shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="text-white font-semibold font-noto tracking-tight bg-ash-900 py-3 px-6 rounded-xl transition-colors flex flex-1 items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ash-800"
                   >
-                    {step === QUESTIONS.length - 1 ? "See My Results" : "Continue"}
-                    <ArrowRight className="h-4 w-4" />
+                    {step === QUESTIONS.length - 1 ? "See my results" : "Continue"}
                   </button>
                 </div>
               </div>
             ) : (
               <>
-                <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                <div className="grid sm:grid-cols-2 gap-2 mb-10">
                   {currentQuestion.options.map((opt) => {
                     const isSelected = multiSelected.includes(opt.id);
                     return (
@@ -828,7 +827,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           className={`size-5 text-ash-800 ${
-                            isSelected ? "opacity-100" : "opacity-50"
+                            isSelected ? "opacity-100" : "opacity-20"
                           }`}
                         >
                           <path d="M20 6 9 17l-5-5" />
