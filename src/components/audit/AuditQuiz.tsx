@@ -788,7 +788,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                   {step > 0 && (
                     <button
                       onClick={goBack}
-                      className="font-noto font-semibold tracking-tight bg-ash-200 px-6 py-3 rounded-xl transition-colors hover:bg-ash-300"
+                      className="text-ash-800 font-noto font-semibold tracking-tight bg-ash-200 px-6 py-3 rounded-xl transition-colors hover:bg-ash-300"
                     >
                       Back
                     </button>
@@ -848,17 +848,16 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                   {step > 0 && (
                     <button
                       onClick={goBack}
-                      className="px-5 py-3.5 rounded-xl border border-border bg-background hover:bg-secondary/30 transition-colors font-medium text-sm text-muted-foreground"
+                      className="text-ash-800 font-noto font-semibold tracking-tight bg-ash-200 px-6 py-3 rounded-xl transition-colors hover:bg-ash-300"
                     >
-                      ← Back
+                      Back
                     </button>
                   )}
                   <button
                     onClick={handleNext}
-                    className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 shadow-md shadow-primary/20"
+                    className="text-white font-semibold font-noto tracking-tight bg-ash-900 py-3 px-6 rounded-xl transition-colors flex flex-1 items-center justify-center hover:bg-ash-800"
                   >
                     {step === QUESTIONS.length - 1 ? "See My Results" : "Continue"}
-                    <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
               </>
