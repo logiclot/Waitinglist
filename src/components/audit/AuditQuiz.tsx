@@ -46,6 +46,7 @@ const QUESTIONS: Question[] = [
   {
     id: "frustration",
     question: "What's your biggest frustration right now?",
+    hint: "Select the main pain point currently affecting your day-to-day operations.",
     type: "single",
     options: [
       {
@@ -78,7 +79,7 @@ const QUESTIONS: Question[] = [
   {
     id: "tasks",
     question: "Which of these do you still handle manually?",
-    hint: "Select all that apply",
+    hint: "Select everything you currently do by hand.",
     type: "multi",
     options: [
       { id: "invoicing", label: "Invoicing & billing" },
@@ -94,6 +95,7 @@ const QUESTIONS: Question[] = [
   {
     id: "hours",
     question: "How many hours per week does your team spend on these tasks?",
+    hint: "This helps us calculate how much time you could save with automation.",
     type: "single",
     options: [
       { id: "low", label: "Less than 5 hours", sub: "Minimal manual load" },
@@ -105,6 +107,7 @@ const QUESTIONS: Question[] = [
   {
     id: "dataOrg",
     question: "How is your data currently stored and managed?",
+    hint: "Describe your current data storage and management practices.",
     type: "single",
     options: [
       {
@@ -772,7 +775,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           )}
                         </div>
                         {isSelected && (
-                          <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                          <CheckCircle2 className="size-5 text-ash-500 shrink-0" />
                         )}
                       </div>
                     </button>
@@ -801,22 +804,22 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div className="grid sm:grid-cols-2 gap-3 mb-4">
                   {currentQuestion.options.map((opt) => {
                     const isSelected = multiSelected.includes(opt.id);
                     return (
                       <button
                         key={opt.id}
                         onClick={() => handleMultiToggle(currentQuestion.id, opt.id)}
-                        className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${isSelected
-                          ? "border-primary bg-primary/5"
-                          : "border-border bg-background hover:border-primary/40 hover:bg-secondary/30"
+                        className={`w-full text-left flex items-center gap-2 py-3 px-4 rounded-xl ring cursor-pointer ${isSelected
+                          ? "bg-white ring-[3px] ring-ash-500"
+                          : "bg-white ring-ash-200 hover:ring-ash-300"
                           }`}
                       >
                         <div
-                          className={`w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${isSelected
-                            ? "border-primary bg-primary"
-                            : "border-border"
+                          className={`size-4 rounded-lg border-2 shrink-0 flex items-center justify-center ${isSelected
+                            ? "border-ash-800 bg-ash-800"
+                            : "border-ash-300"
                             }`}
                         >
                           {isSelected && (
@@ -832,7 +835,7 @@ export function AuditQuiz({ newTab = false, solutions = [], prelaunch = false }:
                           )}
                         </div>
                         <span
-                          className={`text-sm font-medium ${isSelected ? "text-primary" : "text-foreground"
+                          className={`text-sm font-medium ${isSelected ? "text-ash-800" : ""
                             }`}
                         >
                           {opt.label}
