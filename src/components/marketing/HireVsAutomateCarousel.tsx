@@ -115,12 +115,12 @@ export function HireVsAutomateCarousel() {
               ))}
             </ul>
             <div className="mt-4 pt-3 border-t border-black/[0.06]">
+              <span className="text-sm">
+                Per month
+              </span>
               <p className="text-base font-bold">
                 &euro;{role.hire.monthlyCostLow.toLocaleString()}&ndash;
                 {role.hire.monthlyCostHigh.toLocaleString()}
-                <span className="text-sm font-normal">
-                  /mo
-                </span>
               </p>
             </div>
           </div>
@@ -147,16 +147,23 @@ export function HireVsAutomateCarousel() {
               ))}
             </ul>
             <div className="mt-4 pt-3 border-t border-black/[0.06]">
-              <p className="text-base font-bold">
-                &euro;{role.automate.setupCostLow.toLocaleString()}&ndash;
-                {role.automate.setupCostHigh.toLocaleString()}
-                <span className="text-sm font-normal">
-                  {" "}one-time
+              <div>
+                <span className="text-sm">
+                  {" "}One-time payment
                 </span>
-              </p>
-              <p className="text-sm mt-0.5">
-                + &euro;{role.automate.monthlyCost}/mo maintenance
-              </p>
+                <p className="text-base font-bold">
+                  &euro;{role.automate.setupCostLow.toLocaleString()}&ndash;
+                  {role.automate.setupCostHigh.toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm">
+                  Per month maintenance
+                </span>
+                <p className="text-sm mt-0.5">
+                  + &euro;{role.automate.monthlyCost}
+                </p>
+              </div>
             </div>
           </div>
         </div>
