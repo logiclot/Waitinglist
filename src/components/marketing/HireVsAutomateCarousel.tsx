@@ -118,7 +118,7 @@ export function HireVsAutomateCarousel() {
               <p className="text-base font-bold">
                 &euro;{role.hire.monthlyCostLow.toLocaleString()}&ndash;
                 {role.hire.monthlyCostHigh.toLocaleString()}
-                <span className="text-sm font-normal -foreground/50">
+                <span className="text-sm font-normal">
                   /mo
                 </span>
               </p>
@@ -150,11 +150,11 @@ export function HireVsAutomateCarousel() {
               <p className="text-base font-bold">
                 &euro;{role.automate.setupCostLow.toLocaleString()}&ndash;
                 {role.automate.setupCostHigh.toLocaleString()}
-                <span className="text-sm font-normal -foreground/50">
+                <span className="text-sm font-normal">
                   {" "}one-time
                 </span>
               </p>
-              <p className="text-sm/50 mt-0.5">
+              <p className="text-sm mt-0.5">
                 + &euro;{role.automate.monthlyCost}/mo maintenance
               </p>
             </div>
