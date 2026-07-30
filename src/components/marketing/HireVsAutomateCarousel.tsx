@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, User, Zap } from "lucide-react";
 import { HIRE_VS_AUTOMATE_ROLES } from "@/data/hire-vs-automate";
 import { GlowBorder } from "@/components/ui/glow-border";
 
-const INTERVAL_MS = 5500;
+const INTERVAL_MS = 5500000;
 
 export function HireVsAutomateCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -95,9 +95,9 @@ export function HireVsAutomateCarousel() {
         >
           {/* Hire card */}
           <div className="h-full bg-white flex flex-col p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex flex-col gap-2">
               <User className="h-4 w-4" />
-              <p className="text-sm font-semibold uppercase tracking-wider">
+              <p className="text-3xl text-ash-800 font-noto font-semibold tracking-tight">
                 Hire
               </p>
             </div>
@@ -127,9 +127,9 @@ export function HireVsAutomateCarousel() {
 
           {/* Automate card */}
           <div className="h-full bg-white flex flex-col p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex flex-col gap-2">
               <Zap className="h-4 w-4 text-[#8DC63F]" />
-              <p className="text-sm font-semibold uppercase tracking-wider">
+              <p className="text-3xl text-ash-800 font-noto font-semibold tracking-tight">
                 Automate
               </p>
             </div>
