@@ -59,7 +59,7 @@ export function HireVsAutomateCarousel() {
       onMouseLeave={() => setIsPaused(false)}
     >
 
-      <span class="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-400 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">vs</span>
+      <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-400 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">vs</span>
 
       {/* Job title */}
       <h3 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
