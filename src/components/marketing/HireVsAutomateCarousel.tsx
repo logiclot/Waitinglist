@@ -69,7 +69,7 @@ export function HireVsAutomateCarousel() {
       </h3>
 
       {/* Cards with overlaid arrows */}
-      <div className="relative flex-1 min-h-0">
+      <div className="max-w-4xl mx-auto relative flex-1 min-h-0">
         {/* Left arrow */}
         <button
           onClick={handlePrev}
@@ -96,7 +96,7 @@ export function HireVsAutomateCarousel() {
           {/* Hire card */}
           <div className="h-full bg-white flex flex-col p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
             <div className="flex flex-col gap-2">
-              <User className="h-4 w-4" />
+              <User className="size-5" />
               <p className="text-3xl text-ash-800 font-noto font-semibold tracking-tight">
                 Hire
               </p>
@@ -118,7 +118,7 @@ export function HireVsAutomateCarousel() {
               <span className="text-sm">
                 Per month
               </span>
-              <p className="text-base font-bold">
+              <p className="text-sm text-ash-800 font-semibold">
                 &euro;{role.hire.monthlyCostLow.toLocaleString()}&ndash;
                 {role.hire.monthlyCostHigh.toLocaleString()}
               </p>
@@ -128,7 +128,7 @@ export function HireVsAutomateCarousel() {
           {/* Automate card */}
           <div className="h-full bg-white flex flex-col p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
             <div className="flex flex-col gap-2">
-              <Zap className="h-4 w-4 text-[#8DC63F]" />
+              <Zap className="size-5 text-[#8DC63F]" />
               <p className="text-3xl text-ash-800 font-noto font-semibold tracking-tight">
                 Automate
               </p>
@@ -146,21 +146,21 @@ export function HireVsAutomateCarousel() {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 pt-3 border-t border-black/[0.06]">
+            <div className="flex justify-between gap-4 mt-4 pt-3 border-t border-black/[0.06]">
               <div>
                 <span className="text-sm">
                   {" "}One-time payment
                 </span>
-                <p className="text-base font-bold">
+                <p className="text-sm text-ash-800 font-semibold">
                   &euro;{role.automate.setupCostLow.toLocaleString()}&ndash;
                   {role.automate.setupCostHigh.toLocaleString()}
                 </p>
               </div>
               <div>
                 <span className="text-sm">
-                  Per month maintenance
+                  Maintenance/month
                 </span>
-                <p className="text-sm mt-0.5">
+                <p className="text-sm text-ash-800 font-semibold">
                   + &euro;{role.automate.monthlyCost}
                 </p>
               </div>
