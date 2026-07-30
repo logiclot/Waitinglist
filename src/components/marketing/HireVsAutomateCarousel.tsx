@@ -59,12 +59,12 @@ export function HireVsAutomateCarousel() {
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Section label */}
-      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest">
+      <p className="text-sm font-semibold uppercase tracking-widest">
         Hire vs. Automate
       </p>
 
       {/* Job title */}
-      <h3 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+      <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
         {role.title}
       </h3>
 
@@ -76,7 +76,7 @@ export function HireVsAutomateCarousel() {
           className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-border bg-white shadow-md hover:shadow-lg hover:scale-110 hover:border-primary/30 flex items-center justify-center transition-all duration-200"
           aria-label="Previous role"
         >
-          <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
 
         {/* Right arrow */}
@@ -85,7 +85,7 @@ export function HireVsAutomateCarousel() {
           className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-border bg-white shadow-md hover:shadow-lg hover:scale-110 hover:border-primary/30 flex items-center justify-center transition-all duration-200"
           aria-label="Next role"
         >
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          <ChevronRight className="h-5 w-5" />
         </button>
 
         {/* Two cards side by side */}
@@ -96,8 +96,8 @@ export function HireVsAutomateCarousel() {
           {/* Hire card */}
           <div className="h-full bg-white flex flex-col p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
             <div className="flex items-center gap-2 mb-3">
-              <User className="h-4 w-4 text-foreground" />
-              <p className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              <User className="h-4 w-4" />
+              <p className="text-sm font-semibold uppercase tracking-wider">
                 Hire
               </p>
             </div>
@@ -105,9 +105,9 @@ export function HireVsAutomateCarousel() {
               {role.hire.bullets.map((b, i) => (
                 <li
                   key={i}
-                  className="text-xs text-foreground leading-relaxed flex gap-2"
+                  className="text-sm flex gap-2"
                 >
-                  <span className="text-foreground/30 shrink-0 leading-relaxed">
+                  <span className="shrink-0">
                     &bull;
                   </span>
                   <span>{b}</span>
@@ -115,10 +115,10 @@ export function HireVsAutomateCarousel() {
               ))}
             </ul>
             <div className="mt-4 pt-3 border-t border-black/[0.06]">
-              <p className="text-base font-bold text-foreground">
+              <p className="text-base font-bold">
                 &euro;{role.hire.monthlyCostLow.toLocaleString()}&ndash;
                 {role.hire.monthlyCostHigh.toLocaleString()}
-                <span className="text-xs font-normal text-foreground/50">
+                <span className="text-sm font-normal -foreground/50">
                   /mo
                 </span>
               </p>
@@ -129,7 +129,7 @@ export function HireVsAutomateCarousel() {
           <div className="h-full bg-white flex flex-col p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl md:p-8">
             <div className="flex items-center gap-2 mb-3">
               <Zap className="h-4 w-4 text-[#8DC63F]" />
-              <p className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              <p className="text-sm font-semibold uppercase tracking-wider">
                 Automate
               </p>
             </div>
@@ -137,9 +137,9 @@ export function HireVsAutomateCarousel() {
               {role.automate.bullets.map((b, i) => (
                 <li
                   key={i}
-                  className="text-xs text-foreground leading-relaxed flex gap-2"
+                  className="text-sm flex gap-2"
                 >
-                  <span className="text-foreground/30 shrink-0 leading-relaxed">
+                  <span className="shrink-0">
                     &bull;
                   </span>
                   <span>{b}</span>
@@ -147,14 +147,14 @@ export function HireVsAutomateCarousel() {
               ))}
             </ul>
             <div className="mt-4 pt-3 border-t border-black/[0.06]">
-              <p className="text-base font-bold text-foreground">
+              <p className="text-base font-bold">
                 &euro;{role.automate.setupCostLow.toLocaleString()}&ndash;
                 {role.automate.setupCostHigh.toLocaleString()}
-                <span className="text-xs font-normal text-foreground/50">
+                <span className="text-sm font-normal -foreground/50">
                   {" "}one-time
                 </span>
               </p>
-              <p className="text-xs text-foreground/50 mt-0.5">
+              <p className="text-sm/50 mt-0.5">
                 + &euro;{role.automate.monthlyCost}/mo maintenance
               </p>
             </div>
@@ -166,7 +166,7 @@ export function HireVsAutomateCarousel() {
       <div className="mt-4">
         <Link
           href={`/solutions?category=${role.categorySlug}`}
-          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+          className="text-sm hover:text-primary transition-colors"
         >
           See {role.categoryLabel.toLowerCase()} solutions{" "}
           <span aria-hidden="true">&rarr;</span>
