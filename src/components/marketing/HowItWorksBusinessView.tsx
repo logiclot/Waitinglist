@@ -65,17 +65,17 @@ export function HowItWorksBusinessView() {
       <div className="mb-20">
         <div className="text-center mb-4">
           <div className="flex items-center justify-center gap-3 mb-3 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-foreground/8 text-foreground text-xs font-bold uppercase tracking-wider border border-foreground/10">
+            <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
               <ShieldCheck className="h-3.5 w-3.5" /> Zero-Risk Guarantee
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-foreground/8 text-foreground text-xs font-bold uppercase tracking-wider border border-foreground/10">
+            <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
               0% Platform Fee for Businesses
             </span>
           </div>
-          <h3 className="text-xl md:text-2xl font-bold text-foreground tracking-tight leading-tight">
+          <h3 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
             Your money stays protected at every step
           </h3>
-          <p className="text-sm text-muted-foreground mt-3 max-w-xl mx-auto leading-relaxed">
+          <p className="max-w-4xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
             Every euro is locked before an expert starts work and only moves when you say so. You keep 100% of your budget.
           </p>
         </div>
