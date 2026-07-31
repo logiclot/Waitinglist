@@ -15,20 +15,20 @@ export function HowItWorks() {
           <div className="inline-flex flex-col sm:flex-row gap-2 sm:gap-0 bg-secondary p-1.5 rounded-2xl sm:rounded-full border border-border w-full sm:w-auto max-w-sm sm:max-w-none mx-auto">
             <button
               onClick={() => setView("business")}
-              className={`px-6 sm:px-8 py-3.5 sm:py-3 rounded-xl sm:rounded-full text-sm sm:text-base font-bold transition-all duration-300 hover:bg-primary/10 hover:text-primary active:scale-[0.98] ${
+              className={`text-sm font-noto font-bold tracking-tight px-6 px-8 py-3.5 rounded-xl sm:rounded-full transition-all duration-300 hover:bg-primary/10 hover:text-primary active:scale-[0.98] ${
                 view === "business"
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                  : "text-muted-foreground"
+                  ? "bg-ash-900 transition-colors hover:bg-ash-800"
+                  : "text-ash-800"
               }`}
             >
               I&apos;m a Business Owner
             </button>
             <button
               onClick={() => setView("expert")}
-              className={`px-6 sm:px-8 py-3.5 sm:py-3 rounded-xl sm:rounded-full text-sm sm:text-base font-bold transition-all duration-300 hover:bg-primary/10 hover:text-primary active:scale-[0.98] ${
+              className={`text-sm font-noto font-bold tracking-tight px-6 px-8 py-3.5 rounded-xl sm:rounded-full transition-all duration-300 hover:bg-primary/10 hover:text-primary active:scale-[0.98] ${
                 view === "expert"
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                  : "text-muted-foreground"
+                  ? "bg-ash-900 transition-colors hover:bg-ash-800"
+                  : "text-ash-800"
               }`}
             >
               I&apos;m an Expert
