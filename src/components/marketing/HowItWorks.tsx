@@ -12,10 +12,6 @@ export function HowItWorks() {
       <div className="container mx-auto px-4 sm:px-6">
 
         <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 tracking-tight text-foreground">
-            How LogicLot works
-          </h2>
-
           <div className="inline-flex flex-col sm:flex-row gap-2 sm:gap-0 bg-secondary p-1.5 rounded-2xl sm:rounded-full border border-border w-full sm:w-auto max-w-sm sm:max-w-none mx-auto">
             <button
               onClick={() => setView("business")}
