@@ -11,11 +11,11 @@ export function HowItWorks() {
     <section className="pt-20 md:pt-40" id="how-it-works">
       <div className="container mx-auto px-4 sm:px-6">
 
-        <div className="text-center mb-20">
-          <div className="inline-flex flex-col sm:flex-row gap-2 sm:gap-0 bg-secondary p-1.5 rounded-2xl sm:rounded-full border border-border w-full sm:w-auto max-w-sm sm:max-w-none mx-auto">
+        <div className="flex justify-center text-center mb-20">
+          <div className="bg-ash-200 flex gap-2 p-1 rounded-full">
             <button
               onClick={() => setView("business")}
-              className={`text-sm font-noto font-bold tracking-tight py-2.5 px-5 rounded-xl sm:rounded-full ${
+              className={`text-sm font-noto font-bold tracking-tight py-2.5 px-5 rounded-full ${
                 view === "business"
                   ? "text-ash-50 bg-ash-900 transition-colors hover:bg-ash-800"
                   : "text-ash-800"
@@ -25,7 +25,7 @@ export function HowItWorks() {
             </button>
             <button
               onClick={() => setView("expert")}
-              className={`text-sm font-noto font-bold tracking-tight py-2.5 px-5 rounded-xl sm:rounded-full ${
+              className={`text-sm font-noto font-bold tracking-tight py-2.5 px-5 rounded-full ${
                 view === "expert"
                   ? "text-ash-50 bg-ash-900 transition-colors hover:bg-ash-800"
                   : "text-ash-800"
