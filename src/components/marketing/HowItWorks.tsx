@@ -15,9 +15,9 @@ export function HowItWorks() {
           <div className="inline-flex flex-col sm:flex-row gap-2 sm:gap-0 bg-secondary p-1.5 rounded-2xl sm:rounded-full border border-border w-full sm:w-auto max-w-sm sm:max-w-none mx-auto">
             <button
               onClick={() => setView("business")}
-              className={`text-sm font-noto font-bold tracking-tight px-6 px-8 py-3.5 rounded-xl sm:rounded-full transition-all duration-300 hover:bg-primary/10 hover:text-primary active:scale-[0.98] ${
+              className={`text-sm font-noto font-bold tracking-tight px-6 px-8 py-3.5 rounded-xl sm:rounded-full ${
                 view === "business"
-                  ? "bg-ash-900 transition-colors hover:bg-ash-800"
+                  ? "text-ash-50 bg-ash-900 transition-colors hover:bg-ash-800"
                   : "text-ash-800"
               }`}
             >
@@ -25,9 +25,9 @@ export function HowItWorks() {
             </button>
             <button
               onClick={() => setView("expert")}
-              className={`text-sm font-noto font-bold tracking-tight px-6 px-8 py-3.5 rounded-xl sm:rounded-full transition-all duration-300 hover:bg-primary/10 hover:text-primary active:scale-[0.98] ${
+              className={`text-sm font-noto font-bold tracking-tight px-6 px-8 py-3.5 rounded-xl sm:rounded-full ${
                 view === "expert"
-                  ? "bg-ash-900 transition-colors hover:bg-ash-800"
+                  ? "text-ash-50 bg-ash-900 transition-colors hover:bg-ash-800"
                   : "text-ash-800"
               }`}
             >
