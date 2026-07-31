@@ -153,7 +153,7 @@ export function HowItWorksBusinessView() {
 
           {/* Center hub — subtle light bulb effect */}
           <div
-            className="absolute flex flex-col items-center justify-center text-center rounded-full bg-white"
+            className="bg-[#8DC63F] absolute flex flex-col items-center justify-center text-center rounded-full"
             style={{
               width: hubR * 2,
               height: hubR * 2,
@@ -169,7 +169,7 @@ export function HowItWorksBusinessView() {
             <ShieldCheck
               className="h-8 w-8 mb-1"
               style={{
-                color: morseOn ? "#8DC63F" : "#111827",
+                color: morseOn ? "#ffffff" : "#ffffff",
                 filter: morseOn
                   ? "drop-shadow(0 0 3px rgba(141,198,63,0.3))"
                   : "none",
@@ -179,7 +179,7 @@ export function HowItWorksBusinessView() {
             <p
               className="text-sm font-bold leading-tight px-2"
               style={{
-                color: "#111827",
+                color: "#ffffff",
               }}
             >
               Fully<br/>Secured
