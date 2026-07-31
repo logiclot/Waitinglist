@@ -202,8 +202,8 @@ export function HowItWorksBusinessView() {
                   {item.icon}
                 </div>
                 <span className="text-[10px] font-bold text-[#8DC63F] uppercase tracking-wider">{item.step}</span>
-                <h4 className="font-bold text-sm mt-1 text-foreground leading-snug">{item.title}</h4>
-                <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">{item.body}</p>
+                <h4 className="text-ash-800 font-noto font-semibold tracking-tight">{item.title}</h4>
+                <p className="text-sm text-ash-500 mt-1">{item.body}</p>
               </div>
             );
           })}
