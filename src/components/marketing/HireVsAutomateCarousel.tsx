@@ -71,6 +71,18 @@ export function HireVsAutomateCarousel() {
         Evaluating dynamic solutions for modern support: human expertise versus continuous digital innovation.
       </p>
 
+      {/* CTA link */}
+      <div className="text-center mt-4">
+        <Link
+          href={`/solutions?category=${role.categorySlug}`}
+          className="bg-ash-200 inline-flex py-2.5 px-5 rounded-full transition-[background] hover:bg-ash-300"
+        >
+          <span className="text-sm text-ash-800 font-bold font-noto tracking-tight">
+            See {role.categoryLabel.toLowerCase()} solutions{" "}
+          </span>
+        </Link>
+      </div>
+
       {/* Cards with overlaid arrows */}
       <div className="max-w-4xl mx-auto relative flex-1 min-h-0">
         {/* Left arrow */}
@@ -172,18 +184,6 @@ export function HireVsAutomateCarousel() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* CTA link */}
-      <div className="text-center mt-10">
-        <Link
-          href={`/solutions?category=${role.categorySlug}`}
-          className="bg-ash-200 inline-flex py-2.5 px-5 rounded-full transition-[background] hover:bg-ash-300"
-        >
-          <span className="text-sm text-ash-800 font-bold font-noto tracking-tight">
-            See {role.categoryLabel.toLowerCase()} solutions{" "}
-          </span>
-        </Link>
       </div>
     </div>
   );
