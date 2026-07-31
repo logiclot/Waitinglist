@@ -7,31 +7,31 @@ import { DISCOVERY_SCAN_COPY, DISCOVERY_SCAN_BULLETS, CUSTOM_PROJECT_COPY, CUSTO
 
 const ESCROW_STEPS = [
   {
-    icon: <Lock className="h-4 w-4" />,
+    icon: <Lock className="size-5" />,
     step: "Step 1",
     title: "You fund the milestone",
     body: "Before any work begins, you pay via Stripe. Funds are held in escrow by LogicLot and the expert cannot access them.",
   },
   {
-    icon: <Zap className="h-4 w-4" />,
+    icon: <Zap className="size-5" />,
     step: "Step 2",
     title: "Expert starts work",
     body: "The expert sees funds are secured and begins delivery. Your money stays locked until you decide to release it.",
   },
   {
-    icon: <Eye className="h-4 w-4" />,
+    icon: <Eye className="size-5" />,
     step: "Step 3",
     title: "You review the delivery",
     body: "The expert marks work as delivered. You inspect it and only your explicit approval can release funds. Not satisfied? Don't approve.",
   },
   {
-    icon: <ShieldCheck className="h-4 w-4" />,
+    icon: <ShieldCheck className="size-5" />,
     step: "Step 4",
     title: "Dispute? LogicLot rules",
     body: "Raise a dispute and our team reviews all messages, scope, and deliverables. We rule within 10 days, binding on both sides.",
   },
   {
-    icon: <CheckCircle2 className="h-4 w-4" />,
+    icon: <CheckCircle2 className="size-5" />,
     step: "Step 5",
     title: "You approve, funds release",
     body: "Happy with the result? Approve the milestone. Funds transfer to the expert minus the platform fee. Repeat for the next milestone.",
@@ -197,7 +197,7 @@ export function HowItWorksBusinessView() {
                 style={{ width: cardW, left: pos.x - cardW / 2, top: pos.y - 60 }}
               >
                 <div
-                  className="size-11 bg-white flex items-center justify-center mx-auto mb-2 border border-ash-300 shadow-2xl shadow-ash-200 rounded-full"
+                  className="size-11 bg-white flex items-center justify-center mx-auto mb-2 border border-ash-300 shadow-2xl shadow-ash-200 ring-[3px] ring-ash-100 rounded-full"
                 >
                   {item.icon}
                 </div>
