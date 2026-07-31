@@ -153,13 +153,12 @@ export function HowItWorksBusinessView() {
 
           {/* Center hub — subtle light bulb effect */}
           <div
-            className="bg-[#8DC63F] absolute flex flex-col items-center justify-center text-center rounded-full"
+            className="bg-ash-900 absolute flex flex-col items-center justify-center text-center rounded-full"
             style={{
               width: hubR * 2,
               height: hubR * 2,
               left: cx - hubR,
               top: cy - hubR,
-              border: "2px solid #E5E7EB",
               boxShadow: morseOn
                 ? "0 0 14px 3px rgba(141, 198, 63, 0.18), 0 0 28px 6px rgba(141, 198, 63, 0.06)"
                 : "0 4px 16px rgba(0, 0, 0, 0.06)",
