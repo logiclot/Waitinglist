@@ -63,8 +63,15 @@ export function HowItWorksBusinessView() {
 
       {/* ── HERO: Protection Scheme ── */}
       <div className="mb-20">
-        <div className="text-center mb-4">
-          <div className="flex items-center justify-center gap-3 mb-3 flex-wrap">
+        <div className="text-center relative">
+          <span className="text-[70px] font-extrabold tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-t from-25% from-transparent to-ash-400 flex justify-center absolute -top-[50px] inset-x-0 md:text-[100px] md:-top-[75px]">business</span>
+          <h3 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
+            Your money stays protected at every step
+          </h3>
+          <p className="max-w-xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
+            Every euro is locked before an expert starts work and only moves when you say so. You keep 100% of your budget.
+          </p>
+          <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
             <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
               <ShieldCheck className="h-3.5 w-3.5" /> Zero-Risk Guarantee
             </span>
@@ -72,12 +79,6 @@ export function HowItWorksBusinessView() {
               0% Platform Fee for Businesses
             </span>
           </div>
-          <h3 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
-            Your money stays protected at every step
-          </h3>
-          <p className="max-w-xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
-            Every euro is locked before an expert starts work and only moves when you say so. You keep 100% of your budget.
-          </p>
         </div>
 
         {/* ── Desktop: circular orbit ── */}
