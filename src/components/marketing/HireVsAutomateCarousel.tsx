@@ -97,7 +97,7 @@ export function HireVsAutomateCarousel() {
           className="h-full grid gap-2 mt-10 animate-slide-in md:grid-cols-2"
         >
           {/* Hire card */}
-          <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl z-10 overflow-hidden md:p-8">
+          <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl z-10 group overflow-hidden md:p-8">
             <User className="size-60 text-ash-100 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-200" />
             <div className="flex flex-col gap-2">
               <User className="size-5" />
@@ -130,7 +130,7 @@ export function HireVsAutomateCarousel() {
           </div>
 
           {/* Automate card */}
-          <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl z-10 overflow-hidden md:p-8">
+          <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl z-10 group overflow-hidden md:p-8">
             <Zap className="size-60 text-ash-100 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-200" />
             <div className="flex flex-col gap-2">
               <Zap className="size-5 text-[#8DC63F]" />
