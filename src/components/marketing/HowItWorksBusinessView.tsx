@@ -71,14 +71,6 @@ export function HowItWorksBusinessView() {
           <p className="max-w-xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
             Every euro is locked before an expert starts work and only moves when you say so. You keep 100% of your budget.
           </p>
-          <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
-            <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
-              <ShieldCheck className="h-3.5 w-3.5" /> Zero-Risk Guarantee
-            </span>
-            <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
-              0% Platform Fee for Businesses
-            </span>
-          </div>
         </div>
 
         {/* ── Desktop: circular orbit ── */}
@@ -233,6 +225,15 @@ export function HowItWorksBusinessView() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
+        <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
+          <ShieldCheck className="h-3.5 w-3.5" /> Zero-Risk Guarantee
+        </span>
+        <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
+          0% Platform Fee for Businesses
+        </span>
       </div>
 
       {/* Not sure which path? — compact analogy block */}

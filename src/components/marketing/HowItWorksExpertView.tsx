@@ -91,14 +91,6 @@ export function HowItWorksExpertView() {
           <p className="max-w-xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
             Productize your expertise. Build once, sell repeatedly, and get paid for the value you create.
           </p>
-          <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
-            <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
-              Open to All Experts
-            </span>
-            <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
-              Get Paid on Approval
-            </span>
-          </div>
         </div>
 
         {/* ── Desktop: circular orbit ── */}
@@ -251,6 +243,15 @@ export function HowItWorksExpertView() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
+        <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
+          Open to All Experts
+        </span>
+        <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
+          Get Paid on Approval
+        </span>
       </div>
 
       {/* ── 3 Ways to Earn + Founding Expert ── */}
