@@ -197,8 +197,7 @@ export function HowItWorksBusinessView() {
                 style={{ width: cardW, left: pos.x - cardW / 2, top: pos.y - 60 }}
               >
                 <div
-                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center mx-auto mb-2 text-foreground"
-                  style={{ border: "2px solid #E5E7EB" }}
+                  className="size-11 bg-white flex items-center justify-center mx-auto mb-2 border border-ash-300 shadow-2xl shadow-ash-200 rounded-full"
                 >
                   {item.icon}
                 </div>
