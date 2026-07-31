@@ -175,13 +175,14 @@ export function HireVsAutomateCarousel() {
       </div>
 
       {/* CTA link */}
-      <div className="mt-4">
+      <div className="text-center mt-10">
         <Link
           href={`/solutions?category=${role.categorySlug}`}
-          className="text-sm hover:text-primary transition-colors"
+          className="bg-ash-200 inline-flex py-2.5 px-5 rounded-full transition-[background] hover:bg-ash-300"
         >
-          See {role.categoryLabel.toLowerCase()} solutions{" "}
-          <span aria-hidden="true">&rarr;</span>
+          <span className="text-sm text-ash-800 font-bold font-noto tracking-tight">
+            See {role.categoryLabel.toLowerCase()} solutions{" "}
+          </span>
         </Link>
       </div>
     </div>
