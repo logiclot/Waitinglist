@@ -54,7 +54,7 @@ export function HireVsAutomateCarousel() {
 
   return (
     <div
-      className="flex flex-col h-full"
+      className="flex flex-col h-full relative"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -76,7 +76,7 @@ export function HireVsAutomateCarousel() {
         {/* Left arrow */}
         <button
           onClick={handlePrev}
-          className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-border bg-white shadow-md hover:shadow-lg hover:scale-110 hover:border-primary/30 flex items-center justify-center transition-all duration-200"
+          className="z-20 absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-border bg-white shadow-md hover:shadow-lg hover:scale-110 hover:border-primary/30 flex items-center justify-center transition-all duration-200"
           aria-label="Previous role"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -85,7 +85,7 @@ export function HireVsAutomateCarousel() {
         {/* Right arrow */}
         <button
           onClick={handleNext}
-          className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-border bg-white shadow-md hover:shadow-lg hover:scale-110 hover:border-primary/30 flex items-center justify-center transition-all duration-200"
+          className="z-20 absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-border bg-white shadow-md hover:shadow-lg hover:scale-110 hover:border-primary/30 flex items-center justify-center transition-all duration-200"
           aria-label="Next role"
         >
           <ChevronRight className="h-5 w-5" />
