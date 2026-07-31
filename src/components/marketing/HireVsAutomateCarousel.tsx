@@ -76,7 +76,7 @@ export function HireVsAutomateCarousel() {
         {/* Left arrow */}
         <button
           onClick={handlePrev}
-          className="size-10 bg-white flex items-center justify-center absolute -left-5 top-1/2 -translate-y-1/2 z-20 border border-ash-300 shadow-2xl shadow-ash-200 rounded-full hover:scale-110 transition-all"
+          className="size-10 bg-white flex items-center justify-center absolute -left-5 top-1/2 -translate-y-1/2 z-20 border border-ash-300 shadow-2xl shadow-ash-200 cursor-pointer rounded-full hover:scale-110 transition-all"
           aria-label="Previous role"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -85,7 +85,7 @@ export function HireVsAutomateCarousel() {
         {/* Right arrow */}
         <button
           onClick={handleNext}
-          className="size-10 bg-white flex items-center justify-center absolute -right-5 top-1/2 -translate-y-1/2 z-20 border border-ash-300 shadow-2xl shadow-ash-200 rounded-full hover:scale-110 transition-all"
+          className="size-10 bg-white flex items-center justify-center absolute -right-5 top-1/2 -translate-y-1/2 z-20 border border-ash-300 shadow-2xl shadow-ash-200 cursor-pointer rounded-full hover:scale-110 transition-all"
           aria-label="Next role"
         >
           <ChevronRight className="h-5 w-5" />
