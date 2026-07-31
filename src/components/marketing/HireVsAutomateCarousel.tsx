@@ -67,8 +67,8 @@ export function HireVsAutomateCarousel() {
       </h3>
 
       {/* Section label */}
-      <p className="max-w-4xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
-        Hire vs. Automate
+      <p className="max-w-md text-center text-balance mx-auto mt-2 md:text-lg md:mt-4">
+        Evaluating dynamic solutions for modern support: human expertise versus continuous digital innovation.
       </p>
 
       {/* Cards with overlaid arrows */}
