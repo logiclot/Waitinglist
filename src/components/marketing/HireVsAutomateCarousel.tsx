@@ -105,7 +105,7 @@ export function HireVsAutomateCarousel() {
                 Hire
               </p>
             </div>
-            <ul className="grid gap-2 mt-6">
+            <ul className="grid gap-2 mb-auto mt-6">
               {role.hire.bullets.map((b, i) => (
                 <li
                   key={i}
@@ -138,7 +138,7 @@ export function HireVsAutomateCarousel() {
                 Automate
               </p>
             </div>
-            <ul className="grid gap-2 mt-6">
+            <ul className="grid gap-2 mb-auto mt-6">
               {role.automate.bullets.map((b, i) => (
                 <li
                   key={i}
