@@ -8,7 +8,7 @@ export function HowItWorks() {
   const [view, setView] = useState<"business" | "expert">("business");
 
   return (
-    <section className="py-14 md:py-20 bg-[#FBFAF8]" id="how-it-works">
+    <section className="pt-20 md:pt-40" id="how-it-works">
       <div className="container mx-auto px-4 sm:px-6">
 
         <div className="text-center mb-8 md:mb-10">
