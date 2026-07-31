@@ -10,31 +10,31 @@ const ESCROW_STEPS = [
     icon: <Lock className="size-5" />,
     step: "Step 1",
     title: "You fund the milestone",
-    body: "Before any work begins, you pay via Stripe. Funds are held in escrow by LogicLot and the expert cannot access them.",
+    body: "Pay via Stripe. Funds are safely held in LogicLot escrow.",
   },
   {
     icon: <Zap className="size-5" />,
     step: "Step 2",
     title: "Expert starts work",
-    body: "The expert sees funds are secured and begins delivery. Your money stays locked until you decide to release it.",
+    body: "The expert begins work while your payment stays locked.",
   },
   {
     icon: <Eye className="size-5" />,
     step: "Step 3",
     title: "You review the delivery",
-    body: "The expert marks work as delivered. You inspect it and only your explicit approval can release funds. Not satisfied? Don't approve.",
+    body: "Inspect the work. Payment is released only with your approval.",
   },
   {
     icon: <ShieldCheck className="size-5" />,
     step: "Step 4",
     title: "Dispute? LogicLot rules",
-    body: "Raise a dispute and our team reviews all messages, scope, and deliverables. We rule within 10 days, binding on both sides.",
+    body: "Our team reviews the case and issues a binding decision within 10 days.",
   },
   {
     icon: <CheckCircle2 className="size-5" />,
     step: "Step 5",
     title: "You approve, funds release",
-    body: "Happy with the result? Approve the milestone. Funds transfer to the expert minus the platform fee. Repeat for the next milestone.",
+    body: "Approve to transfer funds (minus platform fee) and start the next milestone.",
   },
 ];
 
@@ -217,7 +217,7 @@ export function HowItWorksBusinessView() {
                 {item.icon}
               </div>
               <div>
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{item.step}</span>
+                <span className="text-xs text-lime-500 font-semibold uppercase tracking-wider">{item.step}</span>
                 <h4 className="font-bold text-sm text-foreground leading-snug">{item.title}</h4>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.body}</p>
               </div>
