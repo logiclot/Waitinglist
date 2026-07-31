@@ -15,7 +15,7 @@ export function HowItWorks() {
           <div className="bg-ash-200 flex gap-2 p-1 rounded-full">
             <button
               onClick={() => setView("business")}
-              className={`text-sm font-noto font-bold tracking-tight py-2.5 px-5 rounded-full ${
+              className={`text-sm font-noto font-bold tracking-tight py-2.5 px-5 rounded-full cursor-pointer ${
                 view === "business"
                   ? "text-ash-50 bg-ash-900 transition-colors hover:bg-ash-800"
                   : "text-ash-800"
@@ -25,7 +25,7 @@ export function HowItWorks() {
             </button>
             <button
               onClick={() => setView("expert")}
-              className={`text-sm font-noto font-bold tracking-tight py-2.5 px-5 rounded-full ${
+              className={`text-sm font-noto font-bold tracking-tight py-2.5 px-5 rounded-full cursor-pointer ${
                 view === "expert"
                   ? "text-ash-50 bg-ash-900 transition-colors hover:bg-ash-800"
                   : "text-ash-800"
