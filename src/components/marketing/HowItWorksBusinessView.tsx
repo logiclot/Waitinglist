@@ -75,7 +75,7 @@ export function HowItWorksBusinessView() {
           <h3 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
             Your money stays protected at every step
           </h3>
-          <p className="max-w-4xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
+          <p className="max-w-xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
             Every euro is locked before an expert starts work and only moves when you say so. You keep 100% of your budget.
           </p>
         </div>

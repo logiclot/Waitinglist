@@ -95,7 +95,7 @@ export function HowItWorksExpertView() {
           <h3 className="max-w-xl text-2xl text-ash-800 text-balance font-noto font-semibold tracking-tight mx-auto md:text-4xl">
             You sell thinking, not hours
           </h3>
-          <p className="max-w-4xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
+          <p className="max-w-xl text-balance mx-auto mt-2 md:text-lg md:mt-4">
             Productize your expertise. Build once, sell repeatedly, and get paid for the value you create.
           </p>
         </div>
