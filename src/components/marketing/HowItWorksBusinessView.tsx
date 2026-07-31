@@ -189,7 +189,7 @@ export function HowItWorksBusinessView() {
           {/* 5 steps positioned around the circle */}
           {ESCROW_STEPS.map((item, i) => {
             const pos = nodePositions[i];
-            const cardW = 160;
+            const cardW = 200;
             return (
               <div
                 key={i}
