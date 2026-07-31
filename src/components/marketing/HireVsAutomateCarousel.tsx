@@ -54,7 +54,7 @@ export function HireVsAutomateCarousel() {
 
   return (
     <div
-      className="flex flex-col h-full relative"
+      className="h-full flex flex-col relative"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
