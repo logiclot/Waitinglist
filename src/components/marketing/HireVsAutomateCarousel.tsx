@@ -76,7 +76,7 @@ export function HireVsAutomateCarousel() {
         {/* Left arrow */}
         <button
           onClick={handlePrev}
-          className="z-20 absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-border bg-white shadow-md hover:shadow-lg hover:scale-110 hover:border-primary/30 flex items-center justify-center transition-all duration-200"
+          className="size-10 bg-white flex items-center justify-center absolute -left-5 top-1/2 -translate-y-1/2 z-20 border border-ash-300 shadow-2xl shadow-ash-200 rounded-full hover:scale-110 transition-all"
           aria-label="Previous role"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -85,7 +85,7 @@ export function HireVsAutomateCarousel() {
         {/* Right arrow */}
         <button
           onClick={handleNext}
-          className="z-20 absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-border bg-white shadow-md hover:shadow-lg hover:scale-110 hover:border-primary/30 flex items-center justify-center transition-all duration-200"
+          className="size-10 bg-white flex items-center justify-center absolute -right-5 top-1/2 -translate-y-1/2 z-20 border border-ash-300 shadow-2xl shadow-ash-200 rounded-full hover:scale-110 transition-all"
           aria-label="Next role"
         >
           <ChevronRight className="h-5 w-5" />
@@ -97,7 +97,7 @@ export function HireVsAutomateCarousel() {
           className="h-full grid gap-2 mt-10 animate-slide-in md:grid-cols-2"
         >
           {/* Hire card */}
-          <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl z-10 md:p-8">
+          <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl z-10 overflow-hidden md:p-8">
             <User className="size-60 text-ash-100 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-200" />
             <div className="flex flex-col gap-2">
               <User className="size-5" />
@@ -130,7 +130,7 @@ export function HireVsAutomateCarousel() {
           </div>
 
           {/* Automate card */}
-          <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl z-10 md:p-8">
+          <div className="h-full bg-white flex flex-col relative p-6 border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl z-10 overflow-hidden md:p-8">
             <Zap className="size-60 text-ash-100 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-200" />
             <div className="flex flex-col gap-2">
               <Zap className="size-5 text-[#8DC63F]" />
