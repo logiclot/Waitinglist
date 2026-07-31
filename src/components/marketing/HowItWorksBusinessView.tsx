@@ -227,15 +227,6 @@ export function HowItWorksBusinessView() {
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
-        <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
-          <ShieldCheck className="h-3.5 w-3.5" /> Zero-Risk Guarantee
-        </span>
-        <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
-          0% Platform Fee for Businesses
-        </span>
-      </div>
-
       {/* Not sure which path? — compact analogy block */}
       <div className="mb-14">
         <div className="text-center mb-6">

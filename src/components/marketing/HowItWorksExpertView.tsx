@@ -245,15 +245,6 @@ export function HowItWorksExpertView() {
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
-        <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
-          Open to All Experts
-        </span>
-        <span className="text-sm text-ash-800 font-medium whitespace-nowrap bg-ash-200 flex items-center gap-2 py-2 px-4 rounded-full">
-          Get Paid on Approval
-        </span>
-      </div>
-
       {/* ── 3 Ways to Earn + Founding Expert ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
 
