@@ -256,24 +256,25 @@ export function HowItWorksBusinessView() {
       {/* 3 Tier Cards — same size */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 items-stretch">
         {/* Tier 1 — Browse Solutions */}
-        <div className="relative p-8 rounded-2xl bg-white border border-border shadow-sm hover:shadow-md transition-all flex flex-col min-h-[420px]">
+        <div className="bg-white relative border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 z-10 md:p-8 flex flex-col min-h-[420px]">
+          <Search className="size-60 text-ash-100 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-200" />
           <div className="mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-xs font-bold text-muted-foreground mb-4">
+            <div className="text-sm font-semibold bg-ash-200 py-1.5 px-3 r rounded-md">
               Tier 1
             </div>
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-primary/8 text-primary rounded-xl">
-                <Search className="h-6 w-6" />
+              <div className="size-11 bg-ash-100 flex items-center justify-center border border-ash-300 ring-[3px] ring-ash-100 rounded-xl">
+                <Search className="size-5" />
               </div>
             </div>
-            <h4 className="text-2xl font-bold text-foreground mb-2">Browse Solutions</h4>
+            <h4 className="text-3xl text-ash-800 font-noto font-semibold tracking-tight mt-2">Browse Solutions</h4>
             <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Ready to deploy</p>
           </div>
           <div className="flex-grow mb-8">
-            <p className="text-muted-foreground leading-relaxed text-sm mb-6">
+            <p className="text-ash-500 mt-2">
               Pick a proven automation, see it working live, and have it running in your tools within days.
             </p>
-            <ul className="space-y-3">
+            <ul className="space-y-3 mt-6">
               <li className="text-sm text-foreground flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Watch a live demo before you commit
               </li>
@@ -296,28 +297,29 @@ export function HowItWorksBusinessView() {
         </div>
 
         {/* Tier 2 — Discovery Scan */}
-        <div className="relative p-8 rounded-2xl bg-[#111827] border border-white/8 shadow-xl flex flex-col min-h-[420px]">
+        <div className="bg-ash-900 relative shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 z-10 md:p-8 flex flex-col min-h-[420px]">
+          <Sparkles className="size-60 text-ash-800 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-700" />
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs font-bold mb-4 border border-white/10">
               {DISCOVERY_SCAN_COPY.badge}
             </div>
             <div className="flex items-start justify-between mb-3">
-              <div className="p-3 bg-white/8 text-white/80 rounded-xl border border-white/10">
-                <Sparkles className="h-6 w-6" />
+              <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800 rounded-xl">
+                <Sparkles className="size-5" />
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-white">{DISCOVERY_SCAN_COPY.price}</div>
                 <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
               </div>
             </div>
-            <h4 className="text-2xl font-bold text-white mb-1">Discovery Scan</h4>
+            <h4 className="text-3xl text-ash-50 font-noto font-semibold tracking-tight mt-2">Discovery Scan</h4>
             <p className="text-xs text-white/40 uppercase tracking-wide font-medium mt-2">{DISCOVERY_SCAN_COPY.proposalNote.replace("Discovery Scan · ", "")}</p>
           </div>
           <div className="flex-grow mb-8">
-            <p className="text-white/60 leading-relaxed text-sm mb-6">
+            <p className="text-ash-400 mt-2">
               {DISCOVERY_SCAN_COPY.description}
             </p>
-            <ul className="space-y-3">
+            <ul className="space-y-3 mt-6">
               {DISCOVERY_SCAN_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-white/40 shrink-0 mt-0.5" /> {item}
@@ -337,25 +339,26 @@ export function HowItWorksBusinessView() {
         </div>
 
         {/* Tier 3 — Custom Project */}
-        <div className="relative p-8 rounded-2xl bg-[#111827] border border-white/8 shadow-xl flex flex-col min-h-[420px]">
+        <div className="bg-ash-900 relative shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 z-10 md:p-8 flex flex-col min-h-[420px]">
+          <Crown className="size-60 text-ash-800 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-700" />
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs font-bold mb-4 border border-white/10">
               {CUSTOM_PROJECT_COPY.badge}
             </div>
             <div className="flex items-start justify-between mb-3">
-              <div className="p-3 bg-white/8 text-white/80 rounded-xl border border-white/10">
-                <Crown className="h-6 w-6" />
+              <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800 rounded-xl">
+                <Crown className="size-5" />
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-white">{CUSTOM_PROJECT_COPY.price}</div>
                 <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
               </div>
             </div>
-            <h4 className="text-2xl font-bold text-white mb-1">Custom Project</h4>
+            <h4 className="text-3xl text-ash-50 font-noto font-semibold tracking-tight mt-2">Custom Project</h4>
             <p className="text-xs text-white/40 uppercase tracking-wide font-medium mt-2">{CUSTOM_PROJECT_COPY.proposalNote.replace("Custom Project · ", "")}</p>
           </div>
           <div className="flex-grow mb-8">
-            <p className="text-white/60 leading-relaxed text-sm mb-6">
+            <p className="text-ash-400 mt-2">
               {CUSTOM_PROJECT_COPY.description}
             </p>
             <ul className="space-y-3">
