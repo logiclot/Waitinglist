@@ -258,8 +258,8 @@ export function HowItWorksBusinessView() {
         {/* Tier 1 — Browse Solutions */}
         <div className="bg-white relative border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 z-10 md:p-8 flex flex-col min-h-[420px]">
           <Search className="size-60 text-ash-100 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-200" />
-          <div className="mb-6">
-            <div className="text-sm font-semibold bg-ash-200 py-1.5 px-3 r rounded-md">
+          <div className="">
+            <div className="text-sm font-semibold bg-ash-200 inline-flex mb-4 py-1.5 px-3 r rounded-md">
               Tier 1
             </div>
             <div className="flex items-center justify-between mb-4">
@@ -276,13 +276,16 @@ export function HowItWorksBusinessView() {
             </p>
             <ul className="space-y-3 mt-6">
               <li className="text-sm text-foreground flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Watch a live demo before you commit
+                <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                Watch a live demo before you commit
               </li>
               <li className="text-sm text-foreground flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Deployed inside your existing tools
+                <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                Deployed inside your existing tools
               </li>
               <li className="text-sm text-foreground flex items-start gap-2">
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" /> You approve the result before funds release
+                <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                You approve the result before funds release
               </li>
             </ul>
           </div>
@@ -299,8 +302,8 @@ export function HowItWorksBusinessView() {
         {/* Tier 2 — Discovery Scan */}
         <div className="bg-ash-900 relative shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 z-10 md:p-8 flex flex-col min-h-[420px]">
           <Sparkles className="size-60 text-ash-800 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-700" />
-          <div className="mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs font-bold mb-4 border border-white/10">
+          <div className="">
+            <div className="text-sm text-lime-950 font-semibold bg-lime-500 inline-flex mb-4 py-1.5 px-3 rounded-md">
               {DISCOVERY_SCAN_COPY.badge}
             </div>
             <div className="flex items-start justify-between mb-3">
@@ -322,7 +325,7 @@ export function HowItWorksBusinessView() {
             <ul className="space-y-3 mt-6">
               {DISCOVERY_SCAN_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
-                  <svg className="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                   {item}
                 </li>
               ))}
@@ -342,8 +345,8 @@ export function HowItWorksBusinessView() {
         {/* Tier 3 — Custom Project */}
         <div className="bg-ash-900 relative shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 z-10 md:p-8 flex flex-col min-h-[420px]">
           <Crown className="size-60 text-ash-800 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-700" />
-          <div className="mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs font-bold mb-4 border border-white/10">
+          <div className="">
+            <div className="text-sm text-lime-950 font-semibold bg-lime-500 inline-flex mb-4 py-1.5 px-3 rounded-md">
               {CUSTOM_PROJECT_COPY.badge}
             </div>
             <div className="flex items-start justify-between mb-3">
@@ -365,7 +368,7 @@ export function HowItWorksBusinessView() {
             <ul className="space-y-3 mt-6">
               {CUSTOM_PROJECT_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
-                  <svg className="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                   {item}
                 </li>
               ))}
