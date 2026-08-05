@@ -267,8 +267,8 @@ export function HowItWorksBusinessView() {
                 <Search className="size-5" />
               </div>
             </div>
+            <p className="text-xs text-ash-500 font-medium uppercase tracking-widest">Ready to deploy</p>
             <h4 className="text-3xl text-ash-800 font-noto font-semibold tracking-tight mt-2">Browse Solutions</h4>
-            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Ready to deploy</p>
           </div>
           <div className="flex-grow mb-8">
             <p className="text-ash-500 mt-2">
@@ -304,7 +304,7 @@ export function HowItWorksBusinessView() {
               {DISCOVERY_SCAN_COPY.badge}
             </div>
             <div className="flex items-start justify-between mb-3">
-              <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800 rounded-xl">
+              <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800/50 rounded-xl">
                 <Sparkles className="size-5" />
               </div>
               <div className="text-right">
@@ -312,8 +312,8 @@ export function HowItWorksBusinessView() {
                 <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
               </div>
             </div>
+            <p className="text-xs text-ash-500 font-medium uppercase tracking-widest">{DISCOVERY_SCAN_COPY.proposalNote.replace("Discovery Scan · ", "")}</p>
             <h4 className="text-3xl text-ash-50 font-noto font-semibold tracking-tight mt-2">Discovery Scan</h4>
-            <p className="text-xs text-white/40 uppercase tracking-wide font-medium mt-2">{DISCOVERY_SCAN_COPY.proposalNote.replace("Discovery Scan · ", "")}</p>
           </div>
           <div className="flex-grow mb-8">
             <p className="text-ash-400 mt-2">
@@ -322,7 +322,8 @@ export function HowItWorksBusinessView() {
             <ul className="space-y-3 mt-6">
               {DISCOVERY_SCAN_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-white/40 shrink-0 mt-0.5" /> {item}
+                  <svg class="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  {item}
                 </li>
               ))}
             </ul>
@@ -346,7 +347,7 @@ export function HowItWorksBusinessView() {
               {CUSTOM_PROJECT_COPY.badge}
             </div>
             <div className="flex items-start justify-between mb-3">
-              <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800 rounded-xl">
+              <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800/50 rounded-xl">
                 <Crown className="size-5" />
               </div>
               <div className="text-right">
@@ -354,17 +355,18 @@ export function HowItWorksBusinessView() {
                 <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
               </div>
             </div>
+            <p className="text-xs text-ash-500 font-medium uppercase tracking-widest">{CUSTOM_PROJECT_COPY.proposalNote.replace("Custom Project · ", "")}</p>
             <h4 className="text-3xl text-ash-50 font-noto font-semibold tracking-tight mt-2">Custom Project</h4>
-            <p className="text-xs text-white/40 uppercase tracking-wide font-medium mt-2">{CUSTOM_PROJECT_COPY.proposalNote.replace("Custom Project · ", "")}</p>
           </div>
           <div className="flex-grow mb-8">
             <p className="text-ash-400 mt-2">
               {CUSTOM_PROJECT_COPY.description}
             </p>
-            <ul className="space-y-3">
+            <ul className="space-y-3 mt-6">
               {CUSTOM_PROJECT_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-white/40 shrink-0 mt-0.5" /> {item}
+                  <svg class="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  {item}
                 </li>
               ))}
             </ul>
