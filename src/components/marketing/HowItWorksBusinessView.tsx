@@ -254,7 +254,7 @@ export function HowItWorksBusinessView() {
       </div>
 
       {/* 3 Tier Cards — same size */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {/* Tier 1 — Browse Solutions */}
         <div className="bg-white relative border border-ash-300 shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 z-10 md:p-8 flex flex-col min-h-[420px]">
           <Search className="size-60 text-ash-100 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-200" />
@@ -274,7 +274,7 @@ export function HowItWorksBusinessView() {
             <p className="text-ash-500 mt-2">
               Pick a proven automation, see it working live, and have it running in your tools within days.
             </p>
-            <ul className="space-y-3 mt-6">
+            <ul className="space-y-2 mt-6">
               <li className="text-sm text-foreground flex items-start gap-2">
                 <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                 Watch a live demo before you commit
@@ -311,7 +311,7 @@ export function HowItWorksBusinessView() {
                 <Sparkles className="size-5" />
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-white">{DISCOVERY_SCAN_COPY.price}</div>
+                <div className="text-3xl font-noto font-bold text-white">{DISCOVERY_SCAN_COPY.price}</div>
                 <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
               </div>
             </div>
@@ -322,23 +322,23 @@ export function HowItWorksBusinessView() {
             <p className="text-ash-400 mt-2">
               {DISCOVERY_SCAN_COPY.description}
             </p>
-            <ul className="space-y-3 mt-6">
+            <ul className="space-y-2 mt-6">
               {DISCOVERY_SCAN_BULLETS.map((item) => (
-                <li key={item} className="text-sm text-white/80 flex items-start gap-2">
+                <li key={item} className="text-sm text-ash-300 flex items-start gap-2">
                   <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                   {item}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="mt-auto pt-6 border-t border-white/10">
+          <div className="mt-auto">
             <Link
               href="/jobs/discovery"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white text-primary text-sm font-bold transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
+              className="text-ash-800 font-semibold font-noto tracking-tight bg-white py-3 px-6 rounded-xl transition-[colors,background] flex flex-1 items-center justify-center cursor-pointer hover:bg-ash-100"
             >
-              {DISCOVERY_SCAN_COPY.cta} <ArrowRight className="h-4 w-4" />
+              {DISCOVERY_SCAN_COPY.cta}
             </Link>
-            <p className="text-sm text-white/30 text-center mt-3">{DISCOVERY_SCAN_COPY.footer}</p>
+            <p className="text-sm text-ash-500 text-center mt-2">{DISCOVERY_SCAN_COPY.footer}</p>
           </div>
         </div>
 
@@ -354,7 +354,7 @@ export function HowItWorksBusinessView() {
                 <Crown className="size-5" />
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-white">{CUSTOM_PROJECT_COPY.price}</div>
+                <div className="text-3xl font-noto font-bold text-white">{CUSTOM_PROJECT_COPY.price}</div>
                 <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
               </div>
             </div>
@@ -365,34 +365,25 @@ export function HowItWorksBusinessView() {
             <p className="text-ash-400 mt-2">
               {CUSTOM_PROJECT_COPY.description}
             </p>
-            <ul className="space-y-3 mt-6">
+            <ul className="space-y-2 mt-6">
               {CUSTOM_PROJECT_BULLETS.map((item) => (
-                <li key={item} className="text-sm text-white/80 flex items-start gap-2">
+                <li key={item} className="text-sm text-ash-300 flex items-start gap-2">
                   <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                   {item}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="mt-auto pt-6 border-t border-white/10">
+          <div className="mt-auto">
             <Link
               href="/jobs/new"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white text-primary text-sm font-bold transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
+              className="text-ash-800 font-semibold font-noto tracking-tight bg-white py-3 px-6 rounded-xl transition-[colors,background] flex flex-1 items-center justify-center cursor-pointer hover:bg-ash-100"
             >
-              {CUSTOM_PROJECT_COPY.cta} <ArrowRight className="h-4 w-4" />
+              {CUSTOM_PROJECT_COPY.cta}
             </Link>
-            <p className="text-sm text-white/30 text-center mt-3">{CUSTOM_PROJECT_COPY.footer}</p>
+            <p className="text-sm text-ash-500 text-center mt-2">{CUSTOM_PROJECT_COPY.footer}</p>
           </div>
         </div>
-      </div>
-
-      <div className="mt-12 text-center">
-        <Link
-          href="/solutions"
-          className="inline-flex items-center justify-center px-8 py-4 rounded-md bg-primary text-primary-foreground font-bold text-lg hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 active:scale-[0.98]"
-        >
-          Browse Solutions
-        </Link>
       </div>
     </div>
   );
