@@ -322,7 +322,7 @@ export function HowItWorksBusinessView() {
             <ul className="space-y-3 mt-6">
               {DISCOVERY_SCAN_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
-                  <svg class="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  <svg className="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                   {item}
                 </li>
               ))}
@@ -365,7 +365,7 @@ export function HowItWorksBusinessView() {
             <ul className="space-y-3 mt-6">
               {CUSTOM_PROJECT_BULLETS.map((item) => (
                 <li key={item} className="text-sm text-white/80 flex items-start gap-2">
-                  <svg class="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                  <svg className="size-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                   {item}
                 </li>
               ))}
