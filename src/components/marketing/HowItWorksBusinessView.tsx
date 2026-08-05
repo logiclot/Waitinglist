@@ -275,27 +275,28 @@ export function HowItWorksBusinessView() {
               Pick a proven automation, see it working live, and have it running in your tools within days.
             </p>
             <ul className="space-y-2 mt-6">
-              <li className="text-sm text-foreground flex items-start gap-2">
+              <li className="text-sm flex items-start gap-2">
                 <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                 Watch a live demo before you commit
               </li>
-              <li className="text-sm text-foreground flex items-start gap-2">
+              <li className="text-sm flex items-start gap-2">
                 <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                 Deployed inside your existing tools
               </li>
-              <li className="text-sm text-foreground flex items-start gap-2">
+              <li className="text-sm flex items-start gap-2">
                 <svg className="size-5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
                 You approve the result before funds release
               </li>
             </ul>
           </div>
-          <div className="mt-auto pt-6 border-t border-border">
+          <div className="mt-auto">
             <Link
               href="/solutions"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-primary text-primary hover:bg-primary hover:text-white text-sm font-bold transition-all duration-200 hover:shadow-md active:scale-[0.98]"
+              className="text-white font-semibold font-noto tracking-tight bg-ash-900 py-3 px-6 rounded-xl transition-colors flex flex-1 items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ash-800"
             >
-              Browse solutions <ArrowRight className="h-4 w-4" />
+              Browse solutions
             </Link>
+            <p class="text-sm text-ash-500 text-center mt-2">Explore our full library of solutions</p>
           </div>
         </div>
 
