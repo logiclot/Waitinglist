@@ -296,7 +296,7 @@ export function HowItWorksBusinessView() {
             >
               Browse solutions
             </Link>
-            <p class="text-sm text-ash-500 text-center mt-2">Explore our full library of solutions</p>
+            <p className="text-sm text-ash-500 text-center mt-2">Explore our full library of solutions</p>
           </div>
         </div>
 
