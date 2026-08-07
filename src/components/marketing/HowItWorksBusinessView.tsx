@@ -350,8 +350,11 @@ export function HowItWorksBusinessView() {
         <div className="bg-ash-900 relative shadow-2xl shadow-ash-200 rounded-3xl group overflow-hidden p-6 z-10 md:p-8 flex flex-col min-h-[420px]">
           <Crown className="size-60 text-ash-800 absolute -top-20 -right-20 stroke-[0.25] -rotate-45 transition-[color] -z-10 group-hover:text-ash-700" />
           <div className="">
-            <div className="text-sm text-lime-950 font-semibold bg-lime-500 inline-flex mb-4 py-1.5 px-3 rounded-md">
-              {CUSTOM_PROJECT_COPY.badge}
+            <div className="flex items-end justify-between mb-4">
+              <div className="text-sm text-lime-950 font-semibold bg-lime-500 inline-flex py-1.5 px-3 rounded-md">
+                {CUSTOM_PROJECT_COPY.badge}
+              </div>
+              <div className="max-w-[100px] text-xs text-ash-500 text-right uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
             </div>
             <div className="flex items-start justify-between mb-3">
               <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800/50 rounded-xl">
