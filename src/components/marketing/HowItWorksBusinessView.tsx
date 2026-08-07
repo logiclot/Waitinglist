@@ -226,7 +226,7 @@ export function HowItWorksBusinessView() {
       </div>
 
       {/* Not sure which path? — compact analogy block */}
-      <div className="mb-14">
+      <div className="hidden mb-14">
         <div className="text-center mb-6">
           <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Not sure which path to take?</p>
           <h3 className="text-lg font-bold text-foreground mt-2">Discovery Scan vs. Custom Project</h3>
