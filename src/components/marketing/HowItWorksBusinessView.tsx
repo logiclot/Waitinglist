@@ -310,7 +310,7 @@ export function HowItWorksBusinessView() {
               </div>
               <div className="max-w-[100px] text-xs text-ash-500 text-right uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
             </div>
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center justify-between mb-3">
               <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800/50 rounded-xl">
                 <Sparkles className="size-5" />
               </div>
@@ -356,13 +356,12 @@ export function HowItWorksBusinessView() {
               </div>
               <div className="max-w-[100px] text-xs text-ash-500 text-right uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
             </div>
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center justify-between mb-3">
               <div className="size-11 text-ash-400 bg-ash-800 flex items-center justify-center border border-ash-700 ring-[3px] ring-ash-800/50 rounded-xl">
                 <Crown className="size-5" />
               </div>
               <div className="text-right">
                 <div className="text-3xl font-noto font-bold text-white">{CUSTOM_PROJECT_COPY.price}</div>
-                <div className="text-xs text-ash-500 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
               </div>
             </div>
             <p className="text-xs text-ash-500 font-medium uppercase tracking-widest">{CUSTOM_PROJECT_COPY.proposalNote.replace("Custom Project · ", "")}</p>
