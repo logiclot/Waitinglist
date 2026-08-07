@@ -6,31 +6,31 @@ import { useMorseCode } from "@/hooks/useMorseCode";
 
 const ORBIT_STEPS = [
   {
-    icon: <UserCircle2 className="h-4 w-4" />,
+    icon: <UserCircle2 className="size-5" />,
     step: "Step 1",
     title: "Build your profile",
     body: "Add your tools, stack, and past work. Clients judge by what they see here, so make it specific.",
   },
   {
-    icon: <Search className="h-4 w-4" />,
+    icon: <Search className="size-5" />,
     step: "Step 2",
     title: "Find your first job",
     body: "Browse open Discovery Scans and Custom Projects, or list a packaged Solution in the marketplace.",
   },
   {
-    icon: <FileText className="h-4 w-4" />,
+    icon: <FileText className="size-5" />,
     step: "Step 3",
     title: "Submit a proposal",
     body: "Send a scoped proposal with your timeline and price. Clients award based on fit, not lowest bid.",
   },
   {
-    icon: <Hammer className="h-4 w-4" />,
+    icon: <Hammer className="size-5" />,
     step: "Step 4",
     title: "Deliver the work",
     body: "Milestone-based delivery keeps both sides aligned. Build, document, and mark the milestone complete.",
   },
   {
-    icon: <Banknote className="h-4 w-4" />,
+    icon: <Banknote className="size-5" />,
     step: "Step 5",
     title: "Get paid",
     body: "Client approves the milestone and funds release instantly. No invoices, no chasing, no delays.",
@@ -171,7 +171,7 @@ export function HowItWorksExpertView() {
 
           {/* Center hub — subtle light bulb effect (green accent for expert) */}
           <div
-            className="absolute flex flex-col items-center justify-center text-center rounded-full bg-white"
+            className="bg-ash-900 absolute flex flex-col items-center justify-center text-center rounded-full"
             style={{
               width: hubR * 2,
               height: hubR * 2,
@@ -215,14 +215,14 @@ export function HowItWorksExpertView() {
                 style={{ width: cardW, left: pos.x - cardW / 2, top: pos.y - 60 }}
               >
                 <div
-                  className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center mx-auto mb-2 text-foreground"
+                  className="size-11 bg-white flex items-center justify-center mx-auto mb-2 border border-ash-300 shadow-2xl shadow-ash-200 ring-[3px] ring-ash-100 rounded-full"
                   style={{ border: "2px solid #E5E7EB" }}
                 >
                   {item.icon}
                 </div>
                 <span className="text-[10px] font-bold text-[#8DC63F] uppercase tracking-wider">{item.step}</span>
-                <h4 className="font-bold text-sm mt-1 text-foreground leading-snug">{item.title}</h4>
-                <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">{item.body}</p>
+                <h4 className="text-ash-800 font-noto font-semibold tracking-tight">{item.title}</h4>
+                <p className="text-sm text-ash-500 mt-1">{item.body}</p>
               </div>
             );
           })}
