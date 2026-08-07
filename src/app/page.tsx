@@ -152,7 +152,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-6 md:mt-8">
-                <span className="text-sm font-semibold bg-ash-200 py-1.5 px-3 r rounded-md">
+                <span className="text-sm font-semibold bg-ash-200 inline-flex py-1.5 px-3 r rounded-md">
                   Paid by Buyer
                 </span>
               </div>
@@ -166,7 +166,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-6 md:mt-8">
-                <span className="text-sm text-ash-800 font-semibold bg-white py-1.5 px-3 r rounded-md">
+                <span className="text-sm text-ash-800 font-semibold bg-white inline-flex py-1.5 px-3 r rounded-md">
                   Free for Buyers
                 </span>
               </div>
@@ -180,7 +180,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="mt-6 md:mt-8">
-                <span className="text-sm font-semibold bg-ash-200 py-1.5 px-3 r rounded-md">
+                <span className="text-sm font-semibold bg-ash-200 inline-flex py-1.5 px-3 r rounded-md">
                   Paid to 3rd Parties
                 </span>
               </div>

@@ -313,7 +313,7 @@ export function HowItWorksBusinessView() {
               </div>
               <div className="text-right">
                 <div className="text-3xl font-noto font-bold text-white">{DISCOVERY_SCAN_COPY.price}</div>
-                <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
+                <div className="text-xs text-ash-500 uppercase tracking-wide font-medium">{DISCOVERY_SCAN_COPY.priceNote}</div>
               </div>
             </div>
             <p className="text-xs text-ash-500 font-medium uppercase tracking-widest">{DISCOVERY_SCAN_COPY.proposalNote.replace("Discovery Scan · ", "")}</p>
@@ -356,7 +356,7 @@ export function HowItWorksBusinessView() {
               </div>
               <div className="text-right">
                 <div className="text-3xl font-noto font-bold text-white">{CUSTOM_PROJECT_COPY.price}</div>
-                <div className="text-[10px] text-white/40 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
+                <div className="text-xs text-ash-500 uppercase tracking-wide font-medium">{CUSTOM_PROJECT_COPY.priceNote}</div>
               </div>
             </div>
             <p className="text-xs text-ash-500 font-medium uppercase tracking-widest">{CUSTOM_PROJECT_COPY.proposalNote.replace("Custom Project · ", "")}</p>
